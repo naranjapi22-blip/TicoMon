@@ -1,0 +1,33 @@
+import discord
+import aiohttp # La librería para hablar con la API
+
+# ... (resto de su configuración de bot) ...
+
+@client.event
+async def on_message(message):
+    if message.author == client.user: return
+
+    if message.content.startswith('!poke '):
+        # Sacamos el nombre después del espacio
+        pokemon_nombre = message.content.split(' ')[1].lower()
+        
+        url = f"https://pokeapi.co/api/v2/pokemon/{pokemon_nombre}"
+        
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    
+                    # Extraemos lo que nos interesa
+                    nombre = data['name'].capitalize()
+                    foto = data['sprites']['front_default']
+                    tipo = data['types'][0]['type']['name']
+                    
+                    # Armamos el Embed profesional
+                    embed = discord.Embed(title=f"Pokémon: {nombre}", color=discord.Color.blue())
+                    embed.set_thumbnail(url=foto)
+                    embed.add_field(name="Tipo", value=tipo.capitalize(), inline=True)
+                    
+                    await message.channel.send(embed=embed)
+                else:
+                    await message.channel.send("¡Mae, ese Pokémon no existe o está en Narnia! Revise el nombre.")
