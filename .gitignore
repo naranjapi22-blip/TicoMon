@@ -1,0 +1,13 @@
+# Archivos de entorno y credenciales
+.env
+
+# Bases de datos locales
+*.db
+
+# Caché de Python
+__pycache__/
+*.pyc
+
+# Archivos de sistema operativo
+.DS_Store
+Thumbs.db
