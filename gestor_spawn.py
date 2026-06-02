@@ -16,11 +16,23 @@ async def obtener_intentos(user_id):
         database.actualizar_energia_db(user_id, 12, ahora)
         return 12, ahora
         
-    intentos, ultima_recarga_str = datos
-    ultima_recarga = datetime.datetime.fromisoformat(ultima_recarga_str)
+    intentos, ultima_recarga_raw = datos
+
+    # --- CORRECCIÓN AQUÍ ---
+    # Si ya es un objeto datetime, no necesitamos convertirlo
+    if isinstance(ultima_recarga_raw, datetime.datetime):
+        ultima_recarga = ultima_recarga_raw
+    else:
+        # Si es un string, lo convertimos
+        ultima_recarga = datetime.datetime.fromisoformat(str(ultima_recarga_raw))
+    # -----------------------
     
+    # Asegurarnos de que ambas tengan zona horaria para comparar correctamente
+    if ultima_recarga.tzinfo is None:
+        ultima_recarga = ultima_recarga.replace(tzinfo=datetime.timezone.utc)
+
     # Comprobar si pasaron 2 horas (7200 segundos)
-    if (ahora.replace(tzinfo=None) - ultima_recarga.replace(tzinfo=None)).total_seconds() >= 7200:
+    if (ahora - ultima_recarga).total_seconds() >= 7200:
         database.actualizar_energia_db(user_id, 12, ahora)
         return 12, ahora
         
