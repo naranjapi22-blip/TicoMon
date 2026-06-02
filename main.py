@@ -15,7 +15,8 @@ from discord.ext import commands
 import admin
 import vistas_combate
 from vistas_combate import SelectorPaginado, VistaCombate
-
+import psycopg2
+import sqlite3
 
 
 # 1. CONFIGURACIÓN
@@ -43,9 +44,16 @@ async def on_ready():
     # 0. INICIALIZAR SESIÓN DE RED (¡Esto soluciona el error!)
     bot.session = aiohttp.ClientSession()
     
-    # 1. Inicializar base de datos de capturas
-    import database
-    database.init_db()
+def get_connection():
+    # Render y otros servicios en la nube usan variables de entorno
+    db_url = os.environ.get('DATABASE_URL')
+    
+    if db_url:
+        # Conexión a PostgreSQL (Producción)
+        return psycopg2.connect(db_url)
+    else:
+        # Conexión a SQLite (Local - Desarrollo)
+        return sqlite3.connect('fumo_data.db')
     
     # 2. Inicializar base de datos de iniciación y comandos
     import gestor_spawn
