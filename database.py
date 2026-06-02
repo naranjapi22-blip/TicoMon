@@ -22,7 +22,7 @@ def init_db():
     # 1. Creamos la tabla con la nueva columna 'pokeball' incluida desde el inicio
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS capturas (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             user_id INTEGER,
             pokemon_nombre TEXT,
             es_shiny INTEGER DEFAULT 0,
