@@ -37,8 +37,9 @@ class VistaCombate(discord.ui.View):
             # --- CORRECCIÓN DEL KEYERROR ---
             # Si 'id' no existe, lo obtenemos usando el nombre (asumiendo que tienes una función para eso)
             # Si no tienes servicios.obtener_id_por_nombre, puedes usar esta lógica rápida:
-            id1 = p1_actual.get('id') or await servicios.obtener_id_por_nombre(p1_actual['nombre'])
-            id2 = p2_actual.get('id') or await servicios.obtener_id_por_nombre(p2_actual['nombre'])
+            # Dentro de tu bucle:
+            id1 = p1_actual.get('id') or await servicios.obtener_id_por_nombre(self.session, p1_actual['nombre'])
+            id2 = p2_actual.get('id') or await servicios.obtener_id_por_nombre(self.session, p2_actual['nombre'])
             
             # 1. Generar la imagen de combate
             buffer = await imagencomb.generar_escena_combate(self.session, id1, id2)
@@ -63,7 +64,7 @@ class VistaCombate(discord.ui.View):
             
             await asyncio.sleep(4)
 
-    def on_timeout(self):
+    async def on_timeout(self):
         self.stop()
 
 class SelectorPaginado(discord.ui.View):

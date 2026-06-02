@@ -102,13 +102,20 @@ async def obtener_nombre_por_id(session, id_p):
             return data['name']
     return "???"
 
-# 3. Obtener ID por nombre
+# Definimos una sola función robusta
 async def obtener_id_por_nombre(session, nombre):
+    """
+    Recibe la sesión y el nombre. 
+    Es eficiente porque reutiliza la sesión del bot.
+    """
     url = f"https://pokeapi.co/api/v2/pokemon/{nombre.lower()}"
-    async with session.get(url) as response:
-        if response.status == 200:
-            data = await response.json()
-            return data['id']
+    try:
+        async with session.get(url) as response:
+            if response.status == 200:
+                data = await response.json()
+                return data['id']
+    except Exception as e:
+        print(f"Error buscando ID para {nombre}: {e}")
     return None
 
 # 4. Filtro de silueta (si no tienes el poke, se vuelve negro)
@@ -287,11 +294,3 @@ async def obtener_url_arte_oficial(session, poke_id):
             data = await response.json()
             return data['sprites']['other']['official-artwork']['front_default']
     return None
-async def obtener_id_por_nombre(nombre):
-    # Si tienes una lista de iniciales o una base de datos, úsala.
-    # Si no, puedes hacer un fetch rápido a la PokeAPI:
-    url = f"https://pokeapi.co/api/v2/pokemon/{nombre.lower()}"
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url) as resp:
-            data = await resp.json()
-            return data['id']
