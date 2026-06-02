@@ -18,7 +18,7 @@ from vistas_combate import SelectorPaginado, VistaCombate
 import psycopg2
 import sqlite3
 
-
+database.init_db()
 # 1. CONFIGURACIÓN
 load_dotenv()
 TOKEN = os.getenv('TOKEN')

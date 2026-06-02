@@ -16,7 +16,7 @@ def get_connection():
 
 
 def init_db():
-    conn = sqlite3.connect('fumo_data.db')
+    conn = get_connection()
     cursor = conn.cursor()
     
     # 1. Creamos la tabla con la nueva columna 'pokeball' incluida desde el inicio
