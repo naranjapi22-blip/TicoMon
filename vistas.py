@@ -1,8 +1,13 @@
 import discord
 import servicios
 import random
+import math
 import database
 import sqlite3
+
+COOLDOWN_LANZAMIENTO = 10.0
+# Pequeña tolerancia: latencia de red / doble clic cerca del segundo 10
+COOLDOWN_GRACE = 0.25
 
 INICIALES = [
     {"nombre": "Bulbasaur", "id": 1}, {"nombre": "Charmander", "id": 4}, {"nombre": "Squirtle", "id": 7},
@@ -230,6 +235,12 @@ class BotonCaptura(discord.ui.View):
         self.max_intentos = 20
         self.user_cooldowns = {}
 
+    def _segundos_restantes_cooldown(self, user_id, ahora):
+        ultimo = self.user_cooldowns.get(user_id)
+        if ultimo is None:
+            return 0.0
+        return COOLDOWN_LANZAMIENTO - (ahora - ultimo)
+
     async def on_timeout(self):
         # Liberar el canal si el tiempo de la vista se agota
         import gestor_spawn
@@ -243,12 +254,15 @@ class BotonCaptura(discord.ui.View):
     @discord.ui.button(label="¡Lanzar Pokéball!", style=discord.ButtonStyle.primary, emoji="🔴")
     async def boton_captura(self, interaction: discord.Interaction, button: discord.ui.Button):
         ahora = discord.utils.utcnow().timestamp()
-        if interaction.user.id in self.user_cooldowns:
-            tiempo_pasado = ahora - self.user_cooldowns[interaction.user.id]
-            if tiempo_pasado < 10:
-                await interaction.response.send_message(f"⏱️ Espera {int(10 - tiempo_pasado)}s.", ephemeral=True)
-                return
-        
+        restante = self._segundos_restantes_cooldown(interaction.user.id, ahora)
+        if restante > COOLDOWN_GRACE:
+            segundos = max(1, math.ceil(restante))
+            await interaction.response.send_message(
+                f"⏱️ Espera {segundos}s.",
+                ephemeral=True,
+            )
+            return
+
         self.user_cooldowns[interaction.user.id] = ahora
         await interaction.response.defer(ephemeral=True)
 
