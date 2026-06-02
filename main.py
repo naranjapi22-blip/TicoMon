@@ -15,7 +15,7 @@ from discord.ext import commands
 import admin
 import vistas_combate
 from vistas_combate import SelectorPaginado, VistaCombate
-
+import imagencomb
 
 
 # 1. CONFIGURACIÓN
@@ -390,48 +390,44 @@ async def es_legendario(session, poke_id):
 admin.setup(bot)
 
 
+import discord
+import imagencomb # Importamos el nuevo archivo
+
+# ... (resto de tus importaciones)
+
 @bot.command(name="combate")
 async def iniciar_combate(ctx, oponente: discord.Member):
     # 1. Validaciones iniciales
-    if oponente.bot:
-        return await ctx.send("❌ No puedes retar a un bot.")
-    if oponente.id == ctx.author.id:
-        return await ctx.send("❌ ¡No puedes pelear contra ti mismo!")
+    if oponente.bot: return await ctx.send("❌ No puedes retar a un bot.")
+    if oponente.id == ctx.author.id: return await ctx.send("❌ ¡No puedes pelear contra ti mismo!")
 
-    # 2. Obtención de listas desde la base de datos
-    lista1 = database.obtener_lista_capturas(ctx.author.id)
-    lista2 = database.obtener_lista_capturas(oponente.id)
+    # 2. Obtención de listas
+    lista1 = database.obtener_capturas(ctx.author.id)
+    lista2 = database.obtener_capturas(oponente.id)
     
     if len(lista1) < 3 or len(lista2) < 3:
-        return await ctx.send("❌ Ambos jugadores necesitan al menos 3 Pokémon capturados para combatir.")
+        return await ctx.send("❌ Ambos necesitan al menos 3 Pokémon capturados.")
 
-    # 3. Jugador 1 elige equipo
+    # 3. Selección de equipos
     view1 = vistas_combate.SelectorPaginado(ctx.author, lista1)
     await ctx.send(f"⚔️ {ctx.author.mention}, elige tus 3 Pokémon:", view=view1)
     await view1.wait()
-    
-    if len(view1.seleccionados) < 3:
-        return await ctx.send(f"❌ {ctx.author.mention} no completó la selección. Combate cancelado.")
+    if len(view1.seleccionados) < 3: return await ctx.send("Combate cancelado.")
 
-    # 4. Jugador 2 elige equipo (CORREGIDO: Ahora usa oponente y view2)
     view2 = vistas_combate.SelectorPaginado(oponente, lista2)
     await ctx.send(f"⚔️ {oponente.mention}, elige tus 3 Pokémon:", view=view2)
-    await view2.wait() # CORREGIDO: Ahora espera a view2
+    await view2.wait()
+    if len(view2.seleccionados) < 3: return await ctx.send("Combate cancelado.")
 
-    if len(view2.seleccionados) < 3:
-        return await ctx.send(f"❌ {oponente.mention} no completó la selección. Combate cancelado.")
-
-    # 5. Inicio de la simulación
+    # 4. Inicio de la simulación
     await ctx.send("⏳ Preparando datos de combate...")
     
-    # Creamos la vista con los equipos ya seleccionados
-    vista_combate = vistas_combate.VistaCombate(ctx.author, oponente, view1.seleccionados, view2.seleccionados)
+    # Pasamos bot.session para que imagencomb pueda descargar las imágenes
+    vista_combate = vistas_combate.VistaCombate(ctx.author, oponente, view1.seleccionados, view2.seleccionados, bot.session)
     
     try:
         await vista_combate.preparar_combate()
         await ctx.send("✅ ¡Todo listo! Pulsa el botón para comenzar.", view=vista_combate)
     except Exception as e:
         await ctx.send(f"❌ Error al preparar el combate: {e}")
-        print(f"Error en preparación: {e}")
-
 bot.run(TOKEN)

@@ -1,15 +1,18 @@
 import discord
 import asyncio
-from combate import CombateSim
+import imagencomb  # Tu archivo de generación de imágenes
 import combate_servicios
+import servicios # Importamos servicios para obtener el ID si falta
+from combate import CombateSim
 
 class VistaCombate(discord.ui.View):
-    def __init__(self, p1, p2, equipo1_nombres, equipo2_nombres):
+    def __init__(self, p1, p2, equipo1_nombres, equipo2_nombres, session):
         super().__init__(timeout=300)
         self.p1 = p1
         self.p2 = p2
         self.equipo1_nombres = equipo1_nombres
         self.equipo2_nombres = equipo2_nombres
+        self.session = session
         self.combate = None 
 
     async def preparar_combate(self):
@@ -25,34 +28,44 @@ class VistaCombate(discord.ui.View):
         
         while not self.combate.es_fin_del_juego():
             resumen_ronda = self.combate.ejecutar_ronda()
+            
             e1 = self.combate.equipos["Jugador 1"]
             e2 = self.combate.equipos["Jugador 2"]
             p1_actual = e1['pokes'][e1['activo']]
             p2_actual = e2['pokes'][e2['activo']]
             
-            poke1_url = f"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/{p1_actual['nombre'].lower()}.png"
-            poke2_url = f"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/{p2_actual['nombre'].lower()}.png"
+            # --- CORRECCIÓN DEL KEYERROR ---
+            # Si 'id' no existe, lo obtenemos usando el nombre (asumiendo que tienes una función para eso)
+            # Si no tienes servicios.obtener_id_por_nombre, puedes usar esta lógica rápida:
+            id1 = p1_actual.get('id') or await servicios.obtener_id_por_nombre(p1_actual['nombre'])
+            id2 = p2_actual.get('id') or await servicios.obtener_id_por_nombre(p2_actual['nombre'])
             
+            # 1. Generar la imagen de combate
+            buffer = await imagencomb.generar_escena_combate(self.session, id1, id2)
+            file = discord.File(buffer, filename="combate.png")
+            
+            # 2. Crear el Embed
             embed = discord.Embed(title="⚔️ Combate Pokémon 3vs3", color=discord.Color.blue())
-            embed.set_thumbnail(url=poke1_url)
-            embed.set_image(url=poke2_url)
-            embed.add_field(name=self.p1.display_name, value=f"{p1_actual['nombre']}\nHP: {max(0, e1['hp'][e1['activo']])}", inline=True)
-            embed.add_field(name="VS", value="🆚", inline=True)
-            embed.add_field(name=self.p2.display_name, value=f"{p2_actual['nombre']}\nHP: {max(0, e2['hp'][e2['activo']])}", inline=True)
-            embed.add_field(name="Resumen de la ronda", value=resumen_ronda, inline=False)
+            embed.set_image(url="attachment://combate.png")
             
-            await msg.edit(embed=embed)
+            embed.add_field(name=f"👤 {self.p1.display_name}", value=f"**{p1_actual['nombre']}**\nHP: {max(0, e1['hp'][e1['activo']])}", inline=True)
+            embed.add_field(name="🆚", value="VS", inline=True)
+            embed.add_field(name=f"👤 {self.p2.display_name}", value=f"**{p2_actual['nombre']}**\nHP: {max(0, e2['hp'][e2['activo']])}", inline=True)
+            embed.add_field(name="📜 Resumen de la ronda", value=resumen_ronda, inline=False)
+            
+            # 3. Editar mensaje
+            await msg.edit(embed=embed, attachments=[file])
             
             ganador = self.combate.es_fin_del_juego()
             if ganador:
                 await interaction.followup.send(f"🏆 **¡El combate ha finalizado!**\nEl ganador es: **{self.p1.display_name if ganador == 'Jugador 1' else self.p2.display_name}**")
                 break
-            await asyncio.sleep(3)
+            
+            await asyncio.sleep(4)
 
     def on_timeout(self):
         self.stop()
 
-# --- SELECTOR PAGINADO PARA LISTAS LARGAS ---
 class SelectorPaginado(discord.ui.View):
     def __init__(self, user, lista_completa):
         super().__init__()
@@ -73,7 +86,12 @@ class SelectorPaginado(discord.ui.View):
             btn_adelante.callback = self.ir_adelante
             self.add_item(btn_adelante)
 
-        opciones = [discord.SelectOption(label=p, value=p) for p in self.paginas[self.pagina_actual]]
+        opciones = []
+        offset = self.pagina_actual * 25
+        for i, nombre in enumerate(self.paginas[self.pagina_actual]):
+            valor_unico = f"{nombre}_{offset + i}"
+            opciones.append(discord.SelectOption(label=nombre, value=valor_unico))
+
         self.select = discord.ui.Select(placeholder=f"Página {self.pagina_actual + 1} (Elige hasta 3)",
                                         min_values=1, max_values=3, options=opciones)
         self.select.callback = self.select_callback
@@ -92,8 +110,9 @@ class SelectorPaginado(discord.ui.View):
     async def select_callback(self, interaction):
         if interaction.user != self.user: return await interaction.response.send_message("No es tu turno.", ephemeral=True)
         for valor in self.select.values:
-            if valor not in self.seleccionados:
-                self.seleccionados.append(valor)
+            nombre_limpio = valor.split('_')[0]
+            if nombre_limpio not in self.seleccionados:
+                self.seleccionados.append(nombre_limpio)
         await interaction.response.send_message(f"✅ Añadidos: {len(self.seleccionados)}/3", ephemeral=True)
         if len(self.seleccionados) >= 3:
             self.stop()

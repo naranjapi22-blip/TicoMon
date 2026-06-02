@@ -10,4 +10,6 @@ __pycache__/
 
 # Archivos de sistema operativo
 .DS_Store
+
+*.db
 Thumbs.db

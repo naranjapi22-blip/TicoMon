@@ -287,3 +287,11 @@ async def obtener_url_arte_oficial(session, poke_id):
             data = await response.json()
             return data['sprites']['other']['official-artwork']['front_default']
     return None
+async def obtener_id_por_nombre(nombre):
+    # Si tienes una lista de iniciales o una base de datos, úsala.
+    # Si no, puedes hacer un fetch rápido a la PokeAPI:
+    url = f"https://pokeapi.co/api/v2/pokemon/{nombre.lower()}"
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as resp:
+            data = await resp.json()
+            return data['id']
