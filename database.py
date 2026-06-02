@@ -137,3 +137,17 @@ def actualizar_energia_db(user_id, intentos, ultima_recarga):
                        (user_id, intentos, ahora_str))
     conn.commit()
     conn.close()
+def obtener_lista_capturas(user_id):
+    conn = get_connection()
+    cursor = conn.cursor()
+    
+    if DATABASE_URL:
+        # Consulta para PostgreSQL
+        cursor.execute("SELECT DISTINCT pokemon_nombre FROM capturas WHERE user_id = %s", (str(user_id),))
+    else:
+        # Consulta para SQLite
+        cursor.execute("SELECT DISTINCT pokemon_nombre FROM capturas WHERE user_id = ?", (user_id,))
+        
+    res = [row[0] for row in cursor.fetchall()]
+    conn.close()
+    return res
