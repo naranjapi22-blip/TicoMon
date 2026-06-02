@@ -1,8 +1,19 @@
 import sqlite3
 import asyncio
 import datetime
-
+import os
+DATABASE_URL = os.environ.get('DATABASE_URL')
 db_lock = asyncio.Lock()
+import psycopg2
+
+def get_connection():
+    if DATABASE_URL:
+        # Conexión a PostgreSQL (Producción en Render)
+        return psycopg2.connect(DATABASE_URL)
+    else:
+        # Conexión a SQLite (Local)
+        return sqlite3.connect('fumo_data.db')
+
 
 def init_db():
     conn = sqlite3.connect('fumo_data.db')
@@ -42,7 +53,7 @@ def init_db():
 
 async def guardar_captura(user_id, pokemon_nombre, es_shiny=False, pokeball='Pokéball'):
     async with db_lock:
-        conn = sqlite3.connect('fumo_data.db')
+        conn = get_connection()
         cursor = conn.cursor()
         # Se añade 'pokeball' a los campos y al tuple de valores
         cursor.execute("INSERT INTO capturas (user_id, pokemon_nombre, es_shiny, pokeball) VALUES (?, ?, ?, ?)", 
@@ -51,7 +62,7 @@ async def guardar_captura(user_id, pokemon_nombre, es_shiny=False, pokeball='Pok
         conn.close()
 
 def obtener_capturas(user_id, solo_shiny=False):
-    conn = sqlite3.connect('fumo_data.db')
+    conn = get_connection()
     cursor = conn.cursor()
     if solo_shiny:
         cursor.execute("SELECT pokemon_nombre FROM capturas WHERE user_id = ? AND es_shiny = 1", (user_id,))
@@ -62,7 +73,7 @@ def obtener_capturas(user_id, solo_shiny=False):
     return resultados
 
 def obtener_versiones_pokemon(user_id, nombre_pokemon):
-    conn = sqlite3.connect('fumo_data.db')
+    conn = get_connection()
     cursor = conn.cursor()
     # Usamos .lower() aquí también
     cursor.execute("SELECT es_shiny FROM capturas WHERE user_id = ? AND pokemon_nombre = ?", 
@@ -73,7 +84,7 @@ def obtener_versiones_pokemon(user_id, nombre_pokemon):
 
 def obtener_info_captura(user_id, nombre_pokemon):
     """Retorna (fecha_primera_captura, cantidad_total)"""
-    conn = sqlite3.connect('fumo_data.db')
+    conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("""
         SELECT MIN(fecha), COUNT(*) 
@@ -84,7 +95,7 @@ def obtener_info_captura(user_id, nombre_pokemon):
     conn.close()
     return resultado
 def init_energia_db():
-    conn = sqlite3.connect('fumo_data.db')
+    conn = get_connection()
     cursor = conn.cursor()
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS energia (
@@ -97,7 +108,7 @@ def init_energia_db():
     conn.close()
 
 def obtener_energia_db(user_id):
-    conn = sqlite3.connect('fumo_data.db')
+    conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT intentos, ultima_recarga FROM energia WHERE user_id = ?", (user_id,))
     res = cursor.fetchone()
@@ -105,14 +116,14 @@ def obtener_energia_db(user_id):
     return res # Retorna (intentos, ultima_recarga_str) o None
 
 def actualizar_energia_db(user_id, intentos, ultima_recarga):
-    conn = sqlite3.connect('fumo_data.db')
+    conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("REPLACE INTO energia (user_id, intentos, ultima_recarga) VALUES (?, ?, ?)", 
                    (user_id, intentos, ultima_recarga.isoformat()))
     conn.commit()
     conn.close()
 def obtener_lista_capturas(user_id):
-    conn = sqlite3.connect('fumo_data.db')
+    conn = get_connection()
     cursor = conn.cursor()
     # DISTINCT para que no salgan repetidos en la lista de selección
     cursor.execute("SELECT DISTINCT pokemon_nombre FROM capturas WHERE user_id = ?", (user_id,))
