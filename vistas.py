@@ -328,14 +328,22 @@ class InfoView(discord.ui.View):
             # 1. Obtenemos datos de DB
             fecha_primera, cantidad = database.obtener_info_captura(self.user_id, self.data['name'])
             
-            # 2. Formateamos fecha (asegurando que no sea None)
-            fecha_str = fecha_primera.split()[0] if fecha_primera and fecha_primera != 'Desconocido' else 'N/A'
+            # 2. Formateamos fecha de forma segura
+            fecha_str = "N/A"
+            if isinstance(fecha_primera, datetime.datetime):
+                # Convierte el objeto fecha a formato YYYY-MM-DD
+                fecha_str = fecha_primera.strftime('%Y-%m-%d')
+            elif isinstance(fecha_primera, str) and fecha_primera != 'Desconocido':
+                # Si por casualidad llega como texto, intentamos el split original
+                fecha_str = fecha_primera.split()[0]
             
             # 3. Construimos el texto base
             info_text = f"✨ **Tipo:** {', '.join([t['type']['name'].capitalize() for t in self.data['types']])}\n"
             info_text += f"📅 **Primera captura:** {fecha_str}\n"
             info_text += f"🔢 **Total capturados:** {cantidad}\n"
             info_text += f"📏 **Altura:** {self.data['height']/10}m | ⚖️ **Peso:** {self.data['weight']/10}kg\n"
+            
+            # ... (el resto de tu código igual)
             
             # 4. Creamos el Embed
             embed = discord.Embed(title=titulo, color=discord.Color.dark_grey())
