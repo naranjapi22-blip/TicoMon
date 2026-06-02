@@ -339,21 +339,23 @@ async def setcanal(ctx, canal: discord.TextChannel):
 # Check global para los comandos
 @bot.check
 async def verificar_canal(ctx):
-    
-    # 1. Permitir siempre a los administradores
-    if ctx.author.guild_permissions.administrator:
+    # Si es mensaje privado, permitir siempre
+    if ctx.guild is None:
         return True
         
-    # 2. Obtener el canal configurado
+    # Si es administrador, permitir siempre
+    if ctx.author.guild_permissions.administrator:
+        return True
+    
+    # Obtener el canal configurado
     canal_permitido = configuracion.obtener_canal(ctx.guild.id)
     
-    # 3. Si se configuró un canal y no es el actual, bloquear
-    if canal_permitido and ctx.channel.id != canal_permitido:
-        # Opcional: Avisar al usuario una sola vez
-        # await ctx.send(f"❌ Solo puedes usar comandos en <#{canal_permitido}>.")
-        return False
+    # Si no hay canal configurado, se permite en todos
+    if canal_permitido is None:
+        return True
         
-    return True
+    # Si hay canal configurado, validar
+    return ctx.channel.id == canal_permitido
 def canal_restringido():
     async def predicate(ctx):
         if ctx.author.guild_permissions.administrator:
@@ -364,28 +366,7 @@ def canal_restringido():
             return False
         return True
     return commands.check(predicate)
-@bot.check
-async def verificar_canal_global(ctx):
-    # Permitir comandos en mensajes privados (si lo deseas)
-    if ctx.guild is None:
-        return True
-        
-    # Permitir siempre a los administradores
-    if ctx.author.guild_permissions.administrator:
-        return True
-    
-    # Obtener el canal configurado
-    canal_permitido = configuracion.obtener_canal(ctx.guild.id)
-    
-    # Si no se ha configurado ningún canal, permitimos por defecto (opcional)
-    if canal_permitido is None:
-        return True
-        
-    # Si hay canal configurado y el actual NO es ese, bloqueamos
-    if ctx.channel.id != canal_permitido:
-        return False
-        
-    return True
+
 # 1. Añade esta función para verificar la rareza
 async def es_legendario(session, poke_id):
     url = f"https://pokeapi.co/api/v2/pokemon-species/{poke_id}/"
@@ -400,52 +381,46 @@ admin.setup(bot)
 
 @bot.command(name="combate")
 async def iniciar_combate(ctx, oponente: discord.Member):
-    # 1. Validaciones iniciales
+    # 1. Validaciones
     if oponente.bot:
         return await ctx.send("❌ No puedes retar a un bot.")
     if oponente.id == ctx.author.id:
         return await ctx.send("❌ ¡No puedes pelear contra ti mismo!")
 
-    # 2. Obtención de listas desde la base de datos
+    # 2. Obtención de datos
     lista1 = database.obtener_lista_capturas(ctx.author.id)
     lista2 = database.obtener_lista_capturas(oponente.id)
     
     if len(lista1) < 3 or len(lista2) < 3:
-        return await ctx.send("❌ Ambos jugadores necesitan al menos 3 Pokémon capturados para combatir.")
+        return await ctx.send("❌ Ambos jugadores necesitan al menos 3 Pokémon capturados.")
 
-    # 3. Jugador 1 elige equipo
-    view1 = vistas_combate.SelectorPaginado(ctx.author, lista1)
-    await ctx.send(f"⚔️ {ctx.author.mention}, elige tus 3 Pokémon:", view=view1)
-    await view1.wait()
+    # 3. Jugador 1 elige equipo (usamos una función helper para limpiar el código)
+    async def obtener_equipo(jugador, lista):
+        view = vistas_combate.SelectorPaginado(jugador, lista)
+        msg = await ctx.send(f"⚔️ {jugador.mention}, elige tus 3 Pokémon:", view=view)
+        await view.wait()
+        await msg.delete() # Borramos el mensaje de selección para no dejar basura
+        return view.seleccionados
+
+    equipo1 = await obtener_equipo(ctx.author, lista1)
+    if len(equipo1) < 3:
+        return await ctx.send(f"❌ {ctx.author.mention} canceló la selección.")
+
+    equipo2 = await obtener_equipo(oponente, lista2)
+    if len(equipo2) < 3:
+        return await ctx.send(f"❌ {oponente.mention} canceló la selección.")
+
+    # 4. Inicio de la simulación
+    msg_espera = await ctx.send("⏳ Preparando arena de combate...")
     
-    if len(view1.seleccionados) < 3:
-        return await ctx.send(f"❌ {ctx.author.mention} no completó la selección. Combate cancelado.")
-
-    # 4. Jugador 2 elige equipo
-    view2 = vistas_combate.SelectorPaginado(oponente, lista2)
-    await ctx.send(f"⚔️ {oponente.mention}, elige tus 3 Pokémon:", view=view2)
-    await view2.wait() 
-
-    if len(view2.seleccionados) < 3:
-        return await ctx.send(f"❌ {oponente.mention} no completó la selección. Combate cancelado.")
-
-    # 5. Inicio de la simulación
-    await ctx.send("⏳ Preparando datos de combate...")
-    
-    # CORRECCIÓN AQUÍ: Usamos bot.session en lugar de self.session
     vista_combate = vistas_combate.VistaCombate(
-        ctx.author, 
-        oponente, 
-        view1.seleccionados, 
-        view2.seleccionados, 
-        bot.session
+        ctx.author, oponente, equipo1, equipo2, bot.session
     )
     
     try:
         await vista_combate.preparar_combate()
-        await ctx.send("✅ ¡Todo listo! Pulsa el botón para comenzar.", view=vista_combate)
+        await msg_espera.edit(content="✅ ¡Todo listo! Pulsa el botón para comenzar.", view=vista_combate)
     except Exception as e:
+        await msg_espera.delete()
         await ctx.send(f"❌ Error al preparar el combate: {e}")
-        print(f"Error en preparación: {e}")
-
 bot.run(TOKEN)
