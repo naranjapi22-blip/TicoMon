@@ -1,8 +1,8 @@
 import os
-import sqlite3
-import psycopg2
-import datetime
 import database 
+import datetime
+import discord
+from discord.ext import commands
 
 # --- 1. ESTADO TEMPORAL ---
 canales_ocupados = set()
@@ -10,7 +10,6 @@ canales_ocupados = set()
 # --- 2. GESTIÓN DE ENERGÍA PERSISTENTE ---
 async def obtener_intentos(user_id):
     ahora = datetime.datetime.now(datetime.timezone.utc)
-    # Usamos las funciones que ya migramos en database.py
     datos = database.obtener_energia_db(user_id)
     
     if not datos:
@@ -53,7 +52,7 @@ def aplicar_filtro_spawn(bot):
 def init_db_inicial():
     conn = database.get_connection()
     cursor = conn.cursor()
-    # Usamos BIGINT para asegurar compatibilidad con Discord IDs
+    # BIGINT es la forma correcta de manejar IDs de Discord en Postgres
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS iniciacion (
             user_id BIGINT PRIMARY KEY,
@@ -67,15 +66,17 @@ def verificar_inicial(user_id):
     conn = database.get_connection()
     cursor = conn.cursor()
     
-    # Sintaxis adaptable para Postgres o SQLite
+    # ASEGURAMOS que el ID sea string siempre para evitar conflictos con BIGINT
+    uid = str(user_id)
+    
     if os.environ.get('DATABASE_URL'):
-        cursor.execute("SELECT recibio_inicial FROM iniciacion WHERE user_id = %s", (str(user_id),))
+        cursor.execute("SELECT recibio_inicial FROM iniciacion WHERE user_id = %s", (uid,))
     else:
-        cursor.execute("SELECT recibio_inicial FROM iniciacion WHERE user_id = ?", (user_id,))
+        cursor.execute("SELECT recibio_inicial FROM iniciacion WHERE user_id = ?", (uid,))
         
     res = cursor.fetchone()
     conn.close()
-    return res and res[0] == 1
+    return res is not None and res[0] == 1
 
 def setup_gestor(bot):
     init_db_inicial()
