@@ -3,6 +3,13 @@
 
 # Bases de datos locales
 *.db
+*.sqlite
+*.sqlite3
+
+# Entornos virtuales (Muy importante)
+.venv/
+venv/
+env/
 
 # Caché de Python
 __pycache__/
@@ -10,6 +17,8 @@ __pycache__/
 
 # Archivos de sistema operativo
 .DS_Store
-
-*.db
 Thumbs.db
+
+# Configuración de editores
+.vscode/
+.idea/
