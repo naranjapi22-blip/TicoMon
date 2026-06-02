@@ -4,6 +4,12 @@ from PIL import Image, ImageDraw, ImageFont
 import io
 import random
 from PIL import Image, ImageChops, ImageDraw, ImageOps
+from cachetools import TTLCache
+import asyncio
+# 1. Creamos una caché que:
+# - Guarda máximo 600 imágenes (maxsize)
+# - Las mantiene solo por 1 hora (ttl=3600 segundos) para liberar espacio
+_cache_imagenes = TTLCache(maxsize=600, ttl=3600)
 
 
 # --- NUEVA FUNCIÓN AUXILIAR PARA LA HIERBA VERDE ---
@@ -102,20 +108,13 @@ async def obtener_nombre_por_id(session, id_p):
             return data['name']
     return "???"
 
-# Definimos una sola función robusta
+# 3. Obtener ID por nombre
 async def obtener_id_por_nombre(session, nombre):
-    """
-    Recibe la sesión y el nombre. 
-    Es eficiente porque reutiliza la sesión del bot.
-    """
     url = f"https://pokeapi.co/api/v2/pokemon/{nombre.lower()}"
-    try:
-        async with session.get(url) as response:
-            if response.status == 200:
-                data = await response.json()
-                return data['id']
-    except Exception as e:
-        print(f"Error buscando ID para {nombre}: {e}")
+    async with session.get(url) as response:
+        if response.status == 200:
+            data = await response.json()
+            return data['id']
     return None
 
 # 4. Filtro de silueta (si no tienes el poke, se vuelve negro)
@@ -131,49 +130,63 @@ def aplicar_filtro_silueta(img):
     img.putdata(new_data)
     return img
 
-# 5. Generar collage con nombres y siluetas
+# 1. Definimos una caché global simple fuera de la función
+_cache_imagenes = {}
+
 async def generar_collage(session, data_pokes, tenidos):
     celda_ancho = 110
     celda_alto = 130 
     cols = 5
     filas = (len(data_pokes) + cols - 1) // cols
     
+    # Función interna para procesar una sola celda (con caché)
+    async def obtener_y_procesar(id_poke, url):
+        # Si no está en caché, descargamos
+        if id_poke not in _cache_imagenes:
+            try:
+                async with session.get(url) as resp:
+                    if resp.status == 200:
+                        _cache_imagenes[id_poke] = await resp.read()
+            except Exception as e:
+                print(f"Error descargando {id_poke}: {e}")
+                return None
+        
+        # Si logramos tener los bytes (ya sea desde caché o recién descargado)
+        if id_poke in _cache_imagenes:
+            img = Image.open(io.BytesIO(_cache_imagenes[id_poke])).convert('RGBA')
+            img = img.resize((96, 96))
+            if id_poke not in tenidos:
+                img = aplicar_filtro_silueta(img)
+            
+            nombre = await obtener_nombre_por_id(session, id_poke)
+            return img, nombre.capitalize()
+        return None
+
+    # 2. Ejecutar todas las tareas en paralelo
+    tareas = [obtener_y_procesar(id_poke, url) for id_poke, url in data_pokes]
+    resultados = await asyncio.gather(*tareas)
+    
+    # 3. Dibujar el collage final
     collage = Image.new('RGBA', (celda_ancho * cols, celda_alto * filas), (0, 0, 0, 0))
     draw = ImageDraw.Draw(collage)
     
-    # Intentar cargar fuente (ajusta la ruta si estás en Linux)
     try:
         font = ImageFont.truetype("arial.ttf", 14)
     except:
         font = ImageFont.load_default()
 
-    for idx, (id_poke, url) in enumerate(data_pokes):
-        async with session.get(url) as resp:
-            if resp.status == 200:
-                img_data = await resp.read()
-                img = Image.open(io.BytesIO(img_data)).convert('RGBA')
-                img = img.resize((96, 96))
-                
-                # Si el usuario NO tiene el Pokémon, aplicar silueta
-                if id_poke not in tenidos:
-                    img = aplicar_filtro_silueta(img)
-                
-                x = (idx % cols) * celda_ancho
-                y = (idx // cols) * celda_alto
-                
-                # Pegar imagen
-                collage.paste(img, (x + 7, y), img)
-                
-                # Dibujar nombre
-                nombre = await obtener_nombre_por_id(session, id_poke)
-                nombre_display = nombre.capitalize()
-                
-                # Centrar texto
-                text_bbox = draw.textbbox((0, 0), nombre_display, font=font)
-                text_width = text_bbox[2] - text_bbox[0]
-                text_x = x + (celda_ancho - text_width) // 2
-                
-                draw.text((text_x, y + 100), nombre_display, fill="white", font=font)
+    # Filtramos nulos por si alguna descarga falló
+    resultados = [r for r in resultados if r is not None]
+
+    for idx, (img, nombre) in enumerate(resultados):
+        x = (idx % cols) * celda_ancho
+        y = (idx // cols) * celda_alto
+        
+        collage.paste(img, (x + 7, y), img)
+        
+        text_bbox = draw.textbbox((0, 0), nombre, font=font)
+        text_width = text_bbox[2] - text_bbox[0]
+        draw.text((x + (celda_ancho - text_width) // 2, y + 100), nombre, fill="white", font=font)
             
     buffer = io.BytesIO()
     collage.save(buffer, format="PNG")

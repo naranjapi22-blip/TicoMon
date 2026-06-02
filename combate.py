@@ -24,99 +24,138 @@ TABLA_TIPOS = {
 
 class CombateSim:
     def __init__(self, equipo1, equipo2):
-        """
-        equipo1/2 son listas de diccionarios:
-        {'nombre': str, 'tipo': list, 'atk': int, 'sp_atk': int, 'def': int, 'spd': int}
-        """
         self.equipos = {
-            "Jugador 1": {"pokes": equipo1, "hp": [100, 100, 100], "activo": 0},
-            "Jugador 2": {"pokes": equipo2, "hp": [100, 100, 100], "activo": 0}
+            "Jugador 1": {
+                "pokes": equipo1, 
+                "hp": [p.get('hp_base', 50) for p in equipo1],
+                "hp_max": [p.get('hp_base', 50) for p in equipo1],
+                "activo": 0
+            },
+            "Jugador 2": {
+                "pokes": equipo2, 
+                "hp": [p.get('hp_base', 50) for p in equipo2],
+                "hp_max": [p.get('hp_base', 50) for p in equipo2],
+                "activo": 0
+            }
         }
 
-    def obtener_multiplicador(self, tipo_atk, tipos_def):
-        """Calcula el multiplicador considerando tipos simples o dobles."""
-        mult_total = 1.0
+    def obtener_multiplicador(self, tipos_atk, tipos_def):
+        """
+        tipos_atk: El tipo del ataque (normalmente un string, ej: "fuego").
+        tipos_def: Una lista con los tipos del defensor (ej: ["planta", "veneno"]).
+        """
+        # Aseguramos que tipos_atk sea el tipo único del ataque
+        if isinstance(tipos_atk, list):
+            tipo_atk = tipos_atk[0]
+        else:
+            tipo_atk = tipos_atk
+            
+        # Aseguramos que tipos_def sea una lista
+        if isinstance(tipos_def, str):
+            tipos_def = [tipos_def]
+            
         if tipo_atk not in TABLA_TIPOS:
             return 1.0
         
-        efectos = TABLA_TIPOS[tipo_atk]
+        mult = 1.0
+        # Multiplicamos la efectividad por cada tipo del defensor
         for t_def in tipos_def:
+            efectos = TABLA_TIPOS[tipo_atk]
             if t_def in efectos["super"]:
-                mult_total *= 2.0
+                mult *= 2.0
             elif t_def in efectos["poca"]:
-                mult_total *= 0.5
-        return mult_total
+                mult *= 0.5
+        
+        return mult
 
-    def calcular_daño(self, atacante, defensor):
-            """Calcula el daño basado en estadísticas de ataque vs defensa."""
-            
-            # 1. Obtener efectividad de tipo
-            mult = self.obtener_multiplicador(atacante['tipo'][0], defensor['tipo'])
-            
-            # 2. Determinar la mejor estadística ofensiva y la defensa del rival
-            ofensiva = max(atacante.get('atk', 50), atacante.get('sp_atk', 50))
-            defensa_rival = defensor.get('def', 50)
-            
-            # 3. Fórmula de daño: (Ataque * 0.3) - (Defensa * 0.15)
-            # Esto hace que un Pokémon con mucha defensa realmente reduzca el daño recibido.
-            # Añadimos un pequeño componente aleatorio (random.randint) para variedad.
-            daño_base = (ofensiva * 0.3) - (defensa_rival * 0.15) + random.randint(5, 15)
-            
-            # Aseguramos que el daño base no sea negativo si la defensa es muy alta
-            daño_base = max(5, daño_base) * mult
-            
-            # 4. Lógica de Crítico: 20% de probabilidad, daño x1.5
-            es_critico = random.random() < 0.20
-            if es_critico:
-                daño_base *= 1.5
-                
-            # 5. Aplicar variación aleatoria final
-            daño_final = int(daño_base * random.uniform(0.85, 1.0))
-            
-            # 6. Textos de feedback
-            mensajes = []
-            if mult > 1.0: mensajes.append("¡Es súper efectivo!")
-            elif mult < 1.0: mensajes.append("No es muy efectivo...")
-            if es_critico: mensajes.append("¡Un golpe crítico!")
-            
-            # Retornamos el daño (mínimo 10 para que siempre haya progreso)
-            return max(10, daño_final), " ".join(mensajes)
+    def calcular_resultado_ataque(self, atacante, defensor):
+        # 1. Estadística ofensiva
+        stat_ofensivo = max(atacante.get('atk', 50), atacante.get('atk_esp', 50))
+        
+        # 2. Factores de estrategia
+        stab = 1.3 if atacante['tipo'][0] in atacante['tipo'] else 1.0
+        mult = self.obtener_multiplicador(atacante['tipo'], defensor['tipo'])
+        
+        # 3. FÓRMULA DE DAÑO (Poder base ajustado a 25 para menos potencia)
+        poder_base = 25 
+        daño = int((stat_ofensivo / (defensor['def'] + 15)) * poder_base * mult * stab)
+        
+        # 4. Fallos y Críticos
+        if random.random() < 0.10:
+            return 0, f"💨 ¡{atacante['nombre']} falló!"
 
+        es_critico = random.random() < 0.10
+        if es_critico:
+            daño = int(daño * 1.4)
+            prefijo = "💥 ¡GOLPE CRÍTICO!"
+        else:
+            prefijo = "✨ ¡Ataque directo!"
+            
+        # 5. Variación
+        daño = int(daño * random.uniform(0.8, 1.0))
+        daño = max(3, daño)
+        
+        sufijo = " ¡Es súper efectivo!" if mult >= 2.0 else (" No es muy efectivo..." if mult <= 0.5 else "")
+        mensaje = f"{prefijo} **{atacante['nombre']}** causa {daño} HP.{sufijo}"
+        
+        return daño, mensaje
     def ejecutar_ronda(self):
-        """Ejecuta una ronda donde ambos atacan (primero el más rápido)."""
-        historial = []
         p1 = self.equipos["Jugador 1"]
         p2 = self.equipos["Jugador 2"]
         
-        # Determinar orden basado en velocidad
         spd1 = p1['pokes'][p1['activo']]['spd']
         spd2 = p2['pokes'][p2['activo']]['spd']
+        
+        # 1. Definimos quién ataca primero
         orden = ["Jugador 1", "Jugador 2"] if spd1 >= spd2 else ["Jugador 2", "Jugador 1"]
         
-        for atacante in orden:
-            defensor = "Jugador 2" if atacante == "Jugador 1" else "Jugador 1"
+        historial = []
+        
+        # 2. Registramos quién está activo al inicio de la ronda
+        # Si alguien cambia, este ID cambiará
+        activo_inicial_p1 = p1['activo']
+        activo_inicial_p2 = p2['activo']
+
+        for jug in orden:
+            oponente = "Jugador 2" if jug == "Jugador 1" else "Jugador 1"
             
-            # Verificar si el atacante sigue vivo antes de golpear
-            if self.equipos[atacante]["hp"][self.equipos[atacante]["activo"]] > 0:
-                p_atk = self.equipos[atacante]["pokes"][self.equipos[atacante]["activo"]]
-                p_def = self.equipos[defensor]["pokes"][self.equipos[defensor]["activo"]]
+            idx_a = self.equipos[jug]["activo"]
+            idx_d = self.equipos[oponente]["activo"]
+            
+            # --- CORRECCIÓN CRÍTICA ---
+            # Si el Pokémon que le toca atacar es el que entró en ESTA MISMA RONDA 
+            # tras un cambio, no debería atacar.
+            if jug == "Jugador 1" and self.equipos[jug]["activo"] != activo_inicial_p1:
+                historial.append(f"⏱️ {self.equipos[jug]['pokes'][idx_a]['nombre']} entró al campo y se prepara.")
+                continue
+            if jug == "Jugador 2" and self.equipos[jug]["activo"] != activo_inicial_p2:
+                historial.append(f"⏱️ {self.equipos[jug]['pokes'][idx_a]['nombre']} entró al campo y se prepara.")
+                continue
+
+            # Verificar si tienen vida y realizar ataque
+            if self.equipos[jug]["hp"][idx_a] > 0 and self.equipos[oponente]["hp"][idx_d] > 0:
+                p_atk = self.equipos[jug]["pokes"][idx_a]
+                p_def = self.equipos[oponente]["pokes"][idx_d]
                 
-                # Verificar si el defensor está vivo (puede haber sido derrotado antes en esta misma ronda)
-                if self.equipos[defensor]["hp"][self.equipos[defensor]["activo"]] > 0:
-                    daño, mensaje = self.calcular_daño(p_atk, p_def)
-                    
-                    # Aplicar daño
-                    self.equipos[defensor]["hp"][self.equipos[defensor]["activo"]] -= daño
-                    historial.append(f"**{p_atk['nombre']}** atacó a {p_def['nombre']} (-{daño} HP). {mensaje}")
-                    
-                    # Lógica de relevo si el defensor cae durante la ronda
-                    if self.equipos[defensor]["hp"][self.equipos[defensor]["activo"]] <= 0:
-                        self.equipos[defensor]["hp"][self.equipos[defensor]["activo"]] = 0
-                        historial.append(f"¡{p_def['nombre']} se debilitó!")
-                        if self.equipos[defensor]["activo"] < 2:
-                            self.equipos[defensor]["activo"] += 1
-                            nuevo = self.equipos[defensor]["pokes"][self.equipos[defensor]["activo"]]
-                            historial.append(f"Sale {nuevo['nombre']} al combate.")
+                daño, log = self.calcular_resultado_ataque(p_atk, p_def)
+                
+                # Lógica de Aguante
+                vida_actual = self.equipos[oponente]["hp"][idx_d]
+                if vida_actual - daño <= 0 and vida_actual > 50:
+                    if random.random() < 0.20:
+                        daño = vida_actual - 1
+                        historial.append(f"🔥 ¡{p_def['nombre']} sobrevive a 1 HP!")
+                
+                self.equipos[oponente]["hp"][idx_d] -= daño
+                historial.append(f"**{p_atk['nombre']}**: {log} (Daño: {daño} HP)")
+                
+                # Lógica de relevo
+                if self.equipos[oponente]["hp"][idx_d] <= 0:
+                    self.equipos[oponente]["hp"][idx_d] = 0
+                    if self.equipos[oponente]["activo"] < 2:
+                        self.equipos[oponente]["activo"] += 1
+                        nuevo = self.equipos[oponente]['pokes'][self.equipos[oponente]['activo']]['nombre']
+                        historial.append(f"⚠️ ¡{p_def['nombre']} se debilitó! {oponente} cambia a {nuevo}.")
         
         return "\n".join(historial)
 
@@ -126,5 +165,5 @@ class CombateSim:
         vida_j2 = sum(self.equipos["Jugador 2"]["hp"])
         
         if vida_j1 <= 0: return "Jugador 2"
-        elif vida_j2 <= 0: return "Jugador 1"
+        if vida_j2 <= 0: return "Jugador 1"
         return None
