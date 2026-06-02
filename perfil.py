@@ -3,45 +3,88 @@ from discord.ext import commands
 import sqlite3
 import database
 import servicios
+import os
+import psycopg2
 
 # --- 1. CONFIGURACIÓN DE BASE DE DATOS DEL PERFIL ---
 def init_db_perfil():
-    """Prepara la tabla del perfil y la actualiza si es necesario."""
-    conn = sqlite3.connect('fumo_data.db')
+    """Prepara la tabla del perfil para SQLite o PostgreSQL."""
+    conn = database.get_connection()
     cursor = conn.cursor()
+    
+    # 1. Crear tabla base (usamos BIGINT para asegurar compatibilidad con Discord IDs)
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS perfiles (
-            user_id INTEGER PRIMARY KEY,
+            user_id BIGINT PRIMARY KEY,
             pokemon_destacado TEXT,
             es_shiny INTEGER DEFAULT 0
         )
     ''')
-    # Actualización silenciosa: si la tabla ya existía sin la columna 'es_shiny', la añade
-    try:
-        cursor.execute("ALTER TABLE perfiles ADD COLUMN es_shiny INTEGER DEFAULT 0")
-    except sqlite3.OperationalError:
-        pass # La columna ya existe, continuamos con normalidad
-        
+    
+    # 2. Actualización segura para la columna 'es_shiny'
+    # PostgreSQL requiere una verificación diferente antes de añadir la columna
+    if os.environ.get('DATABASE_URL'):
+        # Lógica para PostgreSQL
+        cursor.execute("""
+            ALTER TABLE perfiles 
+            ADD COLUMN IF NOT EXISTS es_shiny INTEGER DEFAULT 0
+        """)
+    else:
+        # Lógica para SQLite
+        try:
+            cursor.execute("ALTER TABLE perfiles ADD COLUMN es_shiny INTEGER DEFAULT 0")
+        except sqlite3.OperationalError:
+            pass # La columna ya existe
+            
     conn.commit()
     conn.close()
 
 def guardar_destacado(user_id, pokemon_nombre, es_shiny):
-    conn = sqlite3.connect('fumo_data.db')
+    conn = database.get_connection()
     cursor = conn.cursor()
-    cursor.execute('''
-        REPLACE INTO perfiles (user_id, pokemon_destacado, es_shiny) 
-        VALUES (?, ?, ?)
-    ''', (user_id, pokemon_nombre, es_shiny))
+    
+    # Detectamos si estamos en Render (Postgres)
+    is_postgres = os.environ.get('DATABASE_URL') is not None
+    
+    if is_postgres:
+        # Lógica para PostgreSQL (Upsert)
+        query = """
+            INSERT INTO perfiles (user_id, pokemon_destacado, es_shiny)
+            VALUES (%s, %s, %s)
+            ON CONFLICT(user_id) 
+            DO UPDATE SET pokemon_destacado = EXCLUDED.pokemon_destacado, 
+                          es_shiny = EXCLUDED.es_shiny
+        """
+        cursor.execute(query, (str(user_id), pokemon_nombre, es_shiny))
+    else:
+        # Lógica para SQLite (REPLACE)
+        cursor.execute('''
+            REPLACE INTO perfiles (user_id, pokemon_destacado, es_shiny) 
+            VALUES (?, ?, ?)
+        ''', (user_id, pokemon_nombre, es_shiny))
+        
     conn.commit()
     conn.close()
 
 def obtener_destacado(user_id):
-    conn = sqlite3.connect('fumo_data.db')
+    conn = database.get_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT pokemon_destacado, es_shiny FROM perfiles WHERE user_id = ?", (user_id,))
+    
+    # Detectamos si estamos en Render (Postgres)
+    is_postgres = os.environ.get('DATABASE_URL') is not None
+    
+    if is_postgres:
+        # Consulta para PostgreSQL
+        cursor.execute("SELECT pokemon_destacado, es_shiny FROM perfiles WHERE user_id = %s", (str(user_id),))
+    else:
+        # Consulta para SQLite
+        cursor.execute("SELECT pokemon_destacado, es_shiny FROM perfiles WHERE user_id = ?", (user_id,))
+    
     resultado = cursor.fetchone()
     conn.close()
-    return resultado # Devuelve (nombre, es_shiny) o None
+    
+    # Devuelve (nombre, es_shiny) o None
+    return resultado
 
 # --- 2. MÓDULO PRINCIPAL DE COMANDOS ---
 def iniciar_modulo_perfil(bot):

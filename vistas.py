@@ -372,9 +372,21 @@ class SeleccionInicialView(discord.ui.View):
         import database
         import datetime
         
-        # 1. Marcar iniciación en DB
-        conn = sqlite3.connect('fumo_data.db')
-        conn.execute("INSERT OR IGNORE INTO iniciacion (user_id, recibio_inicial) VALUES (?, 1)", (self.user_id,))
+        conn = database.get_connection()
+        cursor = conn.cursor()
+
+        if os.environ.get('DATABASE_URL'):
+            # Lógica para PostgreSQL
+            # 'ON CONFLICT DO NOTHING' equivale al 'INSERT OR IGNORE' de SQLite
+            cursor.execute("""
+                INSERT INTO iniciacion (user_id, recibio_inicial) 
+                VALUES (%s, 1) 
+                ON CONFLICT(user_id) DO NOTHING
+            """, (str(self.user_id),))
+        else:
+            # Lógica para SQLite
+            cursor.execute("INSERT OR IGNORE INTO iniciacion (user_id, recibio_inicial) VALUES (?, 1)", (self.user_id,))
+
         conn.commit()
         conn.close()
         
