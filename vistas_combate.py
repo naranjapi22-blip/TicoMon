@@ -1,6 +1,7 @@
 import discord
 import asyncio
 import random
+import os
 import imagencomb 
 import servicios  
 from combate import CombateSim
@@ -15,6 +16,7 @@ class VistaCombate(discord.ui.View):
         self.equipo2_nombres = equipo2_nombres
         self.session = session
         self.combate = None 
+        self.fondo_seleccionado = None # Variable para mantener el fondo
 
     async def preparar_combate(self):
         equipo1 = await combate_servicios.preparar_equipos_completos(self.equipo1_nombres)
@@ -26,6 +28,11 @@ class VistaCombate(discord.ui.View):
         button.disabled = True
         await interaction.response.edit_message(content="⚔️ **¡El combate ha comenzado!**", view=self)
         msg = await interaction.original_response()
+        
+        # --- SELECCIONAR FONDO UNA SOLA VEZ ---
+        carpeta_fondos = "fondos"
+        lista_fondos = [f for f in os.listdir(carpeta_fondos) if f.endswith(('.jpg', '.png'))]
+        self.fondo_seleccionado = random.choice(lista_fondos)
         
         while not self.combate.es_fin_del_juego():
             resumen_ronda = self.combate.ejecutar_ronda()
@@ -42,7 +49,7 @@ class VistaCombate(discord.ui.View):
             id1 = p1_actual.get('id') or await servicios.obtener_id_por_nombre(self.session, p1_actual['nombre'])
             id2 = p2_actual.get('id') or await servicios.obtener_id_por_nombre(self.session, p2_actual['nombre'])
             
-            # --- LLAMADA ACTUALIZADA PARA EL DISEÑO RPG ---
+            # --- LLAMADA ACTUALIZADA CON EL FONDO ---
             buffer = await imagencomb.generar_escena_combate(
                 self.session, 
                 id1, 
@@ -55,14 +62,14 @@ class VistaCombate(discord.ui.View):
                 hp_max2=hp_max2,
                 turno_jugador=turno_atacante,
                 es_shiny1=p1_actual.get('shiny', False),
-                es_shiny2=p2_actual.get('shiny', False)
+                es_shiny2=p2_actual.get('shiny', False),
+                fondo_nombre=self.fondo_seleccionado # Se pasa el fondo fijo
             )
             file = discord.File(buffer, filename="combate.png")
             
             embed = discord.Embed(title="⚔️ Duelo Épico", color=discord.Color.red())
             embed.set_image(url="attachment://combate.png")
             
-            # --- EMBED LIMPIO: Las barras de vida ahora están en la imagen ---
             embed.add_field(name=f"👤 {self.p1.display_name}", value=f"**{p1_actual['nombre']}**", inline=True)
             embed.add_field(name="VS", value="🆚", inline=True)
             embed.add_field(name=f"👤 {self.p2.display_name}", value=f"**{p2_actual['nombre']}**", inline=True)
@@ -93,7 +100,6 @@ class SelectorPaginado(discord.ui.View):
     def actualizar_select(self):
         self.clear_items()
         
-        # Paginación
         if len(self.paginas) > 1:
             btn_atras = discord.ui.Button(label="◀️", style=discord.ButtonStyle.secondary)
             btn_atras.callback = self.ir_atras
@@ -104,8 +110,6 @@ class SelectorPaginado(discord.ui.View):
 
         opciones_actuales = self.paginas[self.pagina_actual]
         num_opciones = len(opciones_actuales)
-        
-        # Corrección crítica: max_values no puede ser mayor que el número de opciones
         max_val = min(3, num_opciones)
         
         opciones = [discord.SelectOption(label=p, value=p) for p in opciones_actuales]
