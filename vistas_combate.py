@@ -16,11 +16,6 @@ class VistaCombate(discord.ui.View):
         self.session = session
         self.combate = None 
 
-    def generar_barra_hp(self, hp_actual, hp_max):
-        llenos = int((max(0, hp_actual) / hp_max) * 10)
-        vacios = 10 - llenos
-        return f"[{'█' * llenos}{'░' * vacios}] {max(0, hp_actual)}/{hp_max}"
-
     async def preparar_combate(self):
         equipo1 = await combate_servicios.preparar_equipos_completos(self.equipo1_nombres)
         equipo2 = await combate_servicios.preparar_equipos_completos(self.equipo2_nombres)
@@ -47,16 +42,30 @@ class VistaCombate(discord.ui.View):
             id1 = p1_actual.get('id') or await servicios.obtener_id_por_nombre(self.session, p1_actual['nombre'])
             id2 = p2_actual.get('id') or await servicios.obtener_id_por_nombre(self.session, p2_actual['nombre'])
             
+            # --- LLAMADA ACTUALIZADA PARA EL DISEÑO RPG ---
             buffer = await imagencomb.generar_escena_combate(
-                self.session, id1, id2, hp1=hp1, hp2=hp2, hp_max=max(hp_max1, hp_max2), turno_jugador=turno_atacante
+                self.session, 
+                id1, 
+                id2, 
+                nombre1=p1_actual['nombre'], 
+                nombre2=p2_actual['nombre'],
+                hp1=hp1, 
+                hp2=hp2, 
+                hp_max1=hp_max1, 
+                hp_max2=hp_max2,
+                turno_jugador=turno_atacante,
+                es_shiny1=p1_actual.get('shiny', False),
+                es_shiny2=p2_actual.get('shiny', False)
             )
             file = discord.File(buffer, filename="combate.png")
             
             embed = discord.Embed(title="⚔️ Duelo Épico", color=discord.Color.red())
             embed.set_image(url="attachment://combate.png")
-            embed.add_field(name=f"👤 {self.p1.display_name}", value=f"**{p1_actual['nombre']}**\n{self.generar_barra_hp(hp1, hp_max1)}", inline=True)
+            
+            # --- EMBED LIMPIO: Las barras de vida ahora están en la imagen ---
+            embed.add_field(name=f"👤 {self.p1.display_name}", value=f"**{p1_actual['nombre']}**", inline=True)
             embed.add_field(name="VS", value="🆚", inline=True)
-            embed.add_field(name=f"👤 {self.p2.display_name}", value=f"**{p2_actual['nombre']}**\n{self.generar_barra_hp(hp2, hp_max2)}", inline=True)
+            embed.add_field(name=f"👤 {self.p2.display_name}", value=f"**{p2_actual['nombre']}**", inline=True)
             embed.add_field(name="📜 Resumen de la ronda", value=resumen_ronda, inline=False)
             
             await msg.edit(embed=embed, attachments=[file])
