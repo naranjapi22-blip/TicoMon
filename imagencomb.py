@@ -3,7 +3,7 @@ import os
 import random
 from PIL import Image, ImageDraw, ImageFont
 
-async def generar_escena_combate(session, poke1_id, poke2_id, nombre1, nombre2, hp1, hp2, hp_max1, hp_max2, turno_jugador=0, es_shiny1=False, es_shiny2=False):
+async def generar_escena_combate(session, poke1_id, poke2_id, nombre1, nombre2, hp1, hp2, hp_max1, hp_max2, fondo_nombre, turno_jugador=0, es_shiny1=False, es_shiny2=False):
     
     # 1. Cargar fondo aleatorio
     carpeta_fondos = "fondos" # Asegúrate de que tus imágenes estén aquí
