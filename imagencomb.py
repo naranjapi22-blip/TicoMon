@@ -33,23 +33,20 @@ async def generar_escena_combate(session, poke1_id, poke2_id, nombre1, nombre2, 
     bbox2 = img2.getbbox()
     if bbox2: img2 = img2.crop(bbox2)
 
-    # --- 3. ESCALADO ESTRICTO (Ancho y Alto máximos) ---
-    def escalar_sprite(img, max_w, max_h):
-        # Escala por defecto x3
-        escala_x = max_w / img.width
-        escala_y = max_h / img.height
-        
-        # Tomamos la escala más restrictiva, pero nunca más grande que 3.0
-        escala_final = min(3.0, escala_x, escala_y)
-        
-        nuevo_ancho = max(1, int(img.width * escala_final))
-        nuevo_alto = max(1, int(img.height * escala_final))
+    # --- 3. NUEVO ESCALADO DINÁMICO (El límite de tamaño) ---
+    def escalar_sprite(img, max_size):
+        escala = 3.0
+        # Si al escalarlo por 3 se pasa del límite, calculamos la escala exacta para que quepa
+        if img.width * escala > max_size or img.height * escala > max_size:
+            escala = min(max_size / img.width, max_size / img.height)
+            
+        nuevo_ancho = int(img.width * escala)
+        nuevo_alto = int(img.height * escala)
         return img.resize((nuevo_ancho, nuevo_alto), Image.Resampling.NEAREST)
 
-    # El enemigo tiene menos espacio hacia arriba (max alto: 140px). 
-    # El aliado tiene más espacio (max alto: 200px).
-    img1 = escalar_sprite(img1, max_w=200, max_h=200)
-    img2 = escalar_sprite(img2, max_w=220, max_h=140)
+    # Aplicamos un tamaño máximo de 200px para el aliado y 240px para el enemigo
+    img1 = escalar_sprite(img1, max_size=200)
+    img2 = escalar_sprite(img2, max_size=240)
 
     # 4. Lienzo y Fondo
     fondo = Image.new("RGBA", (800, 400), (160, 208, 224, 255))
@@ -71,11 +68,9 @@ async def generar_escena_combate(session, poke1_id, poke2_id, nombre1, nombre2, 
         centro_aliado[0] - (img1.width // 2) + offset_atk1[0],
         centro_aliado[1] - img1.height + 20 + offset_atk1[1] 
     )
-    # Corrección extra: si el enemigo es muy alto y toca el HUD superior, lo empujamos abajo
-    pos_y_enemigo = max(80, centro_enemigo[1] - img2.height + 20 + offset_atk2[1])
     pos2 = (
         centro_enemigo[0] - (img2.width // 2) + offset_atk2[0],
-        pos_y_enemigo
+        centro_enemigo[1] - img2.height + 20 + offset_atk2[1]
     )
 
     fondo.paste(img2, pos2, img2)
