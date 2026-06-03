@@ -3,6 +3,7 @@ import sqlite3
 import psycopg2
 import datetime
 from logger_config import log
+import logging
 
 
 # Importamos la variable desde tu archivo de configuración o definimos aquí
