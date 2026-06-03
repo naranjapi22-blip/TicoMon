@@ -1,30 +1,59 @@
 import io
 import os
+import aiohttp
+import logging
 from PIL import Image, ImageDraw, ImageFont
+
+# Configuración de logs para este módulo
+log = logging.getLogger('imagencomb')
 
 async def generar_escena_combate(session, poke1_id, poke2_id, nombre1, nombre2, hp1, hp2, hp_max1, hp_max2, fondo_nombre, turno_jugador=0, es_shiny1=False, es_shiny2=False):
     
-    # 1. Cargar el fondo específico que nos pasan (ELIMINAMOS EL RANDOM AQUÍ)
+    # 1. Cargar fondo
     carpeta_fondos = "fondos"
     ruta_fondo = os.path.join(carpeta_fondos, fondo_nombre)
     
-    # Abrir el fondo elegido desde la ruta
-    fondo = Image.open(ruta_fondo).convert("RGBA")
+    if not os.path.exists(ruta_fondo):
+        log.warning(f"Fondo no encontrado: {ruta_fondo}. Usando fondo por defecto.")
+        fondo = Image.new("RGBA", (800, 400), (50, 50, 50, 255))
+    else:
+        fondo = Image.open(ruta_fondo).convert("RGBA")
+    
     fondo = fondo.resize((800, 400), Image.Resampling.LANCZOS)
     draw = ImageDraw.Draw(fondo)
 
-    # 2. Función para obtener URLs (Sprites)
-    def obtener_url(poke_id, es_shiny, es_espalda):
+    # 2. Función segura para obtener sprites desde la API
+    async def obtener_sprite_bytes(poke_id, es_shiny, es_espalda):
         base = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon"
         partes = ["back"] if es_espalda else []
         if es_shiny: partes.append("shiny")
-        return f"{base}/{'/'.join(partes)}/{poke_id}.png" if partes else f"{base}/{poke_id}.png"
+        
+        # Construcción de URL
+        url = f"{base}/{'/'.join(partes)}/{poke_id}.png" if partes else f"{base}/{poke_id}.png"
+        
+        log.info(f"Descargando sprite: {url}")
+        async with session.get(url) as response:
+            if response.status == 200:
+                data = await response.read()
+                # Validar que los datos no estén vacíos
+                if len(data) == 0:
+                    raise ValueError(f"La descarga de {url} devolvió datos vacíos.")
+                return data
+            else:
+                raise Exception(f"Error HTTP {response.status} al descargar sprite: {url}")
 
-    img1 = await (await session.get(obtener_url(poke1_id, es_shiny1, True))).read()
-    img2 = await (await session.get(obtener_url(poke2_id, es_shiny2, False))).read()
-    img1, img2 = Image.open(io.BytesIO(img1)).convert("RGBA"), Image.open(io.BytesIO(img2)).convert("RGBA")
+    # 3. Obtener imágenes con manejo de errores
+    try:
+        img1_bytes = await obtener_sprite_bytes(poke1_id, es_shiny1, True)
+        img2_bytes = await obtener_sprite_bytes(poke2_id, es_shiny2, False)
+        
+        img1 = Image.open(io.BytesIO(img1_bytes)).convert("RGBA")
+        img2 = Image.open(io.BytesIO(img2_bytes)).convert("RGBA")
+    except Exception as e:
+        log.error(f"Fallo crítico al obtener sprites: {e}", exc_info=True)
+        raise e
 
-    # 3. Recortar transparencia y escalar
+    # 4. Preparar sprites
     def preparar_sprite(img, max_w, max_h):
         bbox = img.getbbox()
         if bbox: img = img.crop(bbox)
@@ -34,14 +63,14 @@ async def generar_escena_combate(session, poke1_id, poke2_id, nombre1, nombre2, 
     img1 = preparar_sprite(img1, 200, 200)
     img2 = preparar_sprite(img2, 220, 140)
 
-    # 4. Posicionamiento dinámico
+    # 5. Posicionamiento
     pos1 = (100 + (30 if turno_jugador == 1 else 0), 220 + (-20 if turno_jugador == 1 else 0))
     pos2 = (500 + (-30 if turno_jugador == 2 else 0), 60 + (20 if turno_jugador == 2 else 0))
 
     fondo.paste(img2, pos2, img2)
     fondo.paste(img1, pos1, img1)
 
-    # 5. Dibujo del HUD estilo retro
+    # 6. Dibujo del HUD
     font = ImageFont.load_default()
     def dibujar_hud(x, y, nombre, vida_actual, vida_maxima):
         draw.rounded_rectangle([x, y, x + 310, y + 65], radius=6, fill=(248, 248, 240, 220), outline=(60, 60, 60, 255), width=3)
