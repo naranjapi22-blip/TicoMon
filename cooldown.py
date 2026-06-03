@@ -2,6 +2,8 @@ import os
 import sqlite3
 import psycopg2
 import datetime
+from logger_config import log
+
 
 # Importamos la variable desde tu archivo de configuración o definimos aquí
 DATABASE_URL = os.environ.get('DATABASE_URL')
@@ -49,20 +51,43 @@ def verificar_cooldown(user_id):
 
 def registrar_captura(user_id):
     """Guarda el momento actual como la última captura."""
-    conn = get_connection()
-    cursor = conn.cursor()
-    ahora = datetime.datetime.now(datetime.timezone.utc).isoformat()
-    
-    if DATABASE_URL:
-        # Upsert en PostgreSQL
-        query = """
-            INSERT INTO cooldowns (user_id, ultima_captura) VALUES (%s, %s)
-            ON CONFLICT(user_id) DO UPDATE SET ultima_captura = EXCLUDED.ultima_captura
-        """
-        cursor.execute(query, (user_id, ahora))
-    else:
-        # REPLACE en SQLite
-        cursor.execute("REPLACE INTO cooldowns (user_id, ultima_captura) VALUES (?, ?)", (user_id, ahora))
-    
-    conn.commit()
-    conn.close()
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        ahora = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        
+        if DATABASE_URL:
+            # Upsert en PostgreSQL
+            query = """
+                INSERT INTO cooldowns (user_id, ultima_captura) VALUES (%s, %s)
+                ON CONFLICT(user_id) DO UPDATE SET ultima_captura = EXCLUDED.ultima_captura
+            """
+            cursor.execute(query, (str(user_id), ahora))
+        else:
+            # REPLACE en SQLite
+            cursor.execute("REPLACE INTO cooldowns (user_id, ultima_captura) VALUES (?, ?)", (user_id, ahora))
+        
+        conn.commit()
+        log.info(f"⏱️ [Cooldown] Captura registrada para el usuario {user_id} a las {ahora}.")
+        conn.close()
+
+    except Exception as e:
+        log.error(f"🚨 [ERROR FATAL Cooldown] No se pudo registrar la última captura del usuario {user_id}. Error: {e}", exc_info=True)
+        # Opcional: intentar cerrar la conexión si falló
+        if 'conn' in locals() and conn:
+            try:
+                conn.close()
+            except:
+                pass
+        raise e
+        
+    except Exception as e:
+        # 1. Registramos el error en la consola
+        log.error(f"⚠️ [Error Cooldown] No se pudo registrar el tiempo de espera para el usuario {user_id}. Error: {e}", exc_info=True)
+        
+        # 2. Medida de seguridad: cerramos la conexión si quedó abierta tras el fallo
+        if 'conn' in locals() and conn:
+            try:
+                conn.close()
+            except:
+                pass

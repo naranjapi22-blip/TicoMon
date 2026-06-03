@@ -5,6 +5,7 @@ import math
 import database
 import sqlite3
 import datetime
+from logger_config import log
 COOLDOWN_LANZAMIENTO = 10.0
 # Pequeña tolerancia: latencia de red / doble clic cerca del segundo 10
 COOLDOWN_GRACE = 0.25
@@ -224,8 +225,11 @@ class SpawnSelectionView(discord.ui.View):
     async def btn_opcion_3(self, interaction: discord.Interaction, button: discord.ui.Button):
         await self.manejar_seleccion(interaction, 2)
 
-class BotonCaptura(discord.ui.View):
+# Configuración de logs solicitada
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+log = logging.getLogger('bot_captura') # Opcional: Nombre para identificar el log
 
+class BotonCaptura(discord.ui.View):
     def __init__(self, pokemon_nombre, es_legendario, es_shiny):
         super().__init__(timeout=300.0)
         self.nombre = pokemon_nombre
@@ -253,52 +257,89 @@ class BotonCaptura(discord.ui.View):
 
     @discord.ui.button(label="¡Lanzar Pokéball!", style=discord.ButtonStyle.primary, emoji="🔴")
     async def boton_captura(self, interaction: discord.Interaction, button: discord.ui.Button):
-        ahora = discord.utils.utcnow().timestamp()
-        restante = self._segundos_restantes_cooldown(interaction.user.id, ahora)
-        if restante > COOLDOWN_GRACE:
-            segundos = max(1, math.ceil(restante))
-            await interaction.response.send_message(
-                f"⏱️ Espera {segundos}s.",
-                ephemeral=True,
-            )
-            return
+        try:
+            user_id = interaction.user.id
+            ahora = discord.utils.utcnow().timestamp()
+            import gestor_spawn
 
-        self.user_cooldowns[interaction.user.id] = ahora
-        await interaction.response.defer(ephemeral=True)
+            # 1. Validación de Cooldown por Spam (Evitar doble clic)
+            restante = self._segundos_restantes_cooldown(user_id, ahora)
+            if restante > COOLDOWN_GRACE:
+                segundos = max(1, math.ceil(restante))
+                log.warning(f"[Spam Cooldown] {interaction.user.name} lanzó muy rápido a {self.nombre}. Faltaban {segundos}s.")
+                await interaction.response.send_message(
+                    f"⏱️ Espera {segundos}s.",
+                    ephemeral=True,
+                )
+                return
 
-        azar = random.random()
-        prob_base = 0.04 if (self.es_legendario or self.es_shiny) else 0.30
-        
-        # Determinamos la bola según el azar
-        if azar < 0.005: prob_final, nombre_bola = 1.0, "Master Ball"
-        elif azar < 0.10: prob_final, nombre_bola = prob_base + 0.15, "Ultra Ball"
-        elif azar < 0.30: prob_final, nombre_bola = prob_base + 0.10, "Great Ball"
-        else: prob_final, nombre_bola = prob_base, "Pokéball"
+            self.user_cooldowns[user_id] = ahora
 
-        import gestor_spawn
+            # 2. Validación de Energía / Inciensos
+            intentos_restantes, ultima_recarga = await gestor_spawn.obtener_intentos(user_id)
+            if intentos_restantes <= 0:
+                log.warning(f"[Energía Agotada] {interaction.user.name} intentó capturar a {self.nombre} sin intentos restantes.")
+                await interaction.response.send_message("❌ ¡No te quedan intentos! Espera a que se recarguen tus inciensos.", ephemeral=True)
+                return
 
-        if random.random() < prob_final:
-            # CAMBIO: Pasamos el nombre de la bola a la base de datos
-            await database.guardar_captura(interaction.user.id, self.nombre, self.es_shiny, pokeball=nombre_bola)
-            gestor_spawn.canales_ocupados.discard(interaction.channel.id)
+            # Si pasa las validaciones, procesamos la interacción
+            await interaction.response.defer(ephemeral=True)
 
-            # CAMBIO: Mostramos la bola utilizada en el mensaje de éxito
-            await interaction.message.edit(
-                content=f"🎉 {interaction.user.mention} capturó a **{self.nombre.capitalize()}** usando una **{nombre_bola}**!", 
-                view=None
-            )
-            self.stop()
-        else:
-            self.intentos += 1
-            if self.intentos >= self.max_intentos:
+            # 3. Probabilidades y Bolas
+            azar = random.random()
+            prob_base = 0.04 if (self.es_legendario or self.es_shiny) else 0.30
+            
+            # Determinamos la bola según el azar
+            if azar < 0.005: prob_final, nombre_bola = 1.0, "Master Ball"
+            elif azar < 0.10: prob_final, nombre_bola = prob_base + 0.15, "Ultra Ball"
+            elif azar < 0.30: prob_final, nombre_bola = prob_base + 0.10, "Great Ball"
+            else: prob_final, nombre_bola = prob_base, "Pokéball"
+
+            # 4. Intento de Captura
+            if random.random() < prob_final:
+                # Restamos 1 a la energía del usuario tras una captura exitosa
+                database.actualizar_energia_db(user_id, intentos_restantes - 1, ultima_recarga)
+
+                # Guardamos la captura en la base de datos
+                await database.guardar_captura(user_id, self.nombre, self.es_shiny, pokeball=nombre_bola)
                 gestor_spawn.canales_ocupados.discard(interaction.channel.id)
-                await interaction.message.edit(content="💨 ¡El Pokémon escapó tras fallar demasiadas veces!", view=None)
+
+                # Registro en consola del éxito
+                etiquetas = []
+                if self.es_shiny: etiquetas.append("✨ SHINY")
+                if self.es_legendario: etiquetas.append("👑 LEGENDARIO")
+                tag_str = f"({' '.join(etiquetas)}) " if etiquetas else ""
+                
+                log.info(f"✅ [Captura Exitosa] {interaction.user.name} atrapó a {self.nombre.capitalize()} {tag_str}usando {nombre_bola}.")
+
+                await interaction.message.edit(
+                    content=f"🎉 {interaction.user.mention} capturó a **{self.nombre.capitalize()}** usando una **{nombre_bola}**!", 
+                    view=None
+                )
                 self.stop()
             else:
-                embed = interaction.message.embeds[0]
-                embed.set_footer(text=f"Intentos: {self.intentos}/{self.max_intentos}")
-                await interaction.message.edit(embed=embed)
-                await interaction.followup.send(f"❌ Fallaste con la {nombre_bola}.", ephemeral=True)
+                self.intentos += 1
+                if self.intentos >= self.max_intentos:
+                    gestor_spawn.canales_ocupados.discard(interaction.channel.id)
+                    log.info(f"💨 [Escape] {self.nombre.capitalize()} huyó de {interaction.user.name} tras {self.max_intentos} intentos.")
+                    await interaction.message.edit(content="💨 ¡El Pokémon escapó tras fallar demasiadas veces!", view=None)
+                    self.stop()
+                else:
+                    embed = interaction.message.embeds[0]
+                    embed.set_footer(text=f"Intentos: {self.intentos}/{self.max_intentos}")
+                    await interaction.message.edit(embed=embed)
+                    await interaction.followup.send(f"❌ Fallaste con la {nombre_bola}.", ephemeral=True)
+
+        except Exception as e:
+            # Captura cualquier error de Base de Datos, Discord API, etc.
+            log.error(f"🚨 [Error BotonCaptura] Fallo crítico al procesar la captura de {interaction.user.name}: {e}", exc_info=True)
+            
+            # Avisamos al usuario dependiendo del estado de la interacción
+            mensaje_error = "⚠️ Ocurrió un error interno al intentar atrapar al Pokémon. El administrador ha sido notificado."
+            if not interaction.response.is_done():
+                await interaction.response.send_message(mensaje_error, ephemeral=True)
+            else:
+                await interaction.followup.send(mensaje_error, ephemeral=True)
 class InfoView(discord.ui.View):
     def __init__(self, user_id, data, versiones, mostrar_shiny): # Agregamos user_id
         super().__init__(timeout=60)
