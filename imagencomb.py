@@ -1,15 +1,15 @@
 import io
 import os
-import random
 from PIL import Image, ImageDraw, ImageFont
 
 async def generar_escena_combate(session, poke1_id, poke2_id, nombre1, nombre2, hp1, hp2, hp_max1, hp_max2, fondo_nombre, turno_jugador=0, es_shiny1=False, es_shiny2=False):
     
-    # 1. Cargar fondo aleatorio
-    carpeta_fondos = "fondos" # Asegúrate de que tus imágenes estén aquí
-    lista_fondos = [f for f in os.listdir(carpeta_fondos) if f.endswith(('.jpg', '.png'))]
-    fondo_elegido = random.choice(lista_fondos)
-    fondo = Image.open(os.path.join(carpeta_fondos, fondo_elegido)).convert("RGBA")
+    # 1. Cargar el fondo específico que nos pasan (ELIMINAMOS EL RANDOM AQUÍ)
+    carpeta_fondos = "fondos"
+    ruta_fondo = os.path.join(carpeta_fondos, fondo_nombre)
+    
+    # Abrir el fondo elegido desde la ruta
+    fondo = Image.open(ruta_fondo).convert("RGBA")
     fondo = fondo.resize((800, 400), Image.Resampling.LANCZOS)
     draw = ImageDraw.Draw(fondo)
 
@@ -34,8 +34,7 @@ async def generar_escena_combate(session, poke1_id, poke2_id, nombre1, nombre2, 
     img1 = preparar_sprite(img1, 200, 200)
     img2 = preparar_sprite(img2, 220, 140)
 
-    # 4. Posicionamiento dinámico (Ajustado al suelo del fondo elegido)
-    # Aliado abajo a la izquierda, Enemigo arriba a la derecha
+    # 4. Posicionamiento dinámico
     pos1 = (100 + (30 if turno_jugador == 1 else 0), 220 + (-20 if turno_jugador == 1 else 0))
     pos2 = (500 + (-30 if turno_jugador == 2 else 0), 60 + (20 if turno_jugador == 2 else 0))
 
