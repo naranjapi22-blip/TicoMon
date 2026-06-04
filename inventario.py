@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 from database import get_connection
-
+import servicios
 # --- CLASE PARA LOS BOTONES DE PÁGINAS ---
 class PaginadorInventario(discord.ui.View):
     def __init__(self, ctx, embeds):
