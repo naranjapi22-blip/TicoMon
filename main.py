@@ -25,12 +25,30 @@ load_dotenv()
 TOKEN = os.getenv('TOKEN')
 intents = discord.Intents.default()
 intents.message_content = True
+
+# Inicializamos el bot
+bot = commands.Bot(command_prefix="!", intents=intents)
+
+# Lista de tus nuevos módulos
+initial_extensions = [
+    'ivs_commands',
+    'inventario'
+]
+
+# 2. CARGA DE EXTENSIONES
+if __name__ == '__main__':
+    for extension in initial_extensions:
+        try:
+            bot.load_extension(extension)
+            print(f"✅ Extensión {extension} cargada correctamente.")
+        except Exception as e:
+            print(f"❌ Error al cargar {extension}: {e}")
 bot = commands.Bot(
     command_prefix=commands.when_mentioned_or('!'), 
     intents=intents,
     case_insensitive=True
 )
-
+bot.load_extension("ivs_commands")
 REGIONES = {
     "1": (1, 151), "2": (152, 251), "3": (252, 386),
     "4": (387, 493), "5": (494, 649), "6": (650, 721),
