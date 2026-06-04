@@ -10,7 +10,6 @@ class PaginadorInventario(discord.ui.View):
         self.embeds = embeds
         self.pagina_actual = 0
         
-        # Si solo hay 1 página, deshabilitamos los botones
         if len(self.embeds) <= 1:
             self.btn_anterior.disabled = True
             self.btn_siguiente.disabled = True
@@ -36,13 +35,13 @@ class Inventario(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    # --- COMANDO INVENTARIO CON PÁGINAS ---
     @commands.command(name="inventario")
     async def ver_inventario(self, ctx):
         conn = get_connection()
         cursor = conn.cursor()
         
-        # Le quitamos el LIMIT 20 para traer TODOS los Pokémon
+        # --- CONSULTA SEGURA ---
+        # Nos aseguramos de filtrar estrictamente por el user_id del autor
         cursor.execute("""
             SELECT id, pokemon_nombre, es_shiny, 
                 ((iv_hp + iv_atk + iv_def + iv_spa + iv_spd + iv_spe) * 100 / 186) as porcentaje
@@ -58,7 +57,6 @@ class Inventario(commands.Cog):
             await ctx.send("🎒 Tu inventario está vacío.")
             return
 
-        # Dividimos los Pokémon en grupos de 20 para hacer las páginas
         elementos_por_pagina = 20
         paginas = [pokemones[i:i + elementos_por_pagina] for i in range(0, len(pokemones), elementos_por_pagina)]
         
@@ -69,7 +67,6 @@ class Inventario(commands.Cog):
                 id_p, nombre, shiny, porc = p
                 emoji = "✨" if shiny else "⚪"
                 
-                # Iconos de calidad
                 if porc >= 85: color_pc = "💎" 
                 elif porc >= 70: color_pc = "🔥" 
                 else: color_pc = "⏺️" 
@@ -78,20 +75,19 @@ class Inventario(commands.Cog):
             
             embed = discord.Embed(title=f"🎒 Inventario de {ctx.author.name}", color=discord.Color.green())
             embed.description = lista
-            # Añadimos el número de página al pie del embed
             embed.set_footer(text=f"Página {i+1}/{len(paginas)} | Usa !ivs [ID] para detalles.")
             embeds.append(embed)
 
-        # Enviamos la vista con el paginador
         view = PaginadorInventario(ctx, embeds)
         await ctx.send(embed=embeds[0], view=view)
 
-    # --- COMANDO TOP (Este sí debe tener LIMIT 10 porque es un Top 10) ---
+    # --- COMANDO TOP CORREGIDO ---
     @commands.command(name="top")
     async def ver_top(self, ctx):
         conn = get_connection()
         cursor = conn.cursor()
         
+        # Filtramos por user_id aquí también para mayor seguridad
         cursor.execute("""
             SELECT id, pokemon_nombre, es_shiny, 
                    ((iv_hp + iv_atk + iv_def + iv_spa + iv_spd + iv_spe) * 100 / 186) as porcentaje

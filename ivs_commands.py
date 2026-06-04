@@ -21,17 +21,19 @@ class IvsCommands(commands.Cog):
         conn = get_connection()
         cursor = conn.cursor()
         
+        # --- CORRECCIÓN DE SEGURIDAD APLICADA AQUÍ ---
+        # Filtramos por ID de captura Y por el ID del usuario que envió el comando
         cursor.execute("""
             SELECT pokemon_nombre, iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe, es_shiny
             FROM capturas 
-            WHERE id = %s
-        """, (str(id_pokemon),))
+            WHERE id = %s AND user_id = %s
+        """, (str(id_pokemon), str(ctx.author.id)))
         
         resultado = cursor.fetchone()
         conn.close()
         
         if not resultado:
-            await ctx.send("❌ No existe ningún Pokémon con ese ID.")
+            await ctx.send("❌ No existe ningún Pokémon con ese ID en **tu** inventario.")
             return
 
         nombre, hp, atk, defs, spa, spd, spe, es_shiny = resultado
@@ -55,7 +57,7 @@ class IvsCommands(commands.Cog):
         # 1. Título principal
         embed = discord.Embed(title=f"{emoji_shiny}{nombre.capitalize()}", color=color)
         
-        # 2. Detalles Generales (LO QUE YA TENÍAMOS)
+        # 2. Detalles Generales
         detalles = (
             f"🆔 **ID Único:** {id_pokemon}\n"
             f"⭐ **Calidad:** {calidad}\n"
@@ -64,7 +66,7 @@ class IvsCommands(commands.Cog):
         )
         embed.add_field(name="📝 Detalles de Captura", value=detalles, inline=False)
         
-        # 3. Estadísticas Base (LO NUEVO)
+        # 3. Estadísticas Base
         try:
             data, _ = await servicios.obtener_pokemon(self.bot.session, nombre)
             if data:
@@ -81,7 +83,7 @@ Speed          : {b_stats.get('speed', 0)}
         except Exception as e:
             print(f"Error cargando stats base en ivs: {e}")
 
-        # 4. Bloque de Valores Individuales (IVs) (LO QUE YA TENÍAMOS CON TEXTOS)
+        # 4. Bloque de Valores Individuales (IVs)
         stats_format = f"""```yaml
 Hp             : {hp:>2}/31 [{evaluar_iv(hp)}]
 Attack         : {atk:>2}/31 [{evaluar_iv(atk)}]
@@ -92,7 +94,7 @@ Speed          : {spe:>2}/31 [{evaluar_iv(spe)}]
 ```"""
         embed.add_field(name="🧬 Valores Individuales (IVs)", value=stats_format, inline=False)
         
-        # 5. Obtener IDs y URLs de imágenes (LO QUE YA TENÍAMOS EN GRANDE)
+        # 5. Obtener IDs y URLs de imágenes
         try:
             dex_id = await servicios.obtener_id_por_nombre(self.bot.session, nombre)
             if dex_id:
@@ -102,7 +104,7 @@ Speed          : {spe:>2}/31 [{evaluar_iv(spe)}]
                 img_url = f"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/{path_shiny}{dex_id}.png"
                 embed.set_image(url=img_url)
                 
-                # Miniatura arriba a la derecha (Sprite pequeño)
+                # Miniatura arriba a la derecha
                 thumb_url = f"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/{path_shiny}{dex_id}.png"
                 embed.set_thumbnail(url=thumb_url)
         except Exception as e:
