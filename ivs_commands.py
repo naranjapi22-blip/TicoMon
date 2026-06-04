@@ -52,7 +52,24 @@ class IvsCommands(commands.Cog):
         
         embed = discord.Embed(title=f"{emoji_shiny}{nombre.capitalize()}", color=color)
         
-        # 1. Detalles Generales
+        # 1. Estadísticas Detalladas (Prioridad: Valor al Lvl 50 primero)
+        try:
+            data, _ = await servicios.obtener_pokemon(self.bot.session, nombre)
+            if data:
+                b = {s['stat']['name']: s['base_stat'] for s in data['stats']}
+                
+                embed.add_field(name="📊 Estadísticas (Lvl 50)", value="`Total | Base | IVs`", inline=False)
+                
+                embed.add_field(name="❤️ HP", value=f"`**{calcular_hp_lvl50(b.get('hp',0), hp):>3}** | {b.get('hp',0):>3} | {hp:>2}/31`", inline=False)
+                embed.add_field(name="⚔️ Atk", value=f"`**{calcular_stat_lvl50(b.get('attack',0), atk):>3}** | {b.get('attack',0):>3} | {atk:>2}/31`", inline=False)
+                embed.add_field(name="🛡️ Def", value=f"`**{calcular_stat_lvl50(b.get('defense',0), defs):>3}** | {b.get('defense',0):>3} | {defs:>2}/31`", inline=False)
+                embed.add_field(name="🔮 SpA", value=f"`**{calcular_stat_lvl50(b.get('special-attack',0), spa):>3}** | {b.get('special-attack',0):>3} | {spa:>2}/31`", inline=False)
+                embed.add_field(name="✨ SpD", value=f"`**{calcular_stat_lvl50(b.get('special-defense',0), spd):>3}** | {b.get('special-defense',0):>3} | {spd:>2}/31`", inline=False)
+                embed.add_field(name="⚡ Spe", value=f"`**{calcular_stat_lvl50(b.get('speed',0), spe):>3}** | {b.get('speed',0):>3} | {spe:>2}/31`", inline=False)
+        except Exception as e:
+            print(f"Error cargando stats: {e}")
+
+        # 2. Detalles Generales (Al final)
         detalles = (
             f"🆔 **ID Único:** {id_pokemon}\n"
             f"⭐ **Calidad:** {calidad}\n"
@@ -60,23 +77,6 @@ class IvsCommands(commands.Cog):
             f"✨ **Variocolor:** {'Sí' if es_shiny else 'No'}"
         )
         embed.add_field(name="📝 Detalles de Captura", value=detalles, inline=False)
-        
-        # 2. Estadísticas Detalladas (Base | IVs | Lvl50 en Negrita)
-        try:
-            data, _ = await servicios.obtener_pokemon(self.bot.session, nombre)
-            if data:
-                b = {s['stat']['name']: s['base_stat'] for s in data['stats']}
-                
-                embed.add_field(name="📊 Estadísticas Detalladas", value="`Stat | Base | IVs | Lvl50`", inline=False)
-                
-                embed.add_field(name="❤️ HP", value=f"`{b.get('hp',0):>3}  | {hp:>2}/31 | `**{calcular_hp_lvl50(b.get('hp',0), hp):>3}**", inline=False)
-                embed.add_field(name="⚔️ Atk", value=f"`{b.get('attack',0):>3}  | {atk:>2}/31 | `**{calcular_stat_lvl50(b.get('attack',0), atk):>3}**", inline=False)
-                embed.add_field(name="🛡️ Def", value=f"`{b.get('defense',0):>3}  | {defs:>2}/31 | `**{calcular_stat_lvl50(b.get('defense',0), defs):>3}**", inline=False)
-                embed.add_field(name="🔮 SpA", value=f"`{b.get('special-attack',0):>3}  | {spa:>2}/31 | `**{calcular_stat_lvl50(b.get('special-attack',0), spa):>3}**", inline=False)
-                embed.add_field(name="✨ SpD", value=f"`{b.get('special-defense',0):>3}  | {spd:>2}/31 | `**{calcular_stat_lvl50(b.get('special-defense',0), spd):>3}**", inline=False)
-                embed.add_field(name="⚡ Spe", value=f"`{b.get('speed',0):>3}  | {spe:>2}/31 | `**{calcular_stat_lvl50(b.get('speed',0), spe):>3}**", inline=False)
-        except Exception as e:
-            print(f"Error cargando stats: {e}")
         
         # 3. Imágenes
         try:
