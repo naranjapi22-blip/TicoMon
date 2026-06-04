@@ -22,25 +22,38 @@ async def generar_escena_combate(session, poke1_id, poke2_id, nombre1, nombre2, 
     fondo = fondo.resize((800, 400), Image.Resampling.LANCZOS)
     draw = ImageDraw.Draw(fondo)
 
-    # 2. Función segura para obtener sprites desde la API
     async def obtener_sprite_bytes(poke_id, es_shiny, es_espalda):
-        base = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon"
-        partes = ["back"] if es_espalda else []
-        if es_shiny: partes.append("shiny")
-        
-        # Construcción de URL
-        url = f"{base}/{'/'.join(partes)}/{poke_id}.png" if partes else f"{base}/{poke_id}.png"
-        
-        log.info(f"Descargando sprite: {url}")
-        async with session.get(url) as response:
-            if response.status == 200:
-                data = await response.read()
-                # Validar que los datos no estén vacíos
-                if len(data) == 0:
-                    raise ValueError(f"La descarga de {url} devolvió datos vacíos.")
-                return data
-            else:
-                raise Exception(f"Error HTTP {response.status} al descargar sprite: {url}")
+            base = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon"
+            
+            async def descargar(es_espalda_actual):
+                partes = ["back"] if es_espalda_actual else []
+                if es_shiny: partes.append("shiny")
+                url = f"{base}/{'/'.join(partes)}/{poke_id}.png" if partes else f"{base}/{poke_id}.png"
+                
+                log.info(f"Descargando sprite: {url}")
+                async with session.get(url) as response:
+                    if response.status == 200:
+                        data = await response.read()
+                        if len(data) > 0:
+                            return data
+                    # Si no es 200 o está vacío, lanzamos excepción para capturarla fuera
+                    raise Exception(f"HTTP {response.status}")
+
+            try:
+                # 1. Intentamos la petición original
+                return await descargar(es_espalda)
+            except Exception as e:
+                log.warning(f"Fallo al obtener sprite (espalda={es_espalda}): {e}. Intentando fallback...")
+                
+                # 2. Fallback: Si falló el de espalda, intentamos el frontal
+                if es_espalda:
+                    try:
+                        return await descargar(False)
+                    except Exception as e2:
+                        raise Exception(f"Fallo crítico en ambos sprites: {e2}")
+                else:
+                    # Si ya era frontal y falló, no hay más donde buscar
+                    raise e
 
     # 3. Obtener imágenes con manejo de errores
     try:
