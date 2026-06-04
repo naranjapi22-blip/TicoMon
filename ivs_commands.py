@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 from database import get_connection
+import servicios
 
 class IvsCommands(commands.Cog):
     def __init__(self, bot):
@@ -11,12 +12,12 @@ class IvsCommands(commands.Cog):
         conn = get_connection()
         cursor = conn.cursor()
         
-        # Consultamos el Pokémon
         cursor.execute("""
-            SELECT pokemon_nombre, iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe 
+            SELECT pokemon_nombre, iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe, es_shiny
             FROM capturas 
             WHERE id = %s
-        """, (str(id_pokemon),)) # Convertido a string por si la base de datos lo pide así, es más seguro
+        """, (str(id_pokemon),))
+        
         resultado = cursor.fetchone()
         conn.close()
         
@@ -24,26 +25,65 @@ class IvsCommands(commands.Cog):
             await ctx.send("❌ No existe ningún Pokémon con ese ID.")
             return
 
-        nombre, hp, atk, defs, spa, spd, spe = resultado
+        nombre, hp, atk, defs, spa, spd, spe, es_shiny = resultado
         ivs = [hp, atk, defs, spa, spd, spe]
         total = sum(ivs)
         porcentaje = round((total / 186) * 100, 2)
         
-        # Color dinámico basado en la calidad
-        if porcentaje >= 85: color = discord.Color.gold()     # Épico
-        elif porcentaje >= 70: color = discord.Color.green()  # Excelente
-        else: color = discord.Color.blue()                    # Normal
+        # Color dinámico y etiqueta de calidad
+        if porcentaje >= 85: 
+            color = discord.Color.gold()
+            calidad = "💎 Épico"
+        elif porcentaje >= 70: 
+            color = discord.Color.green()
+            calidad = "🔥 Excelente"
+        else: 
+            color = discord.Color.blue()
+            calidad = "⏺️ Normal"
 
-        embed = discord.Embed(title=f"🧬 IVs de {nombre.capitalize()} (ID: {id_pokemon})", color=color)
-        embed.add_field(name="Estadísticas", value=f"""
-HP: `{hp}/31` | ATK: `{atk}/31`
-DEF: `{defs}/31` | SPA: `{spa}/31`
-SPD: `{spd}/31` | SPE: `{spe}/31`
-        """, inline=False)
-        embed.add_field(name="Potencial Total", value=f"**{total}/186** ({porcentaje}%)", inline=True)
+        emoji_shiny = "✨ " if es_shiny else ""
         
+        # 1. Título principal
+        embed = discord.Embed(title=f"{emoji_shiny}{nombre.capitalize()}", color=color)
+        
+        # 2. Detalles Generales (adaptados a la captura)
+        detalles = (
+            f"🆔 **ID Único:** {id_pokemon}\n"
+            f"⭐ **Calidad:** {calidad}\n"
+            f"📈 **Potencial Total:** {total}/186 ({porcentaje}%)\n"
+            f"✨ **Variocolor:** {'Sí' if es_shiny else 'No'}"
+        )
+        embed.add_field(name="📝 Detalles de Captura", value=detalles, inline=False)
+        
+        # 3. Bloque de estadísticas alineado (estilo consola/código)
+        # Usamos yaml para que los números resalten un poco en Discord
+        stats_format = f"""```yaml
+Hp             : {hp}/31
+Attack         : {atk}/31
+Defense        : {defs}/31
+Special-attack : {spa}/31
+Special-defense: {spd}/31
+Speed          : {spe}/31
+```"""
+        embed.add_field(name="📊 Valores Individuales (IVs)", value=stats_format, inline=False)
+        
+        # 4. Obtener IDs y URLs de imágenes
+        try:
+            dex_id = await servicios.obtener_id_por_nombre(self.bot.session, nombre)
+            if dex_id:
+                path_shiny = "shiny/" if es_shiny else ""
+                
+                # Imagen grande (Official Artwork)
+                img_url = f"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/{path_shiny}{dex_id}.png"
+                embed.set_image(url=img_url)
+                
+                # Miniatura arriba a la derecha (Sprite pequeño)
+                thumb_url = f"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/{path_shiny}{dex_id}.png"
+                embed.set_thumbnail(url=thumb_url)
+        except Exception as e:
+            print(f"Error cargando imágenes para IVs: {e}")
+            
         await ctx.send(embed=embed)
 
-# ESTO ERA LO QUE FALTABA
 async def setup(bot):
     await bot.add_cog(IvsCommands(bot))
