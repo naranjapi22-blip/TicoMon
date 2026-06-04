@@ -65,8 +65,9 @@ async def guardar_captura(user_id, pokemon_nombre, es_shiny=False, pokeball='Pok
             conn = get_connection()
             cursor = conn.cursor()
             
-            # Generamos los IVs al momento de la captura
-            iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe = [generar_iv_final() for _ in range(6)]
+            # 🔥 SOLUCIÓN AQUÍ: Generamos números 100% aleatorios del 0 al 31 inclusive
+            iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe = [random.randint(0, 31) for _ in range(6)]
+            
             fecha_ahora = datetime.datetime.now(datetime.timezone.utc)
             
             if DATABASE_URL:
