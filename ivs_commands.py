@@ -16,7 +16,7 @@ class IvsCommands(commands.Cog):
             SELECT pokemon_nombre, iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe 
             FROM capturas 
             WHERE id = %s
-        """, (id_pokemon,))
+        """, (str(id_pokemon),)) # Convertido a string por si la base de datos lo pide así, es más seguro
         resultado = cursor.fetchone()
         conn.close()
         
@@ -32,7 +32,7 @@ class IvsCommands(commands.Cog):
         # Color dinámico basado en la calidad
         if porcentaje >= 85: color = discord.Color.gold()     # Épico
         elif porcentaje >= 70: color = discord.Color.green()  # Excelente
-        else: color = discord.Color.blue()                   # Normal
+        else: color = discord.Color.blue()                    # Normal
 
         embed = discord.Embed(title=f"🧬 IVs de {nombre.capitalize()} (ID: {id_pokemon})", color=color)
         embed.add_field(name="Estadísticas", value=f"""
@@ -44,6 +44,6 @@ SPD: `{spd}/31` | SPE: `{spe}/31`
         
         await ctx.send(embed=embed)
 
-# Función para cargar el archivo en tu bot principal
-def setup(bot):
-    bot.add_cog(IvsCommands(bot))
+# ESTO ERA LO QUE FALTABA
+async def setup(bot):
+    await bot.add_cog(IvsCommands(bot))
