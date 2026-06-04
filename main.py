@@ -15,6 +15,8 @@ from discord.ext import commands
 import admin
 import vistas_combate
 from vistas_combate import SelectorPaginado, VistaCombate
+import vistas_batalla
+from vistas_batalla import SelectorBatalla
 import psycopg2
 import sqlite3
 from logger_config import log
@@ -348,8 +350,10 @@ async def comandos(ctx):
     embed.add_field(name="!cooldowns", value="Revisa tu energía de captura.", inline=False)
     embed.add_field(name="!info pokemon", value="Te da información del pokemon que tengas", inline=False)
     embed.add_field(name="!destacar", value="Pones tu pokemon en tu perfil(poner shiny si lo tienes)", inline=False)
-    
-    msg = await ctx.send(embed=embed)
+    embed.add_field(name="!combate @usuario", value="Duelo (selector clásico).", inline=False)
+    embed.add_field(name="!batalla @usuario", value="Duelo (selector con búsqueda y miniaturas).", inline=False)
+
+    await ctx.send(embed=embed)
 @bot.command(name="resetintentos")
 @canal_restringido()
 @commands.has_permissions(administrator=True)
@@ -412,48 +416,98 @@ async def es_legendario(session, poke_id):
 admin.setup(bot)
 
 
-@bot.command(name="combate")
-async def iniciar_combate(ctx, oponente: discord.Member):
-    # 1. Validaciones
+async def _validar_retador(ctx, oponente: discord.Member) -> bool:
     if oponente.bot:
-        return await ctx.send("❌ No puedes retar a un bot.")
+        await ctx.send("❌ No puedes retar a un bot.")
+        return False
     if oponente.id == ctx.author.id:
-        return await ctx.send("❌ ¡No puedes pelear contra ti mismo!")
+        await ctx.send("❌ ¡No puedes pelear contra ti mismo!")
+        return False
+    return True
 
-    # 2. Obtención de datos
+
+async def _obtener_equipos_duelo(ctx, oponente: discord.Member, crear_selector):
     lista1 = database.obtener_lista_capturas(ctx.author.id)
     lista2 = database.obtener_lista_capturas(oponente.id)
-    
-    if len(lista1) < 3 or len(lista2) < 3:
-        return await ctx.send("❌ Ambos jugadores necesitan al menos 3 Pokémon capturados.")
 
-    # 3. Jugador 1 elige equipo (usamos una función helper para limpiar el código)
-    async def obtener_equipo(jugador, lista):
-        view = vistas_combate.SelectorPaginado(jugador, lista)
-        msg = await ctx.send(f"⚔️ {jugador.mention}, elige tus 3 Pokémon:", view=view)
+    if len(lista1) < 3 or len(lista2) < 3:
+        await ctx.send("❌ Ambos jugadores necesitan al menos 3 Pokémon capturados.")
+        return None, None
+
+    if not hasattr(bot, "session") or bot.session.closed:
+        bot.session = aiohttp.ClientSession()
+
+    async def elegir_equipo(jugador, lista):
+        view = crear_selector(jugador, lista)
+        if isinstance(view, SelectorBatalla):
+            embed = await view.crear_embed()
+            msg = await ctx.send(
+                f"⚔️ {jugador.mention}, elige tus 3 Pokémon:",
+                embed=embed,
+                view=view,
+            )
+        else:
+            msg = await ctx.send(f"⚔️ {jugador.mention}, elige tus 3 Pokémon:", view=view)
+        view.message = msg
         await view.wait()
-        await msg.delete() # Borramos el mensaje de selección para no dejar basura
+        try:
+            await msg.delete()
+        except discord.HTTPException:
+            pass
         return view.seleccionados
 
-    equipo1 = await obtener_equipo(ctx.author, lista1)
+    equipo1 = await elegir_equipo(ctx.author, lista1)
     if len(equipo1) < 3:
-        return await ctx.send(f"❌ {ctx.author.mention} canceló la selección.")
+        await ctx.send(f"❌ {ctx.author.mention} no completó la selección.")
+        return None, None
 
-    equipo2 = await obtener_equipo(oponente, lista2)
+    equipo2 = await elegir_equipo(oponente, lista2)
     if len(equipo2) < 3:
-        return await ctx.send(f"❌ {oponente.mention} canceló la selección.")
+        await ctx.send(f"❌ {oponente.mention} no completó la selección.")
+        return None, None
 
-    # 4. Inicio de la simulación
+    return equipo1, equipo2
+
+
+async def _iniciar_arena(ctx, oponente: discord.Member, equipo1, equipo2):
     msg_espera = await ctx.send("⏳ Preparando arena de combate...")
-    
-    vista_combate = vistas_combate.VistaCombate(
-        ctx.author, oponente, equipo1, equipo2, bot.session
-    )
-    
+    vista_combate = VistaCombate(ctx.author, oponente, equipo1, equipo2, bot.session)
     try:
         await vista_combate.preparar_combate()
         await msg_espera.edit(content="✅ ¡Todo listo! Pulsa el botón para comenzar.", view=vista_combate)
     except Exception as e:
         await msg_espera.delete()
         await ctx.send(f"❌ Error al preparar el combate: {e}")
+
+
+@bot.command(name="combate")
+async def iniciar_combate(ctx, oponente: discord.Member):
+    """Selección clásica (compatibilidad)."""
+    if not await _validar_retador(ctx, oponente):
+        return
+
+    equipos = await _obtener_equipos_duelo(
+        ctx,
+        oponente,
+        lambda jugador, lista: SelectorPaginado(jugador, lista),
+    )
+    if not equipos[0]:
+        return
+    await _iniciar_arena(ctx, oponente, equipos[0], equipos[1])
+
+
+@bot.command(name="batalla")
+async def iniciar_batalla(ctx, oponente: discord.Member):
+    """Duelo con selector mejorado (miniaturas y búsqueda)."""
+    if not await _validar_retador(ctx, oponente):
+        return
+
+    equipos = await _obtener_equipos_duelo(
+        ctx,
+        oponente,
+        lambda jugador, lista: SelectorBatalla(jugador, lista, bot.session),
+    )
+    if not equipos[0]:
+        return
+    await _iniciar_arena(ctx, oponente, equipos[0], equipos[1])
 bot.run(TOKEN)
