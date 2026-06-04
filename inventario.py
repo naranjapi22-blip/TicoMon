@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 from database import get_connection
-import servicios
+
 # --- CLASE PARA LOS BOTONES DE PÁGINAS ---
 class PaginadorInventario(discord.ui.View):
     def __init__(self, ctx, embeds):
@@ -18,7 +18,6 @@ class PaginadorInventario(discord.ui.View):
     async def btn_anterior(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user != self.ctx.author:
             return await interaction.response.send_message("❌ Solo el dueño puede cambiar de página.", ephemeral=True)
-        
         self.pagina_actual = (self.pagina_actual - 1) % len(self.embeds)
         await interaction.response.edit_message(embed=self.embeds[self.pagina_actual])
 
@@ -26,7 +25,6 @@ class PaginadorInventario(discord.ui.View):
     async def btn_siguiente(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user != self.ctx.author:
             return await interaction.response.send_message("❌ Solo el dueño puede cambiar de página.", ephemeral=True)
-        
         self.pagina_actual = (self.pagina_actual + 1) % len(self.embeds)
         await interaction.response.edit_message(embed=self.embeds[self.pagina_actual])
 
@@ -39,7 +37,6 @@ class Inventario(commands.Cog):
     async def ver_inventario(self, ctx):
         conn = get_connection()
         cursor = conn.cursor()
-        
         cursor.execute("""
             SELECT id, pokemon_nombre, es_shiny, 
                 ((iv_hp + iv_atk + iv_def + iv_spa + iv_spd + iv_spe) * 100 / 186) as porcentaje
@@ -47,7 +44,6 @@ class Inventario(commands.Cog):
             WHERE user_id = %s 
             ORDER BY id DESC
         """, (str(ctx.author.id),))
-        
         pokemones = cursor.fetchall()
         conn.close()
         
@@ -57,65 +53,61 @@ class Inventario(commands.Cog):
 
         elementos_por_pagina = 10
         paginas = [pokemones[i:i + elementos_por_pagina] for i in range(0, len(pokemones), elementos_por_pagina)]
-        
         embeds = []
         for i, pagina in enumerate(paginas):
             lista = ""
             for p in pagina:
                 id_p, nombre, shiny, porc = p
                 
-                # Emojis de estado
                 emoji = "✨" if shiny else "⚪"
                 if porc >= 85: color_pc = "💎" 
                 elif porc >= 70: color_pc = "🔥" 
                 else: color_pc = "⏺️" 
                 
-                # Construimos la línea de texto de forma limpia para evitar errores
-                lista += f"{emoji} {nombre.capitalize()} `[{id_p}]` | {color_pc} `{int(porc)}%`\n"
+                lista += f"{emoji} **{nombre.capitalize()}** `[{id_p}]` | {color_pc} `{int(porc)}%`\n"
             
             embed = discord.Embed(title=f"🎒 Inventario de {ctx.author.name}", color=discord.Color.green())
             embed.description = lista
             embed.set_footer(text=f"Página {i+1}/{len(paginas)} | Usa !ivs [ID] para detalles.")
             embeds.append(embed)
 
-        # Asumimos que tienes una clase PaginadorInventario definida en otro lado
         view = PaginadorInventario(ctx, embeds)
         await ctx.send(embed=embeds[0], view=view)
 
-async def setup(bot):
-    await bot.add_cog(Inventario(bot))
-
-    # --- COMANDO TOP CORREGIDO ---
     @commands.command(name="top")
     async def ver_top(self, ctx):
         conn = get_connection()
         cursor = conn.cursor()
         
-        # Filtramos por user_id aquí también para mayor seguridad
+        # TOP GLOBAL (sin filtro de user_id)
         cursor.execute("""
-            SELECT id, pokemon_nombre, es_shiny, 
+            SELECT id, user_id, pokemon_nombre, es_shiny, 
                    ((iv_hp + iv_atk + iv_def + iv_spa + iv_spd + iv_spe) * 100 / 186) as porcentaje
             FROM capturas 
-            WHERE user_id = %s 
             ORDER BY porcentaje DESC 
             LIMIT 10
-        """, (str(ctx.author.id),))
+        """)
         
         top_pokemones = cursor.fetchall()
         conn.close()
         
         if not top_pokemones:
-            await ctx.send("🎒 Aún no tienes Pokémon capturados.")
+            await ctx.send("❌ Aún no hay Pokémon capturados en el servidor.")
             return
 
-        embed = discord.Embed(title=f"🏆 Top 10 Mejores de {ctx.author.name}", color=discord.Color.gold())
+        embed = discord.Embed(title=f"🏆 Top 10 Mejores Pokémon", color=discord.Color.gold())
         
         lista = ""
         for i, p in enumerate(top_pokemones, 1):
-            id_p, nombre, shiny, porc = p
+            id_p, user_id, nombre, shiny, porc = p
             emoji = "✨" if shiny else "⚪"
             medalla = "🥇" if i == 1 else "🥈" if i == 2 else "🥉" if i == 3 else f"{i}."
-            lista += f"{medalla} `[{id_p}]` {emoji} **{nombre.capitalize()}** — `{int(porc)}%`\n"
+            
+            # Intentar obtener el nombre del usuario
+            user = self.bot.get_user(int(user_id))
+            nombre_usuario = user.name if user else "Desconocido"
+            
+            lista += f"{medalla} {emoji} **{nombre.capitalize()}** `[{id_p}]` | `{int(porc)}%` | {nombre_usuario}\n"
         
         embed.description = lista
         await ctx.send(embed=embed)
