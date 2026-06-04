@@ -3,6 +3,15 @@ from discord.ext import commands
 from database import get_connection
 import servicios
 
+# Función para evaluar cada IV individualmente al estilo de los juegos oficiales
+def evaluar_iv(valor):
+    if valor == 31: return "Inmejorable"
+    elif valor == 30: return "Espectacular"
+    elif 26 <= valor <= 29: return "Genial"
+    elif 16 <= valor <= 25: return "Notable"
+    elif 1 <= valor <= 15: return "Decente"
+    else: return "Cojea un poco"
+
 class IvsCommands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -30,7 +39,7 @@ class IvsCommands(commands.Cog):
         total = sum(ivs)
         porcentaje = round((total / 186) * 100, 2)
         
-        # Color dinámico y etiqueta de calidad
+        # Color dinámico y etiqueta de calidad general
         if porcentaje >= 85: 
             color = discord.Color.gold()
             calidad = "💎 Épico"
@@ -46,7 +55,7 @@ class IvsCommands(commands.Cog):
         # 1. Título principal
         embed = discord.Embed(title=f"{emoji_shiny}{nombre.capitalize()}", color=color)
         
-        # 2. Detalles Generales (adaptados a la captura)
+        # 2. Detalles Generales
         detalles = (
             f"🆔 **ID Único:** {id_pokemon}\n"
             f"⭐ **Calidad:** {calidad}\n"
@@ -55,15 +64,14 @@ class IvsCommands(commands.Cog):
         )
         embed.add_field(name="📝 Detalles de Captura", value=detalles, inline=False)
         
-        # 3. Bloque de estadísticas alineado (estilo consola/código)
-        # Usamos yaml para que los números resalten un poco en Discord
+        # 3. Bloque de estadísticas con evaluación (alineado con :>2 para que los números queden parejos)
         stats_format = f"""```yaml
-Hp             : {hp}/31
-Attack         : {atk}/31
-Defense        : {defs}/31
-Special-attack : {spa}/31
-Special-defense: {spd}/31
-Speed          : {spe}/31
+Hp             : {hp:>2}/31 [{evaluar_iv(hp)}]
+Attack         : {atk:>2}/31 [{evaluar_iv(atk)}]
+Defense        : {defs:>2}/31 [{evaluar_iv(defs)}]
+Special-attack : {spa:>2}/31 [{evaluar_iv(spa)}]
+Special-defense: {spd:>2}/31 [{evaluar_iv(spd)}]
+Speed          : {spe:>2}/31 [{evaluar_iv(spe)}]
 ```"""
         embed.add_field(name="📊 Valores Individuales (IVs)", value=stats_format, inline=False)
         
