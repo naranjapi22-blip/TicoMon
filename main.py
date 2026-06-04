@@ -426,7 +426,7 @@ async def _validar_retador(ctx, oponente: discord.Member) -> bool:
     return True
 
 
-async def _obtener_equipos_duelo(ctx, oponente: discord.Member, crear_selector):
+async def _obtener_equipos_duelo(ctx, oponente: discord.Member, crear_selector, *, privado=False):
     lista1 = database.obtener_lista_capturas(ctx.author.id)
     lista2 = database.obtener_lista_capturas(oponente.id)
 
@@ -438,6 +438,10 @@ async def _obtener_equipos_duelo(ctx, oponente: discord.Member, crear_selector):
         bot.session = aiohttp.ClientSession()
 
     async def elegir_equipo(jugador, lista):
+        if privado:
+            return await vistas_batalla.elegir_equipo_en_privado(
+                ctx, jugador, lista, crear_selector
+            )
         view = crear_selector(jugador, lista)
         if isinstance(view, SelectorBatalla):
             embed = await view.crear_embed()
@@ -506,6 +510,7 @@ async def iniciar_batalla(ctx, oponente: discord.Member):
         ctx,
         oponente,
         lambda jugador, lista: SelectorBatalla(jugador, lista, bot.session),
+        privado=True,
     )
     if not equipos[0]:
         return
