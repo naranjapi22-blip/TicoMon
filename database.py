@@ -57,30 +57,31 @@ async def guardar_captura(user_id, pokemon_nombre, es_shiny=False, pokeball='Pok
             conn = get_connection()
             cursor = conn.cursor()
             
+            # Obtenemos la hora actual en UTC
+            fecha_ahora = datetime.datetime.now(datetime.timezone.utc)
+            
             if DATABASE_URL:
-                cursor.execute("INSERT INTO capturas (user_id, pokemon_nombre, es_shiny, pokeball) VALUES (%s, %s, %s, %s)", 
-                               (str(user_id), pokemon_nombre.lower(), 1 if es_shiny else 0, pokeball))
+                # Añadimos 'fecha' a la lista de columnas y %s al final
+                cursor.execute("""
+                    INSERT INTO capturas (user_id, pokemon_nombre, es_shiny, pokeball, fecha) 
+                    VALUES (%s, %s, %s, %s, %s)
+                """, (str(user_id), pokemon_nombre.lower(), 1 if es_shiny else 0, pokeball, fecha_ahora))
             else:
-                cursor.execute("INSERT INTO capturas (user_id, pokemon_nombre, es_shiny, pokeball) VALUES (?, ?, ?, ?)", 
-                               (user_id, pokemon_nombre.lower(), 1 if es_shiny else 0, pokeball))
+                # Añadimos 'fecha' a la lista de columnas y ? al final
+                cursor.execute("""
+                    INSERT INTO capturas (user_id, pokemon_nombre, es_shiny, pokeball, fecha) 
+                    VALUES (?, ?, ?, ?, ?)
+                """, (user_id, pokemon_nombre.lower(), 1 if es_shiny else 0, pokeball, fecha_ahora))
             
             conn.commit()
-            log.info(f"💾 [DB] Captura guardada: {pokemon_nombre.capitalize()} para user_id {user_id} con {pokeball}.")
+            log.info(f"💾 [DB] Captura guardada: {pokemon_nombre.capitalize()} para {user_id} a las {fecha_ahora}.")
             conn.close()
             
         except Exception as e:
-            # 1. Registramos el error exacto en la consola/archivo de logs
             estado = "✨ SHINY" if es_shiny else "Normal"
-            log.error(f"🚨 [ERROR FATAL DB] No se pudo guardar a {pokemon_nombre} ({estado}) del usuario {user_id} usando {pokeball}. Error: {e}", exc_info=True)
-            
-            # 2. Medida de seguridad: cerramos la conexión si se abrió pero falló a la mitad
+            log.error(f"🚨 [ERROR FATAL DB] No se pudo guardar a {pokemon_nombre} ({estado}) del usuario {user_id}. Error: {e}", exc_info=True)
             if 'conn' in locals() and conn:
-                try:
-                    conn.close()
-                except:
-                    pass
-            
-            # 3. Lanzamos el error de nuevo para que vistas.py lo detecte 
+                conn.close()
             raise e
 
 def ejecutar_consulta(query_pg, query_sql, params):
