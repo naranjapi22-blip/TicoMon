@@ -34,7 +34,7 @@ class PaginadorInventario(discord.ui.View):
 class Inventario(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-
+    
     @commands.command(name="inventario")
     async def ver_inventario(self, ctx):
         conn = get_connection()
@@ -55,7 +55,7 @@ class Inventario(commands.Cog):
             await ctx.send("🎒 Tu inventario está vacío.")
             return
 
-        elementos_por_pagina = 10 # Reduje a 10 para que los embeds no queden demasiado largos con miniaturas
+        elementos_por_pagina = 10
         paginas = [pokemones[i:i + elementos_por_pagina] for i in range(0, len(pokemones), elementos_por_pagina)]
         
         embeds = []
@@ -63,20 +63,14 @@ class Inventario(commands.Cog):
             lista = ""
             for p in pagina:
                 id_p, nombre, shiny, porc = p
-                # Obtenemos el ID de la pokedex para el sprite
-                dex_id = await servicios.obtener_id_por_nombre(self.bot.session, nombre)
                 
-                # Construimos la URL del sprite pequeño
-                path_shiny = "shiny/" if shiny else ""
-                sprite_url = f"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/{path_shiny}{dex_id}.png"
-                
+                # Emojis de estado
                 emoji = "✨" if shiny else "⚪"
                 if porc >= 85: color_pc = "💎" 
                 elif porc >= 70: color_pc = "🔥" 
                 else: color_pc = "⏺️" 
                 
-                # Añadimos el sprite como parte de la línea (usando formato Markdown si el bot soporta links en texto)
-                # O simplemente listamos el nombre junto al emoji
+                # Construimos la línea de texto de forma limpia para evitar errores
                 lista += f"{emoji} {nombre.capitalize()} `[{id_p}]` | {color_pc} `{int(porc)}%`\n"
             
             embed = discord.Embed(title=f"🎒 Inventario de {ctx.author.name}", color=discord.Color.green())
@@ -84,8 +78,12 @@ class Inventario(commands.Cog):
             embed.set_footer(text=f"Página {i+1}/{len(paginas)} | Usa !ivs [ID] para detalles.")
             embeds.append(embed)
 
+        # Asumimos que tienes una clase PaginadorInventario definida en otro lado
         view = PaginadorInventario(ctx, embeds)
         await ctx.send(embed=embeds[0], view=view)
+
+async def setup(bot):
+    await bot.add_cog(Inventario(bot))
 
     # --- COMANDO TOP CORREGIDO ---
     @commands.command(name="top")
