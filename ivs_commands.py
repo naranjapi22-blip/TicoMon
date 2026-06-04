@@ -55,7 +55,7 @@ class IvsCommands(commands.Cog):
         # 1. Título principal
         embed = discord.Embed(title=f"{emoji_shiny}{nombre.capitalize()}", color=color)
         
-        # 2. Detalles Generales
+        # 2. Detalles Generales (LO QUE YA TENÍAMOS)
         detalles = (
             f"🆔 **ID Único:** {id_pokemon}\n"
             f"⭐ **Calidad:** {calidad}\n"
@@ -64,7 +64,24 @@ class IvsCommands(commands.Cog):
         )
         embed.add_field(name="📝 Detalles de Captura", value=detalles, inline=False)
         
-        # 3. Bloque de estadísticas con evaluación (alineado con :>2 para que los números queden parejos)
+        # 3. Estadísticas Base (LO NUEVO)
+        try:
+            data, _ = await servicios.obtener_pokemon(self.bot.session, nombre)
+            if data:
+                b_stats = {s['stat']['name']: s['base_stat'] for s in data['stats']}
+                base_format = f"""```yaml
+Hp             : {b_stats.get('hp', 0)}
+Attack         : {b_stats.get('attack', 0)}
+Defense        : {b_stats.get('defense', 0)}
+Special-attack : {b_stats.get('special-attack', 0)}
+Special-defense: {b_stats.get('special-defense', 0)}
+Speed          : {b_stats.get('speed', 0)}
+```"""
+                embed.add_field(name="📊 Estadísticas Base", value=base_format, inline=False)
+        except Exception as e:
+            print(f"Error cargando stats base en ivs: {e}")
+
+        # 4. Bloque de Valores Individuales (IVs) (LO QUE YA TENÍAMOS CON TEXTOS)
         stats_format = f"""```yaml
 Hp             : {hp:>2}/31 [{evaluar_iv(hp)}]
 Attack         : {atk:>2}/31 [{evaluar_iv(atk)}]
@@ -73,9 +90,9 @@ Special-attack : {spa:>2}/31 [{evaluar_iv(spa)}]
 Special-defense: {spd:>2}/31 [{evaluar_iv(spd)}]
 Speed          : {spe:>2}/31 [{evaluar_iv(spe)}]
 ```"""
-        embed.add_field(name="📊 Valores Individuales (IVs)", value=stats_format, inline=False)
+        embed.add_field(name="🧬 Valores Individuales (IVs)", value=stats_format, inline=False)
         
-        # 4. Obtener IDs y URLs de imágenes
+        # 5. Obtener IDs y URLs de imágenes (LO QUE YA TENÍAMOS EN GRANDE)
         try:
             dex_id = await servicios.obtener_id_por_nombre(self.bot.session, nombre)
             if dex_id:
