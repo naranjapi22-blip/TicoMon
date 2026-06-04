@@ -134,32 +134,28 @@ class SelectorBatalla(discord.ui.View):
             select.callback = self._callback_anadir
             self.add_item(select)
 
-        fila_nav = discord.ui.ActionRow()
+        # Botones en View clásico (sin ActionRow — eso es solo Components V2)
         if len(paginas) > 1:
             btn_atras = discord.ui.Button(label="◀️", style=discord.ButtonStyle.secondary)
             btn_atras.callback = self._callback_atras
-            fila_nav.add_item(btn_atras)
+            self.add_item(btn_atras)
             btn_adelante = discord.ui.Button(label="▶️", style=discord.ButtonStyle.secondary)
             btn_adelante.callback = self._callback_adelante
-            fila_nav.add_item(btn_adelante)
+            self.add_item(btn_adelante)
 
         btn_buscar = discord.ui.Button(label="🔍 Buscar", style=discord.ButtonStyle.primary)
         btn_buscar.callback = self._callback_buscar
-        fila_nav.add_item(btn_buscar)
+        self.add_item(btn_buscar)
 
         if self.filtro:
             btn_todos = discord.ui.Button(label="Ver todos", style=discord.ButtonStyle.secondary)
             btn_todos.callback = self._callback_ver_todos
-            fila_nav.add_item(btn_todos)
+            self.add_item(btn_todos)
 
-        if fila_nav.children:
-            self.add_item(fila_nav)
-
-        fila_acciones = discord.ui.ActionRow()
         if self.seleccionados:
             btn_quitar = discord.ui.Button(label="↩ Quitar último", style=discord.ButtonStyle.secondary)
             btn_quitar.callback = self._callback_quitar
-            fila_acciones.add_item(btn_quitar)
+            self.add_item(btn_quitar)
 
         btn_confirmar = discord.ui.Button(
             label="✅ Confirmar equipo",
@@ -167,8 +163,7 @@ class SelectorBatalla(discord.ui.View):
             disabled=len(self.seleccionados) < 3,
         )
         btn_confirmar.callback = self._callback_confirmar
-        fila_acciones.add_item(btn_confirmar)
-        self.add_item(fila_acciones)
+        self.add_item(btn_confirmar)
 
     async def _editar_vista(self, interaction: discord.Interaction, vista_previa: str | None = None):
         embed = await self.crear_embed(vista_previa=vista_previa)
