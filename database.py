@@ -5,9 +5,17 @@ import os
 import psycopg2
 from logger_config import log
 import logging
-
+import random
 DATABASE_URL = os.environ.get('DATABASE_URL')
 db_lock = asyncio.Lock()
+
+# --- Lógica de IVs (puedes poner esto en utils.py e importarlo) ---
+def generar_iv_final():
+    if random.random() < 0.005:  # 0.5% probabilidad de 0
+        return 0
+    return sum(random.randint(1, 6) for _ in range(5)) + 1
+
+
 
 def get_connection():
     if DATABASE_URL:
@@ -57,29 +65,33 @@ async def guardar_captura(user_id, pokemon_nombre, es_shiny=False, pokeball='Pok
             conn = get_connection()
             cursor = conn.cursor()
             
-            # Obtenemos la hora actual en UTC
+            # Generamos los IVs al momento de la captura
+            iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe = [generar_iv_final() for _ in range(6)]
             fecha_ahora = datetime.datetime.now(datetime.timezone.utc)
             
             if DATABASE_URL:
-                # Añadimos 'fecha' a la lista de columnas y %s al final
                 cursor.execute("""
-                    INSERT INTO capturas (user_id, pokemon_nombre, es_shiny, pokeball, fecha) 
-                    VALUES (%s, %s, %s, %s, %s)
-                """, (str(user_id), pokemon_nombre.lower(), 1 if es_shiny else 0, pokeball, fecha_ahora))
+                    INSERT INTO capturas (
+                        user_id, pokemon_nombre, es_shiny, pokeball, fecha, 
+                        iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """, (str(user_id), pokemon_nombre.lower(), 1 if es_shiny else 0, 
+                      pokeball, fecha_ahora, iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe))
             else:
-                # Añadimos 'fecha' a la lista de columnas y ? al final
                 cursor.execute("""
-                    INSERT INTO capturas (user_id, pokemon_nombre, es_shiny, pokeball, fecha) 
-                    VALUES (?, ?, ?, ?, ?)
-                """, (user_id, pokemon_nombre.lower(), 1 if es_shiny else 0, pokeball, fecha_ahora))
+                    INSERT INTO capturas (
+                        user_id, pokemon_nombre, es_shiny, pokeball, fecha, 
+                        iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (user_id, pokemon_nombre.lower(), 1 if es_shiny else 0, 
+                      pokeball, fecha_ahora, iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe))
             
             conn.commit()
-            log.info(f"💾 [DB] Captura guardada: {pokemon_nombre.capitalize()} para {user_id} a las {fecha_ahora}.")
+            log.info(f"💾 [DB] Captura guardada: {pokemon_nombre.capitalize()} con IVs ({iv_hp}/{iv_atk}/{iv_def}/{iv_spa}/{iv_spd}/{iv_spe}).")
             conn.close()
             
         except Exception as e:
-            estado = "✨ SHINY" if es_shiny else "Normal"
-            log.error(f"🚨 [ERROR FATAL DB] No se pudo guardar a {pokemon_nombre} ({estado}) del usuario {user_id}. Error: {e}", exc_info=True)
+            log.error(f"🚨 [ERROR DB] Fallo al guardar captura: {e}", exc_info=True)
             if 'conn' in locals() and conn:
                 conn.close()
             raise e
