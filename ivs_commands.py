@@ -64,7 +64,7 @@ class IvsCommands(commands.Cog):
             data, _ = await servicios.obtener_pokemon(self.bot.session, nombre)
             if data:
                 b = {s['stat']['name']: s['base_stat'] for s in data['stats']}
-                embed.add_field(name="📊 Estadísticas Detalladas", value="`Stat | Base | IVs | Lvl50`", inline=False)
+                embed.add_field(name="📊 Estadísticas Detalladas", value="`Base | IVs | Total | Lvl50`", inline=False)
                 embed.add_field(name="❤️ HP", value=f"`{b.get('hp',0):>3}  | {hp:>2}/31 | {calcular_hp_lvl50(b.get('hp',0), hp):>3}`", inline=False)
                 embed.add_field(name="⚔️ Atk", value=f"`{b.get('attack',0):>3}  | {atk:>2}/31 | {calcular_stat_lvl50(b.get('attack',0), atk):>3}`", inline=False)
                 embed.add_field(name="🛡️ Def", value=f"`{b.get('defense',0):>3}  | {defs:>2}/31 | {calcular_stat_lvl50(b.get('defense',0), defs):>3}`", inline=False)
