@@ -17,6 +17,7 @@ import vistas_combate
 from vistas_combate import SelectorPaginado, VistaCombate
 import psycopg2
 import sqlite3
+from logger_config import log
 
 database.init_db()
 # 1. CONFIGURACIÓN
@@ -277,32 +278,51 @@ async def unlock(ctx):
     import gestor_spawn
     gestor_spawn.canales_ocupados.clear() # Vacía el set por completo
     await ctx.send("✅ Todos los canales han sido desbloqueados manualmente.")
+
 @bot.command(name="cooldowns")
 @canal_restringido()
 async def cooldowns(ctx):
     import gestor_spawn
     import datetime
 
-    # Obtenemos los datos del usuario
-    intentos, ultima_recarga = await gestor_spawn.obtener_intentos(ctx.author.id)
-    
-    # Calculamos cuánto tiempo falta para las 2 horas (7200 segundos)
-    ahora = datetime.datetime.now()
-    tiempo_transcurrido = (ahora - ultima_recarga).total_seconds()
-    tiempo_restante = max(0, 7200 - tiempo_transcurrido)
-    
-    # Formateamos el tiempo a minutos y segundos
-    minutos = int(tiempo_restante // 60)
-    segundos = int(tiempo_restante % 60)
-    
-    embed = discord.Embed(
-        title="🔋 Estado de tus Inciensos",
-        color=discord.Color.blue()
-    )
-    embed.add_field(name="Intentos disponibles", value=f"**{intentos}/12**", inline=True)
-    embed.add_field(name="Reseteo en", value=f"**{minutos}m {segundos}s**", inline=True)
-    
-    await ctx.send(embed=embed)
+    log.info(f"🔍 [Comando] El usuario {ctx.author.id} solicitó !cooldowns")
+
+    try:
+        # Obtenemos los datos
+        intentos, ultima_recarga_raw = await gestor_spawn.obtener_intentos(ctx.author.id)
+        
+        # Lógica de tiempo (normalizada a UTC)
+        ahora = datetime.datetime.now(datetime.timezone.utc)
+        
+        # Conversión segura
+        if isinstance(ultima_recarga_raw, str):
+            ultima_recarga = datetime.datetime.fromisoformat(ultima_recarga_raw)
+        else:
+            ultima_recarga = ultima_recarga_raw
+
+        if ultima_recarga.tzinfo is None:
+            ultima_recarga = ultima_recarga.replace(tzinfo=datetime.timezone.utc)
+            
+        tiempo_transcurrido = (ahora - ultima_recarga).total_seconds()
+        tiempo_restante = max(0, 7200 - tiempo_transcurrido)
+        
+        minutos = int(tiempo_restante // 60)
+        segundos = int(tiempo_restante % 60)
+        
+        embed = discord.Embed(
+            title="🔋 Estado de tus Inciensos",
+            color=discord.Color.blue()
+        )
+        embed.add_field(name="Intentos disponibles", value=f"**{intentos}/12**", inline=True)
+        embed.add_field(name="Reseteo en", value=f"**{minutos}m {segundos}s**", inline=True)
+        
+        await ctx.send(embed=embed)
+        log.info(f"✅ [Comando] Respuesta de !cooldowns enviada correctamente al usuario {ctx.author.id}")
+
+    except Exception as e:
+        # Esto capturará si hubo un error en la base de datos o en el cálculo
+        log.error(f"🚨 [ERROR Comando] !cooldowns falló para el usuario {ctx.author.id}. Error: {e}", exc_info=True)
+        await ctx.send("❌ Hubo un error al consultar tus datos. Por favor, intenta de nuevo más tarde.")
 @bot.command(name="comandos")
 @canal_restringido()
 async def comandos(ctx):
