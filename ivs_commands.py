@@ -58,14 +58,18 @@ class IvsCommands(commands.Cog):
             if data:
                 b = {s['stat']['name']: s['base_stat'] for s in data['stats']}
                 
-                embed.add_field(name="📊 Estadísticas (Lvl 50)", value="`Total | Base | IVs`", inline=False)
-                
-                embed.add_field(name="❤️ HP", value=f"`**{calcular_hp_lvl50(b.get('hp',0), hp):>3}** | {b.get('hp',0):>3} | {hp:>2}/31`", inline=False)
-                embed.add_field(name="⚔️ Atk", value=f"`**{calcular_stat_lvl50(b.get('attack',0), atk):>3}** | {b.get('attack',0):>3} | {atk:>2}/31`", inline=False)
-                embed.add_field(name="🛡️ Def", value=f"`**{calcular_stat_lvl50(b.get('defense',0), defs):>3}** | {b.get('defense',0):>3} | {defs:>2}/31`", inline=False)
-                embed.add_field(name="🔮 SpA", value=f"`**{calcular_stat_lvl50(b.get('special-attack',0), spa):>3}** | {b.get('special-attack',0):>3} | {spa:>2}/31`", inline=False)
-                embed.add_field(name="✨ SpD", value=f"`**{calcular_stat_lvl50(b.get('special-defense',0), spd):>3}** | {b.get('special-defense',0):>3} | {spd:>2}/31`", inline=False)
-                embed.add_field(name="⚡ Spe", value=f"`**{calcular_stat_lvl50(b.get('speed',0), spe):>3}** | {b.get('speed',0):>3} | {spe:>2}/31`", inline=False)
+            embed.add_field(name="📊 Estadísticas (Total | Base | IVs)", value="━━━━━━━━━━━━━━━━━━━━", inline=False)
+            
+            # Creamos una función auxiliar rápida para el formato
+            def fmt(lvl50, base, ivs):
+                return f"**{lvl50:>3}** | {base:>3} | {ivs:>2}/31"
+
+            embed.add_field(name="❤️ HP", value=fmt(calcular_hp_lvl50(b.get('hp',0), hp), b.get('hp',0), hp), inline=False)
+            embed.add_field(name="⚔️ Atk", value=fmt(calcular_stat_lvl50(b.get('attack',0), atk), b.get('attack',0), atk), inline=False)
+            embed.add_field(name="🛡️ Def", value=fmt(calcular_stat_lvl50(b.get('defense',0), defs), b.get('defense',0), defs), inline=False)
+            embed.add_field(name="🔮 SpA", value=fmt(calcular_stat_lvl50(b.get('special-attack',0), spa), b.get('special-attack',0), spa), inline=False)
+            embed.add_field(name="✨ SpD", value=fmt(calcular_stat_lvl50(b.get('special-defense',0), spd), b.get('special-defense',0), spd), inline=False)
+            embed.add_field(name="⚡ Spe", value=fmt(calcular_stat_lvl50(b.get('speed',0), spe), b.get('speed',0), spe), inline=False)
         except Exception as e:
             print(f"Error cargando stats: {e}")
 
