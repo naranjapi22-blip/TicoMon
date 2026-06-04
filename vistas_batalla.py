@@ -225,3 +225,82 @@ class SelectorBatalla(discord.ui.View):
 
     async def on_timeout(self):
         self.stop()
+
+
+class PuertaSeleccionPrivada(discord.ui.View):
+    """Mensaje público con un botón que abre el selector solo para el jugador (ephemeral)."""
+
+    def __init__(self, jugador: discord.Member, lista: list[str], crear_selector):
+        super().__init__(timeout=180)
+        self.jugador = jugador
+        self.lista = lista
+        self.crear_selector = crear_selector
+        self.seleccionados: list[str] = []
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id != self.jugador.id:
+            await interaction.response.send_message(
+                "❌ Solo el jugador retado puede usar este botón.",
+                ephemeral=True,
+            )
+            return False
+        return True
+
+    @discord.ui.button(
+        label="📋 Elegir mi equipo (privado)",
+        style=discord.ButtonStyle.primary,
+    )
+    async def abrir_selector(self, interaction: discord.Interaction, button: discord.ui.Button):
+        button.disabled = True
+        selector = self.crear_selector(self.jugador, self.lista)
+
+        if isinstance(selector, SelectorBatalla):
+            embed = await selector.crear_embed()
+            await interaction.response.send_message(
+                embed=embed,
+                view=selector,
+                ephemeral=True,
+            )
+        else:
+            await interaction.response.send_message(
+                "⚔️ Elige tus 3 Pokémon (solo tú ves este mensaje):",
+                view=selector,
+                ephemeral=True,
+            )
+
+        selector.message = await interaction.original_response()
+        await selector.wait()
+        self.seleccionados = list(selector.seleccionados)
+        self.stop()
+
+        if len(self.seleccionados) >= 3:
+            await interaction.followup.send(
+                "✅ Equipo registrado. Nadie más pudo ver tus elecciones.",
+                ephemeral=True,
+            )
+        else:
+            await interaction.followup.send(
+                "❌ No completaste la selección a tiempo.",
+                ephemeral=True,
+            )
+
+    async def on_timeout(self):
+        self.stop()
+
+
+async def elegir_equipo_en_privado(ctx, jugador: discord.Member, lista: list[str], crear_selector):
+    """
+    Pide equipo sin mostrar picks en el canal: botón público → UI ephemeral.
+    """
+    puerta = PuertaSeleccionPrivada(jugador, lista, crear_selector)
+    msg = await ctx.send(
+        f"⚔️ {jugador.mention}, pulsa **Elegir mi equipo (privado)**. "
+        "Solo tú verás tu lista y tus 3 Pokémon.",
+        view=puerta,
+    )
+    await puerta.wait()
+    try:
+        await msg.delete()
+    except discord.HTTPException:
+        pass
+    return puerta.seleccionados
