@@ -40,8 +40,6 @@ class Inventario(commands.Cog):
         conn = get_connection()
         cursor = conn.cursor()
         
-        # --- CONSULTA SEGURA ---
-        # Nos aseguramos de filtrar estrictamente por el user_id del autor
         cursor.execute("""
             SELECT id, pokemon_nombre, es_shiny, 
                 ((iv_hp + iv_atk + iv_def + iv_spa + iv_spd + iv_spe) * 100 / 186) as porcentaje
@@ -57,7 +55,7 @@ class Inventario(commands.Cog):
             await ctx.send("🎒 Tu inventario está vacío.")
             return
 
-        elementos_por_pagina = 20
+        elementos_por_pagina = 10 # Reduje a 10 para que los embeds no queden demasiado largos con miniaturas
         paginas = [pokemones[i:i + elementos_por_pagina] for i in range(0, len(pokemones), elementos_por_pagina)]
         
         embeds = []
@@ -65,13 +63,21 @@ class Inventario(commands.Cog):
             lista = ""
             for p in pagina:
                 id_p, nombre, shiny, porc = p
-                emoji = "✨" if shiny else "⚪"
+                # Obtenemos el ID de la pokedex para el sprite
+                dex_id = await servicios.obtener_id_por_nombre(self.bot.session, nombre)
                 
+                # Construimos la URL del sprite pequeño
+                path_shiny = "shiny/" if shiny else ""
+                sprite_url = f"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/{path_shiny}{dex_id}.png"
+                
+                emoji = "✨" if shiny else "⚪"
                 if porc >= 85: color_pc = "💎" 
                 elif porc >= 70: color_pc = "🔥" 
                 else: color_pc = "⏺️" 
                 
-                lista += f"`[{id_p}]` {emoji} **{nombre.capitalize()}** | {color_pc} `{int(porc)}%`\n"
+                # Añadimos el sprite como parte de la línea (usando formato Markdown si el bot soporta links en texto)
+                # O simplemente listamos el nombre junto al emoji
+                lista += f"{emoji} {nombre.capitalize()} `[{id_p}]` | {color_pc} `{int(porc)}%`\n"
             
             embed = discord.Embed(title=f"🎒 Inventario de {ctx.author.name}", color=discord.Color.green())
             embed.description = lista
