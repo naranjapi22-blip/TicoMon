@@ -12,12 +12,14 @@ class Inventario(commands.Cog):
         conn = get_connection()
         cursor = conn.cursor()
         
+        # Usamos cursor con diccionario si quieres, o dejamos así
         cursor.execute("""
             SELECT id, pokemon_nombre, es_shiny, 
                 ((iv_hp + iv_atk + iv_def + iv_spa + iv_spd + iv_spe) * 100 / 186) as porcentaje
             FROM capturas 
             WHERE user_id = %s 
             ORDER BY id DESC
+            LIMIT 20
         """, (str(ctx.author.id),))
         
         pokemones = cursor.fetchall()
@@ -28,15 +30,16 @@ class Inventario(commands.Cog):
             return
 
         lista = ""
-        for p in pokemones[:20]:
+        for p in pokemones:
             id_p, nombre, shiny, porc = p
             emoji = "✨" if shiny else "⚪"
             
+            # Definir iconos de calidad
             if porc >= 85: color_pc = "💎" 
             elif porc >= 70: color_pc = "🔥" 
             else: color_pc = "⏺️" 
             
-            lista += f"`[{id_p}]` {emoji} **{nombre.capitalize()}** | {color_pc} `{porc}%`\n"
+            lista += f"`[{id_p}]` {emoji} **{nombre.capitalize()}** | {color_pc} `{int(porc)}%`\n"
         
         embed = discord.Embed(title=f"🎒 Inventario de {ctx.author.name}", color=discord.Color.green())
         embed.description = lista
@@ -65,17 +68,18 @@ class Inventario(commands.Cog):
             await ctx.send("🎒 Aún no tienes Pokémon capturados.")
             return
 
-        embed = discord.Embed(title=f"🏆 Top 10 Mejores Pokémon de {ctx.author.name}", color=discord.Color.gold())
+        embed = discord.Embed(title=f"🏆 Top 10 Mejores de {ctx.author.name}", color=discord.Color.gold())
         
         lista = ""
         for i, p in enumerate(top_pokemones, 1):
             id_p, nombre, shiny, porc = p
             emoji = "✨" if shiny else "⚪"
             medalla = "🥇" if i == 1 else "🥈" if i == 2 else "🥉" if i == 3 else f"{i}."
-            lista += f"{medalla} `[{id_p}]` {emoji} **{nombre.capitalize()}** — `{porc}%`\n"
+            lista += f"{medalla} `[{id_p}]` {emoji} **{nombre.capitalize()}** — `{int(porc)}%`\n"
         
         embed.description = lista
         await ctx.send(embed=embed)
 
-def setup(bot):
-    bot.add_cog(Inventario(bot))
+# --- CAMBIO CRÍTICO AQUÍ ---
+async def setup(bot):
+    await bot.add_cog(Inventario(bot))
