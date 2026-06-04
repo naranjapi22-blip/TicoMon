@@ -79,35 +79,33 @@ class Inventario(commands.Cog):
         conn = get_connection()
         cursor = conn.cursor()
         
-        # TOP GLOBAL (sin filtro de user_id)
+        # Ranking PERSONAL (solo tus Pokémon)
         cursor.execute("""
-            SELECT id, user_id, pokemon_nombre, es_shiny, 
-                   ((iv_hp + iv_atk + iv_def + iv_spa + iv_spd + iv_spe) * 100 / 186) as porcentaje
+            SELECT id, pokemon_nombre, es_shiny, 
+                   ((iv_hp + iv_atk + iv_def + iv_spa + iv_spd + iv_spe) * 100 / 186) as porcentaje 
             FROM capturas 
+            WHERE user_id = %s 
             ORDER BY porcentaje DESC 
             LIMIT 10
-        """)
+        """, (str(ctx.author.id),))
         
         top_pokemones = cursor.fetchall()
         conn.close()
         
         if not top_pokemones:
-            await ctx.send("❌ Aún no hay Pokémon capturados en el servidor.")
+            await ctx.send("❌ Aún no tienes Pokémon capturados.")
             return
 
-        embed = discord.Embed(title=f"🏆 Top 10 Mejores Pokémon", color=discord.Color.gold())
+        embed = discord.Embed(title=f"🏆 Tus 10 mejores Pokémon", color=discord.Color.gold())
         
         lista = ""
         for i, p in enumerate(top_pokemones, 1):
-            id_p, user_id, nombre, shiny, porc = p
+            id_p, nombre, shiny, porc = p
             emoji = "✨" if shiny else "⚪"
+            
+            # Formato simple: Medalla, Emoji, Nombre, ID y porcentaje
             medalla = "🥇" if i == 1 else "🥈" if i == 2 else "🥉" if i == 3 else f"{i}."
-            
-            # Intentar obtener el nombre del usuario
-            user = self.bot.get_user(int(user_id))
-            nombre_usuario = user.name if user else "Desconocido"
-            
-            lista += f"{medalla} {emoji} **{nombre.capitalize()}** `[{id_p}]` | `{int(porc)}%` | {nombre_usuario}\n"
+            lista += f"{medalla} {emoji} **{nombre.capitalize()}** `[{id_p}]` — `{int(porc)}%`\n"
         
         embed.description = lista
         await ctx.send(embed=embed)
