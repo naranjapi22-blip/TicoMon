@@ -2,15 +2,14 @@ import discord
 from discord.ext import commands
 from database import get_connection
 import servicios
+import math
 
-# Función para evaluar cada IV individualmente al estilo de los juegos oficiales
-def evaluar_iv(valor):
-    if valor == 31: return "Inmejorable"
-    elif valor == 30: return "Espectacular"
-    elif 26 <= valor <= 29: return "Genial"
-    elif 16 <= valor <= 25: return "Notable"
-    elif 1 <= valor <= 15: return "Decente"
-    else: return "Cojea un poco"
+# Fórmulas oficiales de Pokémon (siempre redondean hacia abajo)
+def calcular_stat_lvl50(base, iv):
+    return math.floor(((2 * base + iv) * 50 / 100) + 5)
+
+def calcular_hp_lvl50(base, iv):
+    return math.floor(((2 * base + iv) * 50 / 100) + 50 + 10)
 
 class IvsCommands(commands.Cog):
     def __init__(self, bot):
@@ -36,8 +35,8 @@ class IvsCommands(commands.Cog):
             return
 
         nombre, hp, atk, defs, spa, spd, spe, es_shiny = resultado
-        ivs = [hp, atk, defs, spa, spd, spe]
-        total = sum(ivs)
+        ivs_list = [hp, atk, defs, spa, spd, spe]
+        total = sum(ivs_list)
         porcentaje = round((total / 186) * 100, 2)
         
         # Color dinámico y etiqueta de calidad
@@ -53,10 +52,9 @@ class IvsCommands(commands.Cog):
 
         emoji_shiny = "✨ " if es_shiny else ""
         
-        # 1. Título principal
         embed = discord.Embed(title=f"{emoji_shiny}{nombre.capitalize()}", color=color)
         
-        # 2. Detalles Generales
+        # 1. Detalles Generales
         detalles = (
             f"🆔 **ID Único:** {id_pokemon}\n"
             f"⭐ **Calidad:** {calidad}\n"
@@ -65,35 +63,25 @@ class IvsCommands(commands.Cog):
         )
         embed.add_field(name="📝 Detalles de Captura", value=detalles, inline=False)
         
-        # 3. Estadísticas Base (Lado izquierdo)
+        # 2. Estadísticas Detalladas (Base + IVs + Lvl 50)
         try:
             data, _ = await servicios.obtener_pokemon(self.bot.session, nombre)
             if data:
-                b_stats = {s['stat']['name']: s['base_stat'] for s in data['stats']}
-                base_format = f"""```yaml
-Hp    : {b_stats.get('hp', 0)}
-Atk   : {b_stats.get('attack', 0)}
-Def   : {b_stats.get('defense', 0)}
-SpA   : {b_stats.get('special-attack', 0)}
-SpD   : {b_stats.get('special-defense', 0)}
-Spe   : {b_stats.get('speed', 0)}
+                b = {s['stat']['name']: s['base_stat'] for s in data['stats']}
+                stats_final_format = f"""```yaml
+Stat     Base  IVs   Lvl 50
+Hp    :  {b.get('hp',0):>3}  {hp:>2}/31   {calcular_hp_lvl50(b.get('hp',0), hp):>3}
+Atk   :  {b.get('attack',0):>3}  {atk:>2}/31   {calcular_stat_lvl50(b.get('attack',0), atk):>3}
+Def   :  {b.get('defense',0):>3}  {defs:>2}/31   {calcular_stat_lvl50(b.get('defense',0), defs):>3}
+SpA   :  {b.get('special-attack',0):>3}  {spa:>2}/31   {calcular_stat_lvl50(b.get('special-attack',0), spa):>3}
+SpD   :  {b.get('special-defense',0):>3}  {spd:>2}/31   {calcular_stat_lvl50(b.get('special-defense',0), spd):>3}
+Spe   :  {b.get('speed',0):>3}  {spe:>2}/31   {calcular_stat_lvl50(b.get('speed',0), spe):>3}
 ```"""
-                embed.add_field(name="📊 Stats Base", value=base_format, inline=True)
+                embed.add_field(name="📊 Estadísticas Detalladas", value=stats_final_format, inline=False)
         except Exception as e:
-            print(f"Error cargando stats base: {e}")
-
-        # 4. Valores Individuales (IVs) (Lado derecho)
-        stats_format = f"""```yaml
-Hp    : {hp:>2}/31
-Atk   : {atk:>2}/31
-Def   : {defs:>2}/31
-SpA   : {spa:>2}/31
-SpD   : {spd:>2}/31
-Spe   : {spe:>2}/31
-```"""
-        embed.add_field(name="🧬 IVs", value=stats_format, inline=True)
+            print(f"Error cargando stats: {e}")
         
-        # 5. Obtener Imágenes
+        # 3. Imágenes
         try:
             dex_id = await servicios.obtener_id_por_nombre(self.bot.session, nombre)
             if dex_id:
