@@ -21,8 +21,7 @@ class IvsCommands(commands.Cog):
         conn = get_connection()
         cursor = conn.cursor()
         
-        # --- CORRECCIÓN DE SEGURIDAD APLICADA AQUÍ ---
-        # Filtramos por ID de captura Y por el ID del usuario que envió el comando
+        # Filtramos por ID de captura Y por el ID del usuario
         cursor.execute("""
             SELECT pokemon_nombre, iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe, es_shiny
             FROM capturas 
@@ -41,7 +40,7 @@ class IvsCommands(commands.Cog):
         total = sum(ivs)
         porcentaje = round((total / 186) * 100, 2)
         
-        # Color dinámico y etiqueta de calidad general
+        # Color dinámico y etiqueta de calidad
         if porcentaje >= 85: 
             color = discord.Color.gold()
             calidad = "💎 Épico"
@@ -66,49 +65,45 @@ class IvsCommands(commands.Cog):
         )
         embed.add_field(name="📝 Detalles de Captura", value=detalles, inline=False)
         
-        # 3. Estadísticas Base
+        # 3. Estadísticas Base (Lado izquierdo)
         try:
             data, _ = await servicios.obtener_pokemon(self.bot.session, nombre)
             if data:
                 b_stats = {s['stat']['name']: s['base_stat'] for s in data['stats']}
                 base_format = f"""```yaml
-Hp             : {b_stats.get('hp', 0)}
-Attack         : {b_stats.get('attack', 0)}
-Defense        : {b_stats.get('defense', 0)}
-Special-attack : {b_stats.get('special-attack', 0)}
-Special-defense: {b_stats.get('special-defense', 0)}
-Speed          : {b_stats.get('speed', 0)}
+Hp    : {b_stats.get('hp', 0)}
+Atk   : {b_stats.get('attack', 0)}
+Def   : {b_stats.get('defense', 0)}
+SpA   : {b_stats.get('special-attack', 0)}
+SpD   : {b_stats.get('special-defense', 0)}
+Spe   : {b_stats.get('speed', 0)}
 ```"""
-                embed.add_field(name="📊 Estadísticas Base", value=base_format, inline=False)
+                embed.add_field(name="📊 Stats Base", value=base_format, inline=True)
         except Exception as e:
-            print(f"Error cargando stats base en ivs: {e}")
+            print(f"Error cargando stats base: {e}")
 
-        # 4. Bloque de Valores Individuales (IVs)
+        # 4. Valores Individuales (IVs) (Lado derecho)
         stats_format = f"""```yaml
-Hp             : {hp:>2}/31 [{evaluar_iv(hp)}]
-Attack         : {atk:>2}/31 [{evaluar_iv(atk)}]
-Defense        : {defs:>2}/31 [{evaluar_iv(defs)}]
-Special-attack : {spa:>2}/31 [{evaluar_iv(spa)}]
-Special-defense: {spd:>2}/31 [{evaluar_iv(spd)}]
-Speed          : {spe:>2}/31 [{evaluar_iv(spe)}]
+Hp    : {hp:>2}/31
+Atk   : {atk:>2}/31
+Def   : {defs:>2}/31
+SpA   : {spa:>2}/31
+SpD   : {spd:>2}/31
+Spe   : {spe:>2}/31
 ```"""
-        embed.add_field(name="🧬 Valores Individuales (IVs)", value=stats_format, inline=False)
+        embed.add_field(name="🧬 IVs", value=stats_format, inline=True)
         
-        # 5. Obtener IDs y URLs de imágenes
+        # 5. Obtener Imágenes
         try:
             dex_id = await servicios.obtener_id_por_nombre(self.bot.session, nombre)
             if dex_id:
                 path_shiny = "shiny/" if es_shiny else ""
-                
-                # Imagen grande (Official Artwork)
                 img_url = f"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/{path_shiny}{dex_id}.png"
                 embed.set_image(url=img_url)
-                
-                # Miniatura arriba a la derecha
                 thumb_url = f"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/{path_shiny}{dex_id}.png"
                 embed.set_thumbnail(url=thumb_url)
         except Exception as e:
-            print(f"Error cargando imágenes para IVs: {e}")
+            print(f"Error cargando imágenes: {e}")
             
         await ctx.send(embed=embed)
 
