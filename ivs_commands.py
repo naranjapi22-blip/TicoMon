@@ -52,28 +52,28 @@ class IvsCommands(commands.Cog):
         
         embed = discord.Embed(title=f"{emoji_shiny}{nombre.capitalize()}", color=color)
         
-        # 1. Estadísticas Detalladas (Prioridad: Valor al Lvl 50 primero)
+        # 1. Estadísticas Detalladas
         try:
             data, _ = await servicios.obtener_pokemon(self.bot.session, nombre)
             if data:
                 b = {s['stat']['name']: s['base_stat'] for s in data['stats']}
                 
-            embed.add_field(name="📊 Estadísticas (Total | Base | IVs)", value="━━━━━━━━━━━━━━━━━━━━", inline=False)
-            
-            # Creamos una función auxiliar rápida para el formato
-            def fmt(lvl50, base, ivs):
-                return f"**{lvl50:>3}** | {base:>3} | {ivs:>2}/31"
+                embed.add_field(name="📊 Estadísticas (Total | Base | IVs)", value="━━━━━━━━━━━━━━━━━━━━", inline=False)
+                
+                # Función auxiliar definida dentro del método para acceso a datos
+                def fmt(lvl50, base, ivs):
+                    return f"**{lvl50:>3}** | {base:>3} | {ivs:>2}/31"
 
-            embed.add_field(name="❤️ HP", value=fmt(calcular_hp_lvl50(b.get('hp',0), hp), b.get('hp',0), hp), inline=False)
-            embed.add_field(name="⚔️ Atk", value=fmt(calcular_stat_lvl50(b.get('attack',0), atk), b.get('attack',0), atk), inline=False)
-            embed.add_field(name="🛡️ Def", value=fmt(calcular_stat_lvl50(b.get('defense',0), defs), b.get('defense',0), defs), inline=False)
-            embed.add_field(name="🔮 SpA", value=fmt(calcular_stat_lvl50(b.get('special-attack',0), spa), b.get('special-attack',0), spa), inline=False)
-            embed.add_field(name="✨ SpD", value=fmt(calcular_stat_lvl50(b.get('special-defense',0), spd), b.get('special-defense',0), spd), inline=False)
-            embed.add_field(name="⚡ Spe", value=fmt(calcular_stat_lvl50(b.get('speed',0), spe), b.get('speed',0), spe), inline=False)
+                embed.add_field(name="❤️ HP", value=fmt(calcular_hp_lvl50(b.get('hp',0), hp), b.get('hp',0), hp), inline=False)
+                embed.add_field(name="⚔️ Atk", value=fmt(calcular_stat_lvl50(b.get('attack',0), atk), b.get('attack',0), atk), inline=False)
+                embed.add_field(name="🛡️ Def", value=fmt(calcular_stat_lvl50(b.get('defense',0), defs), b.get('defense',0), defs), inline=False)
+                embed.add_field(name="🔮 SpA", value=fmt(calcular_stat_lvl50(b.get('special-attack',0), spa), b.get('special-attack',0), spa), inline=False)
+                embed.add_field(name="✨ SpD", value=fmt(calcular_stat_lvl50(b.get('special-defense',0), spd), b.get('special-defense',0), spd), inline=False)
+                embed.add_field(name="⚡ Spe", value=fmt(calcular_stat_lvl50(b.get('speed',0), spe), b.get('speed',0), spe), inline=False)
         except Exception as e:
             print(f"Error cargando stats: {e}")
 
-        # 2. Detalles Generales (Al final)
+        # 2. Detalles Generales
         detalles = (
             f"🆔 **ID Único:** {id_pokemon}\n"
             f"⭐ **Calidad:** {calidad}\n"
