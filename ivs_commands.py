@@ -68,16 +68,15 @@ class IvsCommands(commands.Cog):
             data, _ = await servicios.obtener_pokemon(self.bot.session, nombre)
             if data:
                 b = {s['stat']['name']: s['base_stat'] for s in data['stats']}
-    # Definición del formato de la tabla
                 stats_final_format = f"""```yaml
-    Stat    Base   IVs     Valor (Lvl 50)
-    ❤️ HP  :  {b.get('hp',0):>3}   {hp:>2}/31    {calcular_hp_lvl50(b.get('hp',0), hp):>3}
-    ⚔️ Atk :  {b.get('attack',0):>3}   {atk:>2}/31    {calcular_stat_lvl50(b.get('attack',0), atk):>3}
-    🛡️ Def :  {b.get('defense',0):>3}   {defs:>2}/31    {calcular_stat_lvl50(b.get('defense',0), defs):>3}
-    🔮 SpA :  {b.get('special-attack',0):>3}   {spa:>2}/31    {calcular_stat_lvl50(b.get('special-attack',0), spa):>3}
-    ✨ SpD :  {b.get('special-defense',0):>3}   {spd:>2}/31    {calcular_stat_lvl50(b.get('special-defense',0), spd):>3}
-    ⚡ Spe :  {b.get('speed',0):>3}   {spe:>2}/31    {calcular_stat_lvl50(b.get('speed',0), spe):>3}
-    ```"""
+                Stat    Base   IVs     Lvl50
+                ❤️ HP : {b.get('hp',0):>3}   {hp:>2}/31   {calcular_hp_lvl50(b.get('hp',0), hp):>3}
+                ⚔️ Atk: {b.get('attack',0):>3}   {atk:>2}/31   {calcular_stat_lvl50(b.get('attack',0), atk):>3}
+                🛡️ Def: {b.get('defense',0):>3}   {defs:>2}/31   {calcular_stat_lvl50(b.get('defense',0), defs):>3}
+                🔮 SpA: {b.get('special-attack',0):>3}   {spa:>2}/31   {calcular_stat_lvl50(b.get('special-attack',0), spa):>3}
+                ✨ SpD: {b.get('special-defense',0):>3}   {spd:>2}/31   {calcular_stat_lvl50(b.get('special-defense',0), spd):>3}
+                ⚡ Spe: {b.get('speed',0):>3}   {spe:>2}/31   {calcular_stat_lvl50(b.get('speed',0), spe):>3}
+                ```"""
                 embed.add_field(name="📊 Estadísticas Detalladas", value=stats_final_format, inline=False)
         except Exception as e:
             print(f"Error cargando stats: {e}")
