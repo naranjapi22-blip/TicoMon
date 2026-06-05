@@ -120,9 +120,16 @@ async def pokedex(ctx, *, filtro: str = None):
             region_label = f"Región {filtro}"
             es_coleccion_personal = False
         
-        # Filtro de Legendarios
+# Filtro de Legendarios
         elif filtro.lower() == "legendarios":
-            ids_filtrados = await servicios.filtrar_capturas_por_categoria(bot.session, "legendary", ids_tenidos)
+            # Filtramos localmente comparando con nuestra base de datos o lógica interna
+            ids_filtrados = []
+            for id_p in ids_tenidos:
+                # Obtenemos la info del Pokémon mediante el servicio que ya tienes
+                info = await servicios.obtener_info_pokemon(bot.session, id_p)
+                if info and info.get('is_legendary', True): # Ajusta 'is_legendary' según tu API
+                    ids_filtrados.append(id_p)
+            
             if ids_filtrados:
                 ids_tenidos = set(ids_filtrados)
                 region_label = "Legendarios"
