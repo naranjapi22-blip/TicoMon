@@ -289,15 +289,22 @@ class BotonCaptura(discord.ui.View):
             # --- MATEMÁTICA DE CAPTURA AJUSTADA ---
             azar = random.random()
             
-            # Asignación de bolas (Probabilidades ajustadas al ritmo grupal)
+            # Asignación de bolas
             if azar < 0.01: bonus_bola, nombre_bola = 255.0, "Master Ball"
             elif azar < 0.15: bonus_bola, nombre_bola = 2.0, "Ultra Ball"
             elif azar < 0.40: bonus_bola, nombre_bola = 1.5, "Great Ball"
             else: bonus_bola, nombre_bola = 1.0, "Pokéball"
 
-            # Fórmula: (R/255 * B) + (Intentos * 0.015)
-            prob_final = ((self.capture_rate / 255) * bonus_bola) + (self.intentos_fallidos * 0.008)
-            prob_final = min(prob_final, 0.95)
+            # --- CORRECCIÓN: LÓGICA DE MASTER BALL ---
+            if nombre_bola == "Master Ball":
+                prob_final = 1.0  # 100% de éxito garantizado
+            else:
+                # La fórmula de dificultad normal para las otras bolas
+                FACTOR_DIFICULTAD = 0.7 
+                FACTOR_DESGASTE = 0.008
+                prob_base = ((self.capture_rate / 255) * bonus_bola) * FACTOR_DIFICULTAD
+                prob_final = prob_base + (self.intentos_fallidos * FACTOR_DESGASTE)
+                prob_final = min(prob_final, 0.95) # El tope sigue aplicando solo a las normales
 
             # --- INTENTO DE CAPTURA ---
             if random.random() < prob_final:
