@@ -52,32 +52,28 @@ REGIONES = {
     "7": (722, 809), "8": (810, 905), "9": (906, 1025)
 }
 
+# 1. Tu función de conexión limpia y eficiente
+def get_connection():
+    db_url = os.environ.get('DATABASE_URL')
+    if db_url:
+        return psycopg2.connect(db_url)
+    else:
+        return sqlite3.connect('fumo_data.db')
+
+# 2. Tu evento de encendido con la inicialización correcta
 @bot.event
 async def on_ready():
     configuracion.init_config_db()
     print(f'Bot conectado como {bot.user}')
     
-    # 0. INICIALIZAR SESIÓN DE RED (¡Esto soluciona el error!)
+    # 0. Inicializar sesión de red
     bot.session = aiohttp.ClientSession()
     
-def get_connection():
-    # Render y otros servicios en la nube usan variables de entorno
-    db_url = os.environ.get('DATABASE_URL')
-    
-    if db_url:
-        # Conexión a PostgreSQL (Producción)
-        return psycopg2.connect(db_url)
-    else:
-        # Conexión a SQLite (Local - Desarrollo)
-        return sqlite3.connect('fumo_data.db')
-    
-    # 2. Inicializar base de datos de iniciación y comandos
+    # 1. AQUÍ SÍ SE EJECUTARÁ TU CÓDIGO
     import gestor_spawn
     gestor_spawn.setup_gestor(bot)
     gestor_spawn.aplicar_filtro_spawn(bot)
-    
-    # 3. Limpieza de seguridad
-    gestor_spawn.canales_ocupados.clear() 
+    gestor_spawn.canales_ocupados.clear()
     
     print("Base de datos, módulos y sesión de red verificados.")
 
