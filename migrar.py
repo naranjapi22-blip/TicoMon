@@ -13,7 +13,7 @@ sqlite_cursor = sqlite_conn.cursor()
 pg_cursor = pg_conn.cursor()
 
 # Lista de tablas a migrar
-tablas = ['capturas', 'canales_config', 'energia', 'iniciacion', 'perfiles']
+tablas = ['capturas', 'canales_config', 'energia', 'iniciacion', 'perfiles', 'equipo']
 
 for tabla in tablas:
     print(f"Migrando tabla: {tabla}...")
