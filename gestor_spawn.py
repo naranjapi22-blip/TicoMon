@@ -52,32 +52,46 @@ async def obtener_intentos(user_id):
 def aplicar_filtro_spawn(bot):
     @bot.check
     async def check_spawn(ctx):
+        # 1. Ignorar comandos que no son !spawn
+        if ctx.command is None or ctx.command.name != "spawn":
+            return True
+        
         try:
-            if ctx.command.name != "spawn":
-                return True
-            
             log.debug(f"🎯 Validando spawn: User {ctx.author.id} - Canal {ctx.channel.id}")
             
-            if ctx.channel.id in canales_ocupados:
+            # 2. Verificar si el canal ya está ocupado
+            # Usamos gestor_spawn directamente para acceder al set compartido
+            import gestor_spawn
+            if ctx.channel.id in gestor_spawn.canales_ocupados:
                 log.warning(f"⚠️ Canal ocupado: {ctx.channel.id} - User {ctx.author.id}")
-                await ctx.send("❌ Ya hay un encuentro en curso en este canal.")
+                await ctx.send("❌ Ya hay un encuentro en curso en este canal. ¡Espera a que termine!")
                 return False
             
+            # 3. Verificar inicial
             if not verificar_inicial(ctx.author.id):
                 log.warning(f"⚠️ Usuario sin inicial: {ctx.author.id}")
                 await ctx.send("¡Bienvenido! Antes de tu aventura, elige tu Pokémon inicial con el comando `!inicial`.")
                 return False
-                
+            
+            # 4. Verificar energía/intentos
             datos_energia = await obtener_intentos(ctx.author.id)
+            # datos_energia suele ser (intentos, ultima_recarga)
             if datos_energia[0] <= 0:
                 log.warning(f"⚠️ Usuario sin intentos: {ctx.author.id}")
                 await ctx.send("❌ Has agotado tus intentos. Tus inciensos se recargan en 2 horas.")
                 return False
             
-            log.info(f"✅ Spawn validado: User {ctx.author.id} - Intentos: {datos_energia[0]}")
+            # 5. Todo validado
+            log.info(f"✅ Spawn validado: User {ctx.author.id} - Intentos disponibles: {datos_energia[0]}")
+            
+            # Opcional: Aquí podrías reservar el canal inmediatamente si quieres ser ultra-estricto
+            # gestor_spawn.canales_ocupados.add(ctx.channel.id) 
+            
             return True
+
         except Exception as e:
-            log.error(f"🚨 Error en check_spawn: {e}", exc_info=True)
+            log.error(f"🚨 Error crítico en check_spawn para {ctx.author.id}: {e}", exc_info=True)
+            await ctx.send("⚠️ Ocurrió un error al verificar tu estado. Intenta de nuevo en unos segundos.")
             return False
 
 # --- 4. CONFIGURACIÓN DE INICIALIZACIÓN ---

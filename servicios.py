@@ -100,24 +100,26 @@ def generar_mascara_hierba(width, height):
 # 1. Obtener datos de un Pokémon desde PokeAPI
 async def obtener_pokemon(session, nombre_o_id):
     try:
-        log.debug(f"🔍 Obteniendo datos de pokémon: {nombre_o_id}")
         url = f"https://pokeapi.co/api/v2/pokemon/{str(nombre_o_id).lower()}"
         async with session.get(url) as response:
             if response.status == 200:
                 data = await response.json()
-                log.debug(f"✅ Datos de pokémon obtenidos: {data['name']}")
-                # La especie contiene información sobre si es legendario
                 species_url = data['species']['url']
                 async with session.get(species_url) as s_resp:
                     if s_resp.status == 200:
                         species = await s_resp.json()
-                        log.info(f"✅ Pokémon cargado: {data['name']} - Legendario: {species.get('is_legendary', False)}")
+                        
+                        # --- AQUÍ ESTÁ EL DATO CRÍTICO ---
+                        # capture_rate viene en el objeto species de la PokeAPI
+                        rate = species.get('capture_rate', 45) # 45 es el estándar para raros
+                        
+                        log.info(f"✅ Pokémon {data['name']} cargado. Rate: {rate}")
+                        # Devolvemos el rate dentro del diccionario de datos
+                        data['capture_rate'] = rate 
                         return data, species
-            else:
-                log.warning(f"⚠️ Pokémon no encontrado: {nombre_o_id} (Status: {response.status})")
         return None, None
     except Exception as e:
-        log.error(f"🚨 Error al obtener pokémon {nombre_o_id}: {e}", exc_info=True)
+        log.error(f"🚨 Error al obtener datos: {e}")
         return None, None
 
 # 2. Obtener nombre por ID

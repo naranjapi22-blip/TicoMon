@@ -8,6 +8,7 @@ import datetime
 import logging
 from logger_config import log
 import os
+import gestor_spawn
 COOLDOWN_LANZAMIENTO = 10.0
 # Pequeña tolerancia: latencia de red / doble clic cerca del segundo 10
 COOLDOWN_GRACE = 0.25
@@ -237,16 +238,15 @@ import random
 from logger_config import log
 
 class BotonCaptura(discord.ui.View):
-    def __init__(self, pokemon_nombre, es_legendario, es_shiny):
+    def __init__(self, pokemon_data, es_legendario, es_shiny, capture_rate):
         super().__init__(timeout=300.0)
-        self.nombre = pokemon_nombre
+        self.nombre = pokemon_data['name']
         self.es_legendario = es_legendario
         self.es_shiny = es_shiny
-        self.intentos = 0
+        self.capture_rate = capture_rate # Valor R de la API
+        self.intentos_fallidos = 0
         self.max_intentos = 20
         self.user_cooldowns = {}
-        
-        # 🌟 CANDADO DE RAM: Evita colisiones cuando muchos hacen clic a la vez
         self.alguien_lo_atrapo = False
 
     def _segundos_restantes_cooldown(self, user_id, ahora):
@@ -256,10 +256,7 @@ class BotonCaptura(discord.ui.View):
         return COOLDOWN_LANZAMIENTO - (ahora - ultimo)
 
     async def on_timeout(self):
-        # Liberar el canal si el tiempo de la vista se agota
-        import gestor_spawn
         gestor_spawn.canales_ocupados.discard(self.message.channel.id)
-        
         try:
             await self.message.edit(content="💨 El encuentro expiró.", view=None)
         except:
@@ -267,7 +264,6 @@ class BotonCaptura(discord.ui.View):
 
     @discord.ui.button(label="¡Lanzar Pokéball!", style=discord.ButtonStyle.primary, emoji="🔴")
     async def boton_captura(self, interaction: discord.Interaction, button: discord.ui.Button):
-        # 1. Filtro ultrarrápido (RAM): ¿Alguien más ya lo atrapó milisegundos antes?
         if self.alguien_lo_atrapo:
             return await interaction.response.send_message("💨 ¡Llegaste tarde! Alguien más fue más rápido.", ephemeral=True)
 
@@ -275,92 +271,66 @@ class BotonCaptura(discord.ui.View):
             user_id = interaction.user.id
             ahora = discord.utils.utcnow().timestamp()
 
-            # 2. Filtro ultrarrápido (RAM): Cooldown de spam
             restante = self._segundos_restantes_cooldown(user_id, ahora)
             if restante > COOLDOWN_GRACE:
                 segundos = max(1, math.ceil(restante))
                 return await interaction.response.send_message(f"⏱️ Espera {segundos}s para volver a lanzar.", ephemeral=True)
 
             self.user_cooldowns[user_id] = ahora
-
-            # 🌟 DEFER INMEDIATO: Le decimos a Discord que estamos procesando ANTES de hacer cálculos. Adiós Error 10062.
             await interaction.response.defer(ephemeral=True)
 
-            # 3. Probabilidades y Bolas
+            # --- MATEMÁTICA DE CAPTURA AJUSTADA ---
             azar = random.random()
-            prob_base = 0.04 if (self.es_legendario or self.es_shiny) else 0.30
             
-            # Determinamos la bola según el azar
-            if azar < 0.005: prob_final, nombre_bola = 1.0, "Master Ball"
-            elif azar < 0.10: prob_final, nombre_bola = prob_base + 0.15, "Ultra Ball"
-            elif azar < 0.30: prob_final, nombre_bola = prob_base + 0.10, "Great Ball"
-            else: prob_final, nombre_bola = prob_base, "Pokéball"
+            # Asignación de bolas (Probabilidades ajustadas al ritmo grupal)
+            if azar < 0.01: bonus_bola, nombre_bola = 255.0, "Master Ball"
+            elif azar < 0.15: bonus_bola, nombre_bola = 2.0, "Ultra Ball"
+            elif azar < 0.40: bonus_bola, nombre_bola = 1.5, "Great Ball"
+            else: bonus_bola, nombre_bola = 1.0, "Pokéball"
 
-            # 4. Intento de Captura
+            # Fórmula: (R/255 * B) + (Intentos * 0.015)
+            prob_final = ((self.capture_rate / 255) * bonus_bola) + (self.intentos_fallidos * 0.015)
+            prob_final = min(prob_final, 0.95)
+
+            # --- INTENTO DE CAPTURA ---
             if random.random() < prob_final:
-                # 🌟 BLOQUEAMOS EL POKÉMON INMEDIATAMENTE
-                # Así, si la base de datos tarda 1 segundo en guardar, nadie más puede atraparlo en ese lapso.
                 self.alguien_lo_atrapo = True 
-                import gestor_spawn
-                import database
-
+                
                 try:
-                    # Guardamos la captura en la base de datos (Sin tocar la energía)
                     await database.guardar_captura(user_id, self.nombre, self.es_shiny, pokeball=nombre_bola)
                     gestor_spawn.canales_ocupados.discard(interaction.channel.id)
 
-                    # Registro en consola del éxito
-                    etiquetas = []
-                    if self.es_shiny: etiquetas.append("✨ SHINY")
-                    if self.es_legendario: etiquetas.append("👑 LEGENDARIO")
-                    tag_str = f"({' '.join(etiquetas)}) " if etiquetas else ""
-                    
-                    log.info(f"✅ [Captura Exitosa] {interaction.user.name} atrapó a {self.nombre.capitalize()} {tag_str}usando {nombre_bola}.")
+                    log.info(f"✅ [Captura] {interaction.user.name} atrapó a {self.nombre} con {nombre_bola}.")
 
                     await interaction.message.edit(
-                        content=f"🎉 {interaction.user.mention} fue el más rápido y capturó a **{self.nombre.capitalize()}** usando una **{nombre_bola}**!", 
+                        content=f"🎉 {interaction.user.mention} capturó a **{self.nombre.capitalize()}** usando una **{nombre_bola}**!", 
                         view=None
                     )
                     self.stop()
-
                 except Exception as db_error:
-                    # Si falla la base de datos, liberamos el candado para que él u otro pueda volver a intentarlo.
                     self.alguien_lo_atrapo = False
-                    log.error(f"Fallo de BD al guardar captura de {interaction.user.name}: {db_error}", exc_info=True)
-                    # Como usamos defer() arriba, la respuesta se envía con followup
-                    await interaction.followup.send("⚠️ Hubo un error guardando tu Pokémon. ¡Inténtalo de nuevo!", ephemeral=True)
+                    log.error(f"Error de BD: {db_error}", exc_info=True)
+                    await interaction.followup.send("⚠️ Error interno. ¡Inténtalo de nuevo!", ephemeral=True)
 
             else:
-                self.intentos += 1
-                if self.intentos >= self.max_intentos:
-                    self.alguien_lo_atrapo = True # Bloqueamos para que nadie más tire
-                    import gestor_spawn
+                self.intentos_fallidos += 1
+                if self.intentos_fallidos >= self.max_intentos:
+                    self.alguien_lo_atrapo = True
                     gestor_spawn.canales_ocupados.discard(interaction.channel.id)
-                    
-                    log.info(f"💨 [Escape] {self.nombre.capitalize()} huyó tras {self.max_intentos} intentos.")
                     await interaction.message.edit(content="💨 ¡El Pokémon escapó tras fallar demasiadas veces!", view=None)
                     self.stop()
                 else:
                     embed = interaction.message.embeds[0]
-                    embed.set_footer(text=f"Intentos: {self.intentos}/{self.max_intentos}")
+                    embed.set_footer(text=f"Intentos: {self.intentos_fallidos}/{self.max_intentos}")
                     await interaction.message.edit(embed=embed)
-                    await interaction.followup.send(f"❌ Lanzaste una {nombre_bola} pero fallaste.", ephemeral=True)
+                    await interaction.followup.send(f"❌ Lanzaste una {nombre_bola} pero fallaste. ¡El Pokémon está más cansado!", ephemeral=True)
 
-        except discord.NotFound:
-            # Captura silenciosa si el usuario tenía tanto lag que Discord mató la interacción de todas formas
-            log.warning(f"⚠️ [Latencia] Interacción de {interaction.user.name} expiró antes de procesarse.")
         except Exception as e:
-            # Captura general de errores inesperados
-            log.error(f"🚨 [Error BotonCaptura] Fallo crítico al procesar la captura de {interaction.user.name}: {e}", exc_info=True)
-            
-            try:
-                mensaje_error = "⚠️ Ocurrió un error interno al intentar atrapar al Pokémon."
-                if not interaction.response.is_done():
-                    await interaction.response.send_message(mensaje_error, ephemeral=True)
-                else:
-                    await interaction.followup.send(mensaje_error, ephemeral=True)
-            except discord.NotFound:
-                pass
+            log.error(f"🚨 Error crítico en captura: {e}", exc_info=True)
+            if not interaction.response.is_done():
+                await interaction.response.send_message("⚠️ Error inesperado.", ephemeral=True)
+            else:
+                await interaction.followup.send("⚠️ Error inesperado.", ephemeral=True)
 class InfoView(discord.ui.View):
     def __init__(self, user_id, data, versiones, mostrar_shiny): # Agregamos user_id
         super().__init__(timeout=60)
