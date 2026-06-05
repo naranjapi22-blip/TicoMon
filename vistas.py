@@ -7,6 +7,7 @@ import sqlite3
 import datetime
 import logging
 from logger_config import log
+import os
 COOLDOWN_LANZAMIENTO = 10.0
 # Pequeña tolerancia: latencia de red / doble clic cerca del segundo 10
 COOLDOWN_GRACE = 0.25
