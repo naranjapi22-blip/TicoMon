@@ -408,3 +408,13 @@ async def obtener_url_arte_oficial(session, poke_id):
     except Exception as e:
         log.error(f"🚨 Error al obtener URL de arte: {e}", exc_info=True)
     return None
+async def obtener_especie_desde_data(session, data):
+    """Obtiene el JSON de la especie dado el objeto data del Pokémon."""
+    try:
+        species_url = data['species']['url']
+        async with session.get(species_url) as resp:
+            if resp.status == 200:
+                return await resp.json()
+    except Exception as e:
+        log.error(f"🚨 Error al obtener especie: {e}")
+    return None

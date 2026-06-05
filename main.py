@@ -124,13 +124,21 @@ async def pokedex(ctx, *, filtro: str = None):
         elif filtro.lower() == "legendarios":
             ids_filtrados = []
             for id_p in ids_tenidos:
+                # 1. Obtenemos el objeto (resultado[0] es 'data', resultado[1] es 'species')
                 resultado = await servicios.obtener_pokemon(bot.session, id_p)
-                info = resultado[0] if isinstance(resultado, tuple) else resultado
                 
-                # Usamos el capture_rate como filtro.
-                # La mayoría de legendarios tienen capture_rate de 3.
-                # Si quieres ser más inclusivo, puedes usar <= 3
-                if info and info.get('capture_rate', 255) <= 3:
+                # 2. Si es tupla, extraemos los datos
+                if isinstance(resultado, tuple):
+                    data, species = resultado
+                else:
+                    # Si tu servicio solo devuelve un objeto, asume que es 'data' 
+                    # y tendrías que buscar species aparte
+                    data = resultado
+                    # A veces la especie está dentro de data['species'] en PokeAPI
+                    species = await servicios.obtener_especie_desde_data(bot.session, data)
+
+                # 3. FILTRO EXACTO: Usamos la misma lógica que tu comando exitoso
+                if species and species.get('is_legendary'):
                     ids_filtrados.append(id_p)
             
             if ids_filtrados:
