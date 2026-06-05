@@ -20,7 +20,7 @@ from vistas_batalla import SelectorBatalla
 import psycopg2
 import sqlite3
 from logger_config import log
-
+from dotenv import load_dotenv
 database.init_db()
 # 1. CONFIGURACIÓN
 load_dotenv()
