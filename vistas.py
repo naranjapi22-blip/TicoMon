@@ -287,6 +287,7 @@ class BotonCaptura(discord.ui.View):
             await interaction.response.defer(ephemeral=True)
 
             # --- MATEMÁTICA DE CAPTURA AJUSTADA ---
+            # --- MATEMÁTICA DE CAPTURA AJUSTADA ---
             azar = random.random()
             
             # Asignación de bolas
@@ -295,16 +296,21 @@ class BotonCaptura(discord.ui.View):
             elif azar < 0.40: bonus_bola, nombre_bola = 1.5, "Great Ball"
             else: bonus_bola, nombre_bola = 1.0, "Pokéball"
 
-            # --- CORRECCIÓN: LÓGICA DE MASTER BALL ---
+            # --- FACTOR DE DIFICULTAD SHINY ---
+            multiplicador_shiny = 0.5 if self.es_shiny else 1.0
+
+            # --- LÓGICA DE CAPTURA ---
             if nombre_bola == "Master Ball":
-                prob_final = 1.0  # 100% de éxito garantizado
+                prob_final = 1.0  # 100% éxito garantizado
             else:
-                # La fórmula de dificultad normal para las otras bolas
-                FACTOR_DIFICULTAD = 0.7 
+                FACTOR_DIFICULTAD = 0.5 
                 FACTOR_DESGASTE = 0.008
-                prob_base = ((self.capture_rate / 255) * bonus_bola) * FACTOR_DIFICULTAD
+                
+                # APLICAMOS EL multiplicador_shiny AQUÍ:
+                prob_base = (((self.capture_rate / 255) * bonus_bola) * FACTOR_DIFICULTAD) * multiplicador_shiny
+                
                 prob_final = prob_base + (self.intentos_fallidos * FACTOR_DESGASTE)
-                prob_final = min(prob_final, 0.95) # El tope sigue aplicando solo a las normales
+                prob_final = min(prob_final, 0.95)
 
             # --- INTENTO DE CAPTURA ---
             if random.random() < prob_final:
