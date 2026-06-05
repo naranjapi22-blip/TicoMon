@@ -127,12 +127,10 @@ async def pokedex(ctx, *, filtro: str = None):
                 resultado = await servicios.obtener_pokemon(bot.session, id_p)
                 info = resultado[0] if isinstance(resultado, tuple) else resultado
                 
-                # --- LÍNEA DE DEBUG: Mira qué sale en tu consola ---
-                print(f"DEBUG: Info para {id_p}: {info.keys() if isinstance(info, dict) else info}")
-                
-                # Verificamos si alguna de estas llaves indica que es legendario
-                # (A veces la API lo llama 'legendary', 'is_legendary', o viene dentro de 'species')
-                if info and (info.get('is_legendary') or info.get('legendary')):
+                # Usamos el capture_rate como filtro.
+                # La mayoría de legendarios tienen capture_rate de 3.
+                # Si quieres ser más inclusivo, puedes usar <= 3
+                if info and info.get('capture_rate', 255) <= 3:
                     ids_filtrados.append(id_p)
             
             if ids_filtrados:
