@@ -17,6 +17,8 @@ import vistas_combate
 from vistas_combate import SelectorPaginado, VistaCombate
 import vistas_batalla
 from vistas_batalla import SelectorBatalla
+import vistas_equipo
+from vistas_equipo import VistaEquipo
 import psycopg2
 import sqlite3
 from logger_config import log
@@ -375,8 +377,9 @@ async def comandos(ctx):
     embed.add_field(name="!cooldowns", value="Revisa tu energía de captura.", inline=False)
     embed.add_field(name="!info pokemon", value="Te da información del pokemon que tengas", inline=False)
     embed.add_field(name="!destacar", value="Pones tu pokemon en tu perfil(poner shiny si lo tienes)", inline=False)
+    embed.add_field(name="!equipo", value="Gestiona tu equipo de hasta 9 Pokémon.", inline=False)
     embed.add_field(name="!combate @usuario", value="Duelo (selector clásico).", inline=False)
-    embed.add_field(name="!batalla @usuario", value="Duelo (selector con búsqueda y miniaturas).", inline=False)
+    embed.add_field(name="!batalla @usuario", value="Duelo con tu equipo guardado (selector privado).", inline=False)
 
     await ctx.send(embed=embed)
 @bot.command(name="resetintentos")
@@ -451,12 +454,26 @@ async def _validar_retador(ctx, oponente: discord.Member) -> bool:
     return True
 
 
-async def _obtener_equipos_duelo(ctx, oponente: discord.Member, crear_selector, *, privado=False):
-    lista1 = database.obtener_lista_capturas(ctx.author.id)
-    lista2 = database.obtener_lista_capturas(oponente.id)
+async def _obtener_equipos_duelo(
+    ctx,
+    oponente: discord.Member,
+    crear_selector,
+    *,
+    privado=False,
+    fuente_lista=database.obtener_lista_capturas,
+    mensaje_minimo="❌ Ambos jugadores necesitan al menos 3 Pokémon capturados.",
+    resolver_seleccion=None,
+):
+    lista1 = fuente_lista(ctx.author.id)
+    lista2 = fuente_lista(oponente.id)
 
-    if len(lista1) < 3 or len(lista2) < 3:
-        await ctx.send("❌ Ambos jugadores necesitan al menos 3 Pokémon capturados.")
+    def _conteo(datos):
+        if isinstance(datos, dict):
+            return len(datos.get("valores", []))
+        return len(datos)
+
+    if _conteo(lista1) < 3 or _conteo(lista2) < 3:
+        await ctx.send(mensaje_minimo)
         return None, None
 
     if not hasattr(bot, "session") or bot.session.closed:
@@ -486,7 +503,10 @@ async def _obtener_equipos_duelo(ctx, oponente: discord.Member, crear_selector, 
             await msg.delete()
         except discord.HTTPException:
             pass
-        return view.seleccionados
+        seleccion = view.seleccionados
+        if resolver_seleccion:
+            return resolver_seleccion(jugador, seleccion)
+        return seleccion
 
     equipo1 = await elegir_equipo(ctx.author, lista1)
     if len(equipo1) < 3:
@@ -539,8 +559,27 @@ async def iniciar_batalla(ctx, oponente: discord.Member):
         oponente,
         lambda jugador, lista: SelectorBatalla(jugador, lista, bot.session),
         privado=True,
+        fuente_lista=database.obtener_equipo_selector,
+        mensaje_minimo="❌ Necesitas al menos 3 Pokémon en tu equipo. Usa `!equipo`.",
+        resolver_seleccion=lambda jugador, ids: database.nombres_desde_captura_ids(
+            jugador.id, ids
+        ),
     )
     if not equipos[0]:
         return
     await _iniciar_arena(ctx, oponente, equipos[0], equipos[1])
+
+
+@bot.command(name="equipo")
+@canal_restringido()
+async def equipo(ctx):
+    """Gestiona tu equipo de hasta 9 Pokémon."""
+    if not hasattr(bot, "session") or bot.session.closed:
+        bot.session = aiohttp.ClientSession()
+    view = VistaEquipo(ctx.author, bot.session)
+    embed = await view.crear_embed()
+    msg = await ctx.send(embed=embed, view=view)
+    view.message = msg
+
+
 bot.run(TOKEN)
