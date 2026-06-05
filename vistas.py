@@ -178,15 +178,20 @@ class SpawnSelectionView(discord.ui.View):
 
     # --- MANEJO DE LA SELECCIÓN ---
 # --- MANEJO DE LA SELECCIÓN ---
-    async def manejar_seleccion(self, interaction: discord.Interaction, indice: int):
+async def manejar_seleccion(self, interaction: discord.Interaction, indice: int):
         self.stop()
         for child in self.children:
             child.disabled = True
         
+        # 'data' es el JSON del pokemon, 'species' es el JSON de la especie
         data, species = self.data_pokes[indice]
         
         es_shiny = (random.randint(1, 50) == 1)
         es_legendario = species.get('is_legendary', False)
+        
+        # --- AQUÍ OBTENEMOS EL CAPTURE_RATE ---
+        # Si la API no lo tiene, por defecto ponemos 45 (estándar)
+        capture_rate = species.get('capture_rate', 45)
         
         etiquetas = []
         if es_shiny: etiquetas.append("✨ SHINY")
@@ -199,19 +204,22 @@ class SpawnSelectionView(discord.ui.View):
         color_embed = discord.Color.gold() if (es_shiny or es_legendario) else discord.Color.green()
         embed_revelado = discord.Embed(title=titulo_revelado, color=color_embed)
         
-        # --- MODIFICACIÓN AQUÍ ---
-        # Accedemos a 'official-artwork' para obtener la imagen de alta resolución
         if es_shiny:
             url_imagen = data['sprites']['other']['official-artwork']['front_shiny']
         else:
             url_imagen = data['sprites']['other']['official-artwork']['front_default']
-        # --------------------------
         
         embed_revelado.set_image(url=url_imagen)
-        embed_revelado.set_footer(text="Intentos fallidos: 0/10")
+        embed_revelado.set_footer(text="Intentos fallidos: 0/20")
         
-        # Instanciamos la vista de captura original
-        view_captura = BotonCaptura(data['name'], es_legendario, es_shiny)
+        # --- AQUÍ ESTÁ LA CORRECCIÓN ---
+        # Pasamos el capture_rate que acabamos de extraer
+        view_captura = BotonCaptura(
+            pokemon_data=data, 
+            es_legendario=es_legendario, 
+            es_shiny=es_shiny, 
+            capture_rate=capture_rate
+        )
         
         await interaction.response.edit_message(embed=embed_revelado, attachments=[], view=view_captura)
 
