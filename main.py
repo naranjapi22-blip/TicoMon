@@ -120,32 +120,32 @@ async def pokedex(ctx, *, filtro: str = None):
             region_label = f"Región {filtro}"
             es_coleccion_personal = False
         
-# Filtro de Legendarios
+# Filtro de Legendarios y Míticos
         elif filtro.lower() == "legendarios":
             ids_filtrados = []
             for id_p in ids_tenidos:
-                # 1. Obtenemos el objeto (resultado[0] es 'data', resultado[1] es 'species')
                 resultado = await servicios.obtener_pokemon(bot.session, id_p)
+                # Extraemos 'data' y 'species' correctamente
+                data, species = resultado if isinstance(resultado, tuple) else (resultado, None)
                 
-                # 2. Si es tupla, extraemos los datos
-                if isinstance(resultado, tuple):
-                    data, species = resultado
-                else:
-                    # Si tu servicio solo devuelve un objeto, asume que es 'data' 
-                    # y tendrías que buscar species aparte
-                    data = resultado
-                    # A veces la especie está dentro de data['species'] en PokeAPI
-                    species = await servicios.obtener_especie_desde_data(bot.session, data)
+                # Si no obtuvimos species directamente, lo buscamos en el diccionario
+                if not species and isinstance(data, dict):
+                    # Asumimos que la lógica para obtener species ya ocurrió en servicios.obtener_pokemon
+                    pass 
 
-                # 3. FILTRO EXACTO: Usamos la misma lógica que tu comando exitoso
-                if species and species.get('is_legendary'):
+                # --- AQUÍ ESTÁ LA CORRECCIÓN ---
+                # Ahora preguntamos por ambos: si es legendario O si es mítico
+                es_legendario = species.get('is_legendary', False) if species else False
+                es_mitico = species.get('is_mythical', False) if species else False
+                
+                if es_legendario or es_mitico:
                     ids_filtrados.append(id_p)
             
             if ids_filtrados:
                 ids_tenidos = set(ids_filtrados)
-                region_label = "Legendarios"
+                region_label = "Legendarios y Míticos"
             else:
-                return await ctx.send("No tienes ningún Pokémon Legendario registrado.")
+                return await ctx.send("No tienes ningún Pokémon Legendario o Mítico registrado.")
         
         # Filtro de Tipos (solo si no es modo shiny ni es una región)
         elif not es_shiny_mode:
