@@ -302,8 +302,8 @@ class BotonCaptura(discord.ui.View):
                 await interaction.message.edit(content="💨 ¡El tiempo se ha agotado! El Pokémon ha huido.", view=None)
                 return self.stop()
 
-            # 2. Huída aleatoria (Periodo de gracia de 10 tiros, factor 0.003)
-            if self.intentos_fallidos > 10:
+            # 2. Huída aleatoria (Periodo de gracia de 20 tiros, factor 0.003)
+            if self.intentos_fallidos > 20:
                 if random.random() < (self.intentos_fallidos * 0.003):
                     self.alguien_lo_atrapo = True
                     gestor_spawn.canales_ocupados.discard(interaction.channel.id)
