@@ -238,11 +238,8 @@ class PuertaSeleccionPrivada(discord.ui.View):
         self.seleccionados: list[str] = []
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        # El check debe ser rápido y solo retornar True o False
         if interaction.user.id != self.jugador.id:
-            await interaction.response.send_message(
-                "❌ Solo el jugador retado puede usar este botón.",
-                ephemeral=True,
-            )
             return False
         return True
 
@@ -251,28 +248,38 @@ class PuertaSeleccionPrivada(discord.ui.View):
         style=discord.ButtonStyle.primary,
     )
     async def abrir_selector(self, interaction: discord.Interaction, button: discord.ui.Button):
+        # 1. Diferimos la respuesta inmediatamente para evitar el error 10062
+        await interaction.response.defer(ephemeral=True)
+
         button.disabled = True
+        # Actualizamos el mensaje original para deshabilitar el botón
+        await interaction.edit_original_response(view=self)
+
         selector = self.crear_selector(self.jugador, self.lista)
 
+        # 2. Usamos followup para enviar el contenido privado tras el defer
         if isinstance(selector, SelectorBatalla):
             embed = await selector.crear_embed()
-            await interaction.response.send_message(
+            await interaction.followup.send(
                 embed=embed,
                 view=selector,
                 ephemeral=True,
             )
         else:
-            await interaction.response.send_message(
+            await interaction.followup.send(
                 "⚔️ Elige tus 3 Pokémon (solo tú ves este mensaje):",
                 view=selector,
                 ephemeral=True,
             )
 
         selector.message = await interaction.original_response()
+        
+        # 3. Esperamos a que el usuario termine su selección
         await selector.wait()
         self.seleccionados = list(selector.seleccionados)
         self.stop()
 
+        # 4. Confirmación final
         if len(self.seleccionados) >= 3:
             await interaction.followup.send(
                 "✅ Equipo registrado. Nadie más pudo ver tus elecciones.",
