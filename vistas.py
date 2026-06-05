@@ -1,16 +1,16 @@
 import discord
-import servicios
 import random
 import math
+import logging
 import database
 import sqlite3
 import datetime
-import logging
-from logger_config import log
 import os
 import gestor_spawn
+import servicios
+from logger_config import log
+
 COOLDOWN_LANZAMIENTO = 10.0
-# Pequeña tolerancia: latencia de red / doble clic cerca del segundo 10
 COOLDOWN_GRACE = 0.25
 
 INICIALES = [
@@ -24,7 +24,6 @@ INICIALES = [
     {"nombre": "Grookey", "id": 810}, {"nombre": "Scorbunny", "id": 813}, {"nombre": "Sobble", "id": 816},
     {"nombre": "Sprigatito", "id": 906}, {"nombre": "Fuecoco", "id": 909}, {"nombre": "Quaxly", "id": 912}
 ]
-
 # --- CLASE PARA EL MENÚ DE TIPOS ---
 class TipoSelect(discord.ui.Select):
     def __init__(self, tenidos):
@@ -177,8 +176,8 @@ class SpawnSelectionView(discord.ui.View):
         return True # Si es el dueño, lo deja pasar con normalidad
 
     # --- MANEJO DE LA SELECCIÓN ---
-# --- MANEJO DE LA SELECCIÓN ---
-async def manejar_seleccion(self, interaction: discord.Interaction, indice: int):
+    # --- MANEJO DE LA SELECCIÓN ---
+    async def manejar_seleccion(self, interaction: discord.Interaction, indice: int):
         self.stop()
         for child in self.children:
             child.disabled = True
