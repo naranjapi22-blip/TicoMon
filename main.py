@@ -122,12 +122,14 @@ async def pokedex(ctx, *, filtro: str = None):
         
 # Filtro de Legendarios
         elif filtro.lower() == "legendarios":
-            # Filtramos localmente comparando con nuestra base de datos o lógica interna
             ids_filtrados = []
             for id_p in ids_tenidos:
-                # Obtenemos la info del Pokémon mediante el servicio que ya tienes
-                info = await servicios.obtener_info_pokemon(bot.session, id_p)
-                if info and info.get('is_legendary', True): # Ajusta 'is_legendary' según tu API
+                # Usamos la función que existe en servicios: obtener_pokemon
+                info = await servicios.obtener_pokemon(bot.session, id_p)
+                
+                # Verificamos si la clave es_legendary existe y es True
+                # Usamos False por defecto para que solo los que tengan la marca pasen el filtro
+                if info and info.get('is_legendary', False):
                     ids_filtrados.append(id_p)
             
             if ids_filtrados:
