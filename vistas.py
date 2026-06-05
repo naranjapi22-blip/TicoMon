@@ -296,7 +296,7 @@ class BotonCaptura(discord.ui.View):
             else: bonus_bola, nombre_bola = 1.0, "Pokéball"
 
             # Fórmula: (R/255 * B) + (Intentos * 0.015)
-            prob_final = ((self.capture_rate / 255) * bonus_bola) + (self.intentos_fallidos * 0.015)
+            prob_final = ((self.capture_rate / 255) * bonus_bola) + (self.intentos_fallidos * 0.008)
             prob_final = min(prob_final, 0.95)
 
             # --- INTENTO DE CAPTURA ---
