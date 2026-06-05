@@ -209,7 +209,7 @@ class SpawnSelectionView(discord.ui.View):
             url_imagen = data['sprites']['other']['official-artwork']['front_default']
         
         embed_revelado.set_image(url=url_imagen)
-        embed_revelado.set_footer(text="Intentos fallidos: 0/20")
+        embed_revelado.set_footer(text="Intentos fallidos: 0/30")
         
         # --- AQUÍ ESTÁ LA CORRECCIÓN ---
         # Pasamos el capture_rate que acabamos de extraer
@@ -252,7 +252,7 @@ class BotonCaptura(discord.ui.View):
         self.es_shiny = es_shiny
         self.capture_rate = capture_rate # Valor R de la API
         self.intentos_fallidos = 0
-        self.max_intentos = 20
+        self.max_intentos = 30
         self.user_cooldowns = {}
         self.alguien_lo_atrapo = False
 
@@ -297,14 +297,14 @@ class BotonCaptura(discord.ui.View):
             else: bonus_bola, nombre_bola = 1.0, "Pokéball"
 
             # --- FACTOR DE DIFICULTAD SHINY ---
-            multiplicador_shiny = 0.5 if self.es_shiny else 1.0
+            multiplicador_shiny = 0.1 if self.es_shiny else 1.0
 
             # --- LÓGICA DE CAPTURA ---
             if nombre_bola == "Master Ball":
                 prob_final = 1.0  # 100% éxito garantizado
             else:
-                FACTOR_DIFICULTAD = 0.5 
-                FACTOR_DESGASTE = 0.008
+                FACTOR_DIFICULTAD = 0.2 
+                FACTOR_DESGASTE = 0.007
                 
                 # APLICAMOS EL multiplicador_shiny AQUÍ:
                 prob_base = (((self.capture_rate / 255) * bonus_bola) * FACTOR_DIFICULTAD) * multiplicador_shiny
