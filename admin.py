@@ -23,177 +23,180 @@ REGIONES = {
 
 def setup(bot):
     
-    # --- COMANDO SPAWNSHINY ---
+# --- COMANDO SPAWNSHINY CORREGIDO ---
     @bot.command(name="spawnshiny")
     @commands.has_permissions(administrator=True)
     async def spawnshiny(ctx):
         """Fuerza la aparición de un Shiny con imagen: !spawnshiny"""
         try:
-            log.info(f"🎯 [Admin] Comando spawnshiny ejecutado por {ctx.author} (ID: {ctx.author.id})")
-            
+            log.info(f"🎯 [Admin] Comando spawnshiny ejecutado por {ctx.author}")
             random_id = random.randint(1, 1025)
-            log.debug(f"Pokémon ID seleccionado: {random_id}")
             
-            async with aiohttp.ClientSession() as session:
-                async with session.get(f"https://pokeapi.co/api/v2/pokemon/{random_id}") as response:
-                    if response.status == 200:
-                        data = await response.json()
-                        nombre = data['name']
-                        url_imagen = data['sprites']['other']['official-artwork']['front_shiny']
-                        log.info(f"✅ Shiny generado: {nombre.capitalize()}")
-                    else:
-                        nombre = "pikachu"
-                        url_imagen = ""
-                        log.warning(f"❌ Error en API para ID {random_id}, usando default: pikachu")
+            # Usamos servicios.obtener_pokemon para obtener data + species + capture_rate
+            data, species = await servicios.obtener_pokemon(ctx.bot.session, random_id)
+            
+            if not data:
+                return await ctx.send("❌ Error al obtener datos de la API.")
+            
+            nombre = data['name']
+            url_imagen = data['sprites']['other']['official-artwork']['front_shiny']
+            # Extraemos el rate desde species (la función de servicios ya lo prepara)
+            rate = species.get('capture_rate', 45)
             
             embed = discord.Embed(
                 title="✨ ¡Ha aparecido un Pokémon SHINY salvaje!",
-                description=f"Un **{nombre.capitalize()} ✨** salvaje apareció de la nada.",
+                description=f"Un **{nombre.capitalize()} ✨** salvaje apareció.",
                 color=discord.Color.gold()
             )
-            if url_imagen:
-                embed.set_image(url=url_imagen)
+            embed.set_image(url=url_imagen)
             
-            view = BotonCaptura(nombre, False, True)
+            # PASAMOS LOS 4 ARGUMENTOS REQUERIDOS:
+            # 1. data, 2. es_legendario, 3. es_shiny=True, 4. rate
+            view = BotonCaptura(data, species.get('is_legendary', False), True, rate)
+            
             await ctx.send(embed=embed, view=view)
-            log.info(f"✅ Embed de shiny enviado exitosamente")
+            log.info(f"✅ Embed de shiny enviado exitosamente para {nombre}")
             
         except Exception as e:
             log.error(f"🚨 Error en comando spawnshiny: {e}", exc_info=True)
             await ctx.send("❌ Hubo un error al generar el Shiny.")
 
-    # --- COMANDO SPAWNLEGENDARY ---
+# --- COMANDO SPAWNLEGENDARY CORREGIDO ---
     @bot.command(name="spawnlegendary")
     @commands.has_permissions(administrator=True)
     async def spawnlegendary(ctx):
         """Fuerza la aparición de un Legendario: !spawnlegendary"""
         try:
-            log.info(f"🎯 [Admin] Comando spawnlegendary ejecutado por {ctx.author} (ID: {ctx.author.id})")
+            log.info(f"🎯 [Admin] Comando spawnlegendary por {ctx.author}")
             
-            async with aiohttp.ClientSession() as session:
-                es_legendario = False
-                random_id = 0
-                intentos = 0
-                while not es_legendario and intentos < 50:
-                    random_id = random.randint(1, 1025)
-                    async with session.get(f"https://pokeapi.co/api/v2/pokemon-species/{random_id}") as response:
-                        if response.status == 200:
-                            data_species = await response.json()
-                            es_legendario = data_species['is_legendary']
-                            intentos += 1
-                
-                if not es_legendario:
-                    log.warning(f"⚠️ No se encontró legendario después de {intentos} intentos")
-                
-                log.debug(f"Legendario encontrado: ID {random_id}")
-                
-                async with session.get(f"https://pokeapi.co/api/v2/pokemon/{random_id}") as response:
-                    data = await response.json()
-                    nombre = data['name']
-                    url_imagen = data['sprites']['other']['official-artwork']['front_default']
-                    log.info(f"✅ Legendario obtenido: {nombre.capitalize()}")
-
+            # Buscamos un legendario usando la función centralizada
+            data, species = None, None
+            while not species or not species.get('is_legendary'):
+                random_id = random.randint(1, 1025)
+                data, species = await servicios.obtener_pokemon(ctx.bot.session, random_id)
+            
+            # Extraemos los datos necesarios
+            nombre = data['name']
+            url_imagen = data['sprites']['other']['official-artwork']['front_default']
+            rate = species.get('capture_rate', 3) # Los legendarios suelen tener rate 3
+            
             embed = discord.Embed(
                 title="👑 ¡Ha aparecido un Pokémon LEGENDARIO salvaje!",
                 description=f"Un **{nombre.capitalize()}** legendario ha descendido al servidor.",
                 color=discord.Color.gold()
             )
+            embed.set_image(url=url_imagen)
             
-            if url_imagen:
-                embed.set_image(url=url_imagen)
+            # CORRECCIÓN: Pasamos el objeto 'data' completo y el 'capture_rate'
+            view = BotonCaptura(
+                pokemon_data=data, 
+                es_legendario=True, 
+                es_shiny=False, 
+                capture_rate=rate
+            )
             
-            view = BotonCaptura(nombre, True, False)
             await ctx.send(embed=embed, view=view)
-            log.info(f"✅ Embed legendario enviado exitosamente")
+            log.info(f"✅ Embed legendario enviado: {nombre}")
             
         except Exception as e:
             log.error(f"🚨 Error en comando spawnlegendary: {e}", exc_info=True)
             await ctx.send("❌ Hubo un error al generar el legendario.")
 
-    # --- COMANDO SPAWNREGION (Sin Legendarios) ---
+# --- COMANDO SPAWNREGION CORREGIDO ---
     @bot.command(name="spawnregion")
     @commands.has_permissions(administrator=True)
     async def spawnregion(ctx, region: str = None):
         """Hace aparecer un Pokémon de una región específica (No legendario): !spawnregion <region>"""
         try:
             region = region.lower() if region else random.choice(list(REGIONES.keys()))
-            log.info(f"🎯 [Admin] Comando spawnregion ejecutado por {ctx.author} (ID: {ctx.author.id}) - Región: {region}")
+            log.info(f"🎯 [Admin] Comando spawnregion ejecutado por {ctx.author} - Región: {region}")
             
             if region not in REGIONES:
-                log.warning(f"⚠️ Región inválida solicitada: {region}")
                 return await ctx.send(f"❌ Región no válida. Usa: {', '.join(REGIONES.keys())}")
 
-            async with aiohttp.ClientSession() as session:
-                es_legendario = True
-                nombre, url_imagen = "", ""
-                intentos = 0
-                while es_legendario and intentos < 50:
-                    rango = REGIONES[region]
-                    random_id = random.randint(rango[0], rango[1])
-                    # Verificamos si es legendario
-                    async with session.get(f"https://pokeapi.co/api/v2/pokemon-species/{random_id}") as res_sp:
-                        if res_sp.status == 200:
-                            data_sp = await res_sp.json()
-                            es_legendario = data_sp['is_legendary']
-                    
-                    if not es_legendario:
-                        async with session.get(f"https://pokeapi.co/api/v2/pokemon/{random_id}") as res_pk:
-                            data = await res_pk.json()
-                            nombre = data['name']
-                            url_imagen = data['sprites']['other']['official-artwork']['front_default']
-                            log.info(f"✅ Pokémon de región {region} obtenido: {nombre.capitalize()}")
-                    intentos += 1
+            data, species = None, None
+            es_legendario = True
             
-            embed = discord.Embed(title=f"🌍 ¡Un Pokémon de {region.capitalize()} ha aparecido!", description=f"Un **{nombre.capitalize()}** salvaje apareció.", color=discord.Color.green())
+            # FILTRO: Buscamos hasta encontrar uno que no sea legendario
+            while es_legendario:
+                rango = REGIONES[region]
+                random_id = random.randint(rango[0], rango[1])
+                data, species = await servicios.obtener_pokemon(ctx.bot.session, random_id)
+                if data and species:
+                    es_legendario = species.get('is_legendary', False)
+            
+            nombre = data['name']
+            url_imagen = data['sprites']['other']['official-artwork']['front_default']
+            rate = species.get('capture_rate', 45)
+            
+            embed = discord.Embed(
+                title=f"🌍 ¡Un Pokémon de {region.capitalize()} ha aparecido!", 
+                description=f"Un **{nombre.capitalize()}** salvaje apareció.", 
+                color=discord.Color.green()
+            )
             embed.set_image(url=url_imagen)
-            await ctx.send(embed=embed, view=BotonCaptura(nombre, False, False))
-            log.info(f"✅ Embed de región enviado exitosamente")
+            
+            # CORRECCIÓN: Pasamos el objeto completo 'data' y el 'rate' extraído
+            view = BotonCaptura(
+                pokemon_data=data, 
+                es_legendario=False, 
+                es_shiny=False, 
+                capture_rate=rate
+            )
+            
+            await ctx.send(embed=embed, view=view)
+            log.info(f"✅ Embed de región enviado exitosamente: {nombre}")
             
         except Exception as e:
             log.error(f"🚨 Error en comando spawnregion: {e}", exc_info=True)
             await ctx.send("❌ Hubo un error al generar el Pokémon regional.")
 
-    # --- COMANDO SPAWNTYPE (Sin Legendarios) ---
+# --- COMANDO SPAWNTYPE CORREGIDO ---
     @bot.command(name="spawntype")
     @commands.has_permissions(administrator=True)
     async def spawntype(ctx, tipo: str = None):
         """Aparece un Pokémon de un tipo específico (No legendario): !spawntype <tipo>"""
         try:
-            if not tipo:
-                log.warning(f"⚠️ Comando spawntype sin tipo especificado")
-                return await ctx.send("❌ Debes especificar un tipo (ej: !spawntype fuego).")
-            
-            log.info(f"🎯 [Admin] Comando spawntype ejecutado por {ctx.author} (ID: {ctx.author.id}) - Tipo: {tipo}")
+            if not tipo: return await ctx.send("❌ Debes especificar un tipo (ej: !spawntype fuego).")
             
             tipo_api = TRADUCCIONES_TIPOS.get(tipo.lower())
-            if not tipo_api:
-                log.warning(f"⚠️ Tipo inválido solicitado: {tipo}")
-                return await ctx.send("❌ Tipo no encontrado.")
+            if not tipo_api: return await ctx.send("❌ Tipo no encontrado.")
 
-            async with aiohttp.ClientSession() as session:
-                async with session.get(f"https://pokeapi.co/api/v2/type/{tipo_api}") as res:
-                    data_tipo = await res.json()
-                    is_leg = True
-                    intentos = 0
-                    while is_leg and intentos < 50:
-                        poke_info = random.choice(data_tipo['pokemon'])
-                        async with session.get(poke_info['pokemon']['url']) as res_pk:
-                            data = await res_pk.json()
-                            poke_id = data['id']
-                            # Verificar si es legendario
-                            async with session.get(f"https://pokeapi.co/api/v2/pokemon-species/{poke_id}") as res_sp:
-                                data_sp = await res_sp.json()
-                                is_leg = data_sp['is_legendary']
-                                if not is_leg:
-                                    nombre = data['name']
-                                    url_imagen = data['sprites']['other']['official-artwork']['front_default']
-                                    log.info(f"✅ Pokémon de tipo {tipo} obtenido: {nombre.capitalize()}")
-                        intentos += 1
+            log.info(f"🎯 [Admin] Comando spawntype ejecutado por {ctx.author} - Tipo: {tipo}")
 
-            embed = discord.Embed(title=f"🔥 ¡Un Pokémon de tipo {tipo.capitalize()}!", description=f"Un **{nombre.capitalize()}** salvaje apareció.", color=discord.Color.red())
-            embed.set_image(url=url_imagen)
-            await ctx.send(embed=embed, view=BotonCaptura(nombre, False, False))
-            log.info(f"✅ Embed de tipo enviado exitosamente")
+            # Obtenemos la lista de Pokémon del tipo
+            async with ctx.bot.session.get(f"https://pokeapi.co/api/v2/type/{tipo_api}") as res:
+                data_tipo = await res.json()
+                
+                data, species = None, None
+                is_leg = True
+                
+                # FILTRO: Buscamos hasta encontrar uno que no sea legendario
+                while is_leg:
+                    poke_info = random.choice(data_tipo['pokemon'])
+                    poke_id = poke_info['pokemon']['url'].split('/')[-2]
+                    data, species = await servicios.obtener_pokemon(ctx.bot.session, poke_id)
+                    is_leg = species.get('is_legendary', False)
+
+            rate = species.get('capture_rate', 45)
+            
+            embed = discord.Embed(
+                title=f"🔥 ¡Un Pokémon de tipo {tipo.capitalize()}!", 
+                description=f"Un **{data['name'].capitalize()}** salvaje apareció.", 
+                color=discord.Color.red()
+            )
+            embed.set_image(url=data['sprites']['other']['official-artwork']['front_default'])
+            
+            # CORRECCIÓN: Pasamos el objeto 'data' y el 'rate' extraído
+            view = BotonCaptura(
+                pokemon_data=data, 
+                es_legendario=False, 
+                es_shiny=False, 
+                capture_rate=rate
+            )
+            
+            await ctx.send(embed=embed, view=view)
+            log.info(f"✅ Embed de tipo enviado exitosamente: {data['name']}")
             
         except Exception as e:
             log.error(f"🚨 Error en comando spawntype: {e}", exc_info=True)
