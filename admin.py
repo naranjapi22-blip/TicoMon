@@ -4,6 +4,7 @@ import random
 import aiohttp
 from vistas import BotonCaptura
 from logger_config import log
+import servicios
 
 # DICCIONARIO PARA TRADUCCIONES DE TIPOS
 TRADUCCIONES_TIPOS = {
