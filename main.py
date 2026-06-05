@@ -88,11 +88,11 @@ async def on_command_error(ctx, error):
 @bot.command()
 @canal_restringido()
 async def pokedex(ctx, *, filtro: str = None):
-    
     """
     Uso: 
     !pokedex -> Muestra tu colección completa.
     !pokedex shiny -> Muestra tu colección de shinys.
+    !pokedex legendarios -> Muestra tus Pokémon legendarios.
     !pokedex [1-9] -> Muestra la pokedex regional.
     !pokedex [tipo] -> Filtra tu colección por tipo.
     """
@@ -114,12 +114,23 @@ async def pokedex(ctx, *, filtro: str = None):
     es_coleccion_personal = True
 
     if filtro:
+        # Filtro de Regiones
         if filtro.isdigit() and filtro in REGIONES:
             inicio, fin = REGIONES[filtro]
             region_label = f"Región {filtro}"
             es_coleccion_personal = False
+        
+        # Filtro de Legendarios
+        elif filtro.lower() == "legendarios":
+            ids_filtrados = await servicios.filtrar_capturas_por_categoria(bot.session, "legendary", ids_tenidos)
+            if ids_filtrados:
+                ids_tenidos = set(ids_filtrados)
+                region_label = "Legendarios"
+            else:
+                return await ctx.send("No tienes ningún Pokémon Legendario registrado.")
+        
+        # Filtro de Tipos (solo si no es modo shiny ni es una región)
         elif not es_shiny_mode:
-            # Si no es región ni 'shiny', intentamos filtrar por tipo
             ids_filtrados = await servicios.filtrar_capturas_por_tipo(bot.session, filtro, ids_tenidos)
             if ids_filtrados:
                 ids_tenidos = set(ids_filtrados)
