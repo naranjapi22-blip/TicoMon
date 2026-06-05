@@ -67,6 +67,7 @@ def init_db():
         
         conn.commit()
         conn.close()
+        init_equipo_db()
         log.info("✅ Base de datos inicializada correctamente")
         
     except Exception as e:
@@ -278,3 +279,401 @@ def obtener_lista_capturas(user_id):
     finally:
         if conn:
             conn.close()
+
+
+class EquipoError(Exception):
+    """Error de validación al modificar el equipo del jugador."""
+
+
+def _equipo_existe(cursor) -> bool:
+    if DATABASE_URL:
+        cursor.execute(
+            "SELECT 1 FROM information_schema.tables WHERE table_name = 'equipo'"
+        )
+    else:
+        cursor.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='equipo'"
+        )
+    return cursor.fetchone() is not None
+
+
+def _equipo_tiene_columna(cursor, columna: str) -> bool:
+    if DATABASE_URL:
+        cursor.execute(
+            """
+            SELECT 1 FROM information_schema.columns
+            WHERE table_name = 'equipo' AND column_name = %s
+            """,
+            (columna,),
+        )
+    else:
+        cursor.execute("PRAGMA table_info(equipo)")
+        return any(row[1] == columna for row in cursor.fetchall())
+    return cursor.fetchone() is not None
+
+
+def _crear_tabla_equipo(cursor):
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS equipo (
+            user_id BIGINT NOT NULL,
+            slot INTEGER NOT NULL CHECK (slot BETWEEN 1 AND 9),
+            captura_id INTEGER NOT NULL,
+            PRIMARY KEY (user_id, slot),
+            UNIQUE (user_id, captura_id)
+        )
+    ''')
+
+
+def _migrar_equipo_nombre_a_captura_id(cursor, conn):
+    log.info("📍 Migrando equipo: pokemon_nombre → captura_id...")
+    if DATABASE_URL:
+        cursor.execute("SELECT user_id, slot, pokemon_nombre FROM equipo")
+    else:
+        cursor.execute("SELECT user_id, slot, pokemon_nombre FROM equipo")
+    filas = cursor.fetchall()
+
+    cursor.execute("DROP TABLE equipo")
+    _crear_tabla_equipo(cursor)
+
+    for user_id, slot, nombre in filas:
+        cap = obtener_mejor_captura(user_id, nombre)
+        if not cap:
+            continue
+        captura_id = cap[0]
+        if DATABASE_URL:
+            cursor.execute(
+                """
+                INSERT INTO equipo (user_id, slot, captura_id)
+                VALUES (%s, %s, %s)
+                ON CONFLICT DO NOTHING
+                """,
+                (_uid(user_id), slot, captura_id),
+            )
+        else:
+            try:
+                cursor.execute(
+                    "INSERT INTO equipo (user_id, slot, captura_id) VALUES (?, ?, ?)",
+                    (user_id, slot, captura_id),
+                )
+            except sqlite3.IntegrityError:
+                pass
+    conn.commit()
+    log.info("✅ Migración de equipo completada")
+
+
+def init_equipo_db():
+    try:
+        log.info("📍 Inicializando tabla de equipo...")
+        conn = get_connection()
+        cursor = conn.cursor()
+
+        if not _equipo_existe(cursor):
+            _crear_tabla_equipo(cursor)
+        elif _equipo_tiene_columna(cursor, "pokemon_nombre") and not _equipo_tiene_columna(cursor, "captura_id"):
+            _migrar_equipo_nombre_a_captura_id(cursor, conn)
+        elif not _equipo_tiene_columna(cursor, "captura_id"):
+            _crear_tabla_equipo(cursor)
+
+        conn.commit()
+        conn.close()
+        log.info("✅ Tabla 'equipo' creada/verificada")
+    except Exception as e:
+        log.error(f"🚨 Error al inicializar tabla de equipo: {e}", exc_info=True)
+        raise
+
+
+def _uid(user_id):
+    return str(user_id) if DATABASE_URL else user_id
+
+
+def obtener_captura(user_id, captura_id: int):
+    """Retorna (id, pokemon_nombre, es_shiny, ivs...) o None si no es del usuario."""
+    conn = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        if DATABASE_URL:
+            cursor.execute(
+                """
+                SELECT id, pokemon_nombre, es_shiny,
+                       iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe
+                FROM capturas
+                WHERE id = %s AND user_id = %s
+                """,
+                (captura_id, _uid(user_id)),
+            )
+        else:
+            cursor.execute(
+                """
+                SELECT id, pokemon_nombre, es_shiny,
+                       iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe
+                FROM capturas
+                WHERE id = ? AND user_id = ?
+                """,
+                (captura_id, user_id),
+            )
+        return cursor.fetchone()
+    except Exception as e:
+        log.error(f"🚨 Error obtener_captura: {e}", exc_info=True)
+        return None
+    finally:
+        if conn:
+            conn.close()
+
+
+def listar_capturas_usuario(user_id, excluir_ids: set | None = None) -> list[dict]:
+    """Todas las capturas del usuario, opcionalmente excluyendo IDs ya en equipo."""
+    excluir_ids = excluir_ids or set()
+    conn = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        iv_pct = "((iv_hp + iv_atk + iv_def + iv_spa + iv_spd + iv_spe) * 100 / 186)"
+        if DATABASE_URL:
+            cursor.execute(
+                f"""
+                SELECT id, pokemon_nombre, es_shiny, {iv_pct}
+                FROM capturas
+                WHERE user_id = %s
+                ORDER BY id DESC
+                """,
+                (_uid(user_id),),
+            )
+        else:
+            cursor.execute(
+                f"""
+                SELECT id, pokemon_nombre, es_shiny, {iv_pct}
+                FROM capturas
+                WHERE user_id = ?
+                ORDER BY id DESC
+                """,
+                (user_id,),
+            )
+        resultado = []
+        for captura_id, nombre, es_shiny, iv_pct_val in cursor.fetchall():
+            if captura_id in excluir_ids:
+                continue
+            resultado.append({
+                "id": captura_id,
+                "nombre": nombre,
+                "es_shiny": bool(es_shiny),
+                "iv_pct": int(iv_pct_val or 0),
+            })
+        return resultado
+    except Exception as e:
+        log.error(f"🚨 Error listar_capturas_usuario: {e}", exc_info=True)
+        return []
+    finally:
+        if conn:
+            conn.close()
+
+
+def obtener_equipo(user_id) -> list:
+    """Retorna 9 slots (índice 0 = slot 1). Vacío = None; lleno = captura_id."""
+    slots = [None] * 9
+    conn = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        if DATABASE_URL:
+            cursor.execute(
+                "SELECT slot, captura_id FROM equipo WHERE user_id = %s ORDER BY slot",
+                (_uid(user_id),),
+            )
+        else:
+            cursor.execute(
+                "SELECT slot, captura_id FROM equipo WHERE user_id = ? ORDER BY slot",
+                (user_id,),
+            )
+        for slot, captura_id in cursor.fetchall():
+            if 1 <= slot <= 9:
+                slots[slot - 1] = captura_id
+        return slots
+    except Exception as e:
+        log.error(f"🚨 Error al obtener equipo: {e}", exc_info=True)
+        return slots
+    finally:
+        if conn:
+            conn.close()
+
+
+def obtener_equipo_detalle(user_id) -> list:
+    """9 slots con datos de captura o None."""
+    slots = [None] * 9
+    ids = obtener_equipo(user_id)
+    for i, captura_id in enumerate(ids):
+        if captura_id is None:
+            continue
+        cap = obtener_captura(user_id, captura_id)
+        if not cap:
+            continue
+        slots[i] = {
+            "id": cap[0],
+            "nombre": cap[1],
+            "es_shiny": bool(cap[2]),
+        }
+    return slots
+
+
+def contar_equipo(user_id) -> int:
+    return sum(1 for c in obtener_equipo(user_id) if c is not None)
+
+
+def obtener_equipo_selector(user_id) -> dict:
+    """Datos para el selector de !batalla: valores (IDs), etiquetas y mapa id→nombre."""
+    detalle = [s for s in obtener_equipo_detalle(user_id) if s]
+    valores = [str(s["id"]) for s in detalle]
+    etiquetas = {}
+    nombres = {}
+    for s in detalle:
+        sid = str(s["id"])
+        shiny = "✨ " if s["es_shiny"] else ""
+        etiquetas[sid] = f"{shiny}{s['nombre'].capitalize()} [#{s['id']}]"
+        nombres[sid] = s["nombre"]
+    return {"valores": valores, "etiquetas": etiquetas, "nombres": nombres}
+
+
+def obtener_equipo_nombres(user_id) -> list[str]:
+    """Nombres de especie del equipo guardado (para compatibilidad con combate)."""
+    return [s["nombre"] for s in obtener_equipo_detalle(user_id) if s]
+
+
+def nombres_desde_captura_ids(user_id, ids_seleccionados: list[str]) -> list[str]:
+    nombres = []
+    for valor in ids_seleccionados:
+        cap = obtener_captura(user_id, int(valor))
+        if cap:
+            nombres.append(cap[1])
+    return nombres
+
+
+def _captura_en_equipo(user_id, captura_id: int) -> bool:
+    return captura_id in [c for c in obtener_equipo(user_id) if c is not None]
+
+
+def _primer_slot_libre(slots: list) -> int | None:
+    for i, captura_id in enumerate(slots):
+        if captura_id is None:
+            return i + 1
+    return None
+
+
+def agregar_a_equipo(user_id, captura_id: int) -> int:
+    """Añade al primer slot libre. Retorna el slot usado."""
+    cap = obtener_captura(user_id, captura_id)
+    if not cap:
+        raise EquipoError("No tienes esa captura en tu inventario.")
+    if _captura_en_equipo(user_id, captura_id):
+        raise EquipoError("Esa captura ya está en tu equipo.")
+    slots = obtener_equipo(user_id)
+    slot = _primer_slot_libre(slots)
+    if slot is None:
+        raise EquipoError("Tu equipo está completo (9/9).")
+    _insertar_slot(user_id, slot, captura_id)
+    return slot
+
+
+def reemplazar_en_equipo(user_id, slot: int, captura_id: int):
+    if not 1 <= slot <= 9:
+        raise EquipoError("El slot debe estar entre 1 y 9.")
+    cap = obtener_captura(user_id, captura_id)
+    if not cap:
+        raise EquipoError("No tienes esa captura en tu inventario.")
+    equipo = obtener_equipo(user_id)
+    for i, actual_id in enumerate(equipo):
+        if actual_id == captura_id and (i + 1) != slot:
+            raise EquipoError("Esa captura ya está en otro slot del equipo.")
+    _insertar_slot(user_id, slot, captura_id)
+
+
+def quitar_de_equipo(user_id, slot: int):
+    if not 1 <= slot <= 9:
+        raise EquipoError("El slot debe estar entre 1 y 9.")
+    conn = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        if DATABASE_URL:
+            cursor.execute(
+                "DELETE FROM equipo WHERE user_id = %s AND slot = %s",
+                (_uid(user_id), slot),
+            )
+        else:
+            cursor.execute(
+                "DELETE FROM equipo WHERE user_id = ? AND slot = ?",
+                (user_id, slot),
+            )
+        conn.commit()
+    finally:
+        if conn:
+            conn.close()
+
+
+def _insertar_slot(user_id, slot: int, captura_id: int):
+    conn = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        if DATABASE_URL:
+            cursor.execute(
+                """
+                INSERT INTO equipo (user_id, slot, captura_id) VALUES (%s, %s, %s)
+                ON CONFLICT (user_id, slot) DO UPDATE SET captura_id = EXCLUDED.captura_id
+                """,
+                (_uid(user_id), slot, captura_id),
+            )
+        else:
+            cursor.execute("DELETE FROM equipo WHERE user_id = ? AND slot = ?", (user_id, slot))
+            cursor.execute(
+                "INSERT INTO equipo (user_id, slot, captura_id) VALUES (?, ?, ?)",
+                (user_id, slot, captura_id),
+            )
+        conn.commit()
+    finally:
+        if conn:
+            conn.close()
+
+
+def listar_capturas_por_especie(user_id, nombre: str) -> list:
+    """
+    Todas las capturas de una especie, ordenadas por IV total descendente.
+    Cada fila: (id, iv_hp..iv_spe, es_shiny).
+    """
+    conn = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        iv_sum = "(iv_hp + iv_atk + iv_def + iv_spa + iv_spd + iv_spe)"
+        if DATABASE_URL:
+            cursor.execute(
+                f"""
+                SELECT id, iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe, es_shiny
+                FROM capturas
+                WHERE user_id = %s AND pokemon_nombre = %s
+                ORDER BY {iv_sum} DESC
+                """,
+                (_uid(user_id), nombre.lower()),
+            )
+        else:
+            cursor.execute(
+                f"""
+                SELECT id, iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe, es_shiny
+                FROM capturas
+                WHERE user_id = ? AND pokemon_nombre = ?
+                ORDER BY {iv_sum} DESC
+                """,
+                (user_id, nombre.lower()),
+            )
+        return cursor.fetchall()
+    except Exception as e:
+        log.error(f"🚨 Error listar_capturas_por_especie: {e}", exc_info=True)
+        return []
+    finally:
+        if conn:
+            conn.close()
+
+
+def obtener_mejor_captura(user_id, nombre: str):
+    """Retorna la mejor captura por IV total o None."""
+    capturas = listar_capturas_por_especie(user_id, nombre)
+    return capturas[0] if capturas else None
