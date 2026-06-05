@@ -9,6 +9,7 @@ import os
 import gestor_spawn
 import servicios
 from logger_config import log
+import datetime
 
 COOLDOWN_LANZAMIENTO = 10.0
 COOLDOWN_GRACE = 0.25
@@ -246,16 +247,21 @@ from logger_config import log
 
 class BotonCaptura(discord.ui.View):
     def __init__(self, pokemon_data, es_legendario, es_shiny, capture_rate):
-        super().__init__(timeout=300.0)
+        super().__init__(timeout=300.0) # Tu timeout de 300s (5 min) ya existe aquí
         self.nombre = pokemon_data['name']
         self.es_legendario = es_legendario
         self.es_shiny = es_shiny
-        self.capture_rate = capture_rate # Valor R de la API
+        self.capture_rate = capture_rate
+        
+        # --- NUEVOS ATRIBUTOS ---
+        self.tiempo_aparicion = datetime.datetime.now() # Registra el inicio
         self.intentos_fallidos = 0
-        self.max_intentos = 30
         self.user_cooldowns = {}
         self.alguien_lo_atrapo = False
-
+        self.se_escapo = False # Nueva bandera para saber si el Pokémon huyó
+        
+        # Nota: He eliminado 'self.max_intentos' porque con el timer 
+        # y el factor de huida ya no lo necesitamos como límite fijo.
     def _segundos_restantes_cooldown(self, user_id, ahora):
         ultimo = self.user_cooldowns.get(user_id)
         if ultimo is None:
@@ -286,8 +292,25 @@ class BotonCaptura(discord.ui.View):
             self.user_cooldowns[user_id] = ahora
             await interaction.response.defer(ephemeral=True)
 
-            # --- MATEMÁTICA DE CAPTURA AJUSTADA ---
-            # --- MATEMÁTICA DE CAPTURA AJUSTADA ---
+            # --- NUEVA LÓGICA DE SEGURIDAD (Timer y Huída) ---
+            tiempo_pasado = (datetime.datetime.now() - self.tiempo_aparicion).total_seconds()
+            
+            # 1. Timer de 5 minutos (300 segundos)
+            if tiempo_pasado > 300:
+                self.alguien_lo_atrapo = True
+                gestor_spawn.canales_ocupados.discard(interaction.channel.id)
+                await interaction.message.edit(content="💨 ¡El tiempo se ha agotado! El Pokémon ha huido.", view=None)
+                return self.stop()
+
+            # 2. Huída aleatoria (Periodo de gracia de 10 tiros, factor 0.003)
+            if self.intentos_fallidos > 10:
+                if random.random() < (self.intentos_fallidos * 0.003):
+                    self.alguien_lo_atrapo = True
+                    gestor_spawn.canales_ocupados.discard(interaction.channel.id)
+                    await interaction.message.edit(content="💨 ¡El Pokémon se ha asustado y ha huido!", view=None)
+                    return self.stop()
+
+            # --- MATEMÁTICA DE CAPTURA ---
             azar = random.random()
             
             # Asignación de bolas
@@ -296,21 +319,21 @@ class BotonCaptura(discord.ui.View):
             elif azar < 0.40: bonus_bola, nombre_bola = 1.5, "Great Ball"
             else: bonus_bola, nombre_bola = 1.0, "Pokéball"
 
-            # --- FACTOR DE DIFICULTAD SHINY ---
+            # Factor Shiny
             multiplicador_shiny = 0.1 if self.es_shiny else 1.0
 
-            # --- LÓGICA DE CAPTURA ---
+            # Lógica base
             if nombre_bola == "Master Ball":
-                prob_final = 1.0  # 100% éxito garantizado
+                prob_final = 1.0
             else:
                 FACTOR_DIFICULTAD = 0.2 
                 FACTOR_DESGASTE = 0.007
-                
-                # APLICAMOS EL multiplicador_shiny AQUÍ:
                 prob_base = (((self.capture_rate / 255) * bonus_bola) * FACTOR_DIFICULTAD) * multiplicador_shiny
-                
                 prob_final = prob_base + (self.intentos_fallidos * FACTOR_DESGASTE)
-                prob_final = min(prob_final, 0.95)
+                
+                # Tope: 30% (0.30) para Raros/Legendarios, 45% (0.45) para normales
+                TOPE_MAXIMO = 0.30 if (self.es_shiny or self.es_legendario) else 0.45
+                prob_final = min(prob_final, TOPE_MAXIMO)
 
             # --- INTENTO DE CAPTURA ---
             if random.random() < prob_final:
@@ -334,23 +357,11 @@ class BotonCaptura(discord.ui.View):
 
             else:
                 self.intentos_fallidos += 1
-                if self.intentos_fallidos >= self.max_intentos:
-                    self.alguien_lo_atrapo = True
-                    gestor_spawn.canales_ocupados.discard(interaction.channel.id)
-                    await interaction.message.edit(content="💨 ¡El Pokémon escapó tras fallar demasiadas veces!", view=None)
-                    self.stop()
-                else:
-                    embed = interaction.message.embeds[0]
-                    embed.set_footer(text=f"Intentos: {self.intentos_fallidos}/{self.max_intentos}")
-                    await interaction.message.edit(embed=embed)
-                    await interaction.followup.send(f"❌ Lanzaste una {nombre_bola} pero fallaste. ¡El Pokémon está más cansado!", ephemeral=True)
-
-        except Exception as e:
-            log.error(f"🚨 Error crítico en captura: {e}", exc_info=True)
-            if not interaction.response.is_done():
-                await interaction.response.send_message("⚠️ Error inesperado.", ephemeral=True)
-            else:
-                await interaction.followup.send("⚠️ Error inesperado.", ephemeral=True)
+                # Actualizamos el footer con el nuevo conteo de intentos
+                embed = interaction.message.embeds[0]
+                embed.set_footer(text=f"Intentos fallidos: {self.intentos_fallidos}")
+                await interaction.message.edit(embed=embed)
+                await interaction.followup.send(f"❌ Lanzaste una {nombre_bola} pero fallaste. ¡El Pokémon está más cansado!", ephemeral=True)
 class InfoView(discord.ui.View):
     def __init__(self, user_id, data, versiones, mostrar_shiny): # Agregamos user_id
         super().__init__(timeout=60)
