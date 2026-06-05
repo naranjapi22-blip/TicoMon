@@ -345,8 +345,14 @@ class BotonCaptura(discord.ui.View):
 
                     log.info(f"✅ [Captura] {interaction.user.name} atrapó a {self.nombre} con {nombre_bola}.")
 
+                    # --- MENSAJE CON PROBABILIDAD DE CAPTURA ---
+                    porcentaje = round(prob_final * 100, 2)
+                    
                     await interaction.message.edit(
-                        content=f"🎉 {interaction.user.mention} capturó a **{self.nombre.capitalize()}** usando una **{nombre_bola}**!", 
+                        content=(
+                            f"🎉 {interaction.user.mention} capturó a **{self.nombre.capitalize()}** usando una **{nombre_bola}**! "
+                            f"(Probabilidad final: {porcentaje}%)"
+                        ), 
                         view=None
                     )
                     self.stop()
@@ -361,7 +367,7 @@ class BotonCaptura(discord.ui.View):
                 embed = interaction.message.embeds[0]
                 embed.set_footer(text=f"Intentos fallidos: {self.intentos_fallidos}")
                 await interaction.message.edit(embed=embed)
-                await interaction.followup.send(f"❌ Lanzaste una {nombre_bola} pero fallaste. ¡El Pokémon está más cansado!", ephemeral=True)
+                await interaction.followup.send(f"❌ Lanzaste una {nombre_bola} pero fallaste (Probabilidad: {round(prob_final * 100, 1)}%). ¡El Pokémon está más cansado!", ephemeral=True)
         except Exception as e:
             log.error(f"🚨 Error crítico en captura: {e}", exc_info=True)
 class InfoView(discord.ui.View):
