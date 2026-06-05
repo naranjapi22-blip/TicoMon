@@ -367,7 +367,10 @@ class BotonCaptura(discord.ui.View):
                 embed = interaction.message.embeds[0]
                 embed.set_footer(text=f"Intentos fallidos: {self.intentos_fallidos}")
                 await interaction.message.edit(embed=embed)
-                f"❌ Lanzaste una {nombre_bola} pero fallaste (Probabilidad: {round(prob_final * 100, 3)}%). ¡El Pokémon está más cansado!", ephemeral=True)
+                
+                # Línea corregida: asegúrate de que los paréntesis estén balanceados
+                mensaje_fallo = f"❌ Lanzaste una {nombre_bola} pero fallaste (Probabilidad: {round(prob_final * 100, 3)}%). ¡El Pokémon está más cansado!"
+                await interaction.followup.send(mensaje_fallo, ephemeral=True)
         except Exception as e:
             log.error(f"🚨 Error crítico en captura: {e}", exc_info=True)
 class InfoView(discord.ui.View):
