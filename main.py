@@ -124,11 +124,14 @@ async def pokedex(ctx, *, filtro: str = None):
         elif filtro.lower() == "legendarios":
             ids_filtrados = []
             for id_p in ids_tenidos:
-                # Usamos la función que existe en servicios: obtener_pokemon
-                info = await servicios.obtener_pokemon(bot.session, id_p)
+                # Obtenemos la respuesta
+                resultado = await servicios.obtener_pokemon(bot.session, id_p)
                 
-                # Verificamos si la clave es_legendary existe y es True
-                # Usamos False por defecto para que solo los que tengan la marca pasen el filtro
+                # Si resultado es una tupla, tomamos el primer elemento (donde suelen estar los datos)
+                # Si no, usamos el resultado directamente
+                info = resultado[0] if isinstance(resultado, tuple) else resultado
+                
+                # Ahora info ya debería ser el diccionario, verificamos si es legendario
                 if info and info.get('is_legendary', False):
                     ids_filtrados.append(id_p)
             
