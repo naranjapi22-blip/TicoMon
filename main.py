@@ -439,9 +439,12 @@ async def _obtener_equipos_duelo(ctx, oponente: discord.Member, crear_selector, 
 
     async def elegir_equipo(jugador, lista):
         if privado:
+            # privado=True: elegir_equipo_en_privado retorna directamente la lista
             return await vistas_batalla.elegir_equipo_en_privado(
                 ctx, jugador, lista, crear_selector
             )
+        
+        # privado=False: usar el flujo normal con view.wait()
         view = crear_selector(jugador, lista)
         if isinstance(view, SelectorBatalla):
             embed = await view.crear_embed()
