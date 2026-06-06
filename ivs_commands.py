@@ -189,8 +189,10 @@ class IvsCommands(commands.Cog):
     async def ver_mis_records(self, ctx):
         conn = get_connection()
         cursor = conn.cursor()
+        
+        # 1. Traemos los IDs además de los nombres y flags
         cursor.execute("""
-            SELECT pokemon_nombre, 
+            SELECT pokemon_nombre, id_pokemon_grande, id_pokemon_pequeno,
                    CASE WHEN user_id_grande = %s THEN '👑' ELSE '' END as es_grande,
                    CASE WHEN user_id_pequeno = %s THEN '🤏' ELSE '' END as es_pequeno
             FROM RECORDS_ESPECIE 
@@ -204,18 +206,21 @@ class IvsCommands(commands.Cog):
             await ctx.send("❌ Aún no posees ningún récord.")
             return
 
-        # 1. Dividir los registros en páginas (ej: 10 récords por página)
+        # 2. Dividir en páginas (10 récords por página)
         items_por_pagina = 10
         chunks = [registros[i:i + items_por_pagina] for i in range(0, len(registros), items_por_pagina)]
         pages = []
 
         for chunk in chunks:
             text = ""
-            for nombre, es_g, es_p in chunk:
-                text += f"• **{nombre.capitalize():<12}** {es_g} {es_p}\n"
+            for nombre, id_g, id_p, es_g, es_p in chunk:
+                # Si es grande, muestra el ID grande; si es pequeño, el pequeño
+                # Si tiene ambos, damos prioridad al grande para el ID mostrado
+                display_id = id_g if es_g else id_p
+                text += f"• **{nombre.capitalize():<12}** {es_g}{es_p} `ID: {display_id}`\n"
             pages.append(text)
 
-        # 2. Enviar el primer mensaje con el View de botones
+        # 3. Enviar mensaje con el paginador
         view = PaginatorView(pages, ctx.author)
         await ctx.send(embed=view.create_embed(), view=view)
     @commands.command(name="records")
