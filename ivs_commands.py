@@ -7,6 +7,7 @@ import io # Necesario para io.BytesIO
 from PIL import Image # Necesario para Image.open
 from logger_config import log # Necesario para el log
 import datetime # Asegúrate de tener este también
+from discord.ui import Button, View
 
 # Fórmulas oficiales de Pokémon
 def calcular_stat_lvl50(base, iv):
@@ -50,7 +51,32 @@ STAT_MAP = {
     'special-defense': 'esp_def',
     'speed': 'vel'
 }
+class PaginatorView(View):
+    def __init__(self, pages, user):
+        super().__init__(timeout=60)
+        self.pages = pages
+        self.user = user
+        self.current_page = 0
 
+    def create_embed(self):
+        embed = discord.Embed(title=f"🏆 Récords de {self.user.display_name}", color=discord.Color.gold())
+        embed.description = self.pages[self.current_page]
+        embed.set_footer(text=f"Página {self.current_page + 1} de {len(self.pages)}")
+        return embed
+
+    @discord.ui.button(label="⬅️", style=discord.ButtonStyle.primary)
+    async def prev(self, interaction: discord.Interaction, button: discord.Button):
+        if interaction.user != self.user: return
+        if self.current_page > 0:
+            self.current_page -= 1
+            await interaction.response.edit_message(embed=self.create_embed())
+
+    @discord.ui.button(label="➡️", style=discord.ButtonStyle.primary)
+    async def next(self, interaction: discord.Interaction, button: discord.Button):
+        if interaction.user != self.user: return
+        if self.current_page < len(self.pages) - 1:
+            self.current_page += 1
+            await interaction.response.edit_message(embed=self.create_embed())
 class IvsCommands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -163,12 +189,10 @@ class IvsCommands(commands.Cog):
     async def ver_mis_records(self, ctx):
         conn = get_connection()
         cursor = conn.cursor()
-        
-        # Buscamos todos los registros donde el usuario sea dueño de un récord
         cursor.execute("""
             SELECT pokemon_nombre, 
-                   CASE WHEN user_id_grande = %s THEN 'XXL' ELSE NULL END as es_grande,
-                   CASE WHEN user_id_pequeno = %s THEN 'XXS' ELSE NULL END as es_pequeno
+                   CASE WHEN user_id_grande = %s THEN '👑' ELSE '' END as es_grande,
+                   CASE WHEN user_id_pequeno = %s THEN '🤏' ELSE '' END as es_pequeno
             FROM RECORDS_ESPECIE 
             WHERE user_id_grande = %s OR user_id_pequeno = %s
         """, (str(ctx.author.id), str(ctx.author.id), str(ctx.author.id), str(ctx.author.id)))
@@ -177,27 +201,28 @@ class IvsCommands(commands.Cog):
         conn.close()
         
         if not registros:
-            await ctx.send("❌ Aún no posees ningún récord en el servidor. ¡Sigue atrapando Pokémon!")
+            await ctx.send("❌ Aún no posees ningún récord.")
             return
 
-        # Creamos una lista organizada de los récords del usuario
-        mensaje = f"🏆 **Récords de {ctx.author.display_name}:**\n\n"
-        for nombre, es_g, es_p in registros:
-            categorias = []
-            if es_g: categorias.append("👑 XXL")
-            if es_p: categorias.append("🤏 XXS")
-            mensaje += f"• **{nombre.capitalize()}**: {', '.join(categorias)}\n"
-            
-        embed = discord.Embed(description=mensaje, color=discord.Color.gold())
-        await ctx.send(embed=embed)
-async def setup(bot):
-    await bot.add_cog(IvsCommands(bot))
+        # 1. Dividir los registros en páginas (ej: 10 récords por página)
+        items_por_pagina = 10
+        chunks = [registros[i:i + items_por_pagina] for i in range(0, len(registros), items_por_pagina)]
+        pages = []
+
+        for chunk in chunks:
+            text = ""
+            for nombre, es_g, es_p in chunk:
+                text += f"• **{nombre.capitalize():<12}** {es_g} {es_p}\n"
+            pages.append(text)
+
+        # 2. Enviar el primer mensaje con el View de botones
+        view = PaginatorView(pages, ctx.author)
+        await ctx.send(embed=view.create_embed(), view=view)
     @commands.command(name="records")
     async def ver_records(self, ctx, *, pokemon_nombre: str):
         conn = get_connection()
         cursor = conn.cursor()
         
-        # Consultamos los datos de la tabla RECORDS_ESPECIE
         cursor.execute("""
             SELECT id_pokemon_grande, user_id_grande, tamano_grande, fecha_grande,
                    id_pokemon_pequeno, user_id_pequeno, tamano_pequeno, fecha_pequeno
@@ -209,22 +234,26 @@ async def setup(bot):
         conn.close()
         
         if not row:
-            await ctx.send(f"❌ No hay récords registrados para **{pokemon_nombre.capitalize()}**. ¡Sé el primero en atrapar uno!")
+            await ctx.send(f"❌ No hay récords para **{pokemon_nombre.capitalize()}**. ¡Sé el primero!")
             return
 
-        # Desempaquetamos los resultados
         id_g, user_g, tam_g, fec_g, id_p, user_p, tam_p, fec_p = row
         
-        # Formateamos el embed
+        # Diseño compacto
         embed = discord.Embed(title=f"🏆 Salón de la Fama: {pokemon_nombre.capitalize()}", color=discord.Color.gold())
         
         embed.add_field(
-            name="👑 Récord XXL (Más grande)", 
-            value=f"**Tamaño:** {tam_g}x\n**ID:** {id_g}\n**Dueño:** <@{user_g}>\n**Fecha:** {fec_g}", 
+            name="👑 Récord XXL", 
+            value=f"**Tamaño:** {tam_g}x | **ID:** {id_g}\n**Dueño:** <@{user_g}> | **Fecha:** {fec_g}", 
             inline=False
         )
         embed.add_field(
-            name="🤏 Récord XXS (Más pequeño)", 
-            value=f"**Tamaño:** {tam_p}x\n**ID:** {id_p}\n**Dueño:** <@{user_p}>\n**Fecha:** {fec_p}", 
+            name="🤏 Récord XXS", 
+            value=f"**Tamaño:** {tam_p}x | **ID:** {id_p}\n**Dueño:** <@{user_p}> | **Fecha:** {fec_p}", 
             inline=False
         )
+        
+        await ctx.send(embed=embed)
+async def setup(bot):
+    await bot.add_cog(IvsCommands(bot))
+    
