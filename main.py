@@ -40,7 +40,7 @@ bot = commands.Bot(
 
 # 2. CARGA DE EXTENSIONES (El método correcto para discord.py 2.0+)
 async def cargar_extensiones():
-    extensiones = ['ivs_commands', 'inventario']
+    extensiones = ['ivs_commands', 'inventario', 'equipo_slash']
     for ext in extensiones:
         try:
             await bot.load_extension(ext)
@@ -77,7 +77,13 @@ async def on_ready():
     gestor_spawn.setup_gestor(bot)
     gestor_spawn.aplicar_filtro_spawn(bot)
     gestor_spawn.canales_ocupados.clear()
-    
+
+    try:
+        synced = await bot.tree.sync()
+        log.info(f"✅ {len(synced)} slash command(s) sincronizados.")
+    except Exception as e:
+        log.error(f"🚨 Error al sincronizar slash commands: {e}", exc_info=True)
+
     print("Base de datos, módulos y sesión de red verificados.")
 
 @bot.event
