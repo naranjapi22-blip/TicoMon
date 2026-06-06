@@ -3,6 +3,10 @@ from discord.ext import commands
 from database import get_connection
 import servicios
 import math
+import io # Necesario para io.BytesIO
+from PIL import Image # Necesario para Image.open
+from logger_config import log # Necesario para el log
+import datetime # Asegúrate de tener este también
 
 # Fórmulas oficiales de Pokémon
 def calcular_stat_lvl50(base, iv):
