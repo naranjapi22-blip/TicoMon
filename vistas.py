@@ -10,7 +10,7 @@ import gestor_spawn
 import servicios
 from logger_config import log
 import datetime
-
+import records  # Importa tu archivo de lógica de récords
 COOLDOWN_LANZAMIENTO = 10.0
 COOLDOWN_GRACE = 0.25
 
@@ -435,37 +435,37 @@ class BotonCaptura(discord.ui.View):
                 self.alguien_lo_atrapo = True 
                 
                 try:
-                    await database.guardar_captura(user_id, self.nombre, self.es_shiny, pokeball=nombre_bola)
-                    gestor_spawn.canales_ocupados.discard(interaction.channel.id)
-
-                    log.info(f"✅ [Captura] {interaction.user.name} atrapó a {self.nombre} con {nombre_bola}.")
-
-                    # --- MENSAJE CON PROBABILIDAD DE CAPTURA ---
-                    porcentaje = round(prob_final * 100, 2)
+                    # 1. Guardamos y obtenemos el ID (Asegúrate de que guardar_captura retorne el ID)
+                    id_captura = await database.guardar_captura(user_id, self.nombre, self.es_shiny, pokeball=nombre_bola)
                     
-                    await interaction.message.edit(
-                        content=(
-                            f"🎉 {interaction.user.mention} capturó a **{self.nombre.capitalize()}** usando una **{nombre_bola}**! "
-                            f"(Probabilidad final: {porcentaje}%)"
-                        ), 
-                        view=None
+                    # 2. Verificación de Récords
+                    conn = database.get_connection()
+                    cursor = conn.cursor()
+                    resultado_record = records.verificar_y_actualizar_record(
+                        cursor, self.nombre, id_captura, user_id, self.tamano_factor
                     )
+                    conn.commit()
+                    conn.close()
+
+                    gestor_spawn.canales_ocupados.discard(interaction.channel.id)
+                    log.info(f"✅ [Captura] {interaction.user.name} atrapó a {self.nombre} (ID: {id_captura}).")
+
+                    # 3. Mensaje de éxito con aviso de récord
+                    porcentaje = round(prob_final * 100, 2)
+                    mensaje = f"🎉 {interaction.user.mention} capturó a **{self.nombre.capitalize()}** (ID: {id_captura}) usando una **{nombre_bola}**! (Probabilidad: {porcentaje}%)"
+                    
+                    if resultado_record == "NUEVO_RECORD_GRANDE":
+                        mensaje += "\n👑 **¡Nuevo Récord XXL!** Has entrado en el Salón de la Fama."
+                    elif resultado_record == "NUEVO_RECORD_PEQUENO":
+                        mensaje += "\n🤏 **¡Nuevo Récord XXS!** Has entrado en el Salón de la Fama."
+
+                    await interaction.message.edit(content=mensaje, view=None)
                     self.stop()
+
                 except Exception as db_error:
                     self.alguien_lo_atrapo = False
-                    log.error(f"Error de BD: {db_error}", exc_info=True)
-                    await interaction.followup.send("⚠️ Error interno. ¡Inténtalo de nuevo!", ephemeral=True)
-
-            else:
-                self.intentos_fallidos += 1
-                # Actualizamos el footer con el nuevo conteo de intentos
-                embed = interaction.message.embeds[0]
-                embed.set_footer(text=f"Intentos fallidos: {self.intentos_fallidos}")
-                await interaction.message.edit(embed=embed)
-                
-                # Línea corregida: asegúrate de que los paréntesis estén balanceados
-                mensaje_fallo = f"❌ Lanzaste una {nombre_bola} pero fallaste (Probabilidad: {round(prob_final * 100, 3)}%). ¡El Pokémon está más cansado!"
-                await interaction.followup.send(mensaje_fallo, ephemeral=True)
+                    log.error(f"Error de BD/Récords: {db_error}", exc_info=True)
+                    await interaction.followup.send("⚠️ Error interno al procesar el récord. ¡Inténtalo de nuevo!", ephemeral=True)
         except Exception as e:
             log.error(f"🚨 Error crítico en captura: {e}", exc_info=True)
 class InfoView(discord.ui.View):
