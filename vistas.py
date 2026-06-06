@@ -422,7 +422,7 @@ class BotonCaptura(discord.ui.View):
 
                     gestor_spawn.canales_ocupados.discard(interaction.channel.id)
                     porcentaje = round(prob_final * 100, 2)
-                    mensaje = f"🎉 {interaction.user.mention} capturó a **{self.nombre.capitalize()}** (ID: {id_captura}) con **{nombre_bola}**! ({porcentaje}%)"
+                    mensaje = f"🎉 {interaction.user.mention} capturó a **{self.nombre.capitalize()}** con **{nombre_bola}**! ({porcentaje}%)"
                     
                     if resultado_record == "NUEVO_RECORD_GRANDE": mensaje += "\n👑 **¡Nuevo Récord XXL!**"
                     elif resultado_record == "NUEVO_RECORD_PEQUENO": mensaje += "\n🤏 **¡Nuevo Récord XXS!**"
