@@ -348,22 +348,21 @@ import random
 from logger_config import log
 
 class BotonCaptura(discord.ui.View):
-    def __init__(self, pokemon_data, es_legendario, es_shiny, capture_rate):
-        super().__init__(timeout=300.0) # Tu timeout de 300s (5 min) ya existe aquí
+    # Debes agregar 'tamano_factor' aquí abajo:
+    def __init__(self, pokemon_data, es_legendario, es_shiny, capture_rate, tamano_factor):
+        super().__init__(timeout=300.0)
         self.nombre = pokemon_data['name']
         self.es_legendario = es_legendario
         self.es_shiny = es_shiny
         self.capture_rate = capture_rate
+        self.tamano_factor = tamano_factor # Ahora sí existe porque se pasó arriba
         
         # --- NUEVOS ATRIBUTOS ---
-        self.tiempo_aparicion = datetime.datetime.now() # Registra el inicio
+        self.tiempo_aparicion = datetime.datetime.now()
         self.intentos_fallidos = 0
         self.user_cooldowns = {}
         self.alguien_lo_atrapo = False
-        self.se_escapo = False # Nueva bandera para saber si el Pokémon huyó
-        
-        # Nota: He eliminado 'self.max_intentos' porque con el timer 
-        # y el factor de huida ya no lo necesitamos como límite fijo.
+        self.se_escapo = False
     def _segundos_restantes_cooldown(self, user_id, ahora):
         ultimo = self.user_cooldowns.get(user_id)
         if ultimo is None:
