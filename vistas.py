@@ -362,6 +362,7 @@ class BotonCaptura(discord.ui.View):
                 await interaction.followup.send(f"❌ Fallaste la {nombre_bola}. ¡El Pokémon está más cansado!", ephemeral=True)
         except Exception as e:
             # SEGURIDAD: Si algo explota, liberamos el canal obligatoriamente
+            liberar_canal_completo(interaction.channel.id)
             gestor_spawn.canales_ocupados.discard(interaction.channel.id)
             self.alguien_lo_atrapo = True # Marcamos como terminado para que no acepten más clics
             log.error(f"🚨 Canal liberado por error crítico: {e}")
