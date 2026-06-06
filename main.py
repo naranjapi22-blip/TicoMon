@@ -421,16 +421,6 @@ async def verificar_canal(ctx):
         
     # Si hay canal configurado, validar
     return ctx.channel.id == canal_permitido
-def canal_restringido():
-    async def predicate(ctx):
-        if ctx.author.guild_permissions.administrator:
-            return True
-        if not configuracion.es_canal_permitido(ctx):
-            # Opcional: Avisar al usuario
-            # await ctx.send("❌ No puedes usar comandos aquí.")
-            return False
-        return True
-    return commands.check(predicate)
 
 # 1. Añade esta función para verificar la rareza
 async def es_legendario(session, poke_id):
