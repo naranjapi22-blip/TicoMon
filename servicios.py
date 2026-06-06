@@ -430,3 +430,26 @@ def obtener_sprite_escalado(imagen_pil, factor):
     
     # Redimensionamos
     return imagen_pil.resize((nuevo_ancho, nuevo_alto), Image.Resampling.LANCZOS)
+def procesar_sprite_pokemon(imagen_base, tamano_factor):
+    """
+    Escala la imagen del Pokemon basándose en el tamano_factor guardado (0.5 a 1.5).
+    """
+    try:
+        # 1. Calculamos nuevas dimensiones
+        ancho, alto = imagen_base.size
+        nuevo_ancho = int(ancho * tamano_factor)
+        nuevo_alto = int(alto * tamano_factor)
+        
+        # 2. Redimensionamos
+        sprite_escalado = imagen_base.resize((nuevo_ancho, nuevo_alto), Image.Resampling.LANCZOS)
+        
+        # 3. Creamos un lienzo fijo de 500x500 y pegamos el sprite en el centro
+        lienzo = Image.new("RGBA", (500, 500), (0, 0, 0, 0))
+        pos_x = (500 - nuevo_ancho) // 2
+        pos_y = (500 - nuevo_alto) // 2
+        
+        lienzo.paste(sprite_escalado, (pos_x, pos_y), sprite_escalado)
+        return lienzo
+    except Exception as e:
+        log.error(f"🚨 Error al procesar sprite para escalado: {e}")
+        return imagen_base # Retornamos la original si algo falla
