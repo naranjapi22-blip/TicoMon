@@ -318,9 +318,9 @@ class SpawnSelectionView(discord.ui.View):
         # Pasamos el capture_rate que acabamos de extraer
         view_captura = BotonCaptura(
             pokemon_data=data,
-            es_legendario=legendario,
-            es_shiny=shiny,
-            capture_rate=capture_rate,
+            es_legendario=data.get('es_legendario', False), # O la variable que tengas definida
+            es_shiny=data.get('es_shiny', False),           # O la variable que tengas definida
+            capture_rate=data.get('capture_rate', 45),
             tamano_factor=data.get('tamano_factor', 1.0)
         )
         
