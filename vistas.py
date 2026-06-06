@@ -413,19 +413,25 @@ class BotonCaptura(discord.ui.View):
             if random.random() < prob_final:
                 self.alguien_lo_atrapo = True 
                 try:
+                    # 1. Primero GUARDAMOS la captura
                     id_captura = await database.guardar_captura(user_id, self.nombre, self.es_shiny, pokeball=nombre_bola)
+                    
+                    # 2. SEGUIMOS con la verificación (YA TENEMOS EL ID)
                     conn = database.get_connection()
                     cursor = conn.cursor()
                     resultado_record = records.verificar_y_actualizar_record(cursor, self.nombre, id_captura, user_id, self.tamano_factor)
                     conn.commit()
                     conn.close()
 
-                    gestor_spawn.canales_ocupados.discard(interaction.channel.id)
+                    # 3. AHORA preparamos el mensaje
                     porcentaje = round(prob_final * 100, 2)
-                    mensaje = f"🎉 {interaction.user.mention} capturó a **{self.nombre.capitalize()}** con **{nombre_bola}**! ({porcentaje}%)"
+                    mensaje = f"🎉 {interaction.user.mention} capturó a **{self.nombre.capitalize()}** (ID: {id_captura}) usando una **{nombre_bola}**! ({porcentaje}%)"
                     
-                    if resultado_record == "NUEVO_RECORD_GRANDE": mensaje += "\n👑 **¡Nuevo Récord XXL!**"
-                    elif resultado_record == "NUEVO_RECORD_PEQUENO": mensaje += "\n🤏 **¡Nuevo Récord XXS!**"
+                    # 4. Verificamos el resultado justo antes de editar el mensaje
+                    if resultado_record == "NUEVO_RECORD_GRANDE":
+                        mensaje += "\n👑 **¡Nuevo Récord XXL!** Has entrado en el Salón de la Fama."
+                    elif resultado_record == "NUEVO_RECORD_PEQUENO":
+                        mensaje += "\n🤏 **¡Nuevo Récord XXS!** Has entrado en el Salón de la Fama."
 
                     await interaction.message.edit(content=mensaje, view=None)
                     self.stop()
