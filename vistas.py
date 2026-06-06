@@ -136,7 +136,7 @@ class SpawnSelectionView(discord.ui.View):
         self.message = None # <-- Añadimos esto para guardar el mensaje y poder editarlo al final
 
     async def on_timeout(self):
-        # 1. Desactivamos los botones
+        # 1. Desactivamos los botones siempre
         for child in self.children:
             child.disabled = True
             
@@ -152,13 +152,17 @@ class SpawnSelectionView(discord.ui.View):
                     
                     # Editamos el mensaje con el embed modificado y los botones deshabilitados
                     await self.message.edit(embed=embed_huida, view=self)
-                
-                # 3. Liberamos el canal
-                import gestor_spawn
-                gestor_spawn.canales_ocupados.discard(self.message.channel.id)
-                
+            
+            except discord.NotFound:
+                # Si el usuario borró el mensaje, no hacemos nada, solo continuamos a la limpieza
+                pass
             except Exception as e:
-                print(f"Error en on_timeout: {e}")
+                print(f"Error al editar mensaje en on_timeout: {e}")
+            
+            # 3. Liberamos el canal (Esto debe ejecutarse siempre, exista el mensaje o no)
+            import gestor_spawn
+            gestor_spawn.canales_ocupados.discard(self.message.channel.id)
+            
         else:
             print("on_timeout: self.message no está definido, no se pudo actualizar el mensaje.")
     # --- EL GUARDA DE SEGURIDAD ---
