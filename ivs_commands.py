@@ -56,8 +56,9 @@ class IvsCommands(commands.Cog):
         conn = get_connection()
         cursor = conn.cursor()
         
+        # 1. Obtenemos el tamano_factor de la base de datos
         cursor.execute("""
-            SELECT pokemon_nombre, iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe, es_shiny, naturaleza
+            SELECT pokemon_nombre, iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe, es_shiny, naturaleza, tamano_factor
             FROM capturas 
             WHERE id = %s AND user_id = %s
         """, (str(id_pokemon), str(ctx.author.id)))
@@ -69,18 +70,23 @@ class IvsCommands(commands.Cog):
             await ctx.send("❌ No existe ningún Pokémon con ese ID en **tu** inventario.")
             return
 
-        nombre, hp, atk, defs, spa, spd, spe, es_shiny, naturaleza = resultado
+        # 2. Desempaquetamos incluyendo el tamano
+        nombre, hp, atk, defs, spa, spd, spe, es_shiny, naturaleza, tamano = resultado
+        
+        # Lógica de etiqueta de tamaño
+        tamano = float(tamano or 1.0) # Por si hay algún nulo antiguo
+        if tamano < 0.7: etiqueta_tamano = "XXS 🤏"
+        elif tamano > 1.3: etiqueta_tamano = "XXL 👑"
+        else: etiqueta_tamano = "Normal"
+
         ivs_list = [hp, atk, defs, spa, spd, spe]
         total = sum(ivs_list)
         porcentaje = round((total / 186) * 100, 2)
         
         # Color dinámico
-        if porcentaje >= 85: 
-            color, calidad = discord.Color.gold(), "💎 Épico"
-        elif porcentaje >= 70: 
-            color, calidad = discord.Color.green(), "🔥 Excelente"
-        else: 
-            color, calidad = discord.Color.blue(), "⏺️ Normal"
+        if porcentaje >= 85: color, calidad = discord.Color.gold(), "💎 Épico"
+        elif porcentaje >= 70: color, calidad = discord.Color.green(), "🔥 Excelente"
+        else: color, calidad = discord.Color.blue(), "⏺️ Normal"
 
         emoji_shiny = "✨ " if es_shiny else ""
         embed = discord.Embed(title=f"{emoji_shiny}{nombre.capitalize()}", color=color)
@@ -88,6 +94,7 @@ class IvsCommands(commands.Cog):
         data, species = await servicios.obtener_pokemon(self.bot.session, nombre)
         nat_stats = NATURALEZAS.get(naturaleza.capitalize(), NATURALEZAS["Fuerte"])
 
+        # (Mantén tu función format_stat_con_nat aquí adentro igual que antes)
         def format_stat_con_nat(base_lvl50, iv, stat_name):
             if stat_name == 'hp': return f"**{base_lvl50:>3}** | {iv:>2}/31"
             key = STAT_MAP.get(stat_name)
@@ -106,28 +113,39 @@ class IvsCommands(commands.Cog):
             embed.add_field(name="✨ SpD", value=format_stat_con_nat(calcular_stat_lvl50(b.get('special-defense',0), spd), spd, "special-defense"), inline=True)
             embed.add_field(name="⚡ Spe", value=format_stat_con_nat(calcular_stat_lvl50(b.get('speed',0), spe), spe, "speed"), inline=True)
 
-        gen_url = species.get('generation', {}).get('url', '')
-        gen_id = gen_url.split('/')[-2] if gen_url else "Desconocida"
-        regiones = {'1': 'Kanto', '2': 'Johto', '3': 'Hoenn', '4': 'Sinnoh', '5': 'Teselia', '6': 'Kalos', '7': 'Alola', '8': 'Galar', '9': 'Paldea'}
-        
         detalles = (
             f"🆔 **ID Único:** {id_pokemon}\n"
-            f"🗺️ **Región:** {regiones.get(gen_id, 'Desconocida')}\n"
+            f"📏 **Tamaño:** {etiqueta_tamano} ({tamano}x)\n"
             f"🍃 **Naturaleza:** {naturaleza.capitalize()}\n"
             f"⭐ **Calidad:** {calidad}\n"
             f"📈 **Potencial Total:** {total}/186 ({porcentaje}%)\n"
-            f"✨ **Variocolor:** {'Sí' if es_shiny else 'No'}"
         )
-        embed.add_field(name="📝 Detalles de Captura", value=detalles, inline=False)
+        embed.add_field(name="📝 Detalles", value=detalles, inline=False)
         
+        # 3. Escalado Visual con servicios.procesar_sprite_pokemon
         try:
             dex_id = await servicios.obtener_id_por_nombre(self.bot.session, nombre)
             if dex_id:
                 path_s = "shiny/" if es_shiny else ""
-                url_base = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/"
-                embed.set_image(url=f"{url_base}other/official-artwork/{path_s}{dex_id}.png")
-                embed.set_thumbnail(url=f"{url_base}{path_s}{dex_id}.png")
-        except Exception: pass
+                url = f"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/{path_s}{dex_id}.png"
+                
+                async with self.bot.session.get(url) as resp:
+                    img_data = await resp.read()
+                    img_base = Image.open(io.BytesIO(img_data)).convert("RGBA")
+                    
+                    # Llamada a la nueva función de servicios (que debes añadir abajo)
+                    img_final = servicios.procesar_sprite_pokemon(img_base, tamano)
+                    
+                    buffer = io.BytesIO()
+                    img_final.save(buffer, format="PNG")
+                    buffer.seek(0)
+                    
+                    file = discord.File(buffer, filename="pokemon.png")
+                    embed.set_image(url="attachment://pokemon.png")
+                    await ctx.send(embed=embed, file=file)
+                    return # Salimos para no enviar el embed dos veces
+        except Exception as e:
+            log.error(f"Error imagen: {e}")
             
         await ctx.send(embed=embed)
 

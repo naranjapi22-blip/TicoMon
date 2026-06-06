@@ -418,3 +418,15 @@ async def obtener_especie_desde_data(session, data):
     except Exception as e:
         log.error(f"🚨 Error al obtener especie: {e}")
     return None
+# Añade esto a servicios.py
+def obtener_sprite_escalado(imagen_pil, factor):
+    """
+    Escala la imagen del Pokemon basándose en el tamano_factor guardado.
+    """
+    ancho, alto = imagen_pil.size
+    # Escala el tamaño: base * factor
+    nuevo_ancho = int(ancho * factor)
+    nuevo_alto = int(alto * factor)
+    
+    # Redimensionamos
+    return imagen_pil.resize((nuevo_ancho, nuevo_alto), Image.Resampling.LANCZOS)
