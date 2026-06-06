@@ -10,23 +10,31 @@ def verificar_y_actualizar_record(cursor, pokemon_nombre, id_nuevo, user_id_nuev
     row = cursor.fetchone()
     
     if not row:
-        # PRIMERA CAPTURA: Solo insertamos si el Pokémon es excepcional.
-        # Si el Pokémon es normal, no hacemos nada (queda vacío esperando un récord real).
-        if tamano_nuevo >= UMBRAL_XXL:
-            cursor.execute("""
-                INSERT INTO RECORDS_ESPECIE (pokemon_nombre, id_pokemon_grande, user_id_grande, tamano_grande, fecha_grande)
-                VALUES (%s, %s, %s, %s, CURRENT_DATE)
-            """, (pokemon_nombre, id_nuevo, user_id_nuevo, tamano_nuevo))
-            return "NUEVO_RECORD_GRANDE"
-            
-        elif tamano_nuevo <= UMBRAL_XXS:
-            cursor.execute("""
-                INSERT INTO RECORDS_ESPECIE (pokemon_nombre, id_pokemon_pequeno, user_id_pequeno, tamano_pequeno, fecha_pequeno)
-                VALUES (%s, %s, %s, %s, CURRENT_DATE)
-            """, (pokemon_nombre, id_nuevo, user_id_nuevo, tamano_nuevo))
-            return "NUEVO_RECORD_PEQUENO"
-            
-        return None # Pokémon normal, no es récord
+            # Inicializamos todas las columnas. 
+            # Si es XXL, seteamos el grande y dejamos el pequeño en valores neutros.
+            if tamano_nuevo >= UMBRAL_XXL:
+                cursor.execute("""
+                    INSERT INTO RECORDS_ESPECIE (
+                        pokemon_nombre, 
+                        id_pokemon_grande, user_id_grande, tamano_grande, fecha_grande,
+                        id_pokemon_pequeno, user_id_pequeno, tamano_pequeno, fecha_pequeno
+                    )
+                    VALUES (%s, %s, %s, %s, CURRENT_DATE, NULL, NULL, 9.9, NULL)
+                """, (pokemon_nombre, id_nuevo, user_id_nuevo, tamano_nuevo))
+                return "NUEVO_RECORD_GRANDE"
+                
+            elif tamano_nuevo <= UMBRAL_XXS:
+                cursor.execute("""
+                    INSERT INTO RECORDS_ESPECIE (
+                        pokemon_nombre, 
+                        id_pokemon_grande, user_id_grande, tamano_grande, fecha_grande,
+                        id_pokemon_pequeno, user_id_pequeno, tamano_pequeno, fecha_pequeno
+                    )
+                    VALUES (%s, NULL, NULL, 0.0, NULL, %s, %s, %s, CURRENT_DATE)
+                """, (pokemon_nombre, id_nuevo, user_id_nuevo, tamano_nuevo))
+                return "NUEVO_RECORD_PEQUENO"
+                
+            return None
 
     # Si ya existe el registro, actualizamos normalmente
     tamano_grande = row[3] if row[3] is not None else 0.0
