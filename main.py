@@ -207,13 +207,14 @@ def generar_pista(data, species, pistas_usadas):
     else:
         return "Una criatura sumamente misteriosa..."
 # NOTA: Agrega este método auxiliar en tu clase o como función fuera:
-async def _auto_liberar(self, channel_id, segundos):
+async def auto_liberar_canal(channel_id, segundos):
     import asyncio
-    await asyncio.sleep(segundos)
     import gestor_spawn
+    await asyncio.sleep(segundos)
     if channel_id in gestor_spawn.canales_ocupados:
         gestor_spawn.canales_ocupados.discard(channel_id)
         gestor_spawn.vistas_activas.pop(channel_id, None)
+        print(f"🧹 [LIMPIEZA FORZADA] Canal {channel_id} liberado por seguridad.")
 
 
 
