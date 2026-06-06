@@ -1,9 +1,8 @@
 # records.py
 
 def verificar_y_actualizar_record(cursor, pokemon_nombre, id_nuevo, user_id_nuevo, tamano_nuevo):
-    """Verifica y actualiza récords con umbrales de validación."""
+    """Verifica y actualiza récords con umbrales de validación estrictos."""
     
-    # 1. Definimos los umbrales para que solo los extremos entren al Salón de la Fama
     UMBRAL_XXL = 1.2
     UMBRAL_XXS = 0.8
     
@@ -11,23 +10,30 @@ def verificar_y_actualizar_record(cursor, pokemon_nombre, id_nuevo, user_id_nuev
     row = cursor.fetchone()
     
     if not row:
-        # Primera captura: Insertamos. 
-        # NOTA: Si no quieres que un Pokémon normal sea el primer récord, 
-        # puedes añadir un IF aquí para no insertar si el tamaño es normal.
-        cursor.execute("""
-            INSERT INTO RECORDS_ESPECIE (
-                pokemon_nombre, id_pokemon_grande, user_id_grande, tamano_grande, fecha_grande, 
-                id_pokemon_pequeno, user_id_pequeno, tamano_pequeno, fecha_pequeno
-            )
-            VALUES (%s, %s, %s, %s, CURRENT_DATE, %s, %s, %s, CURRENT_DATE)
-        """, (pokemon_nombre, id_nuevo, user_id_nuevo, tamano_nuevo, id_nuevo, user_id_nuevo, tamano_nuevo))
-        return "NUEVO_RECORD_ABS"
+        # PRIMERA CAPTURA: Solo insertamos si el Pokémon es excepcional.
+        # Si el Pokémon es normal, no hacemos nada (queda vacío esperando un récord real).
+        if tamano_nuevo >= UMBRAL_XXL:
+            cursor.execute("""
+                INSERT INTO RECORDS_ESPECIE (pokemon_nombre, id_pokemon_grande, user_id_grande, tamano_grande, fecha_grande)
+                VALUES (%s, %s, %s, %s, CURRENT_DATE)
+            """, (pokemon_nombre, id_nuevo, user_id_nuevo, tamano_nuevo))
+            return "NUEVO_RECORD_GRANDE"
+            
+        elif tamano_nuevo <= UMBRAL_XXS:
+            cursor.execute("""
+                INSERT INTO RECORDS_ESPECIE (pokemon_nombre, id_pokemon_pequeno, user_id_pequeno, tamano_pequeno, fecha_pequeno)
+                VALUES (%s, %s, %s, %s, CURRENT_DATE)
+            """, (pokemon_nombre, id_nuevo, user_id_nuevo, tamano_nuevo))
+            return "NUEVO_RECORD_PEQUENO"
+            
+        return None # Pokémon normal, no es récord
 
-    tamano_grande = row[3]
-    tamano_pequeno = row[7]
+    # Si ya existe el registro, actualizamos normalmente
+    tamano_grande = row[3] if row[3] is not None else 0.0
+    tamano_pequeno = row[7] if row[7] is not None else 99.0
 
-    # 2. Verificación XXL: Solo si es mayor al récord actual Y supera el umbral
-    if tamano_nuevo > tamano_grande and tamano_nuevo >= UMBRAL_XXL:
+    # Verificación XXL
+    if tamano_nuevo >= UMBRAL_XXL and tamano_nuevo > tamano_grande:
         cursor.execute("""
             UPDATE RECORDS_ESPECIE 
             SET id_pokemon_grande = %s, user_id_grande = %s, tamano_grande = %s, fecha_grande = CURRENT_DATE 
@@ -35,8 +41,8 @@ def verificar_y_actualizar_record(cursor, pokemon_nombre, id_nuevo, user_id_nuev
         """, (id_nuevo, user_id_nuevo, tamano_nuevo, pokemon_nombre))
         return "NUEVO_RECORD_GRANDE"
 
-    # 3. Verificación XXS: Solo si es menor al récord actual Y es menor al umbral
-    if tamano_nuevo < tamano_pequeno and tamano_nuevo <= UMBRAL_XXS:
+    # Verificación XXS
+    if tamano_nuevo <= UMBRAL_XXS and tamano_nuevo < tamano_pequeno:
         cursor.execute("""
             UPDATE RECORDS_ESPECIE 
             SET id_pokemon_pequeno = %s, user_id_pequeno = %s, tamano_pequeno = %s, fecha_pequeno = CURRENT_DATE 
