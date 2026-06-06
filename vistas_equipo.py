@@ -109,7 +109,14 @@ async def crear_embed_captura_stats(session, user_id, captura_id: int) -> discor
 
     data, _ = await servicios.obtener_pokemon(session, nombre)
     if data:
+        tipos = ", ".join(t["type"]["name"].capitalize() for t in data.get("types", []))
         b = {s["stat"]["name"]: s["base_stat"] for s in data["stats"]}
+        embed.insert_field_at(
+            0,
+            name="Tipos",
+            value=tipos or "—",
+            inline=True,
+        )
         embed.add_field(name="Estadísticas (Lvl 50 | IVs)", value="━━━━━━━━━━━━━━━━━━━━", inline=False)
         embed.add_field(name="❤️ HP", value=_format_stat(calcular_hp_lvl50(b.get("hp", 0), hp), hp), inline=True)
         embed.add_field(name="⚔️ Atk", value=_format_stat(calcular_stat_lvl50(b.get("attack", 0), atk), atk), inline=True)
@@ -307,6 +314,49 @@ class BuscarCapturaModal(discord.ui.Modal, title="Buscar captura"):
             view=view,
             ephemeral=True,
         )
+
+
+class AgregarPorIdModal(discord.ui.Modal, title="Añadir por ID"):
+    captura_id_input = discord.ui.TextInput(
+        label="ID de captura",
+        placeholder="ej. 42",
+        max_length=10,
+        required=True,
+    )
+
+    def __init__(self, vista_equipo: "VistaEquipo"):
+        super().__init__()
+        self.vista_equipo = vista_equipo
+
+    async def on_submit(self, interaction: discord.Interaction):
+        raw = self.captura_id_input.value.strip().lstrip("#")
+        if not raw.isdigit():
+            return await interaction.response.send_message("❌ ID inválido.", ephemeral=True)
+
+        captura_id = int(raw)
+        cap = database.obtener_captura(self.vista_equipo.user.id, captura_id)
+        if not cap:
+            return await interaction.response.send_message(
+                "❌ No tienes ninguna captura con ese ID.",
+                ephemeral=True,
+            )
+        if captura_id in self.vista_equipo._ids_en_equipo():
+            return await interaction.response.send_message(
+                "❌ Esa captura ya está en tu equipo.",
+                ephemeral=True,
+            )
+
+        try:
+            slot = database.agregar_a_equipo(self.vista_equipo.user.id, captura_id)
+        except database.EquipoError as e:
+            return await interaction.response.send_message(f"❌ {e}", ephemeral=True)
+
+        nombre = cap[1].capitalize()
+        await interaction.response.send_message(
+            f"✅ **{nombre}** `[#{captura_id}]` añadido al slot **{slot}**.",
+            ephemeral=True,
+        )
+        await self.vista_equipo._refrescar_mensaje_principal()
 
 
 class PuertaEquipoPrivada(discord.ui.View):
@@ -652,6 +702,15 @@ class VistaEquipo(discord.ui.View):
         view = discord.ui.View(timeout=60)
         view.add_item(select)
         await interaction.response.send_message("Elige el Pokémon a quitar:", view=view, ephemeral=True)
+
+    @discord.ui.button(label="🆔 Agregar por ID", style=discord.ButtonStyle.success, row=1)
+    async def anadir_por_id(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if database.contar_equipo(self.user.id) >= 9:
+            return await interaction.response.send_message(
+                "❌ Tu equipo está completo (9/9).",
+                ephemeral=True,
+            )
+        await interaction.response.send_modal(AgregarPorIdModal(self))
 
     @discord.ui.button(label="📊 Comparar", style=discord.ButtonStyle.primary, row=1)
     async def comparar(self, interaction: discord.Interaction, button: discord.ui.Button):
