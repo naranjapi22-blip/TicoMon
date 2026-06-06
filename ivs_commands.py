@@ -60,7 +60,7 @@ class IvsCommands(commands.Cog):
         conn = get_connection()
         cursor = conn.cursor()
         
-        # 1. Obtenemos el tamano_factor de la base de datos
+        # 1. Obtenemos datos incluyendo nombre y tamaño
         cursor.execute("""
             SELECT pokemon_nombre, iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe, es_shiny, naturaleza, tamano_factor
             FROM capturas 
@@ -68,17 +68,21 @@ class IvsCommands(commands.Cog):
         """, (str(id_pokemon), str(ctx.author.id)))
         
         resultado = cursor.fetchone()
-        conn.close()
         
         if not resultado:
+            conn.close()
             await ctx.send("❌ No existe ningún Pokémon con ese ID en **tu** inventario.")
             return
 
-        # 2. Desempaquetamos incluyendo el tamano
         nombre, hp, atk, defs, spa, spd, spe, es_shiny, naturaleza, tamano = resultado
         
+        # 2. Verificación de Récord para el Boost Visual
+        # Usamos el cursor abierto para verificar si este ID es el poseedor actual
+        estado_record = records.obtener_estado_record(cursor, nombre.lower(), id_pokemon)
+        conn.close() # Cerramos tras obtener el estado
+        
         # Lógica de etiqueta de tamaño
-        tamano = float(tamano or 1.0) # Por si hay algún nulo antiguo
+        tamano = float(tamano or 1.0)
         if tamano < 0.7: etiqueta_tamano = "XXS 🤏"
         elif tamano > 1.3: etiqueta_tamano = "XXL 👑"
         else: etiqueta_tamano = "Normal"
@@ -98,7 +102,6 @@ class IvsCommands(commands.Cog):
         data, species = await servicios.obtener_pokemon(self.bot.session, nombre)
         nat_stats = NATURALEZAS.get(naturaleza.capitalize(), NATURALEZAS["Fuerte"])
 
-        # (Mantén tu función format_stat_con_nat aquí adentro igual que antes)
         def format_stat_con_nat(base_lvl50, iv, stat_name):
             if stat_name == 'hp': return f"**{base_lvl50:>3}** | {iv:>2}/31"
             key = STAT_MAP.get(stat_name)
@@ -126,7 +129,7 @@ class IvsCommands(commands.Cog):
         )
         embed.add_field(name="📝 Detalles", value=detalles, inline=False)
         
-        # 3. Escalado Visual con servicios.procesar_sprite_pokemon
+        # 3. Escalado Visual con Boost Visual
         try:
             dex_id = await servicios.obtener_id_por_nombre(self.bot.session, nombre)
             if dex_id:
@@ -137,8 +140,8 @@ class IvsCommands(commands.Cog):
                     img_data = await resp.read()
                     img_base = Image.open(io.BytesIO(img_data)).convert("RGBA")
                     
-                    # Llamada a la nueva función de servicios (que debes añadir abajo)
-                    img_final = servicios.procesar_sprite_pokemon(img_base, tamano)
+                    # 🔥 AQUÍ PASAMOS EL estado_record A SERVICIOS
+                    img_final = servicios.procesar_sprite_pokemon(img_base, tamano, estado_record)
                     
                     buffer = io.BytesIO()
                     img_final.save(buffer, format="PNG")
@@ -147,7 +150,7 @@ class IvsCommands(commands.Cog):
                     file = discord.File(buffer, filename="pokemon.png")
                     embed.set_image(url="attachment://pokemon.png")
                     await ctx.send(embed=embed, file=file)
-                    return # Salimos para no enviar el embed dos veces
+                    return 
         except Exception as e:
             log.error(f"Error imagen: {e}")
             

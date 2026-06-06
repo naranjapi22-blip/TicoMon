@@ -7,6 +7,7 @@ from PIL import Image, ImageChops, ImageDraw, ImageOps
 from cachetools import TTLCache
 import asyncio
 from logger_config import log
+from PIL import Image, ImageDraw
 
 # 1. Creamos una caché que:
 # - Guarda máximo 600 imágenes (maxsize)
@@ -430,31 +431,50 @@ def obtener_sprite_escalado(imagen_pil, factor):
     
     # Redimensionamos
     return imagen_pil.resize((nuevo_ancho, nuevo_alto), Image.Resampling.LANCZOS)
-def procesar_sprite_pokemon(imagen_base, tamano_factor):
+def procesar_sprite_pokemon(imagen_base, tamano_factor, estado_record=None):
     """
-    Escala el sprite con un margen de seguridad para que no se corte.
+    Escala el sprite, aplica aura de récord si aplica y centra en un lienzo.
     """
     try:
-        # Aumentamos el margen de seguridad: 
-        # Si tamano_factor es 1.5 (XXL), lo reducimos un poco para que no se salga del lienzo.
+        # 1. Escalado base
         escala_ajustada = tamano_factor * 0.85 
-        
         ancho, alto = imagen_base.size
         nuevo_ancho = int(ancho * escala_ajustada)
         nuevo_alto = int(alto * escala_ajustada)
         
-        # Redimensionar con calidad alta
         sprite_escalado = imagen_base.resize((nuevo_ancho, nuevo_alto), Image.Resampling.LANCZOS)
         
-        # Lienzo transparente de 500x500
+        # 2. Aplicar Boost Visual (Aura)
+        if estado_record:
+            color = "gold" if estado_record == "grande" else "silver"
+            grosor_borde = 10
+            
+            # Creamos una máscara para el aura (un borde redondeado alrededor del sprite escalado)
+            ancho_aura = nuevo_ancho + (grosor_borde * 2)
+            alto_aura = nuevo_alto + (grosor_borde * 2)
+            
+            aura_layer = Image.new("RGBA", (ancho_aura, alto_aura), (0, 0, 0, 0))
+            draw = ImageDraw.Draw(aura_layer)
+            # Dibujamos un rectángulo redondeado con el color del récord
+            draw.rounded_rectangle([0, 0, ancho_aura, alto_aura], radius=20, fill=color)
+            
+            # Pegamos el sprite sobre el aura
+            aura_layer.paste(sprite_escalado, (grosor_borde, grosor_borde), sprite_escalado)
+            
+            # Actualizamos la referencia para que el sprite ahora incluya el aura
+            sprite_escalado = aura_layer
+            nuevo_ancho, nuevo_alto = sprite_escalado.size
+
+        # 3. Lienzo transparente de 500x500
         lienzo = Image.new("RGBA", (500, 500), (0, 0, 0, 0))
         
-        # Centrar
+        # 4. Centrar
         pos_x = (500 - nuevo_ancho) // 2
         pos_y = (500 - nuevo_alto) // 2
         
         lienzo.paste(sprite_escalado, (pos_x, pos_y), sprite_escalado)
         return lienzo
+
     except Exception as e:
-        log.error(f"🚨 Error al procesar sprite para escalado: {e}")
+        log.error(f"🚨 Error al procesar sprite con Boost Visual: {e}")
         return imagen_base

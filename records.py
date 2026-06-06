@@ -43,3 +43,23 @@ def verificar_y_actualizar_record(cursor, pokemon_nombre, id_nuevo, user_id_nuev
         return "NUEVO_RECORD_PEQUENO"
 
     return None
+def obtener_estado_record(cursor, pokemon_nombre, id_pokemon):
+    """
+    Retorna 'grande', 'pequeno' o None.
+    """
+    cursor.execute("""
+        SELECT id_pokemon_grande, id_pokemon_pequeno 
+        FROM RECORDS_ESPECIE 
+        WHERE pokemon_nombre = %s
+    """, (pokemon_nombre,))
+    res = cursor.fetchone()
+    
+    if not res:
+        return None
+    
+    if res[0] == id_pokemon:
+        return "grande"
+    if res[1] == id_pokemon:
+        return "pequeno"
+    
+    return None
