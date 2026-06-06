@@ -135,34 +135,32 @@ class SpawnSelectionView(discord.ui.View):
         self.autor_original = autor_original 
         self.message = None # <-- Añadimos esto para guardar el mensaje y poder editarlo al final
 
-    # --- NUEVA FUNCIÓN PARA CUANDO SE ACABA EL TIEMPO ---
     async def on_timeout(self):
-        # Desactivamos los 3 botones para que se pongan grises
+        # 1. Desactivamos los botones
         for child in self.children:
             child.disabled = True
             
-        if self.message:
+        # 2. Seguridad: Verificamos que self.message exista
+        if hasattr(self, 'message') and self.message:
             try:
-                # Agarramos el embed original y lo cambiamos a rojo
-                embed_huida = self.message.embeds[0]
-                embed_huida.title = "💨 ¡Los Pokémon salvajes huyeron!"
-                embed_huida.description = "Tardaste demasiado en decidir y escaparon entre la hierba alta."
-                embed_huida.color = discord.Color.red()
+                # Actualizamos el embed original a modo "Huida"
+                if self.message.embeds:
+                    embed_huida = self.message.embeds[0]
+                    embed_huida.title = "💨 ¡Los Pokémon salvajes huyeron!"
+                    embed_huida.description = "Tardaste demasiado en decidir y escaparon."
+                    embed_huida.color = discord.Color.red()
+                    
+                    # Editamos el mensaje con el embed modificado y los botones deshabilitados
+                    await self.message.edit(embed=embed_huida, view=self)
                 
-                # Actualizamos el mensaje en Discord
-                await self.message.edit(embed=embed_huida, view=self)
-            except discord.HTTPException:
-                pass
-        # 1. Liberar el canal para que otros puedan usar !spawn
-        import gestor_spawn
-        if self.message:
-            gestor_spawn.canales_ocupados.discard(self.message.channel.id)
-            
-            # 2. Avisar que el tiempo pasó
-            try:
-                await self.message.edit(content="❌ El Pokémon huyó porque nadie lo atrapó a tiempo.", view=None)
-            except:
-                pass
+                # 3. Liberamos el canal
+                import gestor_spawn
+                gestor_spawn.canales_ocupados.discard(self.message.channel.id)
+                
+            except Exception as e:
+                print(f"Error en on_timeout: {e}")
+        else:
+            print("on_timeout: self.message no está definido, no se pudo actualizar el mensaje.")
     # --- EL GUARDA DE SEGURIDAD ---
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         # Si el que hace clic NO es el dueño del comando...
@@ -267,13 +265,6 @@ class BotonCaptura(discord.ui.View):
         if ultimo is None:
             return 0.0
         return COOLDOWN_LANZAMIENTO - (ahora - ultimo)
-
-    async def on_timeout(self):
-        gestor_spawn.canales_ocupados.discard(self.message.channel.id)
-        try:
-            await self.message.edit(content="💨 El encuentro expiró.", view=None)
-        except:
-            pass
 
     @discord.ui.button(label="¡Lanzar Pokéball!", style=discord.ButtonStyle.primary, emoji="🔴")
     async def boton_captura(self, interaction: discord.Interaction, button: discord.ui.Button):

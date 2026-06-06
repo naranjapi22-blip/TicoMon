@@ -216,12 +216,13 @@ def generar_pista(data, species, pistas_usadas):
 async def spawn(ctx):
     import gestor_spawn
     import database
+    import random
     
     # 1. Filtros básicos
     if not gestor_spawn.verificar_inicial(ctx.author.id):
         return await ctx.send("¡Bienvenido! Antes de tu aventura, elige tu Pokémon inicial con `!inicial`.")
     
-    # Obtenemos datos persistentes de la base de datos
+    # Obtenemos datos persistentes
     datos_intentos = await gestor_spawn.obtener_intentos(ctx.author.id)
     intentos = datos_intentos[0]
     ultima_recarga = datos_intentos[1]
@@ -231,9 +232,6 @@ async def spawn(ctx):
 
     # 2. Registro de energía persistente
     database.actualizar_energia_db(ctx.author.id, intentos - 1, ultima_recarga)
-
-    # 3. Bloqueo de canal
-    gestor_spawn.canales_ocupados.add(ctx.channel.id)
 
     try:
         # Generación de IDs con filtro de legendarios
@@ -247,7 +245,7 @@ async def spawn(ctx):
             # FILTRO: Si es legendario, solo aceptarlo con un 5% de probabilidad
             if await es_legendario(bot.session, id_cand):
                 if random.random() > 0.05: 
-                    continue # Rechazado, buscar otro
+                    continue 
             
             ids_spawn.append(id_cand)
         
@@ -259,7 +257,6 @@ async def spawn(ctx):
         
         buffer_siluetas = await servicios.generar_collage_siluetas(bot.session, data_pokes)
         if not buffer_siluetas:
-            gestor_spawn.canales_ocupados.discard(ctx.channel.id)
             database.actualizar_energia_db(ctx.author.id, intentos, ultima_recarga)
             return await ctx.send("Hubo un problema al generar las siluetas.")
 
@@ -281,10 +278,16 @@ async def spawn(ctx):
         embed.set_image(url="attachment://fragmentos.png")
         
         view = SpawnSelectionView(data_pokes, ctx.author)
+        
+        # 3. Envío y vinculación segura
         mensaje_enviado = await ctx.send(embed=embed, file=imagen_final, view=view)
-        view.message = mensaje_enviado
+        view.message = mensaje_enviado # Vital para el on_timeout
+        
+        # 4. Bloqueo de canal solo tras envío exitoso
+        gestor_spawn.canales_ocupados.add(ctx.channel.id)
 
     except Exception as e:
+        # Limpieza ante cualquier error
         gestor_spawn.canales_ocupados.discard(ctx.channel.id)
         database.actualizar_energia_db(ctx.author.id, intentos, ultima_recarga)
         print(f"Error en spawn: {e}")
