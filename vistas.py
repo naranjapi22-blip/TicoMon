@@ -348,7 +348,7 @@ class BotonCaptura(discord.ui.View):
                 embed.set_footer(text=f"Intentos fallidos: {self.intentos_fallidos}")
                 await interaction.message.edit(embed=embed)
                 await interaction.followup.send(f"❌ Fallaste la {nombre_bola}. ¡El Pokémon está más cansado!", ephemeral=True)
-    except Exception as e:
+        except Exception as e:
             # SEGURIDAD: Si algo explota, liberamos el canal obligatoriamente
             gestor_spawn.canales_ocupados.discard(interaction.channel.id)
             self.alguien_lo_atrapo = True # Marcamos como terminado para que no acepten más clics
