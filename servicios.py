@@ -7,7 +7,7 @@ from PIL import Image, ImageChops, ImageDraw, ImageOps
 from cachetools import TTLCache
 import asyncio
 from logger_config import log
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFilter
 
 # 1. Creamos una caché que:
 # - Guarda máximo 600 imágenes (maxsize)
@@ -433,7 +433,7 @@ def obtener_sprite_escalado(imagen_pil, factor):
     return imagen_pil.resize((nuevo_ancho, nuevo_alto), Image.Resampling.LANCZOS)
 def procesar_sprite_pokemon(imagen_base, tamano_factor, estado_record=None):
     """
-    Escala el sprite, aplica aura de récord si aplica y centra en un lienzo.
+    Escala el sprite y aplica un efecto de aura brillante (Glow) si es récord.
     """
     try:
         # 1. Escalado base
@@ -444,25 +444,36 @@ def procesar_sprite_pokemon(imagen_base, tamano_factor, estado_record=None):
         
         sprite_escalado = imagen_base.resize((nuevo_ancho, nuevo_alto), Image.Resampling.LANCZOS)
         
-        # 2. Aplicar Boost Visual (Aura)
+        # 2. Aplicar Boost Visual (Efecto Resplandor)
         if estado_record:
-            color = "gold" if estado_record == "grande" else "silver"
-            grosor_borde = 10
+            # Usamos colores más vibrantes para el efecto luz
+            color_aura = (255, 215, 0, 255) if estado_record == "grande" else (192, 192, 192, 255)
             
-            # Creamos una máscara para el aura (un borde redondeado alrededor del sprite escalado)
-            ancho_aura = nuevo_ancho + (grosor_borde * 2)
-            alto_aura = nuevo_alto + (grosor_borde * 2)
+            # Tamaño del aura (más grande para que el resplandor se note)
+            grosor_resplandor = 20
+            ancho_aura = nuevo_ancho + (grosor_resplandor * 2)
+            alto_aura = nuevo_alto + (grosor_resplandor * 2)
             
-            aura_layer = Image.new("RGBA", (ancho_aura, alto_aura), (0, 0, 0, 0))
-            draw = ImageDraw.Draw(aura_layer)
-            # Dibujamos un rectángulo redondeado con el color del récord
-            draw.rounded_rectangle([0, 0, ancho_aura, alto_aura], radius=20, fill=color)
+            # Capa 1: El resplandor difuminado (Glow)
+            aura_glow = Image.new("RGBA", (ancho_aura, alto_aura), (0, 0, 0, 0))
+            draw = ImageDraw.Draw(aura_glow)
+            # Dibujamos un elipse grande para que el brillo sea orgánico
+            draw.ellipse([0, 0, ancho_aura, alto_aura], fill=color_aura)
+            # Aplicamos desenfoque para efecto "luz"
+            aura_glow = aura_glow.filter(ImageFilter.GaussianBlur(15))
             
-            # Pegamos el sprite sobre el aura
-            aura_layer.paste(sprite_escalado, (grosor_borde, grosor_borde), sprite_escalado)
+            # Capa 2: Un borde interior más definido para que no se pierda la forma
+            aura_borde = Image.new("RGBA", (ancho_aura, alto_aura), (0, 0, 0, 0))
+            draw = ImageDraw.Draw(aura_borde)
+            draw.ellipse([grosor_resplandor//2, grosor_resplandor//2, ancho_aura-grosor_resplandor//2, alto_aura-grosor_resplandor//2], outline=color_aura, width=3)
             
-            # Actualizamos la referencia para que el sprite ahora incluya el aura
-            sprite_escalado = aura_layer
+            # Combinamos todo
+            aura_final = Image.alpha_composite(aura_glow, aura_borde)
+            
+            # Pegamos el sprite encima
+            aura_final.paste(sprite_escalado, (grosor_resplandor, grosor_resplandor), sprite_escalado)
+            
+            sprite_escalado = aura_final
             nuevo_ancho, nuevo_alto = sprite_escalado.size
 
         # 3. Lienzo transparente de 500x500
