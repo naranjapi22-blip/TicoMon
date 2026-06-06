@@ -414,7 +414,7 @@ class BotonCaptura(discord.ui.View):
                 self.alguien_lo_atrapo = True 
                 try:
                     # 1. Primero GUARDAMOS la captura
-                    id_captura = await database.guardar_captura(user_id, self.nombre, self.es_shiny, pokeball=nombre_bola)
+                    id_captura, resultado_record = await database.guardar_captura(user_id, self.nombre, self.es_shiny, pokeball=nombre_bola)
                     
                     # 2. SEGUIMOS con la verificación (YA TENEMOS EL ID)
                     conn = database.get_connection()
