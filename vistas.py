@@ -312,7 +312,7 @@ class SpawnSelectionView(discord.ui.View):
             url_imagen = data['sprites']['other']['official-artwork']['front_default']
         
         embed_revelado.set_image(url=url_imagen)
-        embed_revelado.set_footer(text="Intentos fallidos: 0/30")
+        embed_revelado.set_footer(text="Intentos fallidos: 0")
         
         # --- AQUÍ ESTÁ LA CORRECCIÓN ---
         # Pasamos el capture_rate que acabamos de extraer
