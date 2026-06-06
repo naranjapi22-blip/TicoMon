@@ -158,3 +158,41 @@ class IvsCommands(commands.Cog):
 
 async def setup(bot):
     await bot.add_cog(IvsCommands(bot))
+    @commands.command(name="records")
+    async def ver_records(self, ctx, *, pokemon_nombre: str):
+        conn = get_connection()
+        cursor = conn.cursor()
+        
+        # Consultamos los datos de la tabla RECORDS_ESPECIE
+        cursor.execute("""
+            SELECT id_pokemon_grande, user_id_grande, tamano_grande, fecha_grande,
+                   id_pokemon_pequeno, user_id_pequeno, tamano_pequeno, fecha_pequeno
+            FROM RECORDS_ESPECIE 
+            WHERE pokemon_nombre = %s
+        """, (pokemon_nombre.lower(),))
+        
+        row = cursor.fetchone()
+        conn.close()
+        
+        if not row:
+            await ctx.send(f"❌ No hay récords registrados para **{pokemon_nombre.capitalize()}**. ¡Sé el primero en atrapar uno!")
+            return
+
+        # Desempaquetamos los resultados
+        id_g, user_g, tam_g, fec_g, id_p, user_p, tam_p, fec_p = row
+        
+        # Formateamos el embed
+        embed = discord.Embed(title=f"🏆 Salón de la Fama: {pokemon_nombre.capitalize()}", color=discord.Color.gold())
+        
+        embed.add_field(
+            name="👑 Récord XXL (Más grande)", 
+            value=f"**Tamaño:** {tam_g}x\n**ID:** {id_g}\n**Dueño:** <@{user_g}>\n**Fecha:** {fec_g}", 
+            inline=False
+        )
+        embed.add_field(
+            name="🤏 Récord XXS (Más pequeño)", 
+            value=f"**Tamaño:** {tam_p}x\n**ID:** {id_p}\n**Dueño:** <@{user_p}>\n**Fecha:** {fec_p}", 
+            inline=False
+        )
+        
+        await ctx.send(embed=embed)
