@@ -275,15 +275,15 @@ async def spawn(ctx):
             description=f"Observa las siluetas y lee las pistas...\n\n{texto_pistas}**¿A cuál vas a intentar atrapar?**",
             color=discord.Color.dark_grey()
         )
-        embed.set_image(url="attachment://fragmentos.png")
+        embed.set_image(url="attachment://fragmentos.png")       
         
         view = SpawnSelectionView(data_pokes, ctx.author)
-        
-        # 3. Envío y vinculación segura
         mensaje_enviado = await ctx.send(embed=embed, file=imagen_final, view=view)
-        view.message = mensaje_enviado # Vital para el on_timeout
+        view.message = mensaje_enviado
         
-        # 4. Bloqueo de canal solo tras envío exitoso
+        # GUARDAR REFERENCIA: Esto evita que Python borre la vista
+        gestor_spawn.vistas_activas[ctx.channel.id] = view 
+        
         gestor_spawn.canales_ocupados.add(ctx.channel.id)
 
     except Exception as e:

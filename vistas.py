@@ -140,7 +140,9 @@ class SpawnSelectionView(discord.ui.View):
         for child in self.children:
             child.disabled = True
             
-        # 2. Seguridad: Verificamos que self.message exista
+        import gestor_spawn
+        
+        # 2. Seguridad: Intentamos editar el mensaje solo si existe
         if hasattr(self, 'message') and self.message:
             try:
                 # Actualizamos el embed original a modo "Huida"
@@ -154,18 +156,19 @@ class SpawnSelectionView(discord.ui.View):
                     await self.message.edit(embed=embed_huida, view=self)
             
             except discord.NotFound:
-                # Si el usuario borró el mensaje, no hacemos nada, solo continuamos a la limpieza
                 pass
             except Exception as e:
                 print(f"Error al editar mensaje en on_timeout: {e}")
             
-            # 3. Liberamos el canal (Esto debe ejecutarse siempre, exista el mensaje o no)
-            import gestor_spawn
+            # 3. Liberamos el canal usando el ID del mensaje vinculado
             gestor_spawn.canales_ocupados.discard(self.message.channel.id)
-            
+            # Limpiamos la referencia de la vista si implementaste el diccionario de control
+            gestor_spawn.vistas_activas.pop(self.message.channel.id, None)
+
         else:
-            print("on_timeout: self.message no está definido, no se pudo actualizar el mensaje.")
-    # --- EL GUARDA DE SEGURIDAD ---
+            # CASO DE EMERGENCIA: Si no hay mensaje, intentamos limpiar 
+            # Si tienes una forma de saber el channel_id sin self.message, úsala aquí.
+            print("on_timeout: No se pudo liberar el canal automáticamente (falta referencia self.message).")
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         # Si el que hace clic NO es el dueño del comando...
         if interaction.user != self.autor_original:
