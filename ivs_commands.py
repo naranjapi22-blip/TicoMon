@@ -156,6 +156,40 @@ class IvsCommands(commands.Cog):
             
         await ctx.send(embed=embed)
 
+
+        
+        await ctx.send(embed=embed)
+    @commands.command(name="misrecords")
+    async def ver_mis_records(self, ctx):
+        conn = get_connection()
+        cursor = conn.cursor()
+        
+        # Buscamos todos los registros donde el usuario sea dueño de un récord
+        cursor.execute("""
+            SELECT pokemon_nombre, 
+                   CASE WHEN user_id_grande = %s THEN 'XXL' ELSE NULL END as es_grande,
+                   CASE WHEN user_id_pequeno = %s THEN 'XXS' ELSE NULL END as es_pequeno
+            FROM RECORDS_ESPECIE 
+            WHERE user_id_grande = %s OR user_id_pequeno = %s
+        """, (str(ctx.author.id), str(ctx.author.id), str(ctx.author.id), str(ctx.author.id)))
+        
+        registros = cursor.fetchall()
+        conn.close()
+        
+        if not registros:
+            await ctx.send("❌ Aún no posees ningún récord en el servidor. ¡Sigue atrapando Pokémon!")
+            return
+
+        # Creamos una lista organizada de los récords del usuario
+        mensaje = f"🏆 **Récords de {ctx.author.display_name}:**\n\n"
+        for nombre, es_g, es_p in registros:
+            categorias = []
+            if es_g: categorias.append("👑 XXL")
+            if es_p: categorias.append("🤏 XXS")
+            mensaje += f"• **{nombre.capitalize()}**: {', '.join(categorias)}\n"
+            
+        embed = discord.Embed(description=mensaje, color=discord.Color.gold())
+        await ctx.send(embed=embed)
 async def setup(bot):
     await bot.add_cog(IvsCommands(bot))
     @commands.command(name="records")
@@ -194,36 +228,3 @@ async def setup(bot):
             value=f"**Tamaño:** {tam_p}x\n**ID:** {id_p}\n**Dueño:** <@{user_p}>\n**Fecha:** {fec_p}", 
             inline=False
         )
-        
-        await ctx.send(embed=embed)
-    @commands.command(name="misrecords")
-    async def ver_mis_records(self, ctx):
-        conn = get_connection()
-        cursor = conn.cursor()
-        
-        # Buscamos todos los registros donde el usuario sea dueño de un récord
-        cursor.execute("""
-            SELECT pokemon_nombre, 
-                   CASE WHEN user_id_grande = %s THEN 'XXL' ELSE NULL END as es_grande,
-                   CASE WHEN user_id_pequeno = %s THEN 'XXS' ELSE NULL END as es_pequeno
-            FROM RECORDS_ESPECIE 
-            WHERE user_id_grande = %s OR user_id_pequeno = %s
-        """, (str(ctx.author.id), str(ctx.author.id), str(ctx.author.id), str(ctx.author.id)))
-        
-        registros = cursor.fetchall()
-        conn.close()
-        
-        if not registros:
-            await ctx.send("❌ Aún no posees ningún récord en el servidor. ¡Sigue atrapando Pokémon!")
-            return
-
-        # Creamos una lista organizada de los récords del usuario
-        mensaje = f"🏆 **Récords de {ctx.author.display_name}:**\n\n"
-        for nombre, es_g, es_p in registros:
-            categorias = []
-            if es_g: categorias.append("👑 XXL")
-            if es_p: categorias.append("🤏 XXS")
-            mensaje += f"• **{nombre.capitalize()}**: {', '.join(categorias)}\n"
-            
-        embed = discord.Embed(description=mensaje, color=discord.Color.gold())
-        await ctx.send(embed=embed)
