@@ -8,7 +8,7 @@ from PIL import Image # Necesario para Image.open
 from logger_config import log # Necesario para el log
 import datetime # Asegúrate de tener este también
 from discord.ui import Button, View
-
+import records
 # Fórmulas oficiales de Pokémon
 def calcular_stat_lvl50(base, iv):
     return math.floor(((2 * base + iv) * 50 / 100) + 5)
