@@ -214,10 +214,19 @@ class IvsCommands(commands.Cog):
         for chunk in chunks:
             text = ""
             for nombre, id_g, id_p, es_g, es_p in chunk:
-                # Si es grande, muestra el ID grande; si es pequeño, el pequeño
-                # Si tiene ambos, damos prioridad al grande para el ID mostrado
-                display_id = id_g if es_g else id_p
-                text += f"• **{nombre.capitalize():<12}** {es_g}{es_p} `ID: {display_id}`\n"
+                # Lista para almacenar los bloques de ID (Emoji + ID)
+                ids_texto = []
+                
+                # Si es grande, añadimos su ID a la lista
+                if es_g:
+                    ids_texto.append(f"👑`{id_g}`")
+                
+                # Si es pequeño, añadimos su ID a la lista
+                if es_p:
+                    ids_texto.append(f"🤏`{id_p}`")
+                
+                # Unimos ambos elementos con un espacio
+                text += f"• **{nombre.capitalize():<12}** {' '.join(ids_texto)}\n"
             pages.append(text)
 
         # 3. Enviar mensaje con el paginador
