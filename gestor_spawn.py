@@ -4,9 +4,41 @@ import datetime
 import discord
 from discord.ext import commands
 from logger_config import log
+import time
 
-# --- 1. ESTADO TEMPORAL ---
-canales_ocupados = set()
+class CandadoInteligente(set):
+    """
+    Un 'set' personalizado que elimina automáticamente los canales 
+    si han pasado más de 5 minutos (300 segundos) desde que se añadieron.
+    """
+    def __init__(self):
+        super().__init__()
+        self.tiempos_bloqueo = {}
+
+    def add(self, item):
+        super().add(item)
+        self.tiempos_bloqueo[item] = time.time()
+
+    def discard(self, item):
+        super().discard(item)
+        self.tiempos_bloqueo.pop(item, None)
+        
+    def clear(self):
+        super().clear()
+        self.tiempos_bloqueo.clear()
+
+    def __contains__(self, item):
+        if super().__contains__(item):
+            tiempo_guardado = self.tiempos_bloqueo.get(item, 0)
+            # Si han pasado más de 300 segundos (5 minutos), caduca el bloqueo
+            if time.time() - tiempo_guardado > 300:
+                self.discard(item) # Lo liberamos automáticamente
+                return False
+            return True
+        return False
+
+# Reemplazamos el set normal por nuestro candado con temporizador
+canales_ocupados = CandadoInteligente()
 vistas_activas = {}
 
 # --- 2. GESTIÓN DE ENERGÍA PERSISTENTE ---
