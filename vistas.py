@@ -178,7 +178,104 @@ class SpawnSelectionView(discord.ui.View):
         
         return True # Si es el dueño, lo deja pasar con normalidad
 
-    # --- MANEJO DE LA SELECCIÓN ---
+    async def boton_captura(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if self.alguien_lo_atrapo:
+            return await interaction.response.send_message("💨 ¡Llegaste tarde! Alguien más fue más rápido.", ephemeral=True)
+
+        try:
+            user_id = interaction.user.id
+            ahora = discord.utils.utcnow().timestamp()
+
+            restante = self._segundos_restantes_cooldown(user_id, ahora)
+            if restante > COOLDOWN_GRACE:
+                segundos = max(1, math.ceil(restante))
+                return await interaction.response.send_message(f"⏱️ Espera {segundos}s para volver a lanzar.", ephemeral=True)
+
+            self.user_cooldowns[user_id] = ahora
+            await interaction.response.defer(ephemeral=True)
+
+            # --- NUEVA LÓGICA DE SEGURIDAD (Timer y Huída) ---
+            tiempo_pasado = (datetime.datetime.now() - self.tiempo_aparicion).total_seconds()
+            
+            # 1. Timer de 5 minutos (300 segundos)
+            if tiempo_pasado > 300:
+                self.alguien_lo_atrapo = True
+                gestor_spawn.canales_ocupados.discard(interaction.channel.id)
+                await interaction.message.edit(content="💨 ¡El tiempo se ha agotado! El Pokémon ha huido.", view=None)
+                return self.stop()
+
+            # 2. Huída aleatoria (Periodo de gracia de 20 tiros, factor 0.003)
+            if self.intentos_fallidos > 20:
+                if random.random() < (self.intentos_fallidos * 0.003):
+                    self.alguien_lo_atrapo = True
+                    gestor_spawn.canales_ocupados.discard(interaction.channel.id)
+                    await interaction.message.edit(content="💨 ¡El Pokémon se ha asustado y ha huido!", view=None)
+                    return self.stop()
+
+            # --- MATEMÁTICA DE CAPTURA ---
+            azar = random.random()
+            
+            # Asignación de bolas
+            if azar < 0.01: bonus_bola, nombre_bola = 255.0, "Master Ball"
+            elif azar < 0.15: bonus_bola, nombre_bola = 2.0, "Ultra Ball"
+            elif azar < 0.40: bonus_bola, nombre_bola = 1.5, "Great Ball"
+            else: bonus_bola, nombre_bola = 1.0, "Pokéball"
+
+            # Factor Shiny
+            multiplicador_shiny = 0.1 if self.es_shiny else 1.0
+
+            # Lógica base
+            if nombre_bola == "Master Ball":
+                prob_final = 1.0
+            else:
+                FACTOR_DIFICULTAD = 0.2 
+                FACTOR_DESGASTE = 0.007
+                prob_base = (((self.capture_rate / 255) * bonus_bola) * FACTOR_DIFICULTAD) * multiplicador_shiny
+                prob_final = prob_base + (self.intentos_fallidos * FACTOR_DESGASTE)
+                
+                # Tope: 30% (0.30) para Raros/Legendarios, 45% (0.45) para normales
+                TOPE_MAXIMO = 0.30 if (self.es_shiny or self.es_legendario) else 0.45
+                prob_final = min(prob_final, TOPE_MAXIMO)
+
+            # --- INTENTO DE CAPTURA ---
+            if random.random() < prob_final:
+                self.alguien_lo_atrapo = True 
+                
+                try:
+                    await database.guardar_captura(user_id, self.nombre, self.es_shiny, pokeball=nombre_bola)
+                    gestor_spawn.canales_ocupados.discard(interaction.channel.id)
+
+                    log.info(f"✅ [Captura] {interaction.user.name} atrapó a {self.nombre} con {nombre_bola}.")
+
+                    # --- MENSAJE CON PROBABILIDAD DE CAPTURA ---
+                    porcentaje = round(prob_final * 100, 2)
+                    
+                    await interaction.message.edit(
+                        content=(
+                            f"🎉 {interaction.user.mention} capturó a **{self.nombre.capitalize()}** usando una **{nombre_bola}**! "
+                            f"(Probabilidad final: {porcentaje}%)"
+                        ), 
+                        view=None
+                    )
+                    self.stop()
+                except Exception as db_error:
+                    self.alguien_lo_atrapo = False
+                    log.error(f"Error de BD: {db_error}", exc_info=True)
+                    await interaction.followup.send("⚠️ Error interno. ¡Inténtalo de nuevo!", ephemeral=True)
+
+            else:
+                self.intentos_fallidos += 1
+                # Actualizamos el footer con el nuevo conteo de intentos
+                embed = interaction.message.embeds[0]
+                embed.set_footer(text=f"Intentos fallidos: {self.intentos_fallidos}")
+                await interaction.message.edit(embed=embed)
+                
+                # Línea corregida
+                mensaje_fallo = f"❌ Lanzaste una {nombre_bola} pero fallaste (Probabilidad: {round(prob_final * 100, 3)}%). ¡El Pokémon está más cansado!"
+                await interaction.followup.send(mensaje_fallo, ephemeral=True)
+        except Exception as e:
+            log.error(f"🚨 Error crítico en captura: {e}", exc_info=True)
+            gestor_spawn.canales_ocupados.discard(interaction.channel.id)
     # --- MANEJO DE LA SELECCIÓN ---
     async def manejar_seleccion(self, interaction: discord.Interaction, indice: int):
         self.stop()
