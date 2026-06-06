@@ -317,10 +317,11 @@ class SpawnSelectionView(discord.ui.View):
         # --- AQUÍ ESTÁ LA CORRECCIÓN ---
         # Pasamos el capture_rate que acabamos de extraer
         view_captura = BotonCaptura(
-            pokemon_data=data, 
-            es_legendario=es_legendario, 
-            es_shiny=es_shiny, 
-            capture_rate=capture_rate
+            pokemon_data=data,
+            es_legendario=legendario,
+            es_shiny=shiny,
+            capture_rate=capture_rate,
+            tamano_factor=data.get('tamano_factor', 1.0)
         )
         
         await interaction.response.edit_message(embed=embed_revelado, attachments=[], view=view_captura)
