@@ -167,8 +167,8 @@ class SpawnSelectionView(discord.ui.View):
 
         else:
             # CASO DE EMERGENCIA: Si no hay mensaje, intentamos limpiar 
-            # Si tienes una forma de saber el channel_id sin self.message, úsala aquí.
             print("on_timeout: No se pudo liberar el canal automáticamente (falta referencia self.message).")
+
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         # Si el que hace clic NO es el dueño del comando...
         if interaction.user != self.autor_original:
@@ -181,104 +181,8 @@ class SpawnSelectionView(discord.ui.View):
         
         return True # Si es el dueño, lo deja pasar con normalidad
 
-    async def boton_captura(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if self.alguien_lo_atrapo:
-            return await interaction.response.send_message("💨 ¡Llegaste tarde! Alguien más fue más rápido.", ephemeral=True)
+    # --- SE ELIMINÓ LA FUNCIÓN 'boton_captura' DE AQUÍ (Pertenece a la clase BotonCaptura) ---
 
-        try:
-            user_id = interaction.user.id
-            ahora = discord.utils.utcnow().timestamp()
-
-            restante = self._segundos_restantes_cooldown(user_id, ahora)
-            if restante > COOLDOWN_GRACE:
-                segundos = max(1, math.ceil(restante))
-                return await interaction.response.send_message(f"⏱️ Espera {segundos}s para volver a lanzar.", ephemeral=True)
-
-            self.user_cooldowns[user_id] = ahora
-            await interaction.response.defer(ephemeral=True)
-
-            # --- NUEVA LÓGICA DE SEGURIDAD (Timer y Huída) ---
-            tiempo_pasado = (datetime.datetime.now() - self.tiempo_aparicion).total_seconds()
-            
-            # 1. Timer de 5 minutos (300 segundos)
-            if tiempo_pasado > 300:
-                self.alguien_lo_atrapo = True
-                gestor_spawn.canales_ocupados.discard(interaction.channel.id)
-                await interaction.message.edit(content="💨 ¡El tiempo se ha agotado! El Pokémon ha huido.", view=None)
-                return self.stop()
-
-            # 2. Huída aleatoria (Periodo de gracia de 20 tiros, factor 0.003)
-            if self.intentos_fallidos > 20:
-                if random.random() < (self.intentos_fallidos * 0.003):
-                    self.alguien_lo_atrapo = True
-                    gestor_spawn.canales_ocupados.discard(interaction.channel.id)
-                    await interaction.message.edit(content="💨 ¡El Pokémon se ha asustado y ha huido!", view=None)
-                    return self.stop()
-
-            # --- MATEMÁTICA DE CAPTURA ---
-            azar = random.random()
-            
-            # Asignación de bolas
-            if azar < 0.01: bonus_bola, nombre_bola = 255.0, "Master Ball"
-            elif azar < 0.15: bonus_bola, nombre_bola = 2.0, "Ultra Ball"
-            elif azar < 0.40: bonus_bola, nombre_bola = 1.5, "Great Ball"
-            else: bonus_bola, nombre_bola = 1.0, "Pokéball"
-
-            # Factor Shiny
-            multiplicador_shiny = 0.1 if self.es_shiny else 1.0
-
-            # Lógica base
-            if nombre_bola == "Master Ball":
-                prob_final = 1.0
-            else:
-                FACTOR_DIFICULTAD = 0.2 
-                FACTOR_DESGASTE = 0.007
-                prob_base = (((self.capture_rate / 255) * bonus_bola) * FACTOR_DIFICULTAD) * multiplicador_shiny
-                prob_final = prob_base + (self.intentos_fallidos * FACTOR_DESGASTE)
-                
-                # Tope: 30% (0.30) para Raros/Legendarios, 45% (0.45) para normales
-                TOPE_MAXIMO = 0.30 if (self.es_shiny or self.es_legendario) else 0.45
-                prob_final = min(prob_final, TOPE_MAXIMO)
-
-            # --- INTENTO DE CAPTURA ---
-            if random.random() < prob_final:
-                self.alguien_lo_atrapo = True 
-                
-                try:
-                    await database.guardar_captura(user_id, self.nombre, self.es_shiny, pokeball=nombre_bola)
-                    gestor_spawn.canales_ocupados.discard(interaction.channel.id)
-
-                    log.info(f"✅ [Captura] {interaction.user.name} atrapó a {self.nombre} con {nombre_bola}.")
-
-                    # --- MENSAJE CON PROBABILIDAD DE CAPTURA ---
-                    porcentaje = round(prob_final * 100, 2)
-                    
-                    await interaction.message.edit(
-                        content=(
-                            f"🎉 {interaction.user.mention} capturó a **{self.nombre.capitalize()}** usando una **{nombre_bola}**! "
-                            f"(Probabilidad final: {porcentaje}%)"
-                        ), 
-                        view=None
-                    )
-                    self.stop()
-                except Exception as db_error:
-                    self.alguien_lo_atrapo = False
-                    log.error(f"Error de BD: {db_error}", exc_info=True)
-                    await interaction.followup.send("⚠️ Error interno. ¡Inténtalo de nuevo!", ephemeral=True)
-
-            else:
-                self.intentos_fallidos += 1
-                # Actualizamos el footer con el nuevo conteo de intentos
-                embed = interaction.message.embeds[0]
-                embed.set_footer(text=f"Intentos fallidos: {self.intentos_fallidos}")
-                await interaction.message.edit(embed=embed)
-                
-                # Línea corregida
-                mensaje_fallo = f"❌ Lanzaste una {nombre_bola} pero fallaste (Probabilidad: {round(prob_final * 100, 3)}%). ¡El Pokémon está más cansado!"
-                await interaction.followup.send(mensaje_fallo, ephemeral=True)
-        except Exception as e:
-            log.error(f"🚨 Error crítico en captura: {e}", exc_info=True)
-            gestor_spawn.canales_ocupados.discard(interaction.channel.id)
     # --- MANEJO DE LA SELECCIÓN ---
     async def manejar_seleccion(self, interaction: discord.Interaction, indice: int):
         self.stop()
@@ -288,12 +192,11 @@ class SpawnSelectionView(discord.ui.View):
         # 'data' es el JSON del pokemon, 'species' es el JSON de la especie
         data, species = self.data_pokes[indice]
         
+        # Calculamos variables para esta captura en concreto
         es_shiny = (random.randint(1, 50) == 1)
         es_legendario = species.get('is_legendary', False)
-        
-        # --- AQUÍ OBTENEMOS EL CAPTURE_RATE ---
-        # Si la API no lo tiene, por defecto ponemos 45 (estándar)
         capture_rate = species.get('capture_rate', 45)
+        tamano_factor = round(random.uniform(0.50, 1.50), 2) # Generamos el tamaño aquí
         
         etiquetas = []
         if es_shiny: etiquetas.append("✨ SHINY")
@@ -314,14 +217,14 @@ class SpawnSelectionView(discord.ui.View):
         embed_revelado.set_image(url=url_imagen)
         embed_revelado.set_footer(text="Intentos fallidos: 0")
         
-        # --- AQUÍ ESTÁ LA CORRECCIÓN ---
-        # Pasamos el capture_rate que acabamos de extraer
+        # --- AQUÍ ESTÁ LA CORRECCIÓN DE VARIABLES ---
+        # Pasamos las variables que acabamos de generar, no desde "data"
         view_captura = BotonCaptura(
             pokemon_data=data,
-            es_legendario=data.get('es_legendario', False), # O la variable que tengas definida
-            es_shiny=data.get('es_shiny', False),           # O la variable que tengas definida
-            capture_rate=data.get('capture_rate', 45),
-            tamano_factor=data.get('tamano_factor', 1.0)
+            es_legendario=es_legendario, 
+            es_shiny=es_shiny,           
+            capture_rate=capture_rate,
+            tamano_factor=tamano_factor  
         )
         
         await interaction.response.edit_message(embed=embed_revelado, attachments=[], view=view_captura)
@@ -445,8 +348,13 @@ class BotonCaptura(discord.ui.View):
                 embed.set_footer(text=f"Intentos fallidos: {self.intentos_fallidos}")
                 await interaction.message.edit(embed=embed)
                 await interaction.followup.send(f"❌ Fallaste la {nombre_bola}. ¡El Pokémon está más cansado!", ephemeral=True)
-        except Exception as e:
-            log.error(f"🚨 Error crítico: {e}", exc_info=True)
+    except Exception as e:
+            # SEGURIDAD: Si algo explota, liberamos el canal obligatoriamente
+            gestor_spawn.canales_ocupados.discard(interaction.channel.id)
+            self.alguien_lo_atrapo = True # Marcamos como terminado para que no acepten más clics
+            log.error(f"🚨 Canal liberado por error crítico: {e}")
+            await interaction.followup.send("⚠️ El encuentro ha finalizado debido a un error.", ephemeral=True)
+            self.stop()
 
 class InfoView(discord.ui.View):
     def __init__(self, user_id, data, versiones, mostrar_shiny): # Agregamos user_id
