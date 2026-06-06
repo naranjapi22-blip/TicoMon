@@ -644,6 +644,8 @@ class VistaEquipo(discord.ui.View):
 
     @discord.ui.button(label="🔄 Reemplazar", style=discord.ButtonStyle.primary, row=0)
     async def reemplazar(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.defer(ephemeral=True)
+
         equipo = database.obtener_equipo_detalle(self.user.id)
         opciones = []
         for i, slot in enumerate(equipo, 1):
@@ -655,6 +657,11 @@ class VistaEquipo(discord.ui.View):
         select = discord.ui.Select(placeholder="Elige el slot a reemplazar", options=opciones)
 
         async def callback(sel_inter: discord.Interaction):
+            if sel_inter.user.id != self.user.id:
+                return await sel_inter.response.send_message(
+                    "❌ Este menú no es tuyo.",
+                    ephemeral=True,
+                )
             slot = int(sel_inter.data["values"][0])
             if not self._capturas_para_reemplazo(slot):
                 return await sel_inter.response.send_message(
@@ -666,7 +673,7 @@ class VistaEquipo(discord.ui.View):
         select.callback = callback
         view = discord.ui.View(timeout=60)
         view.add_item(select)
-        await interaction.response.send_message(
+        await interaction.followup.send(
             "Elige el slot que quieres reemplazar:",
             view=view,
             ephemeral=True,
@@ -674,10 +681,12 @@ class VistaEquipo(discord.ui.View):
 
     @discord.ui.button(label="➖ Quitar", style=discord.ButtonStyle.secondary, row=0)
     async def quitar(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.defer(ephemeral=True)
+
         equipo = database.obtener_equipo_detalle(self.user.id)
         llenos = [(i, s) for i, s in enumerate(equipo, 1) if s]
         if not llenos:
-            return await interaction.response.send_message("❌ Tu equipo está vacío.", ephemeral=True)
+            return await interaction.followup.send("❌ Tu equipo está vacío.", ephemeral=True)
 
         opciones = [
             discord.SelectOption(
@@ -689,6 +698,11 @@ class VistaEquipo(discord.ui.View):
         select = discord.ui.Select(placeholder="Elige qué quitar", options=opciones)
 
         async def callback(sel_inter: discord.Interaction):
+            if sel_inter.user.id != self.user.id:
+                return await sel_inter.response.send_message(
+                    "❌ Este menú no es tuyo.",
+                    ephemeral=True,
+                )
             slot = int(sel_inter.data["values"][0])
             slot_data = equipo[slot - 1]
             database.quitar_de_equipo(self.user.id, slot)
@@ -701,7 +715,7 @@ class VistaEquipo(discord.ui.View):
         select.callback = callback
         view = discord.ui.View(timeout=60)
         view.add_item(select)
-        await interaction.response.send_message("Elige el Pokémon a quitar:", view=view, ephemeral=True)
+        await interaction.followup.send("Elige el Pokémon a quitar:", view=view, ephemeral=True)
 
     @discord.ui.button(label="🆔 Agregar por ID", style=discord.ButtonStyle.success, row=1)
     async def anadir_por_id(self, interaction: discord.Interaction, button: discord.ui.Button):

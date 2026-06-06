@@ -6,7 +6,7 @@ from discord import app_commands
 
 import database
 import servicios
-from vistas_equipo import crear_embed_captura_stats
+from vistas_equipo import crear_embed_captura_stats, crear_embed_comparacion, crear_embed_equipo
 
 _tipos_cache: dict[str, str] = {}
 
@@ -56,6 +56,33 @@ def _capturas_disponibles(user_id: int) -> list[dict]:
     return database.listar_capturas_usuario(user_id, excluir_ids=ids_equipo)
 
 
+def _filtrar_especies(especies: list[str], query: str) -> list[str]:
+    q = query.strip().lower()
+    if not q:
+        return especies
+    return [e for e in especies if q in e.lower()]
+
+
+def _etiqueta_especie(nombre: str) -> str:
+    tipos = _tipos_cache.get(nombre.lower(), "?")
+    return f"{nombre.capitalize()} · {tipos}"
+
+
+async def _autocomplete_especies(interaction: discord.Interaction, current: str):
+    especies = sorted(database.obtener_lista_capturas(interaction.user.id), key=str.lower)
+    filtradas = _filtrar_especies(especies, current)[:25]
+    if not filtradas:
+        return []
+
+    session = await _session_del_bot(interaction.client)
+    await asyncio.gather(*[_tipos_de(session, n) for n in set(filtradas)])
+
+    return [
+        app_commands.Choice(name=_etiqueta_especie(nombre)[:100], value=nombre)
+        for nombre in filtradas
+    ]
+
+
 async def _session_del_bot(bot) -> aiohttp.ClientSession:
     if not hasattr(bot, "session") or bot.session.closed:
         bot.session = aiohttp.ClientSession()
@@ -90,6 +117,14 @@ async def equipo_agregar(interaction: discord.Interaction, captura: str):
     await interaction.followup.send(embed=embed, ephemeral=True)
 
 
+@equipo_group.command(name="mostrar", description="Muestra tu equipo guardado (solo tú lo ves)")
+async def equipo_mostrar(interaction: discord.Interaction):
+    await interaction.response.defer(ephemeral=True)
+    session = await _session_del_bot(interaction.client)
+    embed = await crear_embed_equipo(interaction.user, session)
+    await interaction.followup.send(embed=embed, ephemeral=True)
+
+
 @equipo_agregar.autocomplete("captura")
 async def equipo_agregar_autocomplete(interaction: discord.Interaction, current: str):
     capturas = _capturas_disponibles(interaction.user.id)
@@ -107,5 +142,48 @@ async def equipo_agregar_autocomplete(interaction: discord.Interaction, current:
     ]
 
 
+@app_commands.command(name="compare", description="Compara dos especies de tu colección")
+@app_commands.describe(
+    pokemon_a="Primera especie",
+    pokemon_b="Segunda especie",
+)
+async def compare(interaction: discord.Interaction, pokemon_a: str, pokemon_b: str):
+    await interaction.response.defer(ephemeral=True)
+
+    especies = {e.lower() for e in database.obtener_lista_capturas(interaction.user.id)}
+    if pokemon_a.lower() not in especies:
+        return await interaction.followup.send(
+            "❌ No tienes **Pokémon A** en tu colección.",
+            ephemeral=True,
+        )
+    if pokemon_b.lower() not in especies:
+        return await interaction.followup.send(
+            "❌ No tienes **Pokémon B** en tu colección.",
+            ephemeral=True,
+        )
+    if pokemon_a.lower() == pokemon_b.lower():
+        return await interaction.followup.send(
+            "❌ Elige dos especies distintas.",
+            ephemeral=True,
+        )
+
+    session = await _session_del_bot(interaction.client)
+    embed = await crear_embed_comparacion(
+        session, interaction.user.id, pokemon_a, pokemon_b
+    )
+    await interaction.followup.send(embed=embed, ephemeral=True)
+
+
+@compare.autocomplete("pokemon_a")
+async def compare_autocomplete_a(interaction: discord.Interaction, current: str):
+    return await _autocomplete_especies(interaction, current)
+
+
+@compare.autocomplete("pokemon_b")
+async def compare_autocomplete_b(interaction: discord.Interaction, current: str):
+    return await _autocomplete_especies(interaction, current)
+
+
 async def setup(bot):
     bot.tree.add_command(equipo_group)
+    bot.tree.add_command(compare)
