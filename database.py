@@ -6,6 +6,7 @@ import psycopg2
 from logger_config import log
 import logging
 import random
+import records
 
 
 
@@ -84,54 +85,60 @@ def init_db():
         log.error(f"🚨 Error al inicializar la base de datos: {e}", exc_info=True)
         raise
 
+
+
 async def guardar_captura(user_id, pokemon_nombre, es_shiny=False, pokeball='Pokéball'):
     async with db_lock:
         conn = None
         try:
-            # 1. Generamos los datos aleatorios
+            # 1. Cálculos iniciales
             naturaleza_seleccionada = random.choice(NATURALEZAS)
             tamano_factor = round(random.uniform(0.50, 1.50), 2)
             iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe = [random.randint(0, 31) for _ in range(6)]
             fecha_ahora = datetime.datetime.now(datetime.timezone.utc)
             
-            log.debug(f"💾 Guardando captura: {pokemon_nombre} (User: {user_id}, Nat: {naturaleza_seleccionada}, Tam: {tamano_factor})")
-            
+            # 2. Conexión a la base de datos
             conn = get_connection()
             cursor = conn.cursor()
             
+            # 3. Preparación de campos para la consulta
+            campos = "user_id, pokemon_nombre, es_shiny, pokeball, fecha, iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe, naturaleza, tamano_factor"
+            valores = (str(user_id), pokemon_nombre.lower(), 1 if es_shiny else 0, pokeball, fecha_ahora, iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe, naturaleza_seleccionada, tamano_factor)
+
+            # 4. Inserción (Postgres o SQLite)
             if DATABASE_URL:
-                # 🔥 Insertamos naturaleza Y tamano_factor
-                cursor.execute("""
-                    INSERT INTO capturas (
-                        user_id, pokemon_nombre, es_shiny, pokeball, fecha, 
-                        iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe, 
-                        naturaleza, tamano_factor
-                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                """, (str(user_id), pokemon_nombre.lower(), 1 if es_shiny else 0, 
-                      pokeball, fecha_ahora, iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe, 
-                      naturaleza_seleccionada, tamano_factor))
+                cursor.execute(f"INSERT INTO capturas ({campos}) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id", valores)
+                res = cursor.fetchone()
+                id_pokemon = res[0] if res else None
             else:
-                # Lo mismo para SQLite
-                cursor.execute("""
-                    INSERT INTO capturas (
-                        user_id, pokemon_nombre, es_shiny, pokeball, fecha, 
-                        iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe, 
-                        naturaleza, tamano_factor
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, (user_id, pokemon_nombre.lower(), 1 if es_shiny else 0, 
-                      pokeball, fecha_ahora, iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe, 
-                      naturaleza_seleccionada, tamano_factor))
+                cursor.execute(f"INSERT INTO capturas ({campos}) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", valores)
+                id_pokemon = cursor.lastrowid
             
+            # 5. 🔥 VERIFICACIÓN DE RÉCORDS (Lógica síncrona dentro de la misma transacción)
+            if id_pokemon:
+                resultado = records.verificar_y_actualizar_record(
+                    cursor, 
+                    pokemon_nombre.lower(), 
+                    id_pokemon, 
+                    str(user_id), 
+                    tamano_factor
+                )
+                if resultado:
+                    log.info(f"🏆 Récord actualizado ({resultado}) para {pokemon_nombre.capitalize()} (ID: {id_pokemon})")
+            
+            # 6. Confirmación de cambios
             conn.commit()
-            log.info(f"✅ Captura guardada: {pokemon_nombre.capitalize()} - Nat: {naturaleza_seleccionada} - Tam: {tamano_factor}")
+            log.info(f"✅ Captura guardada: {pokemon_nombre.capitalize()} con ID: {id_pokemon}")
             
         except Exception as e:
-            log.error(f"🚨 Error al guardar captura para user {user_id}, pokemon {pokemon_nombre}: {e}", exc_info=True)
+            # 7. Rollback: Si falla algo (incluso la verificación), deshacemos todo
+            if conn:
+                conn.rollback()
+            log.error(f"🚨 Error al guardar o verificar récord: {e}", exc_info=True)
             raise
         finally:
             if conn:
                 conn.close()
-
 def ejecutar_consulta(query_pg, query_sql, params):
     """Auxiliar para ejecutar consultas con diferentes sintaxis"""
     conn = None
