@@ -387,97 +387,61 @@ class BotonCaptura(discord.ui.View):
             self.user_cooldowns[user_id] = ahora
             await interaction.response.defer(ephemeral=True)
 
-            # --- NUEVA LÓGICA DE SEGURIDAD (Timer y Huída) ---
+            # --- LÓGICA DE SEGURIDAD ---
             tiempo_pasado = (datetime.datetime.now() - self.tiempo_aparicion).total_seconds()
-            
-            # 1. Timer de 5 minutos (300 segundos)
             if tiempo_pasado > 300:
                 self.alguien_lo_atrapo = True
                 gestor_spawn.canales_ocupados.discard(interaction.channel.id)
                 await interaction.message.edit(content="💨 ¡El tiempo se ha agotado! El Pokémon ha huido.", view=None)
                 return self.stop()
 
-            # 2. Huída aleatoria (Periodo de gracia de 20 tiros, factor 0.003)
-            if self.intentos_fallidos > 20:
-                if random.random() < (self.intentos_fallidos * 0.003):
-                    self.alguien_lo_atrapo = True
-                    gestor_spawn.canales_ocupados.discard(interaction.channel.id)
-                    await interaction.message.edit(content="💨 ¡El Pokémon se ha asustado y ha huido!", view=None)
-                    return self.stop()
-
             # --- MATEMÁTICA DE CAPTURA ---
             azar = random.random()
-            
-            # Asignación de bolas
             if azar < 0.01: bonus_bola, nombre_bola = 255.0, "Master Ball"
             elif azar < 0.15: bonus_bola, nombre_bola = 2.0, "Ultra Ball"
             elif azar < 0.40: bonus_bola, nombre_bola = 1.5, "Great Ball"
             else: bonus_bola, nombre_bola = 1.0, "Pokéball"
 
-            # Factor Shiny
             multiplicador_shiny = 0.1 if self.es_shiny else 1.0
-
-            # Lógica base
             if nombre_bola == "Master Ball":
                 prob_final = 1.0
             else:
-                FACTOR_DIFICULTAD = 0.2 
-                FACTOR_DESGASTE = 0.007
-                prob_base = (((self.capture_rate / 255) * bonus_bola) * FACTOR_DIFICULTAD) * multiplicador_shiny
-                prob_final = prob_base + (self.intentos_fallidos * FACTOR_DESGASTE)
-                
-                # Tope: 30% (0.30) para Raros/Legendarios, 45% (0.45) para normales
-                TOPE_MAXIMO = 0.30 if (self.es_shiny or self.es_legendario) else 0.45
-                prob_final = min(prob_final, TOPE_MAXIMO)
+                prob_base = (((self.capture_rate / 255) * bonus_bola) * 0.2) * multiplicador_shiny
+                prob_final = min(prob_base + (self.intentos_fallidos * 0.007), (0.30 if (self.es_shiny or self.es_legendario) else 0.45))
 
-# --- INTENTO DE CAPTURA ---
+            # --- INTENTO DE CAPTURA ---
             if random.random() < prob_final:
-                # 1. Bloqueo inmediato para evitar doble captura
                 self.alguien_lo_atrapo = True 
-                
                 try:
-                    # 2. Guardamos la captura en la DB
                     id_captura = await database.guardar_captura(user_id, self.nombre, self.es_shiny, pokeball=nombre_bola)
-                    
-                    # 3. Verificación de Récords
                     conn = database.get_connection()
                     cursor = conn.cursor()
-                    resultado_record = records.verificar_y_actualizar_record(
-                        cursor, self.nombre, id_captura, user_id, self.tamano_factor
-                    )
+                    resultado_record = records.verificar_y_actualizar_record(cursor, self.nombre, id_captura, user_id, self.tamano_factor)
                     conn.commit()
                     conn.close()
 
-                    # 4. Limpieza de canal y logging
                     gestor_spawn.canales_ocupados.discard(interaction.channel.id)
-                    log.info(f"✅ [Captura] {interaction.user.name} atrapó a {self.nombre} (ID: {id_captura}).")
-
-                    # 5. Respuesta al usuario
                     porcentaje = round(prob_final * 100, 2)
-                    mensaje = f"🎉 {interaction.user.mention} capturó a **{self.nombre.capitalize()}** (ID: {id_captura}) usando una **{nombre_bola}**! (Probabilidad: {porcentaje}%)"
+                    mensaje = f"🎉 {interaction.user.mention} capturó a **{self.nombre.capitalize()}** (ID: {id_captura}) con **{nombre_bola}**! ({porcentaje}%)"
                     
-                    if resultado_record == "NUEVO_RECORD_GRANDE":
-                        mensaje += "\n👑 **¡Nuevo Récord XXL!** Has entrado en el Salón de la Fama."
-                    elif resultado_record == "NUEVO_RECORD_PEQUENO":
-                        mensaje += "\n🤏 **¡Nuevo Récord XXS!** Has entrado en el Salón de la Fama."
+                    if resultado_record == "NUEVO_RECORD_GRANDE": mensaje += "\n👑 **¡Nuevo Récord XXL!**"
+                    elif resultado_record == "NUEVO_RECORD_PEQUENO": mensaje += "\n🤏 **¡Nuevo Récord XXS!**"
 
                     await interaction.message.edit(content=mensaje, view=None)
                     self.stop()
-
                 except Exception as db_error:
-                    # Si falla la BD, debemos liberar la captura para que no se pierda el spawn
                     self.alguien_lo_atrapo = False
-                    log.error(f"Error crítico en BD/Récords: {db_error}", exc_info=True)
-                    await interaction.followup.send("⚠️ Hubo un error al guardar tu captura. ¡Inténtalo de nuevo!", ephemeral=True)
+                    log.error(f"Error BD: {db_error}", exc_info=True)
+                    await interaction.followup.send("⚠️ Error interno. ¡Inténtalo de nuevo!", ephemeral=True)
             else:
-                # --- FALLO EN CAPTURA ---
                 self.intentos_fallidos += 1
                 embed = interaction.message.embeds[0]
                 embed.set_footer(text=f"Intentos fallidos: {self.intentos_fallidos}")
                 await interaction.message.edit(embed=embed)
-            
-            mensaje_fallo = f"❌ Lanzaste una {nombre_bola} pero fallaste (Probabilidad: {round(prob_final * 100, 3)}%). ¡El Pokémon está más cansado!"
-            await interaction.followup.send(mensaje_fallo, ephemeral=True)
+                await interaction.followup.send(f"❌ Fallaste la {nombre_bola}. ¡El Pokémon está más cansado!", ephemeral=True)
+        except Exception as e:
+            log.error(f"🚨 Error crítico: {e}", exc_info=True)
+
 class InfoView(discord.ui.View):
     def __init__(self, user_id, data, versiones, mostrar_shiny): # Agregamos user_id
         super().__init__(timeout=60)
