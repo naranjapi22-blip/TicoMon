@@ -7,6 +7,7 @@ from logger_config import log
 
 # --- 1. ESTADO TEMPORAL ---
 canales_ocupados = set()
+vistas_activas = {}
 
 # --- 2. GESTIÓN DE ENERGÍA PERSISTENTE ---
 async def obtener_intentos(user_id):
