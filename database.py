@@ -7,6 +7,16 @@ from logger_config import log
 import logging
 import random
 
+
+
+# 1. Asegúrate de tener esto arriba en tu archivo
+NATURALEZAS = [
+    "Fuerte", "Dócil", "Seria", "Rara", "Agitada", "Huraña", "Firme", "Pícara", "Audaz",
+    "Osada", "Floja", "Plácida", "Modesta", "Afable", "Mansa", "Alocada", "Serena",
+    "Amable", "Cauta", "Grosera", "Tímida", "Activa", "Alegre", "Ingenua", "Quietud"
+]
+
+
 DATABASE_URL = os.environ.get('DATABASE_URL')
 db_lock = asyncio.Lock()
 
@@ -78,38 +88,41 @@ async def guardar_captura(user_id, pokemon_nombre, es_shiny=False, pokeball='Pok
     async with db_lock:
         conn = None
         try:
-            log.debug(f"💾 Guardando captura: {pokemon_nombre} (User: {user_id}, Shiny: {es_shiny})")
+            # 🔥 SOLUCIÓN: Generamos la naturaleza aquí
+            naturaleza_seleccionada = random.choice(NATURALEZAS)
+            
+            log.debug(f"💾 Guardando captura: {pokemon_nombre} con naturaleza {naturaleza_seleccionada}")
             
             conn = get_connection()
             cursor = conn.cursor()
             
-            # 🔥 SOLUCIÓN AQUÍ: Generamos números 100% aleatorios del 0 al 31 inclusive
             iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe = [random.randint(0, 31) for _ in range(6)]
-            
             fecha_ahora = datetime.datetime.now(datetime.timezone.utc)
             
             if DATABASE_URL:
+                # 🔥 AÑADIMOS 'naturaleza' en columnas y el %s adicional en VALUES
                 cursor.execute("""
                     INSERT INTO capturas (
                         user_id, pokemon_nombre, es_shiny, pokeball, fecha, 
-                        iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe
-                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe, naturaleza
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (str(user_id), pokemon_nombre.lower(), 1 if es_shiny else 0, 
-                      pokeball, fecha_ahora, iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe))
+                      pokeball, fecha_ahora, iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe, naturaleza_seleccionada))
             else:
+                # Lo mismo para SQLite si lo usas
                 cursor.execute("""
                     INSERT INTO capturas (
                         user_id, pokemon_nombre, es_shiny, pokeball, fecha, 
-                        iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe, naturaleza
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (user_id, pokemon_nombre.lower(), 1 if es_shiny else 0, 
-                      pokeball, fecha_ahora, iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe))
+                      pokeball, fecha_ahora, iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe, naturaleza_seleccionada))
             
             conn.commit()
-            log.info(f"✅ Captura guardada: {pokemon_nombre.capitalize()} - User {user_id} - IVs ({iv_hp}/{iv_atk}/{iv_def}/{iv_spa}/{iv_spd}/{iv_spe}) - Shiny: {es_shiny}")
+            log.info(f"✅ Captura guardada: {pokemon_nombre.capitalize()} - Naturaleza: {naturaleza_seleccionada}")
             
         except Exception as e:
-            log.error(f"🚨 Error al guardar captura para user {user_id}, pokemon {pokemon_nombre}: {e}", exc_info=True)
+            log.error(f"🚨 Error al guardar captura: {e}", exc_info=True)
             raise
         finally:
             if conn:
