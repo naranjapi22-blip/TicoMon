@@ -206,7 +206,14 @@ def generar_pista(data, species, pistas_usadas):
         return random.choice(pistas)
     else:
         return "Una criatura sumamente misteriosa..."
-
+# NOTA: Agrega este método auxiliar en tu clase o como función fuera:
+async def _auto_liberar(self, channel_id, segundos):
+    import asyncio
+    await asyncio.sleep(segundos)
+    import gestor_spawn
+    if channel_id in gestor_spawn.canales_ocupados:
+        gestor_spawn.canales_ocupados.discard(channel_id)
+        gestor_spawn.vistas_activas.pop(channel_id, None)
 
 
 
@@ -218,6 +225,7 @@ async def spawn(ctx):
     import gestor_spawn
     import database
     import random
+    import asyncio # Necesario para create_task
     
     # 1. Filtros básicos
     if not gestor_spawn.verificar_inicial(ctx.author.id):
@@ -289,29 +297,29 @@ async def spawn(ctx):
             gestor_spawn.vistas_activas[ctx.channel.id] = view 
             gestor_spawn.canales_ocupados.add(ctx.channel.id)
             
-            # --- SEGURO DE VIDA (Opcional pero recomendado) ---
-            # Esto garantiza que el canal se libere solo si la vista falla
-            asyncio.create_task(self._auto_liberar(ctx.channel.id, 305))
+            # --- SEGURO DE VIDA ---
+            # Corregido: Quitamos el "self." y llamamos directamente a la función
+            asyncio.create_task(auto_liberar_canal(ctx.channel.id, 305))
 
         except Exception as e:
-            # Si algo falla aquí, aseguramos limpieza total
+            # Si algo falla en el envío, aseguramos limpieza total
             gestor_spawn.canales_ocupados.discard(ctx.channel.id)
             gestor_spawn.vistas_activas.pop(ctx.channel.id, None)
             
             # Revertimos los intentos si es necesario
             database.actualizar_energia_db(ctx.author.id, intentos, ultima_recarga)
             
-            print(f"Error en spawn: {e}")
-            await ctx.send("¡Se escaparon! Hubo un error al intentar generar el encuentro.")
+            print(f"Error al enviar mensaje en spawn: {e}")
+            await ctx.send("¡Se escaparon! Hubo un error al intentar enviar el encuentro.")
 
-# NOTA: Agrega este método auxiliar en tu clase o como función fuera:
-async def _auto_liberar(self, channel_id, segundos):
-    import asyncio
-    await asyncio.sleep(segundos)
-    import gestor_spawn
-    if channel_id in gestor_spawn.canales_ocupados:
-        gestor_spawn.canales_ocupados.discard(channel_id)
-        gestor_spawn.vistas_activas.pop(channel_id, None)
+    except Exception as e:
+        # Si algo falla en la generación general
+        gestor_spawn.canales_ocupados.discard(ctx.channel.id)
+        gestor_spawn.vistas_activas.pop(ctx.channel.id, None)
+        database.actualizar_energia_db(ctx.author.id, intentos, ultima_recarga)
+        print(f"Error en generación de spawn: {e}")
+        await ctx.send("¡Se escaparon! Hubo un error al intentar generar el encuentro.")
+
 @bot.command()
 @canal_restringido()
 async def info(ctx, *, nombre: str):
