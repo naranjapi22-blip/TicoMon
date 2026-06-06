@@ -2,7 +2,7 @@ import discord
 import database
 import servicios
 from ivs_commands import calcular_stat_lvl50, calcular_hp_lvl50
-from vistas_selector import SelectorPokemon, SPRITE_URL, POR_PAGINA
+from vistas_selector import SPRITE_URL, POR_PAGINA
 
 
 def _etiqueta_captura(captura: dict) -> str:
@@ -10,11 +10,14 @@ def _etiqueta_captura(captura: dict) -> str:
     return f"{shiny}{captura['nombre'].capitalize()} [#{captura['id']}] {captura['iv_pct']}%"
 
 
-def _datos_selector(capturas: list[dict]) -> tuple[list[str], dict[str, str], dict[str, str]]:
-    valores = [str(c["id"]) for c in capturas]
-    etiquetas = {str(c["id"]): _etiqueta_captura(c) for c in capturas}
-    nombres = {str(c["id"]): c["nombre"] for c in capturas}
-    return valores, etiquetas, nombres
+def _filtrar_capturas(capturas: list[dict], query: str) -> list[dict]:
+    q = query.strip().lower()
+    if q.startswith("#"):
+        q = q[1:]
+    if q.isdigit():
+        captura_id = int(q)
+        return [c for c in capturas if c["id"] == captura_id]
+    return [c for c in capturas if q in c["nombre"].lower()]
 
 
 def _lineas_equipo(slots: list) -> str:
@@ -46,12 +49,17 @@ async def crear_embed_equipo(user: discord.Member, session, slots: list | None =
     return embed
 
 
-def _resumen_captura(b: dict, captura) -> str:
+def _format_stat(lvl50: int, iv: int) -> str:
+    return f"**{lvl50:>3}** | {iv:>2}/31"
+
+
+def _stats_desde_captura(b: dict, captura) -> tuple[str, float]:
     captura_id, hp, atk, defs, spa, spd, spe, es_shiny = captura
-    total = hp + atk + defs + spa + spd + spe
+    ivs = [hp, atk, defs, spa, spd, spe]
+    total = sum(ivs)
     pct = round((total / 186) * 100, 2)
     shiny = " ✨" if es_shiny else ""
-    return (
+    texto = (
         f"**`#{captura_id}`**{shiny} **{pct}%**\n"
         f"IVs `{hp}/{atk}/{defs}/{spa}/{spd}/{spe}`\n"
         f"❤️ {calcular_hp_lvl50(b.get('hp', 0), hp)} · "
@@ -61,6 +69,65 @@ def _resumen_captura(b: dict, captura) -> str:
         f"✨ {calcular_stat_lvl50(b.get('special-defense', 0), spd)} · "
         f"⚡ {calcular_stat_lvl50(b.get('speed', 0), spe)}"
     )
+    return texto, pct
+
+
+async def crear_embed_captura_stats(session, user_id, captura_id: int) -> discord.Embed:
+    cap = database.obtener_captura(user_id, captura_id)
+    if not cap:
+        return discord.Embed(description="❌ Captura no encontrada.", color=discord.Color.red())
+
+    cid, nombre, es_shiny, hp, atk, defs, spa, spd, spe = cap
+    ivs = [hp, atk, defs, spa, spd, spe]
+    total = sum(ivs)
+    pct = round((total / 186) * 100, 2)
+
+    if pct >= 85:
+        color = discord.Color.gold()
+        calidad = "Épico"
+    elif pct >= 70:
+        color = discord.Color.green()
+        calidad = "Excelente"
+    else:
+        color = discord.Color.blue()
+        calidad = "Normal"
+
+    emoji_shiny = "✨ " if es_shiny else ""
+    embed = discord.Embed(
+        title=f"{emoji_shiny}{nombre.capitalize()} `[#{cid}]`",
+        color=color,
+    )
+    embed.add_field(
+        name="Detalles",
+        value=(
+            f"⭐ **Calidad:** {calidad}\n"
+            f"📈 **Potencial:** {total}/186 ({pct}%)\n"
+            f"✨ **Shiny:** {'Sí' if es_shiny else 'No'}"
+        ),
+        inline=False,
+    )
+
+    data, _ = await servicios.obtener_pokemon(session, nombre)
+    if data:
+        b = {s["stat"]["name"]: s["base_stat"] for s in data["stats"]}
+        embed.add_field(name="Estadísticas (Lvl 50 | IVs)", value="━━━━━━━━━━━━━━━━━━━━", inline=False)
+        embed.add_field(name="❤️ HP", value=_format_stat(calcular_hp_lvl50(b.get("hp", 0), hp), hp), inline=True)
+        embed.add_field(name="⚔️ Atk", value=_format_stat(calcular_stat_lvl50(b.get("attack", 0), atk), atk), inline=True)
+        embed.add_field(name="🛡️ Def", value=_format_stat(calcular_stat_lvl50(b.get("defense", 0), defs), defs), inline=True)
+        embed.add_field(name="🔮 SpA", value=_format_stat(calcular_stat_lvl50(b.get("special-attack", 0), spa), spa), inline=True)
+        embed.add_field(name="✨ SpD", value=_format_stat(calcular_stat_lvl50(b.get("special-defense", 0), spd), spd), inline=True)
+        embed.add_field(name="⚡ Spe", value=_format_stat(calcular_stat_lvl50(b.get("speed", 0), spe), spe), inline=True)
+
+        poke_id = data.get("id") or await servicios.obtener_id_por_nombre(session, nombre)
+        if poke_id:
+            embed.set_thumbnail(url=SPRITE_URL.format(poke_id=poke_id))
+
+    return embed
+
+
+def _resumen_captura(b: dict, captura) -> str:
+    texto, _ = _stats_desde_captura(b, captura)
+    return texto
 
 
 def _stats_todas_capturas(data, capturas: list) -> str:
@@ -107,24 +174,253 @@ async def crear_embed_comparacion(session, user_id, nombre_a: str, nombre_b: str
     return embed
 
 
-class CompararView(discord.ui.View):
-    """Dos selects cuando hay ≤25 especies distintas."""
+class ConfirmarCapturaView(discord.ui.View):
+    def __init__(self, vista_equipo: "VistaEquipo", captura_id: int, *, slot: int | None = None):
+        super().__init__(timeout=120)
+        self.vista_equipo = vista_equipo
+        self.captura_id = captura_id
+        self.slot = slot
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id != self.vista_equipo.user.id:
+            await interaction.response.send_message("❌ No es tu equipo.", ephemeral=True)
+            return False
+        return True
+
+    @discord.ui.button(label="✅ Confirmar", style=discord.ButtonStyle.success)
+    async def confirmar(self, interaction: discord.Interaction, button: discord.ui.Button):
+        try:
+            if self.slot is None:
+                slot = database.agregar_a_equipo(self.vista_equipo.user.id, self.captura_id)
+                cap = database.obtener_captura(self.vista_equipo.user.id, self.captura_id)
+                nombre = cap[1].capitalize() if cap else "?"
+                mensaje = f"✅ **{nombre}** `[#{self.captura_id}]` añadido al slot **{slot}**."
+            else:
+                database.reemplazar_en_equipo(self.vista_equipo.user.id, self.slot, self.captura_id)
+                cap = database.obtener_captura(self.vista_equipo.user.id, self.captura_id)
+                nombre = cap[1].capitalize() if cap else "?"
+                mensaje = f"✅ Slot **{self.slot}** → **{nombre}** `[#{self.captura_id}]`."
+        except database.EquipoError as e:
+            return await interaction.response.send_message(f"❌ {e}", ephemeral=True)
+
+        self.stop()
+        await interaction.response.edit_message(content=mensaje, embed=None, view=None)
+        await self.vista_equipo._refrescar_mensaje_principal()
+
+    @discord.ui.button(label="Cancelar", style=discord.ButtonStyle.secondary)
+    async def cancelar(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.stop()
+        await interaction.response.edit_message(content="❌ Acción cancelada.", embed=None, view=None)
+
+
+class EleccionCapturaView(discord.ui.View):
+    def __init__(self, vista_equipo: "VistaEquipo", capturas: list[dict], *, slot: int | None = None):
+        super().__init__(timeout=120)
+        self.vista_equipo = vista_equipo
+        self.capturas = {str(c["id"]): c for c in capturas}
+        self.slot = slot
+
+        opciones = [
+            discord.SelectOption(label=_etiqueta_captura(c)[:100], value=str(c["id"]))
+            for c in capturas[:25]
+        ]
+        self.select = discord.ui.Select(placeholder="Elige una captura", options=opciones)
+        self.select.callback = self._on_select
+        self.add_item(self.select)
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id != self.vista_equipo.user.id:
+            await interaction.response.send_message("❌ No es tu equipo.", ephemeral=True)
+            return False
+        return True
+
+    async def _on_select(self, interaction: discord.Interaction):
+        captura_id = int(interaction.data["values"][0])
+        embed = await crear_embed_captura_stats(
+            self.vista_equipo.session,
+            self.vista_equipo.user.id,
+            captura_id,
+        )
+        view = ConfirmarCapturaView(self.vista_equipo, captura_id, slot=self.slot)
+        await interaction.response.edit_message(
+            content="Revisa las estadísticas y confirma:",
+            embed=embed,
+            view=view,
+        )
+
+
+class BuscarCapturaModal(discord.ui.Modal, title="Buscar captura"):
+    buscar = discord.ui.TextInput(
+        label="Buscar",
+        placeholder="nombre o #id (ej. pikachu, 42)",
+        max_length=50,
+        required=True,
+    )
+
+    def __init__(self, vista_equipo: "VistaEquipo", *, slot: int | None = None):
+        super().__init__()
+        self.vista_equipo = vista_equipo
+        self.slot = slot
+
+    async def on_submit(self, interaction: discord.Interaction):
+        if self.slot is None:
+            candidatos = self.vista_equipo._capturas_disponibles_para_anadir()
+        else:
+            candidatos = self.vista_equipo._capturas_para_reemplazo(self.slot)
+
+        if not candidatos:
+            return await interaction.response.send_message(
+                "❌ No hay capturas disponibles para esa acción.",
+                ephemeral=True,
+            )
+
+        coincidencias = _filtrar_capturas(candidatos, self.buscar.value)
+        if not coincidencias:
+            return await interaction.response.send_message(
+                "❌ No tienes ninguna captura que coincida con esa búsqueda.",
+                ephemeral=True,
+            )
+        if len(coincidencias) > 25:
+            return await interaction.response.send_message(
+                "❌ Demasiados resultados. Sé más específico (usa el ID `#123`).",
+                ephemeral=True,
+            )
+
+        if len(coincidencias) == 1:
+            captura_id = coincidencias[0]["id"]
+            embed = await crear_embed_captura_stats(
+                self.vista_equipo.session,
+                self.vista_equipo.user.id,
+                captura_id,
+            )
+            view = ConfirmarCapturaView(self.vista_equipo, captura_id, slot=self.slot)
+            return await interaction.response.send_message(
+                content="Revisa las estadísticas y confirma:",
+                embed=embed,
+                view=view,
+                ephemeral=True,
+            )
+
+        view = EleccionCapturaView(self.vista_equipo, coincidencias, slot=self.slot)
+        await interaction.response.send_message(
+            content=f"**{len(coincidencias)}** capturas encontradas. Elige una:",
+            view=view,
+            ephemeral=True,
+        )
+
+
+class PuertaEquipoPrivada(discord.ui.View):
+    """Mensaje público con botón que abre el panel de equipo solo para el jugador."""
+
+    def __init__(self, jugador: discord.Member, session):
+        super().__init__(timeout=180)
+        self.jugador = jugador
+        self.session = session
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        return interaction.user.id == self.jugador.id
+
+    @discord.ui.button(label="📋 Abrir mi equipo (privado)", style=discord.ButtonStyle.primary)
+    async def abrir_equipo(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.defer(ephemeral=True)
+
+        button.disabled = True
+        await interaction.edit_original_response(view=self)
+
+        vista = VistaEquipo(self.jugador, self.session)
+        embed = await vista.crear_embed()
+        msg = await interaction.followup.send(embed=embed, view=vista, ephemeral=True)
+        vista.message = msg
+
+        try:
+            await interaction.message.delete()
+        except discord.HTTPException:
+            pass
+
+
+async def abrir_equipo_en_privado(ctx, jugador: discord.Member, session):
+    puerta = PuertaEquipoPrivada(jugador, session)
+    await ctx.send(
+        f"🎒 {jugador.mention}, pulsa **Abrir mi equipo (privado)**. Solo tú verás tu equipo.",
+        view=puerta,
+    )
+
+
+class CompararBuscarModal(discord.ui.Modal, title="Buscar especie"):
+    def __init__(self, picker: "CompararPickerView"):
+        super().__init__()
+        self.picker = picker
+        self.campo = discord.ui.TextInput(
+            label="Nombre",
+            placeholder="ej. pikachu, char…",
+            max_length=50,
+            required=True,
+        )
+        self.add_item(self.campo)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        self.picker.filtro = self.campo.value.strip().lower()
+        self.picker.pagina_actual = 0
+        if not self.picker.lista_visible:
+            return await interaction.response.send_message(
+                "❌ No tienes ninguna especie que coincida con esa búsqueda.",
+                ephemeral=True,
+            )
+        self.picker._reconstruir_componentes()
+        await interaction.response.edit_message(
+            embed=self.picker.crear_embed(),
+            view=self.picker,
+        )
+
+
+class CompararPickerView(discord.ui.View):
+    """Elige dos especies con select paginado (25 por página)."""
 
     def __init__(self, user: discord.Member, session, especies: list[str]):
-        super().__init__(timeout=120)
+        super().__init__(timeout=180)
         self.user = user
         self.session = session
         self.especies = sorted(especies, key=str.lower)
-        opts = [
-            discord.SelectOption(label=e.capitalize()[:100], value=e)
-            for e in self.especies[:25]
-        ]
-        self.select_a = discord.ui.Select(placeholder="Pokémon A", options=opts, row=0)
-        self.select_b = discord.ui.Select(placeholder="Pokémon B", options=opts, row=1)
-        self.select_a.callback = self._noop
-        self.select_b.callback = self._noop
-        self.add_item(self.select_a)
-        self.add_item(self.select_b)
+        self.filtro: str | None = None
+        self.pagina_actual = 0
+        self.nombre_a: str | None = None
+        self.nombre_b: str | None = None
+        self._reconstruir_componentes()
+
+    @property
+    def eligiendo_b(self) -> bool:
+        return self.nombre_a is not None and self.nombre_b is None
+
+    @property
+    def lista_visible(self) -> list[str]:
+        base = self.especies
+        if self.eligiendo_b:
+            base = [e for e in base if e.lower() != self.nombre_a.lower()]
+        if self.filtro:
+            return [e for e in base if self.filtro in e.lower()]
+        return base
+
+    @property
+    def paginas(self) -> list[list[str]]:
+        visible = self.lista_visible
+        if not visible:
+            return [[]]
+        return [visible[i : i + POR_PAGINA] for i in range(0, len(visible), POR_PAGINA)]
+
+    def crear_embed(self) -> discord.Embed:
+        total_pag = max(1, len(self.paginas))
+        fase = "B" if self.eligiendo_b else "A"
+        busqueda = f"\n🔎 Filtro: `{self.filtro}`" if self.filtro else ""
+        desc = f"Elige **Pokémon {fase}** del menú.{busqueda}\n📄 Página **{self.pagina_actual + 1}/{total_pag}**"
+        if self.nombre_a:
+            desc += f"\n\n**A:** {self.nombre_a.capitalize()}"
+        if self.nombre_b:
+            desc += f"\n**B:** {self.nombre_b.capitalize()}"
+        return discord.Embed(
+            title="📊 Comparar especies",
+            description=desc,
+            color=discord.Color.gold(),
+        )
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.user.id != self.user.id:
@@ -132,98 +428,120 @@ class CompararView(discord.ui.View):
             return False
         return True
 
-    async def _noop(self, interaction: discord.Interaction):
-        await interaction.response.defer()
+    def _reconstruir_componentes(self):
+        self.clear_items()
+        paginas = self.paginas
+        if self.pagina_actual >= len(paginas):
+            self.pagina_actual = max(0, len(paginas) - 1)
 
-    @discord.ui.button(label="📊 Comparar", style=discord.ButtonStyle.primary, row=2)
-    async def comparar(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if not self.select_a.values or not self.select_b.values:
-            return await interaction.response.send_message(
-                "❌ Elige ambos Pokémon.",
-                ephemeral=True,
+        opciones_pagina = paginas[self.pagina_actual]
+        fase = "B" if self.eligiendo_b else "A"
+
+        if opciones_pagina and self.nombre_b is None:
+            opciones = [
+                discord.SelectOption(label=n.capitalize()[:100], value=n)
+                for n in opciones_pagina
+            ]
+            select = discord.ui.Select(
+                placeholder=f"Elige Pokémon {fase}",
+                min_values=1,
+                max_values=1,
+                options=opciones,
             )
-        a, b = self.select_a.values[0], self.select_b.values[0]
-        if a == b:
-            return await interaction.response.send_message(
-                "❌ Elige dos especies distintas.",
-                ephemeral=True,
-            )
-        embed = await crear_embed_comparacion(self.session, self.user.id, a, b)
+            select.callback = self._callback_select
+            self.add_item(select)
+
+        if len(paginas) > 1:
+            btn_atras = discord.ui.Button(label="◀️", style=discord.ButtonStyle.secondary)
+            btn_atras.callback = self._callback_atras
+            self.add_item(btn_atras)
+            btn_adelante = discord.ui.Button(label="▶️", style=discord.ButtonStyle.secondary)
+            btn_adelante.callback = self._callback_adelante
+            self.add_item(btn_adelante)
+
+        btn_buscar = discord.ui.Button(label="🔍 Buscar", style=discord.ButtonStyle.primary)
+        btn_buscar.callback = self._callback_buscar
+        self.add_item(btn_buscar)
+
+        if self.filtro:
+            btn_todos = discord.ui.Button(label="Ver todos", style=discord.ButtonStyle.secondary)
+            btn_todos.callback = self._callback_ver_todos
+            self.add_item(btn_todos)
+
+        if self.eligiendo_b:
+            btn_cambiar = discord.ui.Button(label="↩ Cambiar A", style=discord.ButtonStyle.secondary)
+            btn_cambiar.callback = self._callback_cambiar_a
+            self.add_item(btn_cambiar)
+
+        if self.nombre_b:
+            btn_cambiar_b = discord.ui.Button(label="↩ Cambiar B", style=discord.ButtonStyle.secondary)
+            btn_cambiar_b.callback = self._callback_cambiar_b
+            self.add_item(btn_cambiar_b)
+
+        if self.nombre_a and self.nombre_b:
+            btn_ok = discord.ui.Button(label="📊 Comparar", style=discord.ButtonStyle.success)
+            btn_ok.callback = self._callback_comparar
+            self.add_item(btn_ok)
+
+    async def _editar(self, interaction: discord.Interaction):
+        await interaction.response.edit_message(embed=self.crear_embed(), view=self)
+
+    async def _callback_select(self, interaction: discord.Interaction):
+        nombre = interaction.data["values"][0]
+        if not self.nombre_a:
+            self.nombre_a = nombre
+            self.pagina_actual = 0
+            self.filtro = None
+        else:
+            if nombre.lower() == self.nombre_a.lower():
+                return await interaction.response.send_message(
+                    "❌ Elige una especie distinta a Pokémon A.",
+                    ephemeral=True,
+                )
+            self.nombre_b = nombre
+        self._reconstruir_componentes()
+        await self._editar(interaction)
+
+    async def _callback_atras(self, interaction: discord.Interaction):
+        self.pagina_actual = max(0, self.pagina_actual - 1)
+        self._reconstruir_componentes()
+        await self._editar(interaction)
+
+    async def _callback_adelante(self, interaction: discord.Interaction):
+        self.pagina_actual = min(len(self.paginas) - 1, self.pagina_actual + 1)
+        self._reconstruir_componentes()
+        await self._editar(interaction)
+
+    async def _callback_buscar(self, interaction: discord.Interaction):
+        await interaction.response.send_modal(CompararBuscarModal(self))
+
+    async def _callback_ver_todos(self, interaction: discord.Interaction):
+        self.filtro = None
+        self.pagina_actual = 0
+        self._reconstruir_componentes()
+        await self._editar(interaction)
+
+    async def _callback_cambiar_a(self, interaction: discord.Interaction):
+        self.nombre_a = None
+        self.nombre_b = None
+        self.pagina_actual = 0
+        self.filtro = None
+        self._reconstruir_componentes()
+        await self._editar(interaction)
+
+    async def _callback_cambiar_b(self, interaction: discord.Interaction):
+        self.nombre_b = None
+        self.pagina_actual = 0
+        self.filtro = None
+        self._reconstruir_componentes()
+        await self._editar(interaction)
+
+    async def _callback_comparar(self, interaction: discord.Interaction):
+        embed = await crear_embed_comparacion(
+            self.session, self.user.id, self.nombre_a, self.nombre_b
+        )
         self.stop()
-        await interaction.response.send_message(embed=embed, ephemeral=True, view=None)
-
-
-class CompararModal(discord.ui.Modal, title="Comparar Pokémon"):
-    """Modal con selects cuando discord.py soporta Label (≤25 especies)."""
-
-    def __init__(self, user: discord.Member, session, especies: list[str]):
-        super().__init__()
-        self.user = user
-        self.session = session
-        self.especies = sorted(especies, key=str.lower)
-        opts = [
-            discord.SelectOption(label=e.capitalize()[:100], value=e)
-            for e in self.especies[:25]
-        ]
-        self._select_a = discord.ui.Select(placeholder="Pokémon A", options=opts)
-        self._select_b = discord.ui.Select(placeholder="Pokémon B", options=opts)
-        self.add_item(discord.ui.Label(text="Pokémon A", component=self._select_a))
-        self.add_item(discord.ui.Label(text="Pokémon B", component=self._select_b))
-
-    async def on_submit(self, interaction: discord.Interaction):
-        if interaction.user.id != self.user.id:
-            return await interaction.response.send_message("❌ No es tu comparación.", ephemeral=True)
-        if not self._select_a.values or not self._select_b.values:
-            return await interaction.response.send_message("❌ Elige ambos Pokémon.", ephemeral=True)
-        a, b = self._select_a.values[0], self._select_b.values[0]
-        if a == b:
-            return await interaction.response.send_message("❌ Elige dos especies distintas.", ephemeral=True)
-        embed = await crear_embed_comparacion(self.session, self.user.id, a, b)
-        await interaction.response.send_message(embed=embed, ephemeral=True)
-
-
-async def _comparar_dos_pasos(interaction: discord.Interaction, user: discord.Member, session, especies: list[str]):
-    await interaction.response.defer(ephemeral=True)
-
-    selector_a = SelectorPokemon(
-        user,
-        especies,
-        session,
-        max_seleccion=1,
-        titulo="📊 Comparar — elige Pokémon A",
-        placeholder_select="Elige el primer Pokémon",
-        etiqueta_campo="Pokémon A",
-    )
-    msg = await interaction.followup.send(
-        embed=await selector_a.crear_embed(),
-        view=selector_a,
-        ephemeral=True,
-    )
-    selector_a.message = msg
-    await selector_a.wait()
-    if not selector_a.seleccionados:
-        return
-    nombre_a = selector_a.seleccionados[0]
-    restantes = [e for e in especies if e.lower() != nombre_a.lower()]
-
-    selector_b = SelectorPokemon(
-        user,
-        restantes,
-        session,
-        max_seleccion=1,
-        titulo="📊 Comparar — elige Pokémon B",
-        placeholder_select="Elige el segundo Pokémon",
-        etiqueta_campo="Pokémon B",
-    )
-    embed_b = await selector_b.crear_embed()
-    await msg.edit(embed=embed_b, view=selector_b)
-    selector_b.message = msg
-    await selector_b.wait()
-    if not selector_b.seleccionados:
-        return
-    nombre_b = selector_b.seleccionados[0]
-    embed = await crear_embed_comparacion(session, user.id, nombre_a, nombre_b)
-    await msg.edit(embed=embed, view=None)
+        await interaction.response.edit_message(embed=embed, view=None)
 
 
 class VistaEquipo(discord.ui.View):
@@ -260,58 +578,6 @@ class VistaEquipo(discord.ui.View):
             embed = await self.crear_embed()
             await self.message.edit(embed=embed, view=self)
 
-    async def _ejecutar_selector_ephemeral(
-        self,
-        interaction: discord.Interaction,
-        capturas: list[dict],
-        titulo: str,
-        on_pick,
-        *,
-        ya_respondido: bool = False,
-    ):
-        if not capturas:
-            if ya_respondido:
-                return await interaction.followup.send(
-                    "❌ No hay capturas disponibles para esa acción.",
-                    ephemeral=True,
-                )
-            return await interaction.response.send_message(
-                "❌ No hay capturas disponibles para esa acción.",
-                ephemeral=True,
-            )
-        if not ya_respondido:
-            await interaction.response.defer(ephemeral=True)
-
-        valores, etiquetas, nombres = _datos_selector(capturas)
-        selector = SelectorPokemon(
-            self.user,
-            valores,
-            self.session,
-            max_seleccion=1,
-            titulo=titulo,
-            placeholder_select="Elige una captura",
-            etiqueta_campo="Selección",
-            etiquetas=etiquetas,
-            nombre_por_valor=nombres,
-        )
-        msg = await interaction.followup.send(
-            embed=await selector.crear_embed(),
-            view=selector,
-            ephemeral=True,
-        )
-        selector.message = msg
-        await selector.wait()
-        if not selector.seleccionados:
-            return
-        captura_id = int(selector.seleccionados[0])
-        try:
-            mensaje = on_pick(captura_id)
-        except database.EquipoError as e:
-            await interaction.followup.send(f"❌ {e}", ephemeral=True)
-            return
-        await interaction.followup.send(mensaje, ephemeral=True)
-        await self._refrescar_mensaje_principal()
-
     @discord.ui.button(label="➕ Añadir", style=discord.ButtonStyle.success, row=0)
     async def anadir(self, interaction: discord.Interaction, button: discord.ui.Button):
         if database.contar_equipo(self.user.id) >= 9:
@@ -319,17 +585,12 @@ class VistaEquipo(discord.ui.View):
                 "❌ Tu equipo está completo (9/9).",
                 ephemeral=True,
             )
-        capturas = self._capturas_disponibles_para_anadir()
-
-        def on_pick(captura_id: int) -> str:
-            slot = database.agregar_a_equipo(self.user.id, captura_id)
-            cap = database.obtener_captura(self.user.id, captura_id)
-            nombre = cap[1].capitalize() if cap else "?"
-            return f"✅ **{nombre}** `[#{captura_id}]` añadido al slot **{slot}**."
-
-        await self._ejecutar_selector_ephemeral(
-            interaction, capturas, "➕ Añadir al equipo", on_pick
-        )
+        if not self._capturas_disponibles_para_anadir():
+            return await interaction.response.send_message(
+                "❌ No tienes capturas disponibles para añadir.",
+                ephemeral=True,
+            )
+        await interaction.response.send_modal(BuscarCapturaModal(self))
 
     @discord.ui.button(label="🔄 Reemplazar", style=discord.ButtonStyle.primary, row=0)
     async def reemplazar(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -345,25 +606,12 @@ class VistaEquipo(discord.ui.View):
 
         async def callback(sel_inter: discord.Interaction):
             slot = int(sel_inter.data["values"][0])
-            capturas = self._capturas_para_reemplazo(slot)
-            await sel_inter.response.edit_message(
-                content=f"Slot **{slot}** — elige la captura:",
-                view=None,
-            )
-
-            def on_pick(captura_id: int) -> str:
-                database.reemplazar_en_equipo(self.user.id, slot, captura_id)
-                cap = database.obtener_captura(self.user.id, captura_id)
-                nombre = cap[1].capitalize() if cap else "?"
-                return f"✅ Slot **{slot}** → **{nombre}** `[#{captura_id}]`."
-
-            await self._ejecutar_selector_ephemeral(
-                sel_inter,
-                capturas,
-                f"🔄 Reemplazar slot {slot}",
-                on_pick,
-                ya_respondido=True,
-            )
+            if not self._capturas_para_reemplazo(slot):
+                return await sel_inter.response.send_message(
+                    "❌ No hay capturas disponibles para ese slot.",
+                    ephemeral=True,
+                )
+            await sel_inter.response.send_modal(BuscarCapturaModal(self, slot=slot))
 
         select.callback = callback
         view = discord.ui.View(timeout=60)
@@ -413,18 +661,12 @@ class VistaEquipo(discord.ui.View):
                 "❌ Necesitas al menos 2 especies distintas capturadas.",
                 ephemeral=True,
             )
-        if len(especies) <= POR_PAGINA:
-            try:
-                modal = CompararModal(self.user, self.session, especies)
-                return await interaction.response.send_modal(modal)
-            except (TypeError, AttributeError):
-                view = CompararView(self.user, self.session, especies)
-                return await interaction.response.send_message(
-                    "Elige dos Pokémon y pulsa Comparar:",
-                    view=view,
-                    ephemeral=True,
-                )
-        await _comparar_dos_pasos(interaction, self.user, self.session, especies)
+        view = CompararPickerView(self.user, self.session, especies)
+        await interaction.response.send_message(
+            embed=view.crear_embed(),
+            view=view,
+            ephemeral=True,
+        )
 
     async def on_timeout(self):
         for item in self.children:

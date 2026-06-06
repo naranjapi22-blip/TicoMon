@@ -18,7 +18,7 @@ from vistas_combate import SelectorPaginado, VistaCombate
 import vistas_batalla
 from vistas_batalla import SelectorBatalla
 import vistas_equipo
-from vistas_equipo import VistaEquipo
+from vistas_equipo import abrir_equipo_en_privado
 import psycopg2
 import asyncio
 import sqlite3
@@ -595,13 +595,10 @@ async def iniciar_batalla(ctx, oponente: discord.Member):
 @bot.command(name="equipo")
 @canal_restringido()
 async def equipo(ctx):
-    """Gestiona tu equipo de hasta 9 Pokémon."""
+    """Gestiona tu equipo de hasta 9 Pokémon (panel privado)."""
     if not hasattr(bot, "session") or bot.session.closed:
         bot.session = aiohttp.ClientSession()
-    view = VistaEquipo(ctx.author, bot.session)
-    embed = await view.crear_embed()
-    msg = await ctx.send(embed=embed, view=view)
-    view.message = msg
+    await abrir_equipo_en_privado(ctx, ctx.author, bot.session)
 
 
 bot.run(TOKEN)
