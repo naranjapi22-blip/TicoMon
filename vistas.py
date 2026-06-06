@@ -14,6 +14,18 @@ import records  # Importa tu archivo de lógica de récords
 COOLDOWN_LANZAMIENTO = 10.0
 COOLDOWN_GRACE = 0.25
 
+
+
+
+
+def liberar_canal_completo(channel_id):
+    import gestor_spawn
+    gestor_spawn.canales_ocupados.discard(channel_id)
+    # Limpiamos también la vista activa para quitar el "doble candado"
+    if hasattr(gestor_spawn, 'vistas_activas'):
+        gestor_spawn.vistas_activas.pop(channel_id, None)
+
+
 INICIALES = [
     {"nombre": "Bulbasaur", "id": 1}, {"nombre": "Charmander", "id": 4}, {"nombre": "Squirtle", "id": 7},
     {"nombre": "Chikorita", "id": 152}, {"nombre": "Cyndaquil", "id": 155}, {"nombre": "Totodile", "id": 158},
@@ -318,7 +330,7 @@ class BotonCaptura(discord.ui.View):
                 try:
                     # 1. Primero GUARDAMOS la captura
                     id_captura, resultado_record = await database.guardar_captura(user_id, self.nombre, self.es_shiny, pokeball=nombre_bola)
-                    
+                    liberar_canal_completo(interaction.channel.id)
                     # 2. SEGUIMOS con la verificación (YA TENEMOS EL ID)
                     conn = database.get_connection()
                     cursor = conn.cursor()
