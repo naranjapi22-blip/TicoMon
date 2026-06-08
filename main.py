@@ -32,7 +32,8 @@ load_dotenv()
 TOKEN = os.getenv('TOKEN')
 intents = discord.Intents.default()
 intents.message_content = True
-
+async def setup_hook():
+    await bot.load_extension('cogs.newpokedex')
 # 1. Inicializamos el bot (UNA SOLA VEZ)
 bot = commands.Bot(
     command_prefix=commands.when_mentioned_or('!'), 
@@ -189,8 +190,7 @@ async def pokedex(ctx, *, filtro: str = None):
     )
     
     await view.generar_vista_pokedex(ctx, bot.session)
-async def setup_hook():
-    await bot.load_extension('cogs.newpokedex')
+
 
 bot = commands.Bot(..., setup_hook=setup_hook)
 def generar_pista(data, species, pistas_usadas):
