@@ -94,7 +94,7 @@ async def guardar_captura(user_id, pokemon_nombre, es_shiny=False, pokeball='Pok
         try:
             # 1. Cálculos iniciales
             naturaleza_seleccionada = random.choice(NATURALEZAS)
-            tamano_factor = round(random.uniform(0.50, 1.50), 2)
+            tamano_factor = tamano_factor
             iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe = [random.randint(0, 31) for _ in range(6)]
             fecha_ahora = datetime.datetime.now(datetime.timezone.utc)
             
