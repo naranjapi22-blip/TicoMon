@@ -181,10 +181,6 @@ class IvsCommands(commands.Cog):
             log.error(f"Error imagen: {e}")
             
         await ctx.send(embed=embed)
-
-
-        
-        await ctx.send(embed=embed)
     @commands.command(name="misrecords")
     async def ver_mis_records(self, ctx):
         conn = get_connection()
