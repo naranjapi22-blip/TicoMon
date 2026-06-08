@@ -7,6 +7,7 @@ import asyncio
 from logger_config import log
 from PIL import Image, ImageDraw, ImageFilter
 import os
+from PIL import Image, ImageFilter, ImageEnhance, ImageDraw
 # 1. Creamos una caché que:
 # - Guarda máximo 600 imágenes (maxsize)
 # - Las mantiene solo por 1 hora (ttl=3600 segundos) para liberar espacio
@@ -442,44 +443,73 @@ def procesar_sprite_pokemon(imagen_base, tamano_factor, estado_record=None):
         
         sprite_escalado = imagen_base.resize((nuevo_ancho, nuevo_alto), Image.Resampling.LANCZOS)
         
-        # 2. Aplicar Boost Visual (Efecto Resplandor Intenso)
+# 2. Aplicar Boost Visual (Efecto Resplandor Intenso, Épico y con Chispas)
         if estado_record:
             # Color: Oro para grande, Plata para pequeño
             color_aura = (255, 215, 0, 255) if estado_record == "grande" else (192, 192, 192, 255)
             
-            # Aumentamos el margen para que el brillo tenga espacio para expandirse
-            margen = 50 
+            margen = 80 
             ancho_aura = nuevo_ancho + (margen * 2)
             alto_aura = nuevo_alto + (margen * 2)
             
-            # Creamos el lienzo del aura
+            # Lienzo final
             aura_layer = Image.new("RGBA", (ancho_aura, alto_aura), (0, 0, 0, 0))
             
-            # 1. CREAR MÁSCARA DE RESPLANDOR (Más fuerte)
-            # Dibujamos una silueta más gruesa para que el desenfoque sea mayor
-            from PIL import ImageEnhance
+            # --- 1. MÁSCARA INSTANTÁNEA ---
+            silueta_color = Image.new("RGBA", sprite_escalado.size, color_aura)
+            silueta_color.putalpha(sprite_escalado.getchannel('A'))
             
-            # Creamos una versión "glow" del sprite: convertimos el sprite a un color sólido
-            glow = sprite_escalado.copy()
-            # Convertimos a blanco para que el color brille más
-            pixels = glow.load()
-            for y in range(glow.size[1]):
-                for x in range(glow.size[0]):
-                    if pixels[x, y][3] > 0: # Si no es transparente
-                        pixels[x, y] = color_aura
-            
-            # Aplicamos desenfoque agresivo para crear el brillo
-            glow = glow.filter(ImageFilter.GaussianBlur(10))
-            # Potenciamos el brillo con un enhancer
-            enhancer = ImageEnhance.Brightness(glow)
-            glow = enhancer.enhance(3.0) # ¡Esto hace que brille mucho más!
+            lienzo_temp = Image.new("RGBA", (ancho_aura, alto_aura), (0, 0, 0, 0))
+            lienzo_temp.paste(silueta_color, (margen, margen), silueta_color)
 
-            # 2. COMPOSICIÓN
-            # Pegamos el brillo varias veces para que sea denso
-            aura_layer.paste(glow, (margen - 10, margen - 10), glow)
-            aura_layer.paste(glow, (margen + 10, margen + 10), glow)
+            # --- 2. EL AURA DE DOBLE CAPA ---
+            glow_externo = lienzo_temp.filter(ImageFilter.GaussianBlur(25))
             
-            # Pegamos el sprite original encima
+            glow_interno = lienzo_temp.filter(ImageFilter.GaussianBlur(8))
+            enhancer = ImageEnhance.Brightness(glow_interno)
+            glow_interno = enhancer.enhance(2.5) 
+            
+            # --- 3. NUEVO: EFECTO DE CHISPAS (PARTÍCULAS) ---
+            # Creamos un lienzo transparente solo para las chispas
+            capa_chispas = Image.new("RGBA", (ancho_aura, alto_aura), (0, 0, 0, 0))
+            draw = ImageDraw.Draw(capa_chispas)
+            
+            centro_x = ancho_aura // 2
+            centro_y = alto_aura // 2
+            radio_dispersion = margen + 10 # Controla qué tan lejos vuelan las chispas
+            
+            # Generamos 75 chispas aleatorias
+            for _ in range(75):
+                # random.gauss concentra los puntos en el centro y los dispersa hacia los bordes
+                x = int(random.gauss(centro_x, radio_dispersion / 1.5))
+                y = int(random.gauss(centro_y, radio_dispersion / 1.5))
+                
+                # Nos aseguramos de que las chispas se dibujen dentro del lienzo
+                if 0 < x < ancho_aura and 0 < y < alto_aura:
+                    # Tamaño aleatorio para dar sensación de profundidad (algunas cerca, otras lejos)
+                    tamano = random.randint(1, 4)
+                    
+                    # Hacemos que la chispa sea un poco más brillante/blanca que el aura base
+                    color_chispa = (
+                        min(255, color_aura[0] + 80),
+                        min(255, color_aura[1] + 80),
+                        min(255, color_aura[2] + 80),
+                        random.randint(180, 255) # Opacidad aleatoria para que parpadeen
+                    )
+                    
+                    # Dibujamos la chispa como un pequeño círculo/óvalo
+                    draw.ellipse((x, y, x + tamano, y + tamano), fill=color_chispa)
+
+            # Le damos un difuminado mínimo a las chispas para que parezcan luz y no píxeles duros
+            capa_chispas = capa_chispas.filter(ImageFilter.GaussianBlur(1))
+
+            # --- 4. COMPOSICIÓN FINAL ---
+            aura_layer.paste(glow_externo, (0, 0), glow_externo)
+            aura_layer.paste(glow_interno, (0, 0), glow_interno)
+            
+            # Pegamos las chispas SOBRE el aura pero DEBAJO del Pokémon original
+            aura_layer.paste(capa_chispas, (0, 0), capa_chispas)
+            
             aura_layer.paste(sprite_escalado, (margen, margen), sprite_escalado)
             
             sprite_escalado = aura_layer
