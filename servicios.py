@@ -442,38 +442,40 @@ def procesar_sprite_pokemon(imagen_base, tamano_factor, estado_record=None):
         
         sprite_escalado = imagen_base.resize((nuevo_ancho, nuevo_alto), Image.Resampling.LANCZOS)
         
-# 2. Aplicar Boost Visual (Usando tu libro)
+# 2. Aplicar Boost Visual (Efecto Aura Brillante)
         if estado_record:
-            # Cargar tu imagen de libro
-            try:
-                # Asegúrate de que record.png esté en la carpeta raíz de tu bot
-                libro = Image.open("assets/record.png").convert("RGBA")
-                
-                # Ajustamos el tamaño del libro al del sprite (dando un poco de margen)
-                # El libro es vertical, el sprite es cuadrado/rectangular
-                ancho_libro = int(nuevo_ancho * 1.8) 
-                alto_libro = int(nuevo_alto * 1.8)
-                libro = libro.resize((ancho_libro, alto_libro), Image.Resampling.LANCZOS)
-                
-                # Crear un lienzo vacío transparente del tamaño del libro
-                final = Image.new("RGBA", (ancho_libro, alto_libro), (0, 0, 0, 0))
-                
-                # Pegar el libro primero
-                final.paste(libro, (0, 0), libro)
-                
-                # Calcular para centrar el Pokémon dentro del libro
-                x_pos = (ancho_libro - nuevo_ancho) // 2
-                y_pos = (alto_libro - nuevo_alto) // 2
-                
-                # Pegar el sprite del Pokémon encima
-                final.paste(sprite_escalado, (x_pos, y_pos), sprite_escalado)
-                
-                # Actualizar variables para el resultado final
-                sprite_escalado = final
-                nuevo_ancho, nuevo_alto = sprite_escalado.size
-                
-            except Exception as e:
-                log.error(f"Error al procesar la imagen del libro: {e}")
+            # Color: Oro para grande, Plata para pequeño
+            color_aura = (255, 215, 0, 255) if estado_record == "grande" else (192, 192, 192, 255)
+            
+            # Definimos un margen para el resplandor
+            margen = 30
+            ancho_aura = nuevo_ancho + (margen * 2)
+            alto_aura = nuevo_alto + (margen * 2)
+            
+            # Creamos el lienzo del aura
+            aura_layer = Image.new("RGBA", (ancho_aura, alto_aura), (0, 0, 0, 0))
+            draw = ImageDraw.Draw(aura_layer)
+            
+            # Dibujamos el elipse del resplandor
+            draw.ellipse([margen//2, margen//2, ancho_aura - margen//2, alto_aura - margen//2], 
+                         fill=color_aura)
+            
+            # Aplicamos desenfoque para suavizar el brillo
+            aura_layer = aura_layer.filter(ImageFilter.GaussianBlur(15))
+            
+            # Dibujamos un borde más nítido encima del resplandor
+            draw = ImageDraw.Draw(aura_layer)
+            draw.ellipse([margen, margen, ancho_aura - margen, alto_aura - margen], 
+                         outline=color_aura, width=4)
+            
+            # Pegamos el sprite del Pokémon encima del aura (centrado)
+            pos_x_aura = (ancho_aura - nuevo_ancho) // 2
+            pos_y_aura = (alto_aura - nuevo_alto) // 2
+            aura_layer.paste(sprite_escalado, (pos_x_aura, pos_y_aura), sprite_escalado)
+            
+            # Actualizamos las variables para que el paso 3 (centrado en lienzo 500x500) lo reconozca
+            sprite_escalado = aura_layer
+            nuevo_ancho, nuevo_alto = sprite_escalado.size
 
         # 3. Lienzo transparente de 500x500
         lienzo = Image.new("RGBA", (500, 500), (0, 0, 0, 0))
