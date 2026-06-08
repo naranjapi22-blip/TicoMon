@@ -358,9 +358,9 @@ class BotonCaptura(discord.ui.View):
 
             # --- MATEMÁTICA DE CAPTURA ---
             azar = random.random()
-            if azar < 0.005: bonus_bola, nombre_bola = 255.0, "Master Ball"
-            elif azar < 0.15: bonus_bola, nombre_bola = 1.5, "Ultra Ball"
-            elif azar < 0.40: bonus_bola, nombre_bola = 1.25, "Great Ball"
+            if azar < 0.002: bonus_bola, nombre_bola = 255.0, "Master Ball"
+            elif azar < 0.10: bonus_bola, nombre_bola = 1.5, "Ultra Ball"
+            elif azar < 0.30: bonus_bola, nombre_bola = 1.25, "Great Ball"
             else: bonus_bola, nombre_bola = 1.0, "Pokéball"
 
             multiplicador_shiny = 1.0 # Ajustado para que los shiny sean atrapables
