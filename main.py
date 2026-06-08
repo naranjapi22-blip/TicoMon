@@ -232,7 +232,7 @@ async def spawn(ctx):
     import gestor_spawn
     import database
     import random
-    import asyncio # Necesario para create_task
+    import asyncio
     
     # 1. Filtros básicos
     if not gestor_spawn.verificar_inicial(ctx.author.id):
@@ -250,20 +250,24 @@ async def spawn(ctx):
     database.actualizar_energia_db(ctx.author.id, intentos - 1, ultima_recarga)
 
     try:
-        # Generación de IDs con filtro de legendarios
+        # --- GENERACIÓN EQUILIBRADA DE IDS ---
+        # Definimos rangos de generación: 85% Comunes, 12% Raros, 3% Legendarios/Especiales
+        opciones_rangos = [(1, 493), (494, 809), (810, 1025)]
+        pesos_rangos = [85, 12, 3] 
+
         ids_spawn = []
         while len(ids_spawn) < 3:
-            azar = random.random()
-            if azar < 0.80: id_cand = random.randint(1, 493)
-            elif azar < 0.95: id_cand = random.randint(494, 809)
-            else: id_cand = random.randint(810, 1025)
+            rango = random.choices(opciones_rangos, weights=pesos_rangos, k=1)[0]
+            id_cand = random.randint(rango[0], rango[1])
             
-            # FILTRO: Si es legendario, solo aceptarlo con un 5% de probabilidad
+            # FILTRO LEGENDARIO: Solo aparece un 2% de las veces que sale seleccionado
             if await es_legendario(bot.session, id_cand):
-                if random.random() > 0.05: 
+                if random.random() > 0.02: 
                     continue 
             
-            ids_spawn.append(id_cand)
+            # Evitar Pokémon duplicados en la misma selección
+            if id_cand not in ids_spawn:
+                ids_spawn.append(id_cand)
         
         # Obtención de datos
         data_pokes = []
@@ -296,35 +300,28 @@ async def spawn(ctx):
         view = SpawnSelectionView(data_pokes, ctx.author)
         
         try:
-            # Intentamos enviar el mensaje
             mensaje_enviado = await ctx.send(embed=embed, file=imagen_final, view=view)
             
-            # Si el envío fue exitoso, vinculamos y registramos
             view.message = mensaje_enviado
             gestor_spawn.vistas_activas[ctx.channel.id] = view 
             gestor_spawn.canales_ocupados.add(ctx.channel.id)
             
             # --- SEGURO DE VIDA ---
-            # Corregido: Quitamos el "self." y llamamos directamente a la función
             asyncio.create_task(auto_liberar_canal(ctx.channel.id, 305))
 
         except Exception as e:
-            # Si algo falla en el envío, aseguramos limpieza total
             gestor_spawn.canales_ocupados.discard(ctx.channel.id)
             gestor_spawn.vistas_activas.pop(ctx.channel.id, None)
-            
-            # Revertimos los intentos si es necesario
             database.actualizar_energia_db(ctx.author.id, intentos, ultima_recarga)
             
-            print(f"Error al enviar mensaje en spawn: {e}")
+            log.error(f"Error al enviar mensaje en spawn: {e}")
             await ctx.send("¡Se escaparon! Hubo un error al intentar enviar el encuentro.")
 
     except Exception as e:
-        # Si algo falla en la generación general
         gestor_spawn.canales_ocupados.discard(ctx.channel.id)
         gestor_spawn.vistas_activas.pop(ctx.channel.id, None)
         database.actualizar_energia_db(ctx.author.id, intentos, ultima_recarga)
-        print(f"Error en generación de spawn: {e}")
+        log.error(f"Error en generación de spawn: {e}", exc_info=True)
         await ctx.send("¡Se escaparon! Hubo un error al intentar generar el encuentro.")
 
 @bot.command()
