@@ -359,8 +359,8 @@ class BotonCaptura(discord.ui.View):
             # --- MATEMÁTICA DE CAPTURA (INTEGRANDO TUS % BASE) ---
             azar = random.random()
             if azar < 0.002: bonus_bola, nombre_bola = 255.0, "Master Ball" # Rareza ajustada
-            elif azar < 0.10: bonus_bola, nombre_bola = 1.5, "Ultra Ball"    # Nerfeada
-            elif azar < 0.30: bonus_bola, nombre_bola = 1.25, "Great Ball"   # Nerfeada
+            elif azar < 0.10: bonus_bola, nombre_bola = 1.4, "Ultra Ball"    # Nerfeada
+            elif azar < 0.30: bonus_bola, nombre_bola = 1.20, "Great Ball"   # Nerfeada
             else: bonus_bola, nombre_bola = 1.0, "Pokéball"
 
             multiplicador_shiny = 1.0 
