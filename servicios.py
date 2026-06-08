@@ -442,42 +442,47 @@ def procesar_sprite_pokemon(imagen_base, tamano_factor, estado_record=None):
         
         sprite_escalado = imagen_base.resize((nuevo_ancho, nuevo_alto), Image.Resampling.LANCZOS)
         
-# 2. Aplicar Boost Visual (Efecto Aura Brillante)
+# 2. Aplicar Boost Visual (Efecto Resplandor Orgánico)
         if estado_record:
             # Color: Oro para grande, Plata para pequeño
             color_aura = (255, 215, 0, 255) if estado_record == "grande" else (192, 192, 192, 255)
             
-            # Definimos un margen para el resplandor
+            # 1. Crear una silueta sólida del Pokémon en el color del aura
+            # Esto crea una "sombra" brillante justo detrás del sprite
+            glow_mask = sprite_escalado.copy()
+            # Convertimos todo lo no transparente a un color sólido (el color del aura)
+            data = glow_mask.getdata()
+            new_data = []
+            for item in data:
+                # Si el pixel tiene algo de opacidad, lo pintamos del color del aura
+                if item[3] > 0:
+                    new_data.append(color_aura)
+                else:
+                    new_data.append(item)
+            glow_mask.putdata(new_data)
+            
+            # 2. Difuminar la silueta para crear el resplandor
+            # Esto expande el color hacia afuera, creando un brillo natural
+            glow_mask = glow_mask.filter(ImageFilter.GaussianBlur(15))
+            
+            # 3. Crear lienzo final con margen
             margen = 30
-            ancho_aura = nuevo_ancho + (margen * 2)
-            alto_aura = nuevo_alto + (margen * 2)
+            final_w = nuevo_ancho + (margen * 2)
+            final_h = nuevo_alto + (margen * 2)
+            final_layer = Image.new("RGBA", (final_w, final_h), (0, 0, 0, 0))
             
-            # Creamos el lienzo del aura
-            aura_layer = Image.new("RGBA", (ancho_aura, alto_aura), (0, 0, 0, 0))
-            draw = ImageDraw.Draw(aura_layer)
+            # 4. Pegar el brillo y luego el sprite original encima
+            # Pegamos el brillo (varias veces para mayor intensidad si se desea)
+            final_layer.paste(glow_mask, (margen - 5, margen - 5), glow_mask)
+            final_layer.paste(glow_mask, (margen, margen), glow_mask)
             
-            # Dibujamos el elipse del resplandor
-            draw.ellipse([margen//2, margen//2, ancho_aura - margen//2, alto_aura - margen//2], 
-                         fill=color_aura)
+            # Pegar el sprite original centrado
+            final_layer.paste(sprite_escalado, (margen, margen), sprite_escalado)
             
-            # Aplicamos desenfoque para suavizar el brillo
-            aura_layer = aura_layer.filter(ImageFilter.GaussianBlur(15))
-            
-            # Dibujamos un borde más nítido encima del resplandor
-            draw = ImageDraw.Draw(aura_layer)
-            draw.ellipse([margen, margen, ancho_aura - margen, alto_aura - margen], 
-                         outline=color_aura, width=4)
-            
-            # Pegamos el sprite del Pokémon encima del aura (centrado)
-            pos_x_aura = (ancho_aura - nuevo_ancho) // 2
-            pos_y_aura = (alto_aura - nuevo_alto) // 2
-            aura_layer.paste(sprite_escalado, (pos_x_aura, pos_y_aura), sprite_escalado)
-            
-            # Actualizamos las variables para que el paso 3 (centrado en lienzo 500x500) lo reconozca
-            sprite_escalado = aura_layer
+            sprite_escalado = final_layer
             nuevo_ancho, nuevo_alto = sprite_escalado.size
 
-        # 3. Lienzo transparente de 500x500
+        # 3. Lienzo transparente de 500x500 (Paso final de centrado)
         lienzo = Image.new("RGBA", (500, 500), (0, 0, 0, 0))
         
         # 4. Centrar
