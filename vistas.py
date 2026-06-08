@@ -306,6 +306,8 @@ class BotonCaptura(discord.ui.View):
             tiempo_pasado = (datetime.datetime.now() - self.tiempo_aparicion).total_seconds()
             if tiempo_pasado > 300:
                 self.alguien_lo_atrapo = True
+                liberar_canal_completo(interaction.channel.id)
+                mensaje += "El pokemon ha escapado."
                 gestor_spawn.canales_ocupados.discard(interaction.channel.id)
                 await interaction.message.edit(content="💨 ¡El tiempo se ha agotado! El Pokémon ha huido.", view=None)
                 return self.stop()
@@ -363,6 +365,7 @@ class BotonCaptura(discord.ui.View):
         except Exception as e:
             # SEGURIDAD: Si algo explota, liberamos el canal obligatoriamente
             liberar_canal_completo(interaction.channel.id)
+            mensaje += "El pokemon ha escapado."
             gestor_spawn.canales_ocupados.discard(interaction.channel.id)
             self.alguien_lo_atrapo = True # Marcamos como terminado para que no acepten más clics
             log.error(f"🚨 Canal liberado por error crítico: {e}")
