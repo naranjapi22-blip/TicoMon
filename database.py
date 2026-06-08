@@ -124,7 +124,7 @@ async def guardar_captura(user_id, pokemon_nombre, tamano_factor, es_shiny=False
             
             # 5. VERIFICACIÓN DE RÉCORDS
             if id_pokemon:
-                resultado = records.verificar_y_actualizar_record(cursor, pokemon_nombre.lower(), id_pokemon, str(user_id), tamano_factor)
+                resultado = records.verificar_y_actualizar_record(cursor, pokemon_nombre.lower(), id_pokemon, str(user_id), tamano_factor, fecha_ahora)
                 if resultado:
                     log.info(f"🏆 Récord actualizado ({resultado}) para {pokemon_nombre.capitalize()} (ID: {id_pokemon})")
             
