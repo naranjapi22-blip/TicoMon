@@ -440,86 +440,88 @@ def procesar_sprite_pokemon(imagen_base, tamano_factor, estado_record=None):
         
         sprite_escalado = imagen_base.resize((nuevo_ancho, nuevo_alto), Image.Resampling.LANCZOS)
         
-        # 2. Aplicar Boost Visual (Efecto Resplandor Intenso)
+         # 2. Aplicar Boost Visual (Efecto Resplandor Intenso)
+
         if estado_record:
+
             # Color: Oro para grande, Plata para pequeño
+
             color_aura = (255, 215, 0, 255) if estado_record == "grande" else (192, 192, 192, 255)
-            
+
+           
+
             # Aumentamos el margen para que el brillo tenga espacio para expandirse
-            margen = 50 
+
+            margen = 50
+
             ancho_aura = nuevo_ancho + (margen * 2)
+
             alto_aura = nuevo_alto + (margen * 2)
-            
+
+           
+
             # Creamos el lienzo del aura
+
             aura_layer = Image.new("RGBA", (ancho_aura, alto_aura), (0, 0, 0, 0))
-            
+
+           
+
             # 1. CREAR MÁSCARA DE RESPLANDOR (Más fuerte)
+
             # Dibujamos una silueta más gruesa para que el desenfoque sea mayor
-            
+
+            from PIL import ImageEnhance
+
+           
+
             # Creamos una versión "glow" del sprite: convertimos el sprite a un color sólido
+
             glow = sprite_escalado.copy()
+
             # Convertimos a blanco para que el color brille más
+
             pixels = glow.load()
+
             for y in range(glow.size[1]):
+
                 for x in range(glow.size[0]):
+
                     if pixels[x, y][3] > 0: # Si no es transparente
+
                         pixels[x, y] = color_aura
-            
+
+           
+
             # Aplicamos desenfoque agresivo para crear el brillo
+
             glow = glow.filter(ImageFilter.GaussianBlur(10))
+
             # Potenciamos el brillo con un enhancer
+
             enhancer = ImageEnhance.Brightness(glow)
+
             glow = enhancer.enhance(3.0) # ¡Esto hace que brille mucho más!
 
-        # 2. COMPOSICIÓN
-            aura_layer.paste(glow, (margen - 10, margen - 10), glow)
-            aura_layer.paste(glow, (margen + 10, margen + 10), glow)
-            
-            # --- EL SECRETO PARA RAYOS ÉPICOS: NÚCLEO Y RESPLANDOR ---
-            # Capa 1: El halo de luz del rayo (grueso y del color del aura)
-            capa_resplandor = Image.new("RGBA", (ancho_aura, alto_aura), (0, 0, 0, 0))
-            draw_resplandor = ImageDraw.Draw(capa_resplandor)
-            
-            # Capa 2: El centro caliente del plasma (fino y blanco puro)
-            capa_nucleo = Image.new("RGBA", (ancho_aura, alto_aura), (0, 0, 0, 0))
-            draw_nucleo = ImageDraw.Draw(capa_nucleo)
-            
-            centro_x = ancho_aura // 2
-            centro_y = alto_aura // 2
-            
-            for _ in range(30): # 30 rayos son suficientes si brillan bien
-                distancia_inicio = random.randint(margen // 2, margen + 15)
-                longitud = random.randint(25, 60) # Rayos más largos
-                angulo = random.uniform(0, 2 * math.pi)
-                
-                x_ini = centro_x + int(math.cos(angulo) * distancia_inicio)
-                y_ini = centro_y + int(math.sin(angulo) * distancia_inicio)
-                x_fin = centro_x + int(math.cos(angulo) * (distancia_inicio + longitud))
-                y_fin = centro_y + int(math.sin(angulo) * (distancia_inicio + longitud))
-                
-                # 1. Dibujamos el halo grueso (usamos el color del aura)
-                # Ponemos un poco de transparencia para que no bloquee el aura principal
-                color_halo = (color_aura[0], color_aura[1], color_aura[2], 180)
-                draw_resplandor.line([(x_ini, y_ini), (x_fin, y_fin)], fill=color_halo, width=8)
-                
-                # 2. Dibujamos el núcleo caliente (blanco sólido)
-                draw_nucleo.line([(x_ini, y_ini), (x_fin, y_fin)], fill=(255, 255, 255, 255), width=2)
-            
-            # ¡MAGIA OPTICA!: Desenfocamos solo la capa gruesa para que parezca luz emitida
-            capa_resplandor = capa_resplandor.filter(ImageFilter.GaussianBlur(3))
-            
-            # Pegamos el núcleo blanco afilado SOBRE su propio resplandor borroso
-            capa_resplandor.paste(capa_nucleo, (0, 0), capa_nucleo)
-            
-            # Finalmente, pegamos esta estructura completa de luz sobre tu aura general
-            aura_layer.paste(capa_resplandor, (0, 0), capa_resplandor)
-            # ---------------------------------------------------------
 
-            # Pegamos el sprite original encima de todo
+            # 2. COMPOSICIÓN
+
+            # Pegamos el brillo varias veces para que sea denso
+
+            aura_layer.paste(glow, (margen - 10, margen - 10), glow)
+
+            aura_layer.paste(glow, (margen + 10, margen + 10), glow)
+
+           
+
+            # Pegamos el sprite original encima
+
             aura_layer.paste(sprite_escalado, (margen, margen), sprite_escalado)
-            
+
+           
+
             sprite_escalado = aura_layer
-            nuevo_ancho, nuevo_alto = sprite_escalado.size
+
+            nuevo_ancho, nuevo_alto = sprite_escalado.size 
 
         # 3. Lienzo transparente de 500x500 (Paso final de centrado)
         lienzo = Image.new("RGBA", (500, 500), (0, 0, 0, 0))
