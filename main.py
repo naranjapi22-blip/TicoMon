@@ -63,13 +63,7 @@ def get_connection():
         return psycopg2.connect(db_url)
     else:
         return sqlite3.connect('fumo_data.db')
-# En tu bot.py o main.py
-@bot.event
-async def on_ready():
-    # Esto creará la tabla automáticamente si no existe al encender el bot
-    await db_cache.inicializar_bd()
-    print("Base de datos de caché verificada y lista.")
-# 2. Tu evento de encendido con la inicialización correcta
+
 @bot.event
 async def on_ready():
     configuracion.init_config_db()
@@ -91,6 +85,10 @@ async def on_ready():
         log.error(f"🚨 Error al sincronizar slash commands: {e}", exc_info=True)
 
     print("Base de datos, módulos y sesión de red verificados.")
+        # Esto creará la tabla automáticamente si no existe al encender el bot
+    await db_cache.inicializar_bd()
+    print("Base de datos de caché verificada y lista.")
+# 2. Tu evento de encendido con la inicialización correcta
 
 @bot.event
 async def on_command_error(ctx, error):
