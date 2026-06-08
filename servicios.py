@@ -5,6 +5,9 @@ from cachetools import TTLCache
 import asyncio
 from logger_config import log
 from PIL import Image, ImageFilter, ImageEnhance, ImageDraw, ImageChops, ImageOps
+
+
+
 # 1. Creamos una caché que:
 # - Guarda máximo 600 imágenes (maxsize)
 # - Las mantiene solo por 1 hora (ttl=3600 segundos) para liberar espacio
