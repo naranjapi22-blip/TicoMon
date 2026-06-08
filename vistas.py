@@ -140,14 +140,20 @@ class PokedexView(discord.ui.View):
         self.pagina = (self.pagina + 1) % max(1, len(self.paginas))
         await self.generar_vista_pokedex(interaction, interaction.client.session)
 def obtener_rareza(capture_rate):
-    if capture_rate >= 200:
-        return "Común"
-    elif capture_rate >= 100:
-        return "Poco Común"
+    if capture_rate >= 225:
+        return "Muy Común 🟢"      # Ej: Pidgey, Rattata, Caterpie (255)
+    elif capture_rate >= 150:
+        return "Común ⚪"          # Ej: Pikachu (190), Eevee (150)
+    elif capture_rate >= 90:
+        return "Poco Común 🔵"     # Ej: Evoluciones medias como Charmeleon (90)
     elif capture_rate >= 45:
-        return "Raro"
+        return "Raro 🟣"           # Ej: Iniciales como Bulbasaur (45) o Lapras (45)
+    elif capture_rate >= 20:
+        return "Épico 🔴"          # Ej: Snorlax (25), Skarmory (25)
+    elif capture_rate >= 5:
+        return "Mítico 🟡"         # Ej: Algunos ultraentes o muy difíciles (15-5)
     else:
-        return "Epico"
+        return "Legendario 👑"     # Ej: Mewtwo, Lugia, Rayquaza (Normalmente tienen 3)
 class SpawnSelectionView(discord.ui.View):
     def __init__(self, data_pokes, autor_original):
         super().__init__(timeout=60) # Tienen 60 segundos para elegir
