@@ -15,32 +15,20 @@ class PokedexCog(commands.Cog):
         }
 
     @commands.command(name="newpokedex")
-    # @canal_restringido() # Descomenta si tienes tu decorador personalizado
     async def newpokedex(self, ctx, *, filtro: str = None):
-        """Comando optimizado usando caché local para filtrado instantáneo."""
-        
         if not hasattr(self.bot, 'session') or self.bot.session.closed:
             self.bot.session = aiohttp.ClientSession()
 
         async with ctx.typing():
-            # 1. Obtener nombres de capturas
             es_shiny_mode = (filtro == "shiny")
             nombres_capturados = database.obtener_capturas(ctx.author.id, solo_shiny=es_shiny_mode)
             
             if not nombres_capturados:
                 return await ctx.send("No tienes Pokémon registrados en tu colección.")
 
-            # 2. Convertir nombres a IDs usando la caché
-            ids_usuario = set()
-            cache_temporal = {} 
-            
-            for nombre in nombres_capturados:
-                if nombre not in cache_temporal:
-                    cache_temporal[nombre] = await db_cache.obtener_id_pokedex_por_nombre(nombre)
-                
-                id_pokedex = cache_temporal[nombre]
-                if id_pokedex:
-                    ids_usuario.add(id_pokedex)
+            # OPTIMIZACIÓN: Consulta masiva (una sola petición a Neon)
+            mapping = await db_cache.obtener_ids_por_nombres(nombres_capturados)
+            ids_usuario = {id_p for id_p in mapping.values() if id_p}
 
             # 3. Preparar variables
             inicio, fin = 1, 1025

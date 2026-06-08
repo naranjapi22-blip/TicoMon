@@ -70,3 +70,15 @@ class PokedexCache:
             await self.pool.close()
 
 db_cache = PokedexCache()
+async def obtener_ids_por_nombres(self, nombres_lista):
+    """Obtiene todos los IDs en una sola consulta masiva."""
+    if not nombres_lista:
+        return {}
+        
+    pool = await self._get_pool()
+    nombres_limpios = [n.lower() for n in nombres_capturados] # Opcional si ya están limpios
+    
+    async with pool.acquire() as conn:
+        # Consulta masiva: es infinitamente más rápida que hacer un for
+        rows = await conn.fetch("SELECT nombre, id FROM pokemon_data WHERE nombre = ANY($1)", nombres_lista)
+        return {row['nombre']: row['id'] for row in rows}
