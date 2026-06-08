@@ -210,7 +210,7 @@ class SpawnSelectionView(discord.ui.View):
             child.disabled = True
         
         # 'data' es el JSON del pokemon, 'species' es el JSON de la especie
-        data, species = self.data_pokes[indice]
+        data, species, es_shiny = self.data_pokes[indice]
         
         # Calculamos variables para esta captura en concreto
         es_shiny = (random.randint(1, 50) == 1)
