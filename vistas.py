@@ -141,13 +141,13 @@ class PokedexView(discord.ui.View):
         await self.generar_vista_pokedex(interaction, interaction.client.session)
 def obtener_rareza(capture_rate):
     if capture_rate >= 200:
-        return "Común (Fácil)"
+        return "Común"
     elif capture_rate >= 100:
         return "Poco Común"
     elif capture_rate >= 45:
         return "Raro"
     else:
-        return "Legendario/Épico (Muy Difícil)"
+        return "Legendario"
 class SpawnSelectionView(discord.ui.View):
     def __init__(self, data_pokes, autor_original):
         super().__init__(timeout=60) # Tienen 60 segundos para elegir
