@@ -1,4 +1,5 @@
 import io
+import math
 import random
 from cachetools import TTLCache
 import asyncio
@@ -470,38 +471,49 @@ def procesar_sprite_pokemon(imagen_base, tamano_factor, estado_record=None):
             enhancer = ImageEnhance.Brightness(glow)
             glow = enhancer.enhance(3.0) # ¡Esto hace que brille mucho más!
 
-            # 2. COMPOSICIÓN
+# 2. COMPOSICIÓN
             # Pegamos el brillo varias veces para que sea denso
             aura_layer.paste(glow, (margen - 10, margen - 10), glow)
             aura_layer.paste(glow, (margen + 10, margen + 10), glow)
             
-            # --- NUEVO: AGREGAR CHISPAS / RAYOS ---
-            draw = ImageDraw.Draw(aura_layer)
+            # --- NUEVO: RAYOS DE ENERGÍA MEJORADOS (DIRECCIONALES) ---
+            # Creamos una capa temporal solo para los rayos para poder darles efecto de luz
+            capa_rayos = Image.new("RGBA", (ancho_aura, alto_aura), (0, 0, 0, 0))
+            draw_rayos = ImageDraw.Draw(capa_rayos)
+            
             centro_x = ancho_aura // 2
             centro_y = alto_aura // 2
             
-            # Generamos 40 chispas de energía
-            for _ in range(40):
-                # random.gauss las concentra cerca del Pokémon y dispersa algunas lejos
-                x_ini = int(random.gauss(centro_x, margen))
-                y_ini = int(random.gauss(centro_y, margen))
+            # Generamos 35 rayos explosivos
+            for _ in range(35):
+                # Distancia desde el centro donde empieza y longitud del rayo
+                distancia_inicio = random.randint(margen // 2, margen + 15)
+                longitud = random.randint(15, 45) # Hacemos los rayos más largos
                 
-                # Le damos dirección al rayo/chispa
-                desp_x = random.randint(-15, 15)
-                desp_y = random.randint(-15, 15)
+                # Ángulo aleatorio en radianes (0 a 360 grados) para que salgan en todas direcciones
+                angulo = random.uniform(0, 2 * math.pi)
                 
-                # Color blanco brillante con opacidad variable para dar textura eléctrica
-                color_chispa = (255, 255, 255, random.randint(150, 255))
-                grosor = random.randint(1, 2)
+                # Calculamos inicio y fin para que el rayo "salga disparado" hacia afuera desde el centro
+                x_ini = centro_x + int(math.cos(angulo) * distancia_inicio)
+                y_ini = centro_y + int(math.sin(angulo) * distancia_inicio)
+                x_fin = centro_x + int(math.cos(angulo) * (distancia_inicio + longitud))
+                y_fin = centro_y + int(math.sin(angulo) * (distancia_inicio + longitud))
                 
-                # Dibujamos la línea directamente en la capa del aura
-                draw.line(
-                    [(x_ini, y_ini), (x_ini + desp_x, y_ini + desp_y)],
-                    fill=color_chispa, width=grosor
-                )
+                # Color del rayo: blanco brillante y semitransparente
+                color_rayo = (255, 255, 255, random.randint(150, 255))
+                grosor = random.randint(2, 4) # Rayos un poco más gruesos para que resalten
+                
+                # Dibujamos el rayo en su propia capa
+                draw_rayos.line([(x_ini, y_ini), (x_fin, y_fin)], fill=color_rayo, width=grosor)
+            
+            # ¡EL TRUCO DE LA LUZ!: Desenfoque ligero a los rayos para que parezcan plasma/energía
+            capa_rayos = capa_rayos.filter(ImageFilter.GaussianBlur(1))
+            
+            # Finalmente, pegamos la capa de rayos sobre el aura
+            aura_layer.paste(capa_rayos, (0, 0), capa_rayos)
             # --------------------------------------
 
-            # Pegamos el sprite original encima
+            # Pegamos el sprite original encima de todo
             aura_layer.paste(sprite_escalado, (margen, margen), sprite_escalado)
             
             sprite_escalado = aura_layer
