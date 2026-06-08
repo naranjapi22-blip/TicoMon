@@ -443,77 +443,70 @@ def procesar_sprite_pokemon(imagen_base, tamano_factor, estado_record=None):
         
         sprite_escalado = imagen_base.resize((nuevo_ancho, nuevo_alto), Image.Resampling.LANCZOS)
         
-# 2. Aplicar Boost Visual (Efecto Resplandor Intenso, Épico y con Chispas)
+        # Asumimos que 'sprite_escalado' es tu Blaziken con fondo transparente
+        nuevo_ancho, nuevo_alto = sprite_escalado.size
+        estado_record = "grande" # Forzando el estado para el ejemplo
+
         if estado_record:
-            # Color: Oro para grande, Plata para pequeño
-            color_aura = (255, 215, 0, 255) if estado_record == "grande" else (192, 192, 192, 255)
+            # 1. COLOR DINÁMICO (Naranja/Rojo intenso para Blaziken)
+            color_aura = (255, 69, 0, 255) 
             
-            margen = 80 
+            margen = 100 # Aún más espacio para la explosión de energía
             ancho_aura = nuevo_ancho + (margen * 2)
             alto_aura = nuevo_alto + (margen * 2)
+            centro_x, centro_y = ancho_aura // 2, alto_aura // 2
             
-            # Lienzo final
-            aura_layer = Image.new("RGBA", (ancho_aura, alto_aura), (0, 0, 0, 0))
+            # 2. EL SECRETO: FONDO OSCURO PARA QUE EL BRILLO ESTALLE
+            # En lugar de fondo transparente, creamos un lienzo gris casi negro
+            lienzo_final = Image.new("RGBA", (ancho_aura, alto_aura), (15, 15, 20, 255))
             
-            # --- 1. MÁSCARA INSTANTÁNEA ---
+            # --- MÁSCARA INSTANTÁNEA ---
             silueta_color = Image.new("RGBA", sprite_escalado.size, color_aura)
             silueta_color.putalpha(sprite_escalado.getchannel('A'))
             
             lienzo_temp = Image.new("RGBA", (ancho_aura, alto_aura), (0, 0, 0, 0))
             lienzo_temp.paste(silueta_color, (margen, margen), silueta_color)
 
-            # --- 2. EL AURA DE DOBLE CAPA ---
-            glow_externo = lienzo_temp.filter(ImageFilter.GaussianBlur(25))
+            # --- AURA DE DOBLE CAPA (MÁS AGRESIVA) ---
+            glow_externo = lienzo_temp.filter(ImageFilter.GaussianBlur(35)) # Más expansiva
             
-            glow_interno = lienzo_temp.filter(ImageFilter.GaussianBlur(8))
-            enhancer = ImageEnhance.Brightness(glow_interno)
-            glow_interno = enhancer.enhance(2.5) 
+            glow_interno = lienzo_temp.filter(ImageFilter.GaussianBlur(5)) # Más afilada y pegada
+            glow_interno = ImageEnhance.Brightness(glow_interno).enhance(4.0) # Brillo nuclear
             
-            # --- 3. NUEVO: EFECTO DE CHISPAS (PARTÍCULAS) ---
-            # Creamos un lienzo transparente solo para las chispas
-            capa_chispas = Image.new("RGBA", (ancho_aura, alto_aura), (0, 0, 0, 0))
-            draw = ImageDraw.Draw(capa_chispas)
+            # --- NUEVO: RAYOS DE ENERGÍA (No solo puntos) ---
+            capa_rayos = Image.new("RGBA", (ancho_aura, alto_aura), (0, 0, 0, 0))
+            draw = ImageDraw.Draw(capa_rayos)
             
-            centro_x = ancho_aura // 2
-            centro_y = alto_aura // 2
-            radio_dispersion = margen + 10 # Controla qué tan lejos vuelan las chispas
-            
-            # Generamos 75 chispas aleatorias
-            for _ in range(75):
-                # random.gauss concentra los puntos en el centro y los dispersa hacia los bordes
-                x = int(random.gauss(centro_x, radio_dispersion / 1.5))
-                y = int(random.gauss(centro_y, radio_dispersion / 1.5))
+            for _ in range(40): # Menos partículas, pero más grandes y dinámicas
+                # Posición inicial cerca del centro
+                x_inicio = int(random.gauss(centro_x, margen / 1.5))
+                y_inicio = int(random.gauss(centro_y, margen / 1.5))
                 
-                # Nos aseguramos de que las chispas se dibujen dentro del lienzo
-                if 0 < x < ancho_aura and 0 < y < alto_aura:
-                    # Tamaño aleatorio para dar sensación de profundidad (algunas cerca, otras lejos)
-                    tamano = random.randint(1, 4)
-                    
-                    # Hacemos que la chispa sea un poco más brillante/blanca que el aura base
-                    color_chispa = (
-                        min(255, color_aura[0] + 80),
-                        min(255, color_aura[1] + 80),
-                        min(255, color_aura[2] + 80),
-                        random.randint(180, 255) # Opacidad aleatoria para que parpadeen
-                    )
-                    
-                    # Dibujamos la chispa como un pequeño círculo/óvalo
-                    draw.ellipse((x, y, x + tamano, y + tamano), fill=color_chispa)
+                # Proyectamos la línea hacia afuera para dar sensación de explosión
+                desplazamiento_x = random.randint(-20, 20)
+                desplazamiento_y = random.randint(-20, 20)
+                
+                color_rayo = (255, 255, 200, random.randint(150, 255)) # Blanco amarillento incandescente
+                grosor = random.randint(1, 3)
+                
+                draw.line(
+                    [(x_inicio, y_inicio), (x_inicio + desplazamiento_x, y_inicio + desplazamiento_y)],
+                    fill=color_rayo, 
+                    width=grosor
+                )
 
-            # Le damos un difuminado mínimo a las chispas para que parezcan luz y no píxeles duros
-            capa_chispas = capa_chispas.filter(ImageFilter.GaussianBlur(1))
+            capa_rayos = capa_rayos.filter(ImageFilter.GaussianBlur(1))
 
-            # --- 4. COMPOSICIÓN FINAL ---
-            aura_layer.paste(glow_externo, (0, 0), glow_externo)
-            aura_layer.paste(glow_interno, (0, 0), glow_interno)
+            # --- COMPOSICIÓN FINAL ---
+            # Pegamos todo sobre nuestro fondo oscuro
+            lienzo_final.paste(glow_externo, (0, 0), glow_externo)
+            lienzo_final.paste(glow_interno, (0, 0), glow_interno)
+            lienzo_final.paste(capa_rayos, (0, 0), capa_rayos)
             
-            # Pegamos las chispas SOBRE el aura pero DEBAJO del Pokémon original
-            aura_layer.paste(capa_chispas, (0, 0), capa_chispas)
+            # Finalmente, el Pokémon encima
+            lienzo_final.paste(sprite_escalado, (margen, margen), sprite_escalado)
             
-            aura_layer.paste(sprite_escalado, (margen, margen), sprite_escalado)
-            
-            sprite_escalado = aura_layer
-            nuevo_ancho, nuevo_alto = sprite_escalado.size
+            sprite_escalado = lienzo_final
 
         # 3. Lienzo transparente de 500x500 (Paso final de centrado)
         lienzo = Image.new("RGBA", (500, 500), (0, 0, 0, 0))
