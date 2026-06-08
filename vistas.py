@@ -48,13 +48,13 @@ class TipoSelect(discord.ui.Select):
         self.tenidos = tenidos
 
     async def callback(self, interaction: discord.Interaction):
-        # 1. DIFERIR LA INTERACCIÓN: Esto evita que el token de interacción expire.
+        # 1. DIFERIR LA INTERACCIÓN: Evita el error de "Unknown Interaction"
         await interaction.response.defer()
 
         self.view.filtro_actual = self.values[0]
         self.view.pagina = 0
         
-        # 2. Tu lógica de filtrado (ahora se ejecuta tras el defer)
+        # 2. Lógica de filtrado
         ids_filtrados = await servicios.filtrar_capturas_por_tipo(
             interaction.client.session, self.view.filtro_actual, self.tenidos
         )
@@ -66,9 +66,7 @@ class TipoSelect(discord.ui.Select):
         else:
             self.view.paginas = [ids_filtrados[i:i + 10] for i in range(0, len(ids_filtrados), 10)]
         
-        # 3. USAR FOLLOWUP: Como ya deferiste, debes usar followup para editar el mensaje
-        # Pasamos interaction.followup en lugar de la interacción directa
-        await self.view.generar_vista_pokedex(interaction.followup, interaction.client.session)
+        await self.view.generar_vista_pokedex(interaction, interaction.client.session)
 
 # --- CLASE PRINCIPAL DE POKEDEX ---
 class PokedexView(discord.ui.View):
@@ -94,44 +92,57 @@ class PokedexView(discord.ui.View):
         self.add_item(TipoSelect(self.tenidos))
 
     async def generar_vista_pokedex(self, interaction_or_ctx, session):
-            # 1. CASO: LISTA VACÍA
-            if not self.total_pokes:
-                embed = discord.Embed(
-                    title=f"🎒 Colección | Tipo: {self.filtro_actual.capitalize()}",
-                    description="¡No tienes Pokémon de ese tipo!"
-                )
-                
-                if hasattr(interaction_or_ctx, 'response'):
-                    # IMPORTANTE: attachments=[] borra cualquier imagen que hubiera antes
-                    await interaction_or_ctx.response.edit_message(embed=embed, attachments=[], view=self)
-                else:
-                    await interaction_or_ctx.send(embed=embed, view=self)
-                return
-
-            # 2. CASO: LISTA CON DATOS
-            ids_actuales = self.paginas[self.pagina]
-            url_base = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/"
-            data_pokes = [(i, f"{url_base}{i}.png") for i in ids_actuales]
-            
-            buffer = await servicios.generar_collage(session, data_pokes, self.tenidos)
-            file = discord.File(buffer, filename="pokedex.png")
-            
+        # 1. CASO: LISTA VACÍA
+        if not self.total_pokes:
             embed = discord.Embed(
-                title=f"🎒 Colección | Tipo: {self.filtro_actual.capitalize()}", 
-                description=f"Página {self.pagina + 1}/{max(1, len(self.paginas))}"
+                title=f"🎒 Colección | Tipo: {self.filtro_actual.capitalize()}",
+                description="¡No tienes Pokémon de ese tipo!"
             )
-            embed.set_image(url="attachment://pokedex.png")
             
-            # 3. EDICIÓN O ENVÍO
-            if hasattr(interaction_or_ctx, 'response') and interaction_or_ctx.response.is_done():
-                # Si ya se respondió antes (ej: al navegar páginas), usamos followup
-                await interaction_or_ctx.followup.edit_message(message_id=interaction_or_ctx.message.id, embed=embed, attachments=[file], view=self)
-            elif hasattr(interaction_or_ctx, 'response'):
-                # Primera respuesta a la interacción (ej: al usar el menú desplegable)
-                await interaction_or_ctx.response.edit_message(embed=embed, attachments=[file], view=self)
+            if isinstance(interaction_or_ctx, discord.Interaction):
+                # Si la interacción ya fue diferida, usamos followup
+                if interaction_or_ctx.response.is_done():
+                    await interaction_or_ctx.followup.edit_message(message_id=interaction_or_ctx.message.id, embed=embed, attachments=[], view=self)
+                else:
+                    await interaction_or_ctx.response.edit_message(embed=embed, attachments=[], view=self)
             else:
-                # Comando inicial normal
-                await interaction_or_ctx.send(embed=embed, file=file, view=self)
+                await interaction_or_ctx.send(embed=embed, view=self)
+            return
+
+        # 2. CASO: LISTA CON DATOS
+        ids_actuales = self.paginas[self.pagina]
+        url_base = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/"
+        data_pokes = [(i, f"{url_base}{i}.png") for i in ids_actuales]
+        
+        buffer = await servicios.generar_collage(session, data_pokes, self.tenidos)
+        file = discord.File(buffer, filename="pokedex.png")
+        
+        embed = discord.Embed(
+            title=f"🎒 Colección | Tipo: {self.filtro_actual.capitalize()}", 
+            description=f"Página {self.pagina + 1}/{max(1, len(self.paginas))}"
+        )
+        embed.set_image(url="attachment://pokedex.png")
+        
+        # 3. EDICIÓN ROBUSTA (Solución al Mensajero)
+        if isinstance(interaction_or_ctx, discord.Interaction):
+            # Si ya se hizo defer(), response.is_done() será True
+            if interaction_or_ctx.response.is_done():
+                await interaction_or_ctx.followup.edit_message(
+                    message_id=interaction_or_ctx.message.id, 
+                    embed=embed, 
+                    attachments=[file], 
+                    view=self
+                )
+            else:
+                # Si es la primera interacción y no hemos hecho defer()
+                await interaction_or_ctx.response.edit_message(
+                    embed=embed, 
+                    attachments=[file], 
+                    view=self
+                )
+        else:
+            # Comando inicial (ctx)
+            await interaction_or_ctx.send(embed=embed, file=file, view=self)
 
     @discord.ui.button(label="⬅️", style=discord.ButtonStyle.primary)
     async def anterior(self, interaction: discord.Interaction, button: discord.ui.Button):
