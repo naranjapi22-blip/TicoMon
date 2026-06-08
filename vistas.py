@@ -460,52 +460,58 @@ class InfoView(discord.ui.View):
 
 
     def crear_embed(self):
-            poke_id = self.data['id']
-            if self.mostrar_shiny:
-                url_grande = f"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/shiny/{poke_id}.png"
-                url_sprite = self.data['sprites']['front_shiny']
+        poke_id = self.data['id']
+        if self.mostrar_shiny:
+            url_grande = f"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/shiny/{poke_id}.png"
+            url_sprite = self.data['sprites']['front_shiny']
+        else:
+            url_grande = f"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/{poke_id}.png"
+            url_sprite = self.data['sprites']['front_default']
+            
+        titulo = f"{self.data['name'].capitalize()} {'✨ Shiny' if self.mostrar_shiny else ''}"
+        
+        # 1. Obtenemos datos de DB (ahora recibimos los tres valores)
+        fecha_primera, cantidad, lista_ids = database.obtener_info_captura(self.user_id, self.data['name'])
+        
+        # 2. Formateamos fecha de forma segura
+        fecha_str = "N/A"
+        if isinstance(fecha_primera, datetime.datetime):
+            fecha_str = fecha_primera.strftime('%Y-%m-%d')
+        elif isinstance(fecha_primera, str) and fecha_primera != 'Desconocido':
+            fecha_str = fecha_primera.split()[0]
+        
+        # 3. Formateamos los IDs de captura (mostrando los últimos 8 para no saturar)
+        if lista_ids:
+            if len(lista_ids) > 8:
+                ids_formateados = ", ".join([f"#{id_cap}" for id_cap in lista_ids[-8:]]) + "..."
             else:
-                url_grande = f"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/{poke_id}.png"
-                url_sprite = self.data['sprites']['front_default']
-                
-            titulo = f"{self.data['name'].capitalize()} {'✨ Shiny' if self.mostrar_shiny else ''}"
-            
-            # 1. Obtenemos datos de DB
-            fecha_primera, cantidad = database.obtener_info_captura(self.user_id, self.data['name'])
-            
-            # 2. Formateamos fecha de forma segura
-            fecha_str = "N/A"
-            if isinstance(fecha_primera, datetime.datetime):
-                # Convierte el objeto fecha a formato YYYY-MM-DD
-                fecha_str = fecha_primera.strftime('%Y-%m-%d')
-            elif isinstance(fecha_primera, str) and fecha_primera != 'Desconocido':
-                # Si por casualidad llega como texto, intentamos el split original
-                fecha_str = fecha_primera.split()[0]
-            
-            # 3. Construimos el texto base
-            info_text = f"✨ **Tipo:** {', '.join([t['type']['name'].capitalize() for t in self.data['types']])}\n"
-            info_text += f"📅 **Primera captura:** {fecha_str}\n"
-            info_text += f"🔢 **Total capturados:** {cantidad}\n"
-            info_text += f"📏 **Altura:** {self.data['height']/10}m | ⚖️ **Peso:** {self.data['weight']/10}kg\n"
-            
-            # ... (el resto de tu código igual)
-            
-            # 4. Creamos el Embed
-            embed = discord.Embed(title=titulo, color=discord.Color.dark_grey())
-            embed.set_image(url=url_grande)
-            embed.set_thumbnail(url=url_sprite)
-            
-            # 5. Añadimos el campo de Detalles Generales
-            embed.add_field(name="📋 Detalles Generales", value=info_text, inline=False)
-            
-            # 6. Añadimos las estadísticas
-            stats_text = ""
-            for stat in self.data['stats']:
-                stats_text += f"`{stat['stat']['name'].capitalize():<15}: {stat['base_stat']:<3}`\n"
-            
-            embed.add_field(name="📊 Estadísticas Base", value=stats_text, inline=False)
-            
-            return embed
+                ids_formateados = ", ".join([f"#{id_cap}" for id_cap in lista_ids])
+        else:
+            ids_formateados = "Ninguno"
+        
+        # 4. Construimos el texto base
+        info_text = f"✨ **Tipo:** {', '.join([t['type']['name'].capitalize() for t in self.data['types']])}\n"
+        info_text += f"📅 **Primera captura:** {fecha_str}\n"
+        info_text += f"🔢 **Total capturados:** {cantidad}\n"
+        info_text += f"🆔 **IDs de captura:** {ids_formateados}\n"
+        info_text += f"📏 **Altura:** {self.data['height']/10}m | ⚖️ **Peso:** {self.data['weight']/10}kg\n"
+        
+        # 5. Creamos el Embed
+        embed = discord.Embed(title=titulo, color=discord.Color.dark_grey())
+        embed.set_image(url=url_grande)
+        embed.set_thumbnail(url=url_sprite)
+        
+        # 6. Añadimos campo de Detalles Generales
+        embed.add_field(name="📋 Detalles Generales", value=info_text, inline=False)
+        
+        # 7. Añadimos las estadísticas
+        stats_text = ""
+        for stat in self.data['stats']:
+            stats_text += f"`{stat['stat']['name'].capitalize():<15}: {stat['base_stat']:<3}`\n"
+        
+        embed.add_field(name="📊 Estadísticas Base", value=stats_text, inline=False)
+        
+        return embed
 
     async def enviar_embed(self, ctx):
         await ctx.send(embed=self.crear_embed(), view=self)

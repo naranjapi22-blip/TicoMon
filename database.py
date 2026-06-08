@@ -202,17 +202,44 @@ def obtener_info_captura(user_id, nombre_pokemon):
         log.debug(f"🔍 Obteniendo info de captura: {nombre_pokemon} - User {user_id}")
         conn = get_connection()
         cursor = conn.cursor()
-        if DATABASE_URL:
-            cursor.execute("SELECT MIN(fecha), COUNT(*) FROM capturas WHERE user_id = %s AND pokemon_nombre = %s", (str(user_id), nombre_pokemon.lower()))
-        else:
-            cursor.execute("SELECT MIN(fecha), COUNT(*) FROM capturas WHERE user_id = ? AND pokemon_nombre = ?", (user_id, nombre_pokemon.lower()))
         
-        res = cursor.fetchone()
-        log.info(f"✅ Info de captura obtenida: {nombre_pokemon} - Cantidad: {res[1] if res else 0}")
-        return res
+        # Agregamos la columna 'id' a la selección y usamos array_agg (Postgres) o group_concat (SQLite)
+        # Si usas Postgres (DATABASE_URL), array_agg es lo ideal:
+        if DATABASE_URL:
+            query = """
+                SELECT MIN(fecha), COUNT(*), ARRAY_AGG(id) 
+                FROM capturas 
+                WHERE user_id = %s AND pokemon_nombre = %s
+            """
+        else:
+            # Si usas SQLite local, usamos group_concat:
+            query = """
+                SELECT MIN(fecha), COUNT(*), GROUP_CONCAT(id) 
+                FROM capturas 
+                WHERE user_id = ? AND pokemon_nombre = ?
+            """
+            
+        cursor.execute(query, (str(user_id), nombre_pokemon.lower()))
+        res = cursor.fetchone() # res será (fecha, cantidad, ids)
+        
+        # Procesamos los IDs para asegurar que siempre sea una lista
+        fecha, cantidad, ids_raw = res if res else (None, 0, "")
+        
+        # Convertimos el string/array de IDs a una lista de números
+        if ids_raw:
+            if isinstance(ids_raw, str): # Caso SQLite
+                lista_ids = [int(i) for i in ids_raw.split(',')]
+            else: # Caso Postgres (ya es lista/array)
+                lista_ids = ids_raw
+        else:
+            lista_ids = []
+
+        log.info(f"✅ Info de captura obtenida: {nombre_pokemon} - Cantidad: {cantidad}")
+        return fecha, cantidad, lista_ids
+
     except Exception as e:
         log.error(f"🚨 Error al obtener info de captura: {e}", exc_info=True)
-        return None
+        return None, 0, []
     finally:
         if conn:
             conn.close()
