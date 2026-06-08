@@ -25,6 +25,7 @@ import sqlite3
 from logger_config import log
 from dotenv import load_dotenv
 from cache_service import db_cache
+from discord.ext import commands
 database.init_db()
 # 1. CONFIGURACIÓN
 load_dotenv()
@@ -36,7 +37,8 @@ intents.message_content = True
 bot = commands.Bot(
     command_prefix=commands.when_mentioned_or('!'), 
     intents=intents,
-    case_insensitive=True
+    case_insensitive=True,
+    setup_hook=setup_hook
 )
 
 # 2. CARGA DE EXTENSIONES (El método correcto para discord.py 2.0+)
