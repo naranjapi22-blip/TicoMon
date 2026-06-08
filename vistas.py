@@ -356,36 +356,41 @@ class BotonCaptura(discord.ui.View):
                     await interaction.message.edit(content="💨 ¡El Pokémon se ha asustado y ha huido!", view=None)
                     return self.stop()
 
-            # --- MATEMÁTICA DE CAPTURA ---
+            # --- MATEMÁTICA DE CAPTURA (INTEGRANDO TUS % BASE) ---
             azar = random.random()
-            if azar < 0.002: bonus_bola, nombre_bola = 255.0, "Master Ball"
-            elif azar < 0.10: bonus_bola, nombre_bola = 1.5, "Ultra Ball"
-            elif azar < 0.30: bonus_bola, nombre_bola = 1.25, "Great Ball"
+            if azar < 0.002: bonus_bola, nombre_bola = 255.0, "Master Ball" # Rareza ajustada
+            elif azar < 0.10: bonus_bola, nombre_bola = 1.5, "Ultra Ball"    # Nerfeada
+            elif azar < 0.30: bonus_bola, nombre_bola = 1.25, "Great Ball"   # Nerfeada
             else: bonus_bola, nombre_bola = 1.0, "Pokéball"
 
-            multiplicador_shiny = 1.0 # Ajustado para que los shiny sean atrapables
+            multiplicador_shiny = 1.0 
 
             if nombre_bola == "Master Ball":
                 prob_final = 1.0
             else:
-                # Factor base reducido para alinear con tu tabla de intentos requeridos
-                FACTOR_DIFICULTAD = 0.08 
+                # Mapeo directo a tus % base (dividido entre 100 para formato decimal)
+                if self.capture_rate >= 225:   base_pct = 0.15  # Muy Común
+                elif self.capture_rate >= 150: base_pct = 0.10  # Común
+                elif self.capture_rate >= 90:  base_pct = 0.08  # Poco Común
+                elif self.capture_rate >= 45:  base_pct = 0.04  # Raro
+                elif self.capture_rate >= 20:  base_pct = 0.02  # Epico
+                elif self.capture_rate >= 5:   base_pct = 0.008 # Mitico
+                else:                          base_pct = 0.003 # Legendario
                 
-                # Curva suavizada basada en el capture_rate original
-                curva_suavizada = (self.capture_rate / 255.0) ** 0.5 
-                prob_con_bola = curva_suavizada * FACTOR_DIFICULTAD * bonus_bola
+                # Ajustamos la probabilidad con el bono de la bola y la curva de dificultad
+                prob_con_bola = (base_pct * ((self.capture_rate / 255.0) ** 0.5)) * bonus_bola
                 
-                # Desgaste dinámico para cumplir con tu tabla de 3 a 39 intentos
-                if self.capture_rate <= 5:   FACTOR_DESGASTE = 0.024 # Legendario
-                elif self.capture_rate <= 15: FACTOR_DESGASTE = 0.026 # Mítico
-                elif self.capture_rate <= 30: FACTOR_DESGASTE = 0.028 # Épico
-                elif self.capture_rate <= 60: FACTOR_DESGASTE = 0.030 # Raro
-                elif self.capture_rate <= 120: FACTOR_DESGASTE = 0.035 # Poco Común
-                else: FACTOR_DESGASTE = 0.050 # Común / Muy Común
+                # Ajuste de desgaste mucho más lento para legendarios y míticos
+                if self.capture_rate <= 5:   FACTOR_DESGASTE = 0.008   # Legendario: Tarda ~38 tiros en llegar al 30%
+                elif self.capture_rate <= 15: FACTOR_DESGASTE = 0.010  # Mítico: Tarda ~30 tiros
+                elif self.capture_rate <= 30: FACTOR_DESGASTE = 0.012  # Épico: Tarda ~25 tiros
+                elif self.capture_rate <= 60: FACTOR_DESGASTE = 0.015  # Raro
+                elif self.capture_rate <= 120: FACTOR_DESGASTE = 0.020 # Poco Común
+                else: FACTOR_DESGASTE = 0.030                          # Común / Muy Común
                 
                 prob_final = prob_con_bola + (self.intentos_fallidos * FACTOR_DESGASTE)
                 
-                # Mantenemos tus topes máximos originales
+                # Manteniendo tus topes originales
                 TOPE_MAXIMO = 0.30 if (self.es_shiny or self.es_legendario) else 0.45
                 prob_final = min(prob_final, TOPE_MAXIMO)
 
