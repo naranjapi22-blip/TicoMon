@@ -5,6 +5,7 @@ from cachetools import TTLCache
 import asyncio
 from logger_config import log
 from PIL import Image, ImageFilter, ImageEnhance, ImageDraw, ImageChops, ImageOps
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 
 
