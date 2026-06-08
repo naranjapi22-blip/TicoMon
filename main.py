@@ -254,37 +254,38 @@ async def spawn(ctx):
         pesos_rangos = [75, 20, 5] 
 
         ids_spawn = []
+        data_pokes = [] # Inicializamos aquí
         intentos_generacion = 0
         
         while len(ids_spawn) < 3 and intentos_generacion < 50:
             intentos_generacion += 1
             
-            # Elegimos rango primero para asegurar variedad
             rango = random.choices(opciones_rangos, weights=pesos_rangos, k=1)[0]
             id_cand = random.randint(rango[0], rango[1])
             
-            # Obtenemos datos para medir su rareza real
-            data, species = await servicios.obtener_pokemon(bot.session, id_cand)
-            capture_rate = data.get('capture_rate', 100)
-            es_shiny = random.random() < (1 / 250)
-            # FILTRO DE RAREZA NATURAL
-            # min(1.0, capture_rate / 150) hace que los legendarios (ratio 3) 
-            # pasen el filtro solo un 2% de las veces.
-            prob_spawn = min(1.0, capture_rate / 150) 
-            
-            # Lanzamos el dado
-            if random.random() > prob_spawn:
-                continue 
-            data_pokes.append((data, species, es_shiny))
-            # Evitar duplicados
+            # Solo descargamos si no hemos procesado este ID
             if id_cand not in ids_spawn:
+                data, species = await servicios.obtener_pokemon(bot.session, id_cand)
+                capture_rate = data.get('capture_rate', 100)
+                
+                # Filtro de rareza
+                prob_spawn = min(1.0, capture_rate / 150) 
+                if random.random() > prob_spawn:
+                    continue 
+                
+                es_shiny = random.random() < (1 / 250)
                 ids_spawn.append(id_cand)
-        
-        # Obtención de datos finales
-        data_pokes = []
-        for poke_id in ids_spawn:
-            data, species = await servicios.obtener_pokemon(bot.session, poke_id)
-            data_pokes.append((data, species))
+                data_pokes.append((data, species, es_shiny))
+
+        # Si quedaron menos de 3, rellenamos sin filtro para asegurar 3 opciones
+        while len(data_pokes) < 3:
+            id_cand = random.randint(1, 493)
+            # Evitar repetidos en el relleno
+            if id_cand not in ids_spawn:
+                data, species = await servicios.obtener_pokemon(bot.session, id_cand)
+                es_shiny = random.random() < (1 / 250)
+                ids_spawn.append(id_cand)
+                data_pokes.append((data, species, es_shiny))
         
         buffer_siluetas = await servicios.generar_collage_siluetas(bot.session, data_pokes)
         if not buffer_siluetas:
