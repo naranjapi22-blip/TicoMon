@@ -187,7 +187,10 @@ async def pokedex(ctx, *, filtro: str = None):
     )
     
     await view.generar_vista_pokedex(ctx, bot.session)
+async def setup_hook():
+    await bot.load_extension('cogs.newpokedex')
 
+bot = commands.Bot(..., setup_hook=setup_hook)
 def generar_pista(data, species, pistas_usadas):
     pistas = []
     
