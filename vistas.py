@@ -48,24 +48,27 @@ class TipoSelect(discord.ui.Select):
         self.tenidos = tenidos
 
     async def callback(self, interaction: discord.Interaction):
-            self.view.filtro_actual = self.values[0]
-            self.view.pagina = 0
-            
-            # Obtenemos los IDs filtrados
-            ids_filtrados = await servicios.filtrar_capturas_por_tipo(
-                interaction.client.session, self.view.filtro_actual, self.tenidos
-            )
-            
-            # CORRECCIÓN: Actualizamos siempre, incluso si la lista es vacía
-            self.view.total_pokes = ids_filtrados
-            
-            # Si la lista está vacía, reiniciamos las páginas a una lista vacía
-            if not ids_filtrados:
-                self.view.paginas = []
-            else:
-                self.view.paginas = [ids_filtrados[i:i + 10] for i in range(0, len(ids_filtrados), 10)]
-            
-            await self.view.generar_vista_pokedex(interaction, interaction.client.session)
+        # 1. DIFERIR LA INTERACCIÓN: Esto evita que el token de interacción expire.
+        await interaction.response.defer()
+
+        self.view.filtro_actual = self.values[0]
+        self.view.pagina = 0
+        
+        # 2. Tu lógica de filtrado (ahora se ejecuta tras el defer)
+        ids_filtrados = await servicios.filtrar_capturas_por_tipo(
+            interaction.client.session, self.view.filtro_actual, self.tenidos
+        )
+        
+        self.view.total_pokes = ids_filtrados
+        
+        if not ids_filtrados:
+            self.view.paginas = []
+        else:
+            self.view.paginas = [ids_filtrados[i:i + 10] for i in range(0, len(ids_filtrados), 10)]
+        
+        # 3. USAR FOLLOWUP: Como ya deferiste, debes usar followup para editar el mensaje
+        # Pasamos interaction.followup en lugar de la interacción directa
+        await self.view.generar_vista_pokedex(interaction.followup, interaction.client.session)
 
 # --- CLASE PRINCIPAL DE POKEDEX ---
 class PokedexView(discord.ui.View):
