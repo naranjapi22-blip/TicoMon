@@ -13,8 +13,8 @@ def verificar_y_actualizar_record(cursor, pokemon_nombre, id_nuevo, user_id_nuev
     # Valores por defecto para comparación si no hay registro
     # Si no existe, usamos 0.0 para que cualquier XXL supere a 0
     # Y 99.0 para que cualquier XXS sea menor a 99
-    grande_actual = row[3] if row and row[3] is not None else 0.0
-    pequeno_actual = row[7] if row and row[7] is not None else 99.0
+    grande_actual = row[3] if row and row[4] is not None else 0.0
+    pequeno_actual = row[7] if row and row[8] is not None else 99.0
 
     # 1. VERIFICACIÓN XXL (Grande)
     if tamano_nuevo >= UMBRAL_XXL and tamano_nuevo > grande_actual:
