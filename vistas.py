@@ -264,21 +264,37 @@ import random
 from logger_config import log
 
 class BotonCaptura(discord.ui.View):
-    # Debes agregar 'tamano_factor' aquí abajo:
     def __init__(self, pokemon_data, es_legendario, es_shiny, capture_rate, tamano_factor):
         super().__init__(timeout=300.0)
+        self.message = None # Se asignará desde SpawnSelectionView
         self.nombre = pokemon_data['name']
         self.es_legendario = es_legendario
         self.es_shiny = es_shiny
         self.capture_rate = capture_rate
-        self.tamano_factor = tamano_factor # Ahora sí existe porque se pasó arriba
+        self.tamano_factor = tamano_factor
         
-        # --- NUEVOS ATRIBUTOS ---
         self.tiempo_aparicion = datetime.datetime.now()
         self.intentos_fallidos = 0
         self.user_cooldowns = {}
         self.alguien_lo_atrapo = False
-        self.se_escapo = False
+
+    async def on_timeout(self):
+        if self.alguien_lo_atrapo:
+            return
+
+        for child in self.children:
+            child.disabled = True
+        
+        try:
+            if self.message:
+                await self.message.edit(content="💨 ¡El Pokémon se cansó de esperar y ha huido!", view=self)
+        except:
+            pass
+        
+        import gestor_spawn
+        gestor_spawn.canales_ocupados.discard(self.message.channel.id if self.message else 0)
+        self.stop()
+
     def _segundos_restantes_cooldown(self, user_id, ahora):
         ultimo = self.user_cooldowns.get(user_id)
         if ultimo is None:
@@ -291,6 +307,7 @@ class BotonCaptura(discord.ui.View):
             return await interaction.response.send_message("💨 ¡Llegaste tarde! Alguien más fue más rápido.", ephemeral=True)
 
         try:
+            self.message = interaction.message # Aseguramos referencia
             user_id = interaction.user.id
             ahora = discord.utils.utcnow().timestamp()
 
@@ -305,19 +322,17 @@ class BotonCaptura(discord.ui.View):
             # --- LÓGICA DE SEGURIDAD (Timer y Huída) ---
             tiempo_pasado = (datetime.datetime.now() - self.tiempo_aparicion).total_seconds()
             
-            # 1. Timer de 5 minutos (300 segundos)
             if tiempo_pasado > 300:
                 self.alguien_lo_atrapo = True
                 liberar_canal_completo(interaction.channel.id)
                 await interaction.message.edit(content="💨 ¡El tiempo se ha agotado! El Pokémon ha huido.", view=None)
                 return self.stop()
 
-            # 2. Huída por cansancio (después de 20 intentos)
             if self.intentos_fallidos > 20:
                 if random.random() < (self.intentos_fallidos * 0.003):
                     self.alguien_lo_atrapo = True
                     liberar_canal_completo(interaction.channel.id)
-                    await interaction.message.edit(content="💨 ¡El Pokémon se ha asustado de tantas Pokéballs y ha huido!", view=None)
+                    await interaction.message.edit(content="💨 ¡El Pokémon se ha asustado y ha huido!", view=None)
                     return self.stop()
 
             # --- MATEMÁTICA DE CAPTURA ---
@@ -332,45 +347,33 @@ class BotonCaptura(discord.ui.View):
             if nombre_bola == "Master Ball":
                 prob_final = 1.0
             else:
-                # 1. Ajuste base (comunes un poco más difíciles)
-                ajuste_comun = 0.9 if self.capture_rate >= 200 else 1.0
-                FACTOR_DIFICULTAD = 0.15
+                ajuste_base = 0.9 if self.capture_rate >= 200 else 1.0
+                FACTOR_DIFICULTAD = 0.22 
+                prob_con_bola = (((self.capture_rate / 255) * FACTOR_DIFICULTAD * ajuste_base) * multiplicador_shiny) * bonus_bola
                 
-                # 2. Probabilidad base multiplicada SOLO por el bono de la bola
-                prob_con_bola = (((self.capture_rate / 255) * FACTOR_DIFICULTAD * ajuste_comun) * multiplicador_shiny) * bonus_bola
-                
-                # 3. Desgaste como bono plano (no se multiplica por la bola)
                 FACTOR_DESGASTE = 0.01 if (self.es_shiny or self.es_legendario) else 0.007
                 prob_final = prob_con_bola + (self.intentos_fallidos * FACTOR_DESGASTE)
                 
-                # 4. Tope máximo
                 TOPE_MAXIMO = 0.30 if (self.es_shiny or self.es_legendario) else 0.45
                 prob_final = min(prob_final, TOPE_MAXIMO)
 
-            # Calculamos el porcentaje final con 2 decimales
             porcentaje = f"{max(0, prob_final * 100):.2f}"
 
-            # Calculamos el porcentaje aquí para que esté disponible siempre
-            porcentaje = f"{prob_final * 100:.2f}"
             # --- INTENTO DE CAPTURA ---
             if random.random() < prob_final:
                 self.alguien_lo_atrapo = True 
                 try:
-                    # 1. Primero GUARDAMOS la captura
                     id_captura, resultado_record = await database.guardar_captura(user_id, self.nombre, self.es_shiny, pokeball=nombre_bola)
                     liberar_canal_completo(interaction.channel.id)
-                    # 2. SEGUIMOS con la verificación (YA TENEMOS EL ID)
+                    
                     conn = database.get_connection()
                     cursor = conn.cursor()
                     resultado_record = records.verificar_y_actualizar_record(cursor, self.nombre, id_captura, user_id, self.tamano_factor)
                     conn.commit()
                     conn.close()
 
-                    # 3. AHORA preparamos el mensaje
-                    
                     mensaje = f"🎉 {interaction.user.mention} capturó a **{self.nombre.capitalize()}** (ID: {id_captura}) usando una **{nombre_bola}**! ({porcentaje}%)"
                     
-                    # 4. Verificamos el resultado justo antes de editar el mensaje
                     if resultado_record == "NUEVO_RECORD_GRANDE":
                         mensaje += "\n👑 **¡Nuevo Récord XXL!** Has entrado en el Salón de la Fama."
                     elif resultado_record == "NUEVO_RECORD_PEQUENO":
@@ -381,19 +384,20 @@ class BotonCaptura(discord.ui.View):
                 except Exception as db_error:
                     self.alguien_lo_atrapo = False
                     log.error(f"Error BD: {db_error}", exc_info=True)
-                    await interaction.followup.send("⚠️ Error interno. ¡Inténtalo de nuevo!", ephemeral=True)
+                    await interaction.followup.send("⚠️ Error interno de base de datos.", ephemeral=True)
             else:
                 self.intentos_fallidos += 1
                 embed = interaction.message.embeds[0]
                 embed.set_footer(text=f"Intentos fallidos: {self.intentos_fallidos}")
                 await interaction.message.edit(embed=embed)
-                await interaction.followup.send(f"❌ Fallaste la {nombre_bola} con un ({porcentaje}%). ¡El Pokémon está más cansado! ", ephemeral=True)
+                await interaction.followup.send(f"❌ Fallaste la {nombre_bola} con un ({porcentaje}%). ¡El Pokémon está más cansado!", ephemeral=True)
+
         except Exception as e:
-            # SEGURIDAD: Si algo explota, liberamos el canal obligatoriamente
+            import gestor_spawn
             liberar_canal_completo(interaction.channel.id)
             gestor_spawn.canales_ocupados.discard(interaction.channel.id)
-            self.alguien_lo_atrapo = True # Marcamos como terminado para que no acepten más clics
-            log.error(f"🚨 Canal liberado por error crítico: {e}")
+            self.alguien_lo_atrapo = True
+            log.error(f"🚨 Error crítico en captura: {e}", exc_info=True)
             await interaction.followup.send("⚠️ El encuentro ha finalizado debido a un error.", ephemeral=True)
             self.stop()
 
