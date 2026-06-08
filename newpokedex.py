@@ -3,6 +3,7 @@ from discord.ext import commands
 import aiohttp
 from cache_service import db_cache
 from vistas import PokedexView
+import database  # Asegúrate de importar tu módulo de base de datos
 
 REGIONES = {
     "1": (1, 151), "2": (152, 251), "3": (252, 386),
@@ -20,17 +21,25 @@ async def pokedex(ctx, *, filtro: str = None):
         ctx.bot.session = aiohttp.ClientSession()
 
     async with ctx.typing():
-        # 1. Obtener nombres de capturas desde tu BD actual
+        # 1. Obtener nombres de capturas
         es_shiny_mode = (filtro == "shiny")
+        # Nota: Si tu base de datos principal es síncrona, esto bloquea un instante.
+        # Si puedes, intenta que obtener_capturas sea una corrutina en el futuro.
         nombres_capturados = database.obtener_capturas(ctx.author.id, solo_shiny=es_shiny_mode)
         
         if not nombres_capturados:
             return await ctx.send("No tienes Pokémon registrados en tu colección.")
 
-        # 2. Convertir nombres a IDs de Pokédex usando la caché (Local e Instantáneo)
+        # 2. Convertir nombres a IDs de Pokédex eficientemente
         ids_usuario = set()
+        # Cache local para no preguntar 10 veces por el mismo nombre si el usuario tiene repetidos
+        cache_temporal = {} 
+        
         for nombre in nombres_capturados:
-            id_pokedex = await db_cache.obtener_id_pokedex_por_nombre(nombre)
+            if nombre not in cache_temporal:
+                cache_temporal[nombre] = await db_cache.obtener_id_pokedex_por_nombre(nombre)
+            
+            id_pokedex = cache_temporal[nombre]
             if id_pokedex:
                 ids_usuario.add(id_pokedex)
 
