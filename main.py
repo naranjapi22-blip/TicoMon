@@ -32,9 +32,21 @@ load_dotenv()
 TOKEN = os.getenv('TOKEN')
 intents = discord.Intents.default()
 intents.message_content = True
+async def cargar_extensiones():
+    # Agrega 'newpokedex' a tu lista principal. 
+    # Si newpokedex.py está en la carpeta principal, no uses 'cogs.'
+    extensiones = ['ivs_commands', 'inventario', 'equipo_slash', 'newpokedex']
+    
+    for ext in extensiones:
+        try:
+            await bot.load_extension(ext)
+            log.info(f"✅ Extensión {ext} cargada correctamente.")
+        except Exception as e:
+            log.error(f"❌ Error al cargar {ext}: {e}")
+
 async def setup_hook():
-    await bot.load_extension('cogs.newpokedex')
-    print("✅ Extensión newpokedex cargada.")
+    # Simplemente llama a la función unificada
+    await cargar_extensiones()
 
 # 2. Reemplaza la línea que da error por esta (asegúrate de incluir tu prefijo real)
 # Si tu bot usaba un prefijo como "!" o algo distinto, ponlo ahí:
@@ -45,15 +57,6 @@ bot = commands.Bot(
     setup_hook=setup_hook
 )
 
-# 2. CARGA DE EXTENSIONES (El método correcto para discord.py 2.0+)
-async def cargar_extensiones():
-    extensiones = ['ivs_commands', 'inventario', 'equipo_slash']
-    for ext in extensiones:
-        try:
-            await bot.load_extension(ext)
-            log.info(f"✅ Extensión {ext} cargada correctamente.")
-        except Exception as e:
-            log.error(f"❌ Error al cargar {ext}: {e}")
 
 bot.setup_hook = cargar_extensiones
 REGIONES = {
