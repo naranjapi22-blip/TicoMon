@@ -471,47 +471,49 @@ def procesar_sprite_pokemon(imagen_base, tamano_factor, estado_record=None):
             enhancer = ImageEnhance.Brightness(glow)
             glow = enhancer.enhance(3.0) # ¡Esto hace que brille mucho más!
 
-# 2. COMPOSICIÓN
-            # Pegamos el brillo varias veces para que sea denso
+        # 2. COMPOSICIÓN
             aura_layer.paste(glow, (margen - 10, margen - 10), glow)
             aura_layer.paste(glow, (margen + 10, margen + 10), glow)
             
-            # --- NUEVO: RAYOS DE ENERGÍA MEJORADOS (DIRECCIONALES) ---
-            # Creamos una capa temporal solo para los rayos para poder darles efecto de luz
-            capa_rayos = Image.new("RGBA", (ancho_aura, alto_aura), (0, 0, 0, 0))
-            draw_rayos = ImageDraw.Draw(capa_rayos)
+            # --- EL SECRETO PARA RAYOS ÉPICOS: NÚCLEO Y RESPLANDOR ---
+            # Capa 1: El halo de luz del rayo (grueso y del color del aura)
+            capa_resplandor = Image.new("RGBA", (ancho_aura, alto_aura), (0, 0, 0, 0))
+            draw_resplandor = ImageDraw.Draw(capa_resplandor)
+            
+            # Capa 2: El centro caliente del plasma (fino y blanco puro)
+            capa_nucleo = Image.new("RGBA", (ancho_aura, alto_aura), (0, 0, 0, 0))
+            draw_nucleo = ImageDraw.Draw(capa_nucleo)
             
             centro_x = ancho_aura // 2
             centro_y = alto_aura // 2
             
-            # Generamos 35 rayos explosivos
-            for _ in range(35):
-                # Distancia desde el centro donde empieza y longitud del rayo
+            for _ in range(30): # 30 rayos son suficientes si brillan bien
                 distancia_inicio = random.randint(margen // 2, margen + 15)
-                longitud = random.randint(15, 45) # Hacemos los rayos más largos
-                
-                # Ángulo aleatorio en radianes (0 a 360 grados) para que salgan en todas direcciones
+                longitud = random.randint(25, 60) # Rayos más largos
                 angulo = random.uniform(0, 2 * math.pi)
                 
-                # Calculamos inicio y fin para que el rayo "salga disparado" hacia afuera desde el centro
                 x_ini = centro_x + int(math.cos(angulo) * distancia_inicio)
                 y_ini = centro_y + int(math.sin(angulo) * distancia_inicio)
                 x_fin = centro_x + int(math.cos(angulo) * (distancia_inicio + longitud))
                 y_fin = centro_y + int(math.sin(angulo) * (distancia_inicio + longitud))
                 
-                # Color del rayo: blanco brillante y semitransparente
-                color_rayo = (255, 255, 255, random.randint(150, 255))
-                grosor = random.randint(2, 4) # Rayos un poco más gruesos para que resalten
+                # 1. Dibujamos el halo grueso (usamos el color del aura)
+                # Ponemos un poco de transparencia para que no bloquee el aura principal
+                color_halo = (color_aura[0], color_aura[1], color_aura[2], 180)
+                draw_resplandor.line([(x_ini, y_ini), (x_fin, y_fin)], fill=color_halo, width=8)
                 
-                # Dibujamos el rayo en su propia capa
-                draw_rayos.line([(x_ini, y_ini), (x_fin, y_fin)], fill=color_rayo, width=grosor)
+                # 2. Dibujamos el núcleo caliente (blanco sólido)
+                draw_nucleo.line([(x_ini, y_ini), (x_fin, y_fin)], fill=(255, 255, 255, 255), width=2)
             
-            # ¡EL TRUCO DE LA LUZ!: Desenfoque ligero a los rayos para que parezcan plasma/energía
-            capa_rayos = capa_rayos.filter(ImageFilter.GaussianBlur(1))
+            # ¡MAGIA OPTICA!: Desenfocamos solo la capa gruesa para que parezca luz emitida
+            capa_resplandor = capa_resplandor.filter(ImageFilter.GaussianBlur(3))
             
-            # Finalmente, pegamos la capa de rayos sobre el aura
-            aura_layer.paste(capa_rayos, (0, 0), capa_rayos)
-            # --------------------------------------
+            # Pegamos el núcleo blanco afilado SOBRE su propio resplandor borroso
+            capa_resplandor.paste(capa_nucleo, (0, 0), capa_nucleo)
+            
+            # Finalmente, pegamos esta estructura completa de luz sobre tu aura general
+            aura_layer.paste(capa_resplandor, (0, 0), capa_resplandor)
+            # ---------------------------------------------------------
 
             # Pegamos el sprite original encima de todo
             aura_layer.paste(sprite_escalado, (margen, margen), sprite_escalado)
