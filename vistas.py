@@ -216,7 +216,7 @@ class SpawnSelectionView(discord.ui.View):
         es_shiny = es_shiny
         es_legendario = species.get('is_legendary', False)
         capture_rate = species.get('capture_rate', 45)
-        tamano_factor = round(random.uniform(0.50, 1.50), 2) # Generamos el tamaño aquí
+        tamano_factor = tamano_factor
         
         etiquetas = []
         if es_shiny: etiquetas.append("✨ SHINY")
