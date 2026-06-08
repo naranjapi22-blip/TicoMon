@@ -109,8 +109,8 @@ class IvsCommands(commands.Cog):
         
         # Lógica de etiqueta de tamaño
         tamano = float(tamano or 1.0)
-        if tamano < 0.7: etiqueta_tamano = "XXS 🤏"
-        elif tamano > 1.3: etiqueta_tamano = "XXL 👑"
+        if tamano <= 0.8: etiqueta_tamano = "XXS 🤏"
+        elif tamano >= 1.2: etiqueta_tamano = "XXL 👑"
         else: etiqueta_tamano = "Normal"
 
         ivs_list = [hp, atk, defs, spa, spd, spe]
