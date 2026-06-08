@@ -478,11 +478,19 @@ class InfoView(discord.ui.View):
         
         # 2. Formateamos fecha de forma segura
         fecha_str = "N/A"
-        if isinstance(fecha_primera, datetime.datetime):
-            fecha_str = fecha_primera.strftime('%Y-%m-%d')
-        elif isinstance(fecha_primera, str) and fecha_primera != 'Desconocido':
-            fecha_str = fecha_primera.split()[0]
-        
+        try:
+            if isinstance(fecha_primera, datetime.datetime):
+                fecha_str = fecha_primera.strftime('%Y-%m-%d')
+            elif isinstance(fecha_primera, str):
+                # Limpieza extra: si es un string, intentamos obtener solo la fecha
+                # y filtramos valores inválidos
+                if fecha_primera.lower() not in ['desconocido', 'n/a', 'none']:
+                    fecha_str = fecha_primera.split()[0]
+        except Exception as e:
+            # Si algo falla (ej. el formato de fecha es rarísimo), 
+            # mantendremos "N/A" en lugar de crashear el bot
+            print(f"⚠️ Error formateando fecha: {e}")
+            fecha_str = "N/A"
         # 3. Formateamos los IDs de captura (mostrando los últimos 8 para no saturar)
         if lista_ids:
             if len(lista_ids) > 8:
