@@ -378,6 +378,7 @@ class BotonCaptura(discord.ui.View):
             if random.random() < prob_final:
                 self.alguien_lo_atrapo = True 
                 try:
+                    # 1. Guardamos la captura y recibimos el ID y si hubo récord
                     id_captura, resultado_record = await database.guardar_captura(
                         user_id=user_id, 
                         pokemon_nombre=self.nombre, 
@@ -387,19 +388,18 @@ class BotonCaptura(discord.ui.View):
                     )
                     liberar_canal_completo(interaction.channel.id)
                     
-                    conn = database.get_connection()
-                    cursor = conn.cursor()
-                    resultado_record = records.verificar_y_actualizar_record(cursor, self.nombre, id_captura, user_id, self.tamano_factor)
-                    conn.commit()
-                    conn.close()
+                    # Se eliminó la reconexión y la doble verificación aquí para no sobreescribir 'resultado_record'
 
+                    # 2. Construimos el mensaje base
                     mensaje = f"🎉 {interaction.user.mention} capturó a **{self.nombre.capitalize()}** (ID: {id_captura}) usando una **{nombre_bola}**! ({porcentaje}%)"
                     
+                    # 3. Añadimos el aviso de récord si database.guardar_captura devolvió algo
                     if resultado_record == "NUEVO_RECORD_GRANDE":
                         mensaje += "\n👑 **¡Nuevo Récord XXL!** Has entrado en el Salón de la Fama."
                     elif resultado_record == "NUEVO_RECORD_PEQUENO":
                         mensaje += "\n🤏 **¡Nuevo Récord XXS!** Has entrado en el Salón de la Fama."
 
+                    # 4. Enviamos el mensaje final
                     await interaction.message.edit(content=mensaje, view=None)
                     self.stop()
                 except Exception as db_error:
