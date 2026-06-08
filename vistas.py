@@ -349,7 +349,7 @@ class BotonCaptura(discord.ui.View):
                 await interaction.message.edit(content="💨 ¡El tiempo se ha agotado! El Pokémon ha huido.", view=None)
                 return self.stop()
 
-            if self.intentos_fallidos > 20:
+            if self.intentos_fallidos > 30:
                 if random.random() < (self.intentos_fallidos * 0.003):
                     self.alguien_lo_atrapo = True
                     liberar_canal_completo(interaction.channel.id)
@@ -363,18 +363,29 @@ class BotonCaptura(discord.ui.View):
             elif azar < 0.40: bonus_bola, nombre_bola = 1.5, "Great Ball"
             else: bonus_bola, nombre_bola = 1.0, "Pokéball"
 
-            multiplicador_shiny = 0.1 if self.es_shiny else 1.0
+            multiplicador_shiny = 1.0 # Ajustado para que los shiny sean atrapables
 
             if nombre_bola == "Master Ball":
                 prob_final = 1.0
             else:
-                ajuste_base = 0.9 if self.capture_rate >= 200 else 1.0
-                FACTOR_DIFICULTAD = 0.22 
-                prob_con_bola = (((self.capture_rate / 255) * FACTOR_DIFICULTAD * ajuste_base) * multiplicador_shiny) * bonus_bola
+                # Factor base reducido para alinear con tu tabla de intentos requeridos
+                FACTOR_DIFICULTAD = 0.08 
                 
-                FACTOR_DESGASTE = 0.01 if (self.es_shiny or self.es_legendario) else 0.007
+                # Curva suavizada basada en el capture_rate original
+                curva_suavizada = (self.capture_rate / 255.0) ** 0.5 
+                prob_con_bola = curva_suavizada * FACTOR_DIFICULTAD * bonus_bola
+                
+                # Desgaste dinámico para cumplir con tu tabla de 3 a 39 intentos
+                if self.capture_rate <= 5:   FACTOR_DESGASTE = 0.024 # Legendario
+                elif self.capture_rate <= 15: FACTOR_DESGASTE = 0.026 # Mítico
+                elif self.capture_rate <= 30: FACTOR_DESGASTE = 0.028 # Épico
+                elif self.capture_rate <= 60: FACTOR_DESGASTE = 0.030 # Raro
+                elif self.capture_rate <= 120: FACTOR_DESGASTE = 0.035 # Poco Común
+                else: FACTOR_DESGASTE = 0.050 # Común / Muy Común
+                
                 prob_final = prob_con_bola + (self.intentos_fallidos * FACTOR_DESGASTE)
                 
+                # Mantenemos tus topes máximos originales
                 TOPE_MAXIMO = 0.30 if (self.es_shiny or self.es_legendario) else 0.45
                 prob_final = min(prob_final, TOPE_MAXIMO)
 
