@@ -86,9 +86,15 @@ async def on_ready():
 
     print("Base de datos, módulos y sesión de red verificados.")
         # Esto creará la tabla automáticamente si no existe al encender el bot
-    print(f"DEBUG: Conectando a la URL: {os.getenv('DATABASE_URL')}")
     await db_cache.inicializar_bd()
-    print("Base de datos de caché verificada y lista.")
+    
+    # Verificamos si la tabla está vacía
+    ids = await db_cache.obtener_ids_por_filtro()
+    if not ids:
+        print("⚠️ Tabla detectada pero vacía. Iniciando carga masiva...")
+        from setup_cache import prellenar_cache
+        await prellenar_cache() # Asegúrate de que prellenar_cache sea la función dentro de setup_cache
+        print("✅ ¡Carga masiva completada!")
 # 2. Tu evento de encendido con la inicialización correcta
 
 @bot.event
