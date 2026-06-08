@@ -34,7 +34,10 @@ intents = discord.Intents.default()
 intents.message_content = True
 async def setup_hook():
     await bot.load_extension('cogs.newpokedex')
-# 1. Inicializamos el bot (UNA SOLA VEZ)
+    print("✅ Extensión newpokedex cargada.")
+
+# 2. Reemplaza la línea que da error por esta (asegúrate de incluir tu prefijo real)
+# Si tu bot usaba un prefijo como "!" o algo distinto, ponlo ahí:
 bot = commands.Bot(
     command_prefix=commands.when_mentioned_or('!'), 
     intents=intents,
