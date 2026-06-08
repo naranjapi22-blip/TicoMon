@@ -86,6 +86,7 @@ async def on_ready():
 
     print("Base de datos, módulos y sesión de red verificados.")
         # Esto creará la tabla automáticamente si no existe al encender el bot
+    print(f"DEBUG: Conectando a la URL: {os.getenv('DATABASE_URL')}")
     await db_cache.inicializar_bd()
     print("Base de datos de caché verificada y lista.")
 # 2. Tu evento de encendido con la inicialización correcta

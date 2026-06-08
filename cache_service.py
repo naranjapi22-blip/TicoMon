@@ -1,30 +1,39 @@
 import asyncpg
 import os
+import logging
 
 class PokedexCache:
     def __init__(self):
-        # Neon te da esta URL en su dashboard
         self.DATABASE_URL = os.getenv("DATABASE_URL")
+        self.pool = None
+        self.logger = logging.getLogger("PokedexCache")
 
     async def _get_pool(self):
-        return await asyncpg.create_pool(self.DATABASE_URL)
+        """Devuelve el pool existente o crea uno nuevo si no existe."""
+        if self.pool is None:
+            self.pool = await asyncpg.create_pool(self.DATABASE_URL, min_size=1, max_size=10)
+        return self.pool
 
     async def inicializar_bd(self):
-        """Crea la tabla en tu base de datos de Neon."""
-        pool = await self._get_pool()
-        async with pool.acquire() as conn:
-            await conn.execute("""
-                CREATE TABLE IF NOT EXISTS pokemon_data (
-                    id INTEGER PRIMARY KEY,
-                    nombre TEXT NOT NULL UNIQUE,
-                    tipos TEXT NOT NULL,
-                    es_legendario BOOLEAN DEFAULT FALSE,
-                    es_mitico BOOLEAN DEFAULT FALSE
-                )
-            """)
-            await conn.execute("CREATE INDEX IF NOT EXISTS idx_tipos ON pokemon_data(tipos)")
-            await conn.execute("CREATE INDEX IF NOT EXISTS idx_nombre ON pokemon_data(nombre)")
-        await pool.close()
+        """Crea la tabla y los índices necesarios."""
+        try:
+            pool = await self._get_pool()
+            async with pool.acquire() as conn:
+                async with conn.transaction():
+                    await conn.execute("""
+                        CREATE TABLE IF NOT EXISTS pokemon_data (
+                            id INTEGER PRIMARY KEY,
+                            nombre TEXT NOT NULL UNIQUE,
+                            tipos TEXT NOT NULL,
+                            es_legendario BOOLEAN DEFAULT FALSE,
+                            es_mitico BOOLEAN DEFAULT FALSE
+                        )
+                    """)
+                    await conn.execute("CREATE INDEX IF NOT EXISTS idx_tipos ON pokemon_data(tipos)")
+                    await conn.execute("CREATE INDEX IF NOT EXISTS idx_nombre ON pokemon_data(nombre)")
+            print("✅ Estructura de tabla verificada en Neon.")
+        except Exception as e:
+            print(f"❌ Error crítico al inicializar BD: {e}")
 
     async def guardar_pokemon(self, id_p, nombre, tipos, es_legendario, es_mitico):
         pool = await self._get_pool()
@@ -35,14 +44,11 @@ class PokedexCache:
                 ON CONFLICT (id) DO UPDATE SET 
                 nombre = $2, tipos = $3, es_legendario = $4, es_mitico = $5
             """, id_p, nombre.lower(), ",".join(tipos), es_legendario, es_mitico)
-        await pool.close()
 
     async def obtener_id_pokedex_por_nombre(self, nombre):
         pool = await self._get_pool()
         async with pool.acquire() as conn:
-            result = await conn.fetchval("SELECT id FROM pokemon_data WHERE nombre = $1", nombre.lower())
-            return result
-        await pool.close()
+            return await conn.fetchval("SELECT id FROM pokemon_data WHERE nombre = $1", nombre.lower())
 
     async def obtener_ids_por_filtro(self, filtro_tipo=None, legendarios=False):
         pool = await self._get_pool()
@@ -57,6 +63,10 @@ class PokedexCache:
             
             rows = await conn.fetch(query, *args)
             return {row['id'] for row in rows}
-        await pool.close()
+
+    async def cerrar_pool(self):
+        """Se llama cuando el bot se apaga."""
+        if self.pool:
+            await self.pool.close()
 
 db_cache = PokedexCache()
