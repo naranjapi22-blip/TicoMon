@@ -147,7 +147,7 @@ def obtener_rareza(capture_rate):
     elif capture_rate >= 45:
         return "Raro"
     else:
-        return "Legendario"
+        return "Epico"
 class SpawnSelectionView(discord.ui.View):
     def __init__(self, data_pokes, autor_original):
         super().__init__(timeout=60) # Tienen 60 segundos para elegir
