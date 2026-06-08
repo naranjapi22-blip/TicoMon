@@ -24,6 +24,7 @@ import asyncio
 import sqlite3
 from logger_config import log
 from dotenv import load_dotenv
+from cache_service import db_cache
 database.init_db()
 # 1. CONFIGURACIÓN
 load_dotenv()
@@ -62,7 +63,12 @@ def get_connection():
         return psycopg2.connect(db_url)
     else:
         return sqlite3.connect('fumo_data.db')
-
+# En tu bot.py o main.py
+@bot.event
+async def on_ready():
+    # Esto creará la tabla automáticamente si no existe al encender el bot
+    await db_cache.inicializar_bd()
+    print("Base de datos de caché verificada y lista.")
 # 2. Tu evento de encendido con la inicialización correcta
 @bot.event
 async def on_ready():
