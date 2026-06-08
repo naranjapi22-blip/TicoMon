@@ -272,7 +272,7 @@ async def spawn(ctx):
                 prob_spawn = min(1.0, capture_rate / 150) 
                 if random.random() > prob_spawn:
                     continue 
-                es_shiny = True
+                es_shiny = (random.randint(1, 50) == 1)
                 # es_shiny = random.random() < (1 / 250)
                 ids_spawn.append(id_cand)
                 data_pokes.append((data, species, es_shiny))
