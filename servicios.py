@@ -1,12 +1,9 @@
-import aiohttp
 import io
 import random
-from PIL import Image, ImageChops, ImageDraw, ImageOps
 from cachetools import TTLCache
 import asyncio
 from logger_config import log
-from PIL import Image, ImageDraw, ImageFilter
-import os
+from PIL import Image, ImageFilter, ImageEnhance, ImageDraw, ImageChops, ImageOps
 # 1. Creamos una caché que:
 # - Guarda máximo 600 imágenes (maxsize)
 # - Las mantiene solo por 1 hora (ttl=3600 segundos) para liberar espacio
@@ -457,7 +454,6 @@ def procesar_sprite_pokemon(imagen_base, tamano_factor, estado_record=None):
             
             # 1. CREAR MÁSCARA DE RESPLANDOR (Más fuerte)
             # Dibujamos una silueta más gruesa para que el desenfoque sea mayor
-            from PIL import ImageEnhance
             
             # Creamos una versión "glow" del sprite: convertimos el sprite a un color sólido
             glow = sprite_escalado.copy()
@@ -479,6 +475,32 @@ def procesar_sprite_pokemon(imagen_base, tamano_factor, estado_record=None):
             aura_layer.paste(glow, (margen - 10, margen - 10), glow)
             aura_layer.paste(glow, (margen + 10, margen + 10), glow)
             
+            # --- NUEVO: AGREGAR CHISPAS / RAYOS ---
+            draw = ImageDraw.Draw(aura_layer)
+            centro_x = ancho_aura // 2
+            centro_y = alto_aura // 2
+            
+            # Generamos 40 chispas de energía
+            for _ in range(40):
+                # random.gauss las concentra cerca del Pokémon y dispersa algunas lejos
+                x_ini = int(random.gauss(centro_x, margen))
+                y_ini = int(random.gauss(centro_y, margen))
+                
+                # Le damos dirección al rayo/chispa
+                desp_x = random.randint(-15, 15)
+                desp_y = random.randint(-15, 15)
+                
+                # Color blanco brillante con opacidad variable para dar textura eléctrica
+                color_chispa = (255, 255, 255, random.randint(150, 255))
+                grosor = random.randint(1, 2)
+                
+                # Dibujamos la línea directamente en la capa del aura
+                draw.line(
+                    [(x_ini, y_ini), (x_ini + desp_x, y_ini + desp_y)],
+                    fill=color_chispa, width=grosor
+                )
+            # --------------------------------------
+
             # Pegamos el sprite original encima
             aura_layer.paste(sprite_escalado, (margen, margen), sprite_escalado)
             
