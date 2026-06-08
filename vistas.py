@@ -322,7 +322,7 @@ class BotonCaptura(discord.ui.View):
 
             # --- MATEMÁTICA DE CAPTURA ---
             azar = random.random()
-            if azar < 0.01: bonus_bola, nombre_bola = 255.0, "Master Ball"
+            if azar < 0.005: bonus_bola, nombre_bola = 255.0, "Master Ball"
             elif azar < 0.15: bonus_bola, nombre_bola = 2.0, "Ultra Ball"
             elif azar < 0.40: bonus_bola, nombre_bola = 1.5, "Great Ball"
             else: bonus_bola, nombre_bola = 1.0, "Pokéball"
@@ -333,17 +333,21 @@ class BotonCaptura(discord.ui.View):
             if nombre_bola == "Master Ball":
                 prob_final = 1.0
             else:
-                FACTOR_DIFICULTAD = 0.2 
+                # Ajuste para que los comunes no sean tan fáciles (15% en vez de 20%)
+                ajuste_comun = 0.75 if self.capture_rate >= 200 else 1.0
+                FACTOR_DIFICULTAD = 0.15 
                 FACTOR_DESGASTE = 0.01 if (self.es_shiny or self.es_legendario) else 0.007
                 
-                # Fórmula con dificultad y desgaste
-                prob_base = (((self.capture_rate / 255) * bonus_bola) * FACTOR_DIFICULTAD) * multiplicador_shiny
+                # Fórmula con dificultad, ajuste y desgaste
+                prob_base = (((self.capture_rate / 255) * bonus_bola) * FACTOR_DIFICULTAD * ajuste_comun) * multiplicador_shiny
                 prob_final = prob_base + (self.intentos_fallidos * FACTOR_DESGASTE)
                 
                 # Tope máximo de seguridad
                 TOPE_MAXIMO = 0.30 if (self.es_shiny or self.es_legendario) else 0.45
                 prob_final = min(prob_final, TOPE_MAXIMO)
-                porcentaje = round(prob_final * 100, 2)
+
+            # Calculamos el porcentaje aquí para que esté disponible siempre
+            porcentaje = f"{prob_final * 100:.2f}"
             # --- INTENTO DE CAPTURA ---
             if random.random() < prob_final:
                 self.alguien_lo_atrapo = True 
