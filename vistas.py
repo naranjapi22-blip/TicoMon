@@ -214,7 +214,7 @@ class SpawnSelectionView(discord.ui.View):
         
         # Calculamos variables para esta captura en concreto
         es_shiny = es_shiny
-        es_legendario = species.get('is_legendary', True)
+        es_legendario = species.get('is_legendary', False)
         capture_rate = species.get('capture_rate', 45)
         tamano_factor = round(random.uniform(0.50, 1.50), 2) # Generamos el tamaño aquí
         
