@@ -378,7 +378,13 @@ class BotonCaptura(discord.ui.View):
             if random.random() < prob_final:
                 self.alguien_lo_atrapo = True 
                 try:
-                    id_captura, resultado_record = await database.guardar_captura(user_id, self.nombre, self.es_shiny,self.tamano_factor, pokeball=nombre_bola)
+                    id_captura, resultado_record = await database.guardar_captura(
+                        user_id=user_id, 
+                        pokemon_nombre=self.nombre, 
+                        tamano_factor=self.tamano_factor, # Especificas que este es el tamaño
+                        es_shiny=self.es_shiny,           # Especificas que este es el shiny
+                        pokeball=nombre_bola
+                    )
                     liberar_canal_completo(interaction.channel.id)
                     
                     conn = database.get_connection()
