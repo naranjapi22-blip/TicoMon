@@ -343,7 +343,7 @@ class BotonCaptura(discord.ui.View):
                 # Tope máximo de seguridad
                 TOPE_MAXIMO = 0.30 if (self.es_shiny or self.es_legendario) else 0.45
                 prob_final = min(prob_final, TOPE_MAXIMO)
-
+                porcentaje = round(prob_final * 100, 2)
             # --- INTENTO DE CAPTURA ---
             if random.random() < prob_final:
                 self.alguien_lo_atrapo = True 
@@ -359,7 +359,7 @@ class BotonCaptura(discord.ui.View):
                     conn.close()
 
                     # 3. AHORA preparamos el mensaje
-                    porcentaje = round(prob_final * 100, 2)
+                    
                     mensaje = f"🎉 {interaction.user.mention} capturó a **{self.nombre.capitalize()}** (ID: {id_captura}) usando una **{nombre_bola}**! ({porcentaje}%)"
                     
                     # 4. Verificamos el resultado justo antes de editar el mensaje
@@ -383,7 +383,6 @@ class BotonCaptura(discord.ui.View):
         except Exception as e:
             # SEGURIDAD: Si algo explota, liberamos el canal obligatoriamente
             liberar_canal_completo(interaction.channel.id)
-            mensaje += "El pokemon ha escapado."
             gestor_spawn.canales_ocupados.discard(interaction.channel.id)
             self.alguien_lo_atrapo = True # Marcamos como terminado para que no acepten más clics
             log.error(f"🚨 Canal liberado por error crítico: {e}")
