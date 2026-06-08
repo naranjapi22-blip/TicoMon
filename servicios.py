@@ -7,7 +7,6 @@ import asyncio
 from logger_config import log
 from PIL import Image, ImageDraw, ImageFilter
 import os
-from PIL import Image, ImageFilter, ImageEnhance, ImageDraw
 # 1. Creamos una caché que:
 # - Guarda máximo 600 imágenes (maxsize)
 # - Las mantiene solo por 1 hora (ttl=3600 segundos) para liberar espacio
@@ -443,70 +442,48 @@ def procesar_sprite_pokemon(imagen_base, tamano_factor, estado_record=None):
         
         sprite_escalado = imagen_base.resize((nuevo_ancho, nuevo_alto), Image.Resampling.LANCZOS)
         
-        # Asumimos que 'sprite_escalado' es tu Blaziken con fondo transparente
-        nuevo_ancho, nuevo_alto = sprite_escalado.size
-        estado_record = "grande" # Forzando el estado para el ejemplo
-
+        # 2. Aplicar Boost Visual (Efecto Resplandor Intenso)
         if estado_record:
-            # 1. COLOR DINÁMICO (Naranja/Rojo intenso para Blaziken)
-            color_aura = (255, 69, 0, 255) 
+            # Color: Oro para grande, Plata para pequeño
+            color_aura = (255, 215, 0, 255) if estado_record == "grande" else (192, 192, 192, 255)
             
-            margen = 100 # Aún más espacio para la explosión de energía
+            # Aumentamos el margen para que el brillo tenga espacio para expandirse
+            margen = 50 
             ancho_aura = nuevo_ancho + (margen * 2)
             alto_aura = nuevo_alto + (margen * 2)
-            centro_x, centro_y = ancho_aura // 2, alto_aura // 2
             
-            # 2. EL SECRETO: FONDO OSCURO PARA QUE EL BRILLO ESTALLE
-            # En lugar de fondo transparente, creamos un lienzo gris casi negro
-            lienzo_final = Image.new("RGBA", (ancho_aura, alto_aura), (15, 15, 20, 255))
+            # Creamos el lienzo del aura
+            aura_layer = Image.new("RGBA", (ancho_aura, alto_aura), (0, 0, 0, 0))
             
-            # --- MÁSCARA INSTANTÁNEA ---
-            silueta_color = Image.new("RGBA", sprite_escalado.size, color_aura)
-            silueta_color.putalpha(sprite_escalado.getchannel('A'))
+            # 1. CREAR MÁSCARA DE RESPLANDOR (Más fuerte)
+            # Dibujamos una silueta más gruesa para que el desenfoque sea mayor
+            from PIL import ImageEnhance
             
-            lienzo_temp = Image.new("RGBA", (ancho_aura, alto_aura), (0, 0, 0, 0))
-            lienzo_temp.paste(silueta_color, (margen, margen), silueta_color)
+            # Creamos una versión "glow" del sprite: convertimos el sprite a un color sólido
+            glow = sprite_escalado.copy()
+            # Convertimos a blanco para que el color brille más
+            pixels = glow.load()
+            for y in range(glow.size[1]):
+                for x in range(glow.size[0]):
+                    if pixels[x, y][3] > 0: # Si no es transparente
+                        pixels[x, y] = color_aura
+            
+            # Aplicamos desenfoque agresivo para crear el brillo
+            glow = glow.filter(ImageFilter.GaussianBlur(10))
+            # Potenciamos el brillo con un enhancer
+            enhancer = ImageEnhance.Brightness(glow)
+            glow = enhancer.enhance(3.0) # ¡Esto hace que brille mucho más!
 
-            # --- AURA DE DOBLE CAPA (MÁS AGRESIVA) ---
-            glow_externo = lienzo_temp.filter(ImageFilter.GaussianBlur(35)) # Más expansiva
+            # 2. COMPOSICIÓN
+            # Pegamos el brillo varias veces para que sea denso
+            aura_layer.paste(glow, (margen - 10, margen - 10), glow)
+            aura_layer.paste(glow, (margen + 10, margen + 10), glow)
             
-            glow_interno = lienzo_temp.filter(ImageFilter.GaussianBlur(5)) # Más afilada y pegada
-            glow_interno = ImageEnhance.Brightness(glow_interno).enhance(4.0) # Brillo nuclear
+            # Pegamos el sprite original encima
+            aura_layer.paste(sprite_escalado, (margen, margen), sprite_escalado)
             
-            # --- NUEVO: RAYOS DE ENERGÍA (No solo puntos) ---
-            capa_rayos = Image.new("RGBA", (ancho_aura, alto_aura), (0, 0, 0, 0))
-            draw = ImageDraw.Draw(capa_rayos)
-            
-            for _ in range(40): # Menos partículas, pero más grandes y dinámicas
-                # Posición inicial cerca del centro
-                x_inicio = int(random.gauss(centro_x, margen / 1.5))
-                y_inicio = int(random.gauss(centro_y, margen / 1.5))
-                
-                # Proyectamos la línea hacia afuera para dar sensación de explosión
-                desplazamiento_x = random.randint(-20, 20)
-                desplazamiento_y = random.randint(-20, 20)
-                
-                color_rayo = (255, 255, 200, random.randint(150, 255)) # Blanco amarillento incandescente
-                grosor = random.randint(1, 3)
-                
-                draw.line(
-                    [(x_inicio, y_inicio), (x_inicio + desplazamiento_x, y_inicio + desplazamiento_y)],
-                    fill=color_rayo, 
-                    width=grosor
-                )
-
-            capa_rayos = capa_rayos.filter(ImageFilter.GaussianBlur(1))
-
-            # --- COMPOSICIÓN FINAL ---
-            # Pegamos todo sobre nuestro fondo oscuro
-            lienzo_final.paste(glow_externo, (0, 0), glow_externo)
-            lienzo_final.paste(glow_interno, (0, 0), glow_interno)
-            lienzo_final.paste(capa_rayos, (0, 0), capa_rayos)
-            
-            # Finalmente, el Pokémon encima
-            lienzo_final.paste(sprite_escalado, (margen, margen), sprite_escalado)
-            
-            sprite_escalado = lienzo_final
+            sprite_escalado = aura_layer
+            nuevo_ancho, nuevo_alto = sprite_escalado.size
 
         # 3. Lienzo transparente de 500x500 (Paso final de centrado)
         lienzo = Image.new("RGBA", (500, 500), (0, 0, 0, 0))
