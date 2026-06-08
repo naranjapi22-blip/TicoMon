@@ -103,7 +103,16 @@ async def guardar_captura(user_id, pokemon_nombre, tamano_factor, es_shiny=False
             
             # 3. Inserción
             campos = "user_id, pokemon_nombre, es_shiny, pokeball, fecha, iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe, naturaleza, tamano_factor"
-            valores = (str(user_id), pokemon_nombre.lower(), 1 if es_shiny else 0, pokeball, fecha_ahora, iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe, naturaleza_seleccionada, tamano_factor)
+            valores = (
+                str(user_id), 
+                pokemon_nombre.lower(), 
+                1 if es_shiny else 0, # es_shiny
+                pokeball, 
+                fecha_ahora,          # fecha
+                iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe, 
+                naturaleza_seleccionada, 
+                tamano_factor         # <--- TIENE QUE SER EL ÚLTIMO
+                )
 
             if DATABASE_URL:
                 cursor.execute(f"INSERT INTO capturas ({campos}) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id", valores)
