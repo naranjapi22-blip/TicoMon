@@ -139,7 +139,15 @@ class PokedexView(discord.ui.View):
     async def siguiente(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.pagina = (self.pagina + 1) % max(1, len(self.paginas))
         await self.generar_vista_pokedex(interaction, interaction.client.session)
-
+def obtener_rareza(capture_rate):
+    if capture_rate >= 200:
+        return "Común (Fácil)"
+    elif capture_rate >= 100:
+        return "Poco Común"
+    elif capture_rate >= 45:
+        return "Raro"
+    else:
+        return "Legendario/Épico (Muy Difícil)"
 class SpawnSelectionView(discord.ui.View):
     def __init__(self, data_pokes, autor_original):
         super().__init__(timeout=60) # Tienen 60 segundos para elegir
@@ -214,12 +222,19 @@ class SpawnSelectionView(discord.ui.View):
         if es_shiny: etiquetas.append("✨ SHINY")
         if es_legendario: etiquetas.append("👑 LEGENDARIO")
         
+        # --- AQUÍ CALCULAMOS LA RAREZA ---
+        rareza = obtener_rareza(capture_rate) # Usando el capture_rate que ya tienes en la variable
+        
         titulo_revelado = f"¡Es un {data['name'].capitalize()} salvaje!"
         if etiquetas: 
             titulo_revelado = f"{' '.join(etiquetas)} {titulo_revelado}"
             
         color_embed = discord.Color.gold() if (es_shiny or es_legendario) else discord.Color.green()
-        embed_revelado = discord.Embed(title=titulo_revelado, color=color_embed)
+        embed_revelado = discord.Embed(
+            title=titulo_revelado, 
+            description=f"**Rareza:** {rareza}", # Añadimos la info aquí
+            color=color_embed
+        )
         
         if es_shiny:
             url_imagen = data['sprites']['other']['official-artwork']['front_shiny']
