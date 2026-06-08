@@ -234,42 +234,53 @@ async def spawn(ctx):
     import random
     import asyncio
     
-    # 1. Filtros básicos
+    # 1. Filtros básicos de inicial y energía
     if not gestor_spawn.verificar_inicial(ctx.author.id):
         return await ctx.send("¡Bienvenido! Antes de tu aventura, elige tu Pokémon inicial con `!inicial`.")
     
-    # Obtenemos datos persistentes
     datos_intentos = await gestor_spawn.obtener_intentos(ctx.author.id)
-    intentos = datos_intentos[0]
-    ultima_recarga = datos_intentos[1]
+    intentos, ultima_recarga = datos_intentos
     
     if intentos <= 0:
         return await ctx.send("❌ Has agotado tus intentos. Tus inciensos se recargan en 2 horas.")
 
-    # 2. Registro de energía persistente
+    # 2. Descontamos energía inmediatamente (se revertirá si el proceso falla)
     database.actualizar_energia_db(ctx.author.id, intentos - 1, ultima_recarga)
 
     try:
-        # --- GENERACIÓN EQUILIBRADA DE IDS ---
-        # Definimos rangos de generación: 85% Comunes, 12% Raros, 3% Legendarios/Especiales
+        # --- GENERACIÓN HÍBRIDA: RANGOS PONDERADOS + FILTRO DE RAREZA ---
+        # 1. Pesos: 75% Comunes, 20% Raros, 5% Legendarios
         opciones_rangos = [(1, 493), (494, 809), (810, 1025)]
-        pesos_rangos = [85, 12, 3] 
+        pesos_rangos = [75, 20, 5] 
 
         ids_spawn = []
-        while len(ids_spawn) < 3:
+        intentos_generacion = 0
+        
+        while len(ids_spawn) < 3 and intentos_generacion < 50:
+            intentos_generacion += 1
+            
+            # Elegimos rango primero para asegurar variedad
             rango = random.choices(opciones_rangos, weights=pesos_rangos, k=1)[0]
             id_cand = random.randint(rango[0], rango[1])
             
-            # FILTRO LEGENDARIO: Solo aparece un 2% de las veces que sale seleccionado
-            if await es_legendario(bot.session, id_cand):
-                if random.random() > 0.02: 
-                    continue 
+            # Obtenemos datos para medir su rareza real
+            data, species = await servicios.obtener_pokemon(bot.session, id_cand)
+            capture_rate = data.get('capture_rate', 100)
             
-            # Evitar Pokémon duplicados en la misma selección
+            # FILTRO DE RAREZA NATURAL
+            # min(1.0, capture_rate / 150) hace que los legendarios (ratio 3) 
+            # pasen el filtro solo un 2% de las veces.
+            prob_spawn = min(1.0, capture_rate / 150) 
+            
+            # Lanzamos el dado
+            if random.random() > prob_spawn:
+                continue 
+            
+            # Evitar duplicados
             if id_cand not in ids_spawn:
                 ids_spawn.append(id_cand)
         
-        # Obtención de datos
+        # Obtención de datos finales
         data_pokes = []
         for poke_id in ids_spawn:
             data, species = await servicios.obtener_pokemon(bot.session, poke_id)
@@ -277,12 +288,13 @@ async def spawn(ctx):
         
         buffer_siluetas = await servicios.generar_collage_siluetas(bot.session, data_pokes)
         if not buffer_siluetas:
+            # Revertimos energía si el collage falla
             database.actualizar_energia_db(ctx.author.id, intentos, ultima_recarga)
             return await ctx.send("Hubo un problema al generar las siluetas.")
 
         imagen_final = discord.File(buffer_siluetas, filename="fragmentos.png")
         
-        # Pistas
+        # Generación de pistas
         texto_pistas = ""
         pistas_usadas = []
         for i, (data, species) in enumerate(data_pokes):
@@ -302,28 +314,29 @@ async def spawn(ctx):
         try:
             mensaje_enviado = await ctx.send(embed=embed, file=imagen_final, view=view)
             
+            # Vinculación de vista y bloqueo de canal
             view.message = mensaje_enviado
             gestor_spawn.vistas_activas[ctx.channel.id] = view 
             gestor_spawn.canales_ocupados.add(ctx.channel.id)
             
-            # --- SEGURO DE VIDA ---
+            # Tarea de fondo para liberar el canal tras 305 segundos
             asyncio.create_task(auto_liberar_canal(ctx.channel.id, 305))
 
         except Exception as e:
+            # Limpieza en caso de fallo al enviar mensaje
             gestor_spawn.canales_ocupados.discard(ctx.channel.id)
             gestor_spawn.vistas_activas.pop(ctx.channel.id, None)
             database.actualizar_energia_db(ctx.author.id, intentos, ultima_recarga)
-            
-            log.error(f"Error al enviar mensaje en spawn: {e}")
+            log.error(f"Error al enviar mensaje en spawn: {e}", exc_info=True)
             await ctx.send("¡Se escaparon! Hubo un error al intentar enviar el encuentro.")
 
     except Exception as e:
+        # Limpieza global si algo falla en la lógica de generación
         gestor_spawn.canales_ocupados.discard(ctx.channel.id)
         gestor_spawn.vistas_activas.pop(ctx.channel.id, None)
         database.actualizar_energia_db(ctx.author.id, intentos, ultima_recarga)
-        log.error(f"Error en generación de spawn: {e}", exc_info=True)
+        log.error(f"Error crítico en generación de spawn para {ctx.author.id}: {e}", exc_info=True)
         await ctx.send("¡Se escaparon! Hubo un error al intentar generar el encuentro.")
-
 @bot.command()
 @canal_restringido()
 async def info(ctx, *, nombre: str):
