@@ -14,7 +14,7 @@ class PokedexCog(commands.Cog):
             "7": (722, 809), "8": (810, 905), "9": (906, 1025)
         }
 
-    @commands.command(name="pokedex")
+    @commands.command(name="!newpokedex")
     # @canal_restringido() # Descomenta si tienes tu decorador personalizado
     async def pokedex(self, ctx, *, filtro: str = None):
         """Comando optimizado usando caché local para filtrado instantáneo."""
