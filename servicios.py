@@ -1,14 +1,12 @@
 import aiohttp
 import io
-from PIL import Image, ImageDraw, ImageFont
-import io
 import random
 from PIL import Image, ImageChops, ImageDraw, ImageOps
 from cachetools import TTLCache
 import asyncio
 from logger_config import log
 from PIL import Image, ImageDraw, ImageFilter
-
+import os
 # 1. Creamos una caché que:
 # - Guarda máximo 600 imágenes (maxsize)
 # - Las mantiene solo por 1 hora (ttl=3600 segundos) para liberar espacio
@@ -444,37 +442,38 @@ def procesar_sprite_pokemon(imagen_base, tamano_factor, estado_record=None):
         
         sprite_escalado = imagen_base.resize((nuevo_ancho, nuevo_alto), Image.Resampling.LANCZOS)
         
-        # 2. Aplicar Boost Visual (Efecto Resplandor)
+# 2. Aplicar Boost Visual (Usando tu libro)
         if estado_record:
-            # Usamos colores más vibrantes para el efecto luz
-            color_aura = (255, 215, 0, 255) if estado_record == "grande" else (192, 192, 192, 255)
-            
-            # Tamaño del aura (más grande para que el resplandor se note)
-            grosor_resplandor = 20
-            ancho_aura = nuevo_ancho + (grosor_resplandor * 2)
-            alto_aura = nuevo_alto + (grosor_resplandor * 2)
-            
-            # Capa 1: El resplandor difuminado (Glow)
-            aura_glow = Image.new("RGBA", (ancho_aura, alto_aura), (0, 0, 0, 0))
-            draw = ImageDraw.Draw(aura_glow)
-            # Dibujamos un elipse grande para que el brillo sea orgánico
-            draw.ellipse([0, 0, ancho_aura, alto_aura], fill=color_aura)
-            # Aplicamos desenfoque para efecto "luz"
-            aura_glow = aura_glow.filter(ImageFilter.GaussianBlur(15))
-            
-            # Capa 2: Un borde interior más definido para que no se pierda la forma
-            aura_borde = Image.new("RGBA", (ancho_aura, alto_aura), (0, 0, 0, 0))
-            draw = ImageDraw.Draw(aura_borde)
-            draw.ellipse([grosor_resplandor//2, grosor_resplandor//2, ancho_aura-grosor_resplandor//2, alto_aura-grosor_resplandor//2], outline=color_aura, width=3)
-            
-            # Combinamos todo
-            aura_final = Image.alpha_composite(aura_glow, aura_borde)
-            
-            # Pegamos el sprite encima
-            aura_final.paste(sprite_escalado, (grosor_resplandor, grosor_resplandor), sprite_escalado)
-            
-            sprite_escalado = aura_final
-            nuevo_ancho, nuevo_alto = sprite_escalado.size
+            # Cargar tu imagen de libro
+            try:
+                # Asegúrate de que record.png esté en la carpeta raíz de tu bot
+                libro = Image.open("assets/record.png").convert("RGBA")
+                
+                # Ajustamos el tamaño del libro al del sprite (dando un poco de margen)
+                # El libro es vertical, el sprite es cuadrado/rectangular
+                ancho_libro = int(nuevo_ancho * 1.8) 
+                alto_libro = int(nuevo_alto * 1.8)
+                libro = libro.resize((ancho_libro, alto_libro), Image.Resampling.LANCZOS)
+                
+                # Crear un lienzo vacío transparente del tamaño del libro
+                final = Image.new("RGBA", (ancho_libro, alto_libro), (0, 0, 0, 0))
+                
+                # Pegar el libro primero
+                final.paste(libro, (0, 0), libro)
+                
+                # Calcular para centrar el Pokémon dentro del libro
+                x_pos = (ancho_libro - nuevo_ancho) // 2
+                y_pos = (alto_libro - nuevo_alto) // 2
+                
+                # Pegar el sprite del Pokémon encima
+                final.paste(sprite_escalado, (x_pos, y_pos), sprite_escalado)
+                
+                # Actualizar variables para el resultado final
+                sprite_escalado = final
+                nuevo_ancho, nuevo_alto = sprite_escalado.size
+                
+            except Exception as e:
+                log.error(f"Error al procesar la imagen del libro: {e}")
 
         # 3. Lienzo transparente de 500x500
         lienzo = Image.new("RGBA", (500, 500), (0, 0, 0, 0))
