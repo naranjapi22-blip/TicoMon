@@ -266,7 +266,7 @@ async def spawn(ctx):
             # Obtenemos datos para medir su rareza real
             data, species = await servicios.obtener_pokemon(bot.session, id_cand)
             capture_rate = data.get('capture_rate', 100)
-            es_shiny = random.random() < (1 / 500)
+            es_shiny = random.random() < (1 / 250)
             # FILTRO DE RAREZA NATURAL
             # min(1.0, capture_rate / 150) hace que los legendarios (ratio 3) 
             # pasen el filtro solo un 2% de las veces.
