@@ -1,5 +1,6 @@
 import os
 import random
+import asyncio
 import sqlite3
 import discord
 import aiohttp
@@ -28,38 +29,24 @@ load_dotenv()
 TOKEN = os.getenv('TOKEN')
 intents = discord.Intents.default()
 intents.message_content = True
-# 1. Conexión simplificada (Solo PostgreSQL)
-def get_connection():
-    """
-    Retorna una conexión a la base de datos PostgreSQL.
-    Asegúrate de que DATABASE_URL esté definida en tus variables de entorno.
-    """
-    db_url = os.environ.get('DATABASE_URL')
-    if not db_url:
-        raise ValueError("❌ ERROR: DATABASE_URL no está configurada en el entorno.")
-    
-    return psycopg2.connect(db_url)
-
-# 2. Setup Hook (Carga de extensiones y sesión)
-async def setup_hook():
+async def cargar_extensiones():
+    # Agrega 'newpokedex' a tu lista principal. 
+    # Si newpokedex.py está en la carpeta principal, no uses 'cogs.'
     extensiones = ['ivs_commands', 'inventario', 'equipo_slash', 'newpokedex']
+    
     for ext in extensiones:
         try:
             await bot.load_extension(ext)
-            log.info(f"✅ Extensión {ext} cargada.")
+            log.info(f"✅ Extensión {ext} cargada correctamente.")
         except Exception as e:
             log.error(f"❌ Error al cargar {ext}: {e}")
-    
-    bot.session = aiohttp.ClientSession()
-    await db_cache.inicializar_bd()
-    
-    try:
-        synced = await bot.tree.sync()
-        log.info(f"✅ {len(synced)} comandos sincronizados.")
-    except Exception as e:
-        log.error(f"🚨 Error de sincronización: {e}", exc_info=True)
 
-# 3. Inicialización del Bot
+async def setup_hook():
+    # Simplemente llama a la función unificada
+    await cargar_extensiones()
+
+# 2. Reemplaza la línea que da error por esta (asegúrate de incluir tu prefijo real)
+# Si tu bot usaba un prefijo como "!" o algo distinto, ponlo ahí:
 bot = commands.Bot(
     command_prefix=commands.when_mentioned_or('!'), 
     intents=intents,
@@ -67,24 +54,53 @@ bot = commands.Bot(
     setup_hook=setup_hook
 )
 
-# 4. Evento Ready (Lógica de inicio)
+
+bot.setup_hook = cargar_extensiones
+REGIONES = {
+    "1": (1, 151), "2": (152, 251), "3": (252, 386),
+    "4": (387, 493), "5": (494, 649), "6": (650, 721),
+    "7": (722, 809), "8": (810, 905), "9": (906, 1025)
+}
+
+# 1. Tu función de conexión limpia y eficiente
+def get_connection():
+    db_url = os.environ.get('DATABASE_URL')
+    if db_url:
+        return psycopg2.connect(db_url)
+    else:
+        return sqlite3.connect('fumo_data.db')
+
 @bot.event
 async def on_ready():
     configuracion.init_config_db()
     print(f'Bot conectado como {bot.user}')
     
+    # 0. Inicializar sesión de red
+    bot.session = aiohttp.ClientSession()
+    
+    # 1. AQUÍ SÍ SE EJECUTARÁ TU CÓDIGO
     import gestor_spawn
     gestor_spawn.setup_gestor(bot)
     gestor_spawn.aplicar_filtro_spawn(bot)
     gestor_spawn.canales_ocupados.clear()
+
+    try:
+        synced = await bot.tree.sync()
+        log.info(f"✅ {len(synced)} slash command(s) sincronizados.")
+    except Exception as e:
+        log.error(f"🚨 Error al sincronizar slash commands: {e}", exc_info=True)
+
+    print("Base de datos, módulos y sesión de red verificados.")
+        # Esto creará la tabla automáticamente si no existe al encender el bot
+    await db_cache.inicializar_bd()
     
-    # Verificación de caché
+    # Verificamos si la tabla está vacía
     ids = await db_cache.obtener_ids_por_filtro()
     if not ids:
+        print("⚠️ Tabla detectada pero vacía. Iniciando carga masiva...")
         from setup_cache import prellenar_cache
-        await prellenar_cache()
-    
-    print("✅ Sistema listo y verificado.")
+        await prellenar_cache() # Asegúrate de que prellenar_cache sea la función dentro de setup_cache
+        print("✅ ¡Carga masiva completada!")
 # 2. Tu evento de encendido con la inicialización correcta
 
 @bot.event
