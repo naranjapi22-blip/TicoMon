@@ -562,41 +562,43 @@ async def _obtener_equipos_duelo(
         bot.session = aiohttp.ClientSession()
 
     async def elegir_equipo(jugador, lista):
+        # 1. Obtenemos la selección (sea por método privado o público)
         if privado:
-            # privado=True: elegir_equipo_en_privado retorna directamente la lista
-            return await vistas_batalla.elegir_equipo_en_privado(
+            seleccion = await vistas_batalla.elegir_equipo_en_privado(
                 ctx, jugador, lista, crear_selector
             )
-        
-        # privado=False: usar el flujo normal con view.wait()
-        view = crear_selector(jugador, lista)
-        if isinstance(view, SelectorBatalla):
-            embed = await view.crear_embed()
-            msg = await ctx.send(
-                f"⚔️ {jugador.mention}, elige tus 3 Pokémon:",
-                embed=embed,
-                view=view,
-            )
         else:
-            msg = await ctx.send(f"⚔️ {jugador.mention}, elige tus 3 Pokémon:", view=view)
-        view.message = msg
-        await view.wait()
-        try:
-            await msg.delete()
-        except discord.HTTPException:
-            pass
-        seleccion = view.seleccionados
+            view = crear_selector(jugador, lista)
+            if isinstance(view, SelectorBatalla):
+                embed = await view.crear_embed()
+                msg = await ctx.send(
+                    f"⚔️ {jugador.mention}, elige tus 3 Pokémon:",
+                    embed=embed,
+                    view=view,
+                )
+            else:
+                msg = await ctx.send(f"⚔️ {jugador.mention}, elige tus 3 Pokémon:", view=view)
+            
+            view.message = msg
+            await view.wait()
+            try:
+                await msg.delete()
+            except discord.HTTPException:
+                pass
+            seleccion = view.seleccionados
+
+        # 2. LA MAGIA: Traducimos SIEMPRE, sin importar si fue privado o no
         if resolver_seleccion:
             return resolver_seleccion(jugador, seleccion)
         return seleccion
 
     equipo1 = await elegir_equipo(ctx.author, lista1)
-    if len(equipo1) < 3:
+    if not equipo1 or len(equipo1) < 3:
         await ctx.send(f"❌ {ctx.author.mention} no completó la selección.")
         return None, None
 
     equipo2 = await elegir_equipo(oponente, lista2)
-    if len(equipo2) < 3:
+    if not equipo2 or len(equipo2) < 3:
         await ctx.send(f"❌ {oponente.mention} no completó la selección.")
         return None, None
 
