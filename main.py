@@ -29,7 +29,7 @@ from setup_cache import prellenar_cache
 # Vistas e interfaces
 from vistas import PokedexView, BotonCaptura, InfoView, SpawnSelectionView
 from vistas_combate import SelectorPaginado, VistaCombate
-from vistas_batalla import SelectorBatalla
+import vistas_batalla
 from vistas_equipo import abrir_equipo_en_privado
 
 database.init_db()
