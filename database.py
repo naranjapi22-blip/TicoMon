@@ -595,7 +595,9 @@ def nombres_desde_captura_ids(user_id, ids_seleccionados: list[str]) -> list[str
     for valor in ids_seleccionados:
         cap = obtener_captura(user_id, int(valor))
         if cap:
-            nombres.append(cap[1])
+            # cap[0] es el ID, cap[1] es tu user_id, cap[2] es el NOMBRE
+            nombre_real = cap[2] 
+            nombres.append(nombre_real)
     return nombres
 
 
