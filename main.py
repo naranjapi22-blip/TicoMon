@@ -393,10 +393,19 @@ perfil.iniciar_modulo_perfil(bot)
 intercambio.iniciar_modulo_intercambio(bot)
 @bot.event
 async def on_command_error(ctx, error):
-    # Esto silencia el error cuando un check falla
-    if isinstance(error, commands.CheckFailure):
-        return  # No hacemos nada, el usuario ya recibió el mensaje en el canal
-    raise error
+    # 1. Ignorar errores de comando no encontrado
+    if isinstance(error, commands.CommandNotFound):
+        return
+
+    # 2. Manejar específicamente el cooldown
+    if isinstance(error, commands.CommandOnCooldown):
+        seconds = round(error.retry_after, 2)
+        await ctx.send(f"⏳ Estás en cooldown. Intenta de nuevo en **{seconds} segundos**.")
+        return
+
+    # 3. Para otros errores, puedes decidir si quieres elevarlos o mostrarlos
+    # Si quieres que el error se imprima en consola sin crash, simplemente haz:
+    print(f"Error inesperado: {error}")
 @bot.command(name="unlock")
 @canal_restringido()
 @commands.has_permissions(administrator=True)
