@@ -15,57 +15,71 @@ class PokedexCog(commands.Cog):
         }
 
     @commands.command(name="newpokedex")
-    async def newpokedex(self, ctx, *, filtro: str = None):
+    async def newpokedex(self, ctx, *args):
+        # 1. Preparar sesión
         if not hasattr(self.bot, 'session') or self.bot.session.closed:
             self.bot.session = aiohttp.ClientSession()
 
         async with ctx.typing():
-            es_shiny_mode = (filtro == "shiny")
+            # Procesar argumentos: extraer si es shiny y el resto de filtros
+            args_lower = [a.lower() for a in args]
+            es_shiny_mode = "shiny" in args_lower
+            
+            # Obtener todos los Pokémon que el usuario tiene (shiny o normales según el modo)
             nombres_capturados = database.obtener_capturas(ctx.author.id, solo_shiny=es_shiny_mode)
             
             if not nombres_capturados:
                 return await ctx.send("No tienes Pokémon registrados en tu colección.")
 
-            # OPTIMIZACIÓN: Consulta masiva (una sola petición a Neon)
             mapping = await db_cache.obtener_ids_por_nombres(nombres_capturados)
             ids_usuario = {id_p for id_p in mapping.values() if id_p}
 
-            # 3. Preparar variables
+            # Preparar variables iniciales
             inicio, fin = 1, 1025
             region_label = "Colección"
             es_coleccion_personal = True
             ids_finales = ids_usuario
+            tipo_filtro = None
 
-            # 4. Lógica de filtros
-            if filtro:
-                if filtro.isdigit() and filtro in self.regiones:
-                    inicio, fin = self.regiones[filtro]
-                    region_label = f"Región {filtro}"
+            # 2. Lógica de filtros acumulativos
+            for filtro in args:
+                f_lower = filtro.lower()
+                if f_lower == "shiny":
+                    continue # Ya lo procesamos arriba
+                
+                if f_lower.isdigit() and f_lower in self.regiones:
+                    inicio, fin = self.regiones[f_lower]
+                    region_label = f"Región {f_lower}"
                     es_coleccion_personal = False
                 
-                elif filtro.lower() == "legendarios":
+                elif f_lower == "legendarios":
                     ids_filtrados = await db_cache.obtener_ids_por_filtro(legendarios=True)
-                    ids_finales = ids_usuario.intersection(ids_filtrados)
+                    ids_finales = ids_finales.intersection(ids_filtrados)
                     region_label = "Legendarios y Míticos"
                 
-                elif not es_shiny_mode:
-                    ids_filtrados = await db_cache.obtener_ids_por_filtro(filtro_tipo=filtro.lower())
-                    ids_finales = ids_usuario.intersection(ids_filtrados)
-                    region_label = f"Tipo {filtro.capitalize()}"
+                else:
+                    # Asumimos que es un tipo
+                    ids_filtrados = await db_cache.obtener_ids_por_filtro(filtro_tipo=f_lower)
+                    ids_finales = ids_finales.intersection(ids_filtrados)
+                    tipo_filtro = f_lower.capitalize()
+                    region_label = f"Tipo {tipo_filtro}"
 
-            if not ids_finales and not (filtro and filtro.isdigit()):
-                return await ctx.send(f"No tienes Pokémon que coincidan con: **{filtro}**.")
+            # 3. Validación de resultados
+            if not ids_finales and not (any(a.isdigit() for a in args)):
+                return await ctx.send(f"No tienes Pokémon que coincidan con esos filtros.")
 
-        # 5. Lanzar vista
-        view = PokedexView(
-            region=region_label,
-            inicio=inicio,
-            fin=fin,
-            tenidos=ids_finales,
-            es_coleccion_personal=es_coleccion_personal,
-            modo_shiny=es_shiny_mode
-        )
-        await view.generar_vista_pokedex(ctx, self.bot.session)
+            # 4. Lanzar vista
+            view = PokedexView(
+                region=region_label,
+                inicio=inicio,
+                fin=fin,
+                tenidos=ids_finales,
+                es_coleccion_personal=es_coleccion_personal,
+                modo_shiny=es_shiny_mode
+            )
+            # Pasamos el filtro para que el embed sepa qué tipo mostrar
+            view.filtro_actual = tipo_filtro if tipo_filtro else "All"
+            await view.generar_vista_pokedex(ctx, self.bot.session)
 
 async def setup(bot):
     await bot.add_cog(PokedexCog(bot))

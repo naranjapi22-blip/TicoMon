@@ -95,7 +95,7 @@ class PokedexView(discord.ui.View):
         self.tenidos = sorted(list(tenidos))
         self.es_coleccion_personal = es_coleccion_personal
         self.modo_shiny = modo_shiny
-        self.filtro_actual = "all"
+        self.filtro_actual = "All" # Valor por defecto
         
         if self.es_coleccion_personal:
             self.total_pokes = self.tenidos
