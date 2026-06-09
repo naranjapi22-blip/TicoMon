@@ -229,11 +229,15 @@ class SpawnSelectionView(discord.ui.View):
         for child in self.children:
             child.disabled = True
         
-        # 'data' es el JSON del pokemon, 'species' es el JSON de la especie
+        # 1. Obtenemos datos del elegido
         data, species, es_shiny = self.data_pokes[indice]
         
-        # Calculamos variables para esta captura en concreto
-        es_shiny = es_shiny
+        # 2. Lógica del GIF (Shinyhunters)
+        dex_id = data['id']
+        path_folder = "shiny" if es_shiny else "regular"
+        url_gif = f"https://www.shinyhunters.com/images/{path_folder}/{dex_id}.gif"
+        
+        # 3. Calculamos variables para la captura
         es_legendario = species.get('is_legendary', False)
         capture_rate = species.get('capture_rate', 45)
         tamano_factor = round(random.uniform(0.50, 1.50), 2)
@@ -242,30 +246,24 @@ class SpawnSelectionView(discord.ui.View):
         if es_shiny: etiquetas.append("✨ SHINY")
         if es_legendario: etiquetas.append("👑 LEGENDARIO")
         
-        # --- AQUÍ CALCULAMOS LA RAREZA ---
-        rareza = obtener_rareza(capture_rate) # Usando el capture_rate que ya tienes en la variable
+        rareza = obtener_rareza(capture_rate)
         
         titulo_revelado = f"¡Es un {data['name'].capitalize()} salvaje!"
         if etiquetas: 
             titulo_revelado = f"{' '.join(etiquetas)} {titulo_revelado}"
             
         color_embed = discord.Color.gold() if (es_shiny or es_legendario) else discord.Color.green()
+        
+        # 4. Creamos el nuevo embed con el GIF
         embed_revelado = discord.Embed(
             title=titulo_revelado, 
-            description=f"**Rareza:** {rareza}", # Añadimos la info aquí
+            description=f"**Rareza:** {rareza}", 
             color=color_embed
         )
-        
-        if es_shiny:
-            url_imagen = data['sprites']['other']['official-artwork']['front_shiny']
-        else:
-            url_imagen = data['sprites']['other']['official-artwork']['front_default']
-        
-        embed_revelado.set_image(url=url_imagen)
+        embed_revelado.set_image(url=url_gif)
         embed_revelado.set_footer(text="Intentos fallidos: 0")
         
-        # --- AQUÍ ESTÁ LA CORRECCIÓN DE VARIABLES ---
-        # Pasamos las variables que acabamos de generar, no desde "data"
+        # 5. Preparamos la vista de captura
         view_captura = BotonCaptura(
             pokemon_data=data,
             es_legendario=es_legendario, 
@@ -274,6 +272,10 @@ class SpawnSelectionView(discord.ui.View):
             tamano_factor=tamano_factor  
         )
         
+        # 6. Editamos el mensaje: 
+        # attachments=[] elimina la silueta anterior.
+        # embed=embed_revelado pone el GIF.
+        # view=view_captura activa los botones de lanzamiento.
         await interaction.response.edit_message(embed=embed_revelado, attachments=[], view=view_captura)
 
     # --- BOTONES DE LA INTERFAZ ---
