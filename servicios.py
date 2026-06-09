@@ -353,17 +353,15 @@ async def procesar_imagen_fragmento(session, url):
         log.error(f"🚨 Error procesando fragmento de imagen: {e}", exc_info=True)
         return None
 
-async def generar_collage_siluetas(session, data_pokes, tenidos, es_shiny=False):
-    """Genera un collage horizontal con los 3 fragmentos, aplicando silueta si no está capturado."""
-    if tenidos is None:
-        tenidos = []
+async def generar_collage_siluetas(session, data_pokes, tenidos=None, es_shiny=False):
+    """Genera el collage para el SPAWN (3 fragmentos)."""
     try:
         log.info(f"🎨 Generando collage de siluetas (Shiny={es_shiny}) para {len(data_pokes)} pokémon")
         siluetas = []
         
         for idx, (data, _) in enumerate(data_pokes):
             try:
-                # 1. Lógica de URL
+                # 1. Lógica de URL Shiny o Normal
                 if es_shiny:
                     url = data['sprites']['other']['official-artwork'].get('front_shiny')
                     if not url: url = data['sprites'].get('front_shiny')
@@ -371,15 +369,11 @@ async def generar_collage_siluetas(session, data_pokes, tenidos, es_shiny=False)
                     url = data['sprites']['other']['official-artwork'].get('front_default')
                     if not url: url = data['sprites'].get('front_default')
                 
-                # 2. Descargar y procesar imagen
+                # 2. procesar_imagen_fragmento YA hace la magia del fondo gris y el pasto.
+                # NO debemos usar aplicar_filtro_silueta aquí para no arruinar el fondo.
                 fragmento = await procesar_imagen_fragmento(session, url)
                 
                 if fragmento:
-                    # 3. FILTRO: Si el Pokémon no está en 'tenidos', aplicamos silueta
-                    poke_id = data['id']
-                    if poke_id not in tenidos:
-                        fragmento = aplicar_filtro_silueta(fragmento)
-                    
                     siluetas.append(fragmento.resize((150, 150), Image.Resampling.LANCZOS))
             
             except Exception as e:
@@ -388,7 +382,7 @@ async def generar_collage_siluetas(session, data_pokes, tenidos, es_shiny=False)
         if not siluetas:
             return None
         
-        # 4. Creación del lienzo
+        # 3. Creación del lienzo
         composite_width = (150 * len(siluetas)) + (10 * (len(siluetas) - 1))
         composite = Image.new('RGBA', (composite_width, 150), (255, 255, 255, 0))
         
