@@ -1,7 +1,7 @@
 import os
 import random
 import asyncio
-import sqlite3
+import datetime
 import discord
 import aiohttp
 import psycopg2
@@ -13,9 +13,18 @@ import database
 import servicios
 import admin
 import configuracion
+import logger_config
+import cache_service
+import gestor_spawn
+import setup_cache
+import perfil
+import intercambio
+
+# Configuración específica
 from configuracion import canal_restringido
 from logger_config import log
 from cache_service import db_cache
+from setup_cache import prellenar_cache
 
 # Vistas e interfaces
 from vistas import PokedexView, BotonCaptura, InfoView, SpawnSelectionView
@@ -79,7 +88,6 @@ async def on_ready():
     bot.session = aiohttp.ClientSession()
     
     # 1. AQUÍ SÍ SE EJECUTARÁ TU CÓDIGO
-    import gestor_spawn
     gestor_spawn.setup_gestor(bot)
     gestor_spawn.aplicar_filtro_spawn(bot)
     gestor_spawn.canales_ocupados.clear()
@@ -98,7 +106,6 @@ async def on_ready():
     ids = await db_cache.obtener_ids_por_filtro()
     if not ids:
         print("⚠️ Tabla detectada pero vacía. Iniciando carga masiva...")
-        from setup_cache import prellenar_cache
         await prellenar_cache() # Asegúrate de que prellenar_cache sea la función dentro de setup_cache
         print("✅ ¡Carga masiva completada!")
 # 2. Tu evento de encendido con la inicialización correcta
@@ -233,8 +240,7 @@ def generar_pista(data, species, pistas_usadas):
         return "Una criatura sumamente misteriosa..."
 # NOTA: Agrega este método auxiliar en tu clase o como función fuera:
 async def auto_liberar_canal(channel_id, segundos):
-    import asyncio
-    import gestor_spawn
+
     await asyncio.sleep(segundos)
     if channel_id in gestor_spawn.canales_ocupados:
         gestor_spawn.canales_ocupados.discard(channel_id)
@@ -248,10 +254,7 @@ async def auto_liberar_canal(channel_id, segundos):
 @canal_restringido()
 @commands.cooldown(1, 10, commands.BucketType.user)
 async def spawn(ctx):
-    import gestor_spawn
-    import database
-    import random
-    import asyncio
+
     
     # 1. Filtros básicos de inicial y energía
     if not gestor_spawn.verificar_inicial(ctx.author.id):
@@ -381,9 +384,9 @@ async def info(ctx, *, nombre: str):
     
     view = InfoView(ctx.author.id, data, versiones, mostrar_shiny)
     await view.enviar_embed(ctx)
-import perfil
+
 perfil.iniciar_modulo_perfil(bot)
-import intercambio
+
 intercambio.iniciar_modulo_intercambio(bot)
 @bot.event
 async def on_command_error(ctx, error):
@@ -395,15 +398,14 @@ async def on_command_error(ctx, error):
 @canal_restringido()
 @commands.has_permissions(administrator=True)
 async def unlock(ctx):
-    import gestor_spawn
+
     gestor_spawn.canales_ocupados.clear() # Vacía el set por completo
     await ctx.send("✅ Todos los canales han sido desbloqueados manualmente.")
 
 @bot.command(name="cooldowns")
 @canal_restringido()
 async def cooldowns(ctx):
-    import gestor_spawn
-    import datetime
+
 
     log.info(f"🔍 [Comando] El usuario {ctx.author.id} solicitó !cooldowns")
 
@@ -465,8 +467,7 @@ async def comandos(ctx):
 @commands.has_permissions(administrator=True)
 async def resetintentos(ctx, usuario: discord.Member):
     """Resetea los intentos de un usuario a 12 (Admin)."""
-    import datetime
-    import database
+
     
     # Reseteamos a 12 intentos y la hora actual
     database.actualizar_energia_db(usuario.id, 12, datetime.datetime.now())
