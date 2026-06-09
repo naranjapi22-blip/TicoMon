@@ -274,7 +274,7 @@ async def filtrar_capturas_por_tipo(session, tipo, tenidos):
     return []
 
 async def procesar_imagen_fragmento(session, url):
-    """Descarga, recorta y aplica el efecto de 'Hierba Alta' a la silueta HD."""
+    """Descarga, recorta y aplica el efecto de 'Silueta Automática' y 'Hierba Alta'."""
     try:
         log.debug(f"📥 Procesando fragmento de imagen: {url}")
         
@@ -296,54 +296,52 @@ async def procesar_imagen_fragmento(session, url):
         
         img_conteudo = img.crop(bbox)
         width, height = img_conteudo.size
-        log.debug(f"✅ Contenido extraído: {width}x{height}")
         
-        # --- AJUSTE DE TAMAÑO (PUNTO DULCE) ---
-        # Usamos el 60% (0.60). Es más grande para que se note la forma estructural,
-        # pero no tan grande para que salga el Pokémon entero.
+        # --- AJUSTE DE TAMAÑO ---
         crop_w = int(width * 0.60)
         crop_h = int(height * 0.60)
         
-        # Buscamos una coordenada al azar para el recorte que contenga algo del Pokémon
+        # Búsqueda de fragmento válido
         fragmento = None
-        for intento in range(15): # Más intentos porque el recorte es más grande
-            x = random.randint(0, width - crop_w)
-            # Preferimos recortes de la mitad superior para el efecto de hierba
-            y = random.randint(0, int((height - crop_h) * 0.7)) 
+        for intento in range(15):
+            x = random.randint(0, max(0, width - crop_w))
+            y = random.randint(0, max(0, int((height - crop_h) * 0.7))) 
             
             fragmento = img_conteudo.crop((x, y, x + crop_w, y + crop_h))
             
             # Verificamos que el recorte tenga contenido significativo
             alpha_frag = fragmento.getchannel('A')
-            # getcolors devuelve None si hay más colores, o una lista si es uniforme.
-            # Si la mayoría de píxeles son transparentes, getcolors[(0, ...)] tendrá un conteo alto.
             total_píxeles = crop_w * crop_h
             transparentes = alpha_frag.getcolors(total_píxeles)
             
-            # Si no hay píxeles transparentes o menos del 90% lo son, aceptamos el recorte.
+            # Si más del 10% no es transparente, aceptamos el recorte
             if not transparentes or (transparentes[0][1] == 0 and (transparentes[0][0] < total_píxeles * 0.90)):
-                log.debug(f"✅ Fragmento válido encontrado en intento {intento + 1}")
                 break
                 
         if fragmento is None:
-            log.warning(f"⚠️ No se pudo encontrar fragmento válido después de 15 intentos")
             return None
 
-        # --- APLICAR SILUETA (NEGRO) ---
-        negro = Image.new('RGBA', fragmento.size, (0, 0, 0, 255))
-        silueta_completa = ImageChops.composite(negro, fragmento, fragmento)
+        # --- SISTEMA DE SILUETA AUTOMÁTICO (USANDO CANAL ALFA) ---
+        # 1. Obtenemos solo la máscara de transparencia del fragmento
+        _, _, _, alpha_fragmento = fragmento.split()
         
-        # --- LA NUEVA MAGIA: PEGAR LA HIERBA VERDE ---
-        # 1. Generamos la capa con los dibujos de hierba verde
+        # 2. Creamos una imagen negra sólida del mismo tamaño
+        silueta_negra = Image.new('RGBA', fragmento.size, (0, 0, 0, 255))
+        
+        # 3. Aplicamos la transparencia original como máscara a la silueta negra
+        silueta_negra.putalpha(alpha_fragmento)
+        silueta_completa = silueta_negra
+        
+        # --- EFECTO DE HIERBA ALTA ---
         capa_verde = generar_capa_hierba(fragmento.width, fragmento.height)
         
-        # 2. Pegamos la hierba verde encima de la silueta negra.
-        # Usamos la misma capa_verde como máscara para que no pegue el fondo transparente.
         if capa_verde:
+            # Pegamos la hierba usando la hierba como máscara para que solo afecte al Pokémon
             silueta_completa.paste(capa_verde, (0, 0), mask=capa_verde)
         
-        log.info(f"✅ Fragmento procesado exitosamente: {silueta_completa.size}")
+        log.info(f"✅ Silueta procesada exitosamente: {silueta_completa.size}")
         return silueta_completa
+
     except Exception as e:
         log.error(f"🚨 Error procesando fragmento de imagen: {e}", exc_info=True)
         return None
