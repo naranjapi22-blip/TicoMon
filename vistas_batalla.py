@@ -28,7 +28,12 @@ class SelectorBatalla(SelectorPokemon):
             nombre_por_valor=nombres,
         )
 
-    async def _finalizar_seleccion(self, interaction: discord.Interaction, vista_previa: str | None = None):
+async def _finalizar_seleccion(self, interaction: discord.Interaction, vista_previa: str | None = None):
+        # 1. LA MAGIA: Traducir los números a nombres usando el diccionario del menú
+        if self.nombre_por_valor:
+            self.seleccionados = [self.nombre_por_valor.get(str(poke_id), str(poke_id)) for poke_id in self.seleccionados]
+
+        # 2. Ahora sí, cerramos el selector y actualizamos el mensaje
         self.stop()
         embed = await self.crear_embed(vista_previa=vista_previa)
         embed.title = "✅ Equipo listo"

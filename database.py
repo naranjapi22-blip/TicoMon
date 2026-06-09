@@ -591,21 +591,19 @@ def obtener_equipo_nombres(user_id) -> list[str]:
 
 
 def nombres_desde_captura_ids(user_id, ids_seleccionados: list[str]) -> list[str]:
-    # 1. Obtenemos el equipo ya procesado (el mismo que usa el menú y que SÍ tiene los nombres)
+    # ¡Si el selector ya nos envió nombres en texto (ej: "pikachu"), los dejamos pasar tal cual!
+    if ids_seleccionados and not str(ids_seleccionados[0]).isdigit():
+        return ids_seleccionados
+        
+    # Si por alguna extraña razón llegan números, usamos el diccionario como respaldo
     detalle = obtener_equipo_detalle(user_id)
-    
-    # 2. Creamos un mapa rápido para buscar (Ej: {"1282": "gastly", "1285": "cherrim"})
     mapa_nombres = {str(s["id"]): s["nombre"] for s in detalle if s}
     
-    # 3. Traducimos los números que eligió el usuario a sus nombres reales
     nombres = []
     for valor in ids_seleccionados:
-        valor_str = str(valor)
-        if valor_str in mapa_nombres:
-            nombres.append(mapa_nombres[valor_str])
-            
+        nombres.append(mapa_nombres.get(str(valor), str(valor)))
+        
     return nombres
-
 
 def _captura_en_equipo(user_id, captura_id: int) -> bool:
     return captura_id in [c for c in obtener_equipo(user_id) if c is not None]
