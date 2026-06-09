@@ -66,7 +66,7 @@ async def obtener_intentos(user_id):
         
         # Asegurarnos de que ambas tengan zona horaria para comparar correctamente
         if ultima_recarga.tzinfo is None:
-            ultima_recarga = ultima_recarga.replace(tzinfo=datetime.timezone.utc)
+            ultima_recarga = ultima_recarga.replace(tzinfo=timezone.utc)
 
         # Comprobar si pasaron 2 horas (7200 segundos)
         tiempo_transcurrido = (ahora - ultima_recarga).total_seconds()
