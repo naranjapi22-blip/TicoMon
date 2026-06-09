@@ -2,7 +2,7 @@ import os
 import random
 import asyncio
 import asyncpg
-import datetime
+from datetime import datetime, timezone
 import discord
 import aiohttp
 import psycopg2

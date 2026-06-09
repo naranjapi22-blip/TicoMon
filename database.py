@@ -1,6 +1,5 @@
 import sqlite3
 import asyncio
-import datetime
 import os
 import psycopg2
 from logger_config import log
@@ -95,7 +94,7 @@ async def guardar_captura(user_id, pokemon_nombre, tamano_factor, es_shiny=False
             # 1. Cálculos iniciales
             naturaleza_seleccionada = random.choice(NATURALEZAS)
             iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe = [random.randint(0, 31) for _ in range(6)]
-            fecha_ahora = datetime.datetime.now(datetime.timezone.utc)
+            fecha_ahora = datetime.now(timezone.utc)
             
             # 2. Conexión
             conn = get_connection()

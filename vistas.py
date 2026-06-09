@@ -4,12 +4,11 @@ import math
 import logging
 import database
 import sqlite3
-import datetime
+from datetime import datetime, timezone
 import os
 import gestor_spawn
 import servicios
 from logger_config import log
-import datetime
 from mapeo_pokes import obtener_id_gif # Asegúrate de tener este import al inicio del archivo
 import records  # Importa tu archivo de lógica de récords
 COOLDOWN_LANZAMIENTO = 10.0
@@ -317,7 +316,7 @@ class BotonCaptura(discord.ui.View):
         self.capture_rate = capture_rate
         self.tamano_factor = tamano_factor
         
-        self.tiempo_aparicion = datetime.datetime.now()
+        self.tiempo_aparicion = datetime.now(timezone.utc)
         self.intentos_fallidos = 0
         self.user_cooldowns = {}
         self.alguien_lo_atrapo = False
@@ -364,7 +363,7 @@ class BotonCaptura(discord.ui.View):
             await interaction.response.defer(ephemeral=True)
 
             # --- LÓGICA DE SEGURIDAD (Timer y Huída) ---
-            tiempo_pasado = (datetime.datetime.now() - self.tiempo_aparicion).total_seconds()
+            tiempo_pasado = (datetime.now(timezone.utc) - self.tiempo_aparicion).total_seconds()
             
             if tiempo_pasado > 300:
                 self.alguien_lo_atrapo = True
@@ -499,7 +498,7 @@ class InfoView(discord.ui.View):
         # 2. Formateamos fecha de forma segura
         fecha_str = "N/A"
         try:
-            if isinstance(fecha_primera, datetime.datetime):
+            if isinstance(fecha_primera, datetime):
                 fecha_str = fecha_primera.strftime('%Y-%m-%d')
             elif isinstance(fecha_primera, str):
                 # Limpieza extra: si es un string, intentamos obtener solo la fecha
@@ -573,8 +572,6 @@ class SeleccionInicialView(discord.ui.View):
     @discord.ui.button(label="¡Lo elijo a él!", style=discord.ButtonStyle.success)
     async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
         poke = INICIALES[self.index]
-        import database
-        import datetime
         
         conn = database.get_connection()
         cursor = conn.cursor()
@@ -599,7 +596,12 @@ class SeleccionInicialView(discord.ui.View):
         
         # 3. INICIALIZAR ENERGÍA EN LA BASE DE DATOS (Persistente)
         # Usamos la función de base de datos directamente
-        database.actualizar_energia_db(self.user_id, 12, datetime.datetime.now())
+        await database.actualizar_energia_db(
+            self.bot, 
+            self.user_id, 
+            12, 
+            datetime.now(timezone.utc)
+        )
         
         await interaction.response.edit_message(
             content=f"🎉 ¡Felicidades! Has elegido a **{poke['nombre']}**. ¡Tu aventura comienza ahora!", 
