@@ -86,11 +86,13 @@ class IvsCommands(commands.Cog):
         conn = get_connection()
         cursor = conn.cursor()
         
-        # 1. Obtenemos datos incluyendo nombre y tamaño
+        # 1. Obtenemos datos incluyendo nombre, tamaño y el dex_id de la tabla pokemon_data
         cursor.execute("""
-            SELECT pokemon_nombre, iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe, es_shiny, naturaleza, tamano_factor
-            FROM capturas 
-            WHERE id = %s AND user_id = %s
+            SELECT c.pokemon_nombre, c.iv_hp, c.iv_atk, c.iv_def, c.iv_spa, c.iv_spd, c.iv_spe, 
+                   c.es_shiny, c.naturaleza, c.tamano_factor, p.id
+            FROM capturas c
+            JOIN pokemon_data p ON c.pokemon_nombre = p.nombre
+            WHERE c.id = %s AND c.user_id = %s
         """, (str(id_pokemon), str(ctx.author.id)))
         
         resultado = cursor.fetchone()
@@ -100,12 +102,11 @@ class IvsCommands(commands.Cog):
             await ctx.send("❌ No existe ningún Pokémon con ese ID en **tu** inventario.")
             return
 
-        nombre, hp, atk, defs, spa, spd, spe, es_shiny, naturaleza, tamano = resultado
+        nombre, hp, atk, defs, spa, spd, spe, es_shiny, naturaleza, tamano, dex_id = resultado
         
         # 2. Verificación de Récord para el Boost Visual
-        # Usamos el cursor abierto para verificar si este ID es el poseedor actual
         estado_record = records.obtener_estado_record(cursor, nombre.lower(), id_pokemon)
-        conn.close() # Cerramos tras obtener el estado
+        conn.close() 
         
         # Lógica de etiqueta de tamaño
         tamano = float(tamano or 1.0)
@@ -155,32 +156,17 @@ class IvsCommands(commands.Cog):
         )
         embed.add_field(name="📝 Detalles", value=detalles, inline=False)
         
-        # 3. Escalado Visual con Boost Visual
+        # 3. Asignación directa del GIF desde la URL
         try:
-            dex_id = await servicios.obtener_id_por_nombre(self.bot.session, nombre)
-            if dex_id:
-                path_s = "shiny/" if es_shiny else ""
-                url = f"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/{path_s}{dex_id}.png"
-                
-                async with self.bot.session.get(url) as resp:
-                    img_data = await resp.read()
-                    img_base = Image.open(io.BytesIO(img_data)).convert("RGBA")
-                    
-                    # 🔥 AQUÍ PASAMOS EL estado_record A SERVICIOS
-                    img_final = servicios.procesar_sprite_pokemon(img_base, tamano, estado_record)
-                    
-                    buffer = io.BytesIO()
-                    img_final.save(buffer, format="PNG")
-                    buffer.seek(0)
-                    
-                    file = discord.File(buffer, filename="pokemon.png")
-                    embed.set_image(url="attachment://pokemon.png")
-                    await ctx.send(embed=embed, file=file)
-                    return 
-        except Exception as e:
-            log.error(f"Error imagen: {e}")
+            path_folder = "shiny" if es_shiny else "regular"
+            url_gif = f"https://www.shinyhunters.com/images/{path_folder}/{dex_id}.gif"
             
-        await ctx.send(embed=embed)
+            embed.set_image(url=url_gif)
+            await ctx.send(embed=embed)
+            return 
+        except Exception as e:
+            log.error(f"Error cargando GIF: {e}")
+            await ctx.send(embed=embed)
     @commands.command(name="misrecords")
     async def ver_mis_records(self, ctx):
         conn = get_connection()
