@@ -289,11 +289,12 @@ def obtener_energia_db(user_id):
 
 async def actualizar_energia_db(bot, user_id, intentos, ultima_recarga):
     try:
-        log.debug(f"💾 Actualizando energía: User {user_id} - Intentos: {intentos}")
-        
-        # NORMALIZACIÓN: Asegurar que la fecha sea UTC y "offset-aware"
+        # Convertimos la fecha a UTC consciente de zona horaria si no lo es
         if ultima_recarga.tzinfo is None:
             ultima_recarga = ultima_recarga.replace(tzinfo=timezone.utc)
+        else:
+            # Si ya tiene zona horaria pero no es UTC, la convertimos a UTC
+            ultima_recarga = ultima_recarga.astimezone(timezone.utc)
         
         async with bot.db_pool.acquire() as conn:
             await conn.execute("""
@@ -305,8 +306,6 @@ async def actualizar_energia_db(bot, user_id, intentos, ultima_recarga):
                     ultima_recarga = EXCLUDED.ultima_recarga
             """, str(user_id), intentos, ultima_recarga)
             
-        log.info(f"✅ Energía actualizada: User {user_id}")
-        
     except Exception as e:
         log.error(f"🚨 Error al actualizar energía: {e}", exc_info=True)
         raise
