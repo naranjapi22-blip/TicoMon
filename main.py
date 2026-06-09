@@ -8,7 +8,7 @@ import aiohttp
 import psycopg2
 from discord.ext import commands
 from dotenv import load_dotenv
-
+from datetime import datetime, timezone
 # Módulos locales y de proyecto
 import database
 import servicios
@@ -489,7 +489,11 @@ async def resetintentos(ctx, usuario: discord.Member):
 
     
     # Reseteamos a 12 intentos y la hora actual
-    await database.actualizar_energia_db(bot, usuario.id, 12, datetime.datetime.now())
+    await database.actualizar_energia_db(
+    bot, 
+    usuario.id, 
+    12, 
+    datetime.datetime.now(datetime.timezone.utc)
     
     await ctx.send(f"✅ Se han reseteado los intentos de {usuario.display_name} a 12.")
 # Comando para establecer el canal (solo administradores)

@@ -7,7 +7,7 @@ from logger_config import log
 import logging
 import random
 import records
-
+from datetime import datetime, timezone
 
 
 # 1. Asegúrate de tener esto arriba en tu archivo
@@ -288,17 +288,14 @@ def obtener_energia_db(user_id):
             conn.close()
 
 async def actualizar_energia_db(bot, user_id, intentos, ultima_recarga):
-    """
-    Actualiza la energía utilizando el pool de conexiones de asyncpg.
-    """
     try:
         log.debug(f"💾 Actualizando energía: User {user_id} - Intentos: {intentos}")
         
-        # Obtenemos una conexión del pool
+        # NORMALIZACIÓN: Asegurar que la fecha sea UTC y "offset-aware"
+        if ultima_recarga.tzinfo is None:
+            ultima_recarga = ultima_recarga.replace(tzinfo=timezone.utc)
+        
         async with bot.db_pool.acquire() as conn:
-            
-            # PASAMOS 'ultima_recarga' DIRECTAMENTE (sin .isoformat())
-            # asyncpg se encarga de convertir el objeto datetime al formato de Postgres
             await conn.execute("""
                 INSERT INTO energia (user_id, intentos, ultima_recarga) 
                 VALUES ($1, $2, $3)
@@ -308,7 +305,7 @@ async def actualizar_energia_db(bot, user_id, intentos, ultima_recarga):
                     ultima_recarga = EXCLUDED.ultima_recarga
             """, str(user_id), intentos, ultima_recarga)
             
-        log.info(f"✅ Energía actualizada: User {user_id} - Intentos: {intentos}")
+        log.info(f"✅ Energía actualizada: User {user_id}")
         
     except Exception as e:
         log.error(f"🚨 Error al actualizar energía: {e}", exc_info=True)
