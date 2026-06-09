@@ -73,11 +73,17 @@ REGIONES = {
 
 # 1. Tu función de conexión limpia y eficiente
 def get_connection():
+    """
+    Establece conexión a la base de datos PostgreSQL.
+    Requiere que la variable de entorno DATABASE_URL esté definida.
+    """
     db_url = os.environ.get('DATABASE_URL')
-    if db_url:
-        return psycopg2.connect(db_url)
-    else:
-        return sqlite3.connect('fumo_data.db')
+    
+    if not db_url:
+        # Esto lanzará un error descriptivo si el bot no tiene la URL configurada
+        raise EnvironmentError("❌ La variable de entorno 'DATABASE_URL' no está definida.")
+    
+    return psycopg2.connect(db_url)
 
 @bot.event
 async def on_ready():
