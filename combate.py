@@ -169,13 +169,19 @@ class CombateSim:
                 self.equipos[oponente]["hp"][idx_d] -= daño
                 historial.append(f"**{p_atk['nombre']}**: {log} (Daño: {daño} HP)")
                 
-                # Lógica de relevo automático después del KO
+# Lógica de relevo automático después del KO
                 if self.equipos[oponente]["hp"][idx_d] <= 0:
                     self.equipos[oponente]["hp"][idx_d] = 0
-                    if self.equipos[oponente]["activo"] < 2:
+                    
+                    # CORRECCIÓN: Comprobamos si el jugador aún tiene Pokémon vivos en su lista
+                    if self.equipos[oponente]["activo"] + 1 < len(self.equipos[oponente]['pokes']):
+                        # Si hay un siguiente, avanza al siguiente
                         self.equipos[oponente]["activo"] += 1
                         nuevo = self.equipos[oponente]['pokes'][self.equipos[oponente]['activo']]['nombre']
                         historial.append(f"⚠️ ¡{p_def['nombre']} se debilitó! {oponente} cambia a {nuevo}.")
+                    else:
+                        # Si era el último Pokémon, simplemente avisamos que se debilitó
+                        historial.append(f"💀 ¡{p_def['nombre']} se debilitó! ¡A {oponente} no le quedan más Pokémon!")
         
         return "\n".join(historial)
 
