@@ -62,44 +62,58 @@ REGIONES = {
 }
 
 # 1. Tu función de conexión limpia y eficiente
-def get_connection():
-    db_url = os.environ.get('DATABASE_URL')
-    if db_url:
-        return psycopg2.connect(db_url)
-    else:
-        return sqlite3.connect('fumo_data.db')
-
-@bot.event
-async def on_ready():
-    configuracion.init_config_db()
-    print(f'Bot conectado como {bot.user}')
+# 1. Configuración del Bot (Centralizada)
+# El setup_hook es el lugar correcto para cargar extensiones y sesiones
+async def setup_hook():
+    # Carga de extensiones
+    extensiones = ['ivs_commands', 'inventario', 'equipo_slash', 'newpokedex']
+    for ext in extensiones:
+        try:
+            await bot.load_extension(ext)
+            log.info(f"✅ Extensión {ext} cargada correctamente.")
+        except Exception as e:
+            log.error(f"❌ Error al cargar {ext}: {e}")
     
-    # 0. Inicializar sesión de red
+    # Inicialización de sesión y caché
     bot.session = aiohttp.ClientSession()
+    await db_cache.inicializar_bd()
     
-    # 1. AQUÍ SÍ SE EJECUTARÁ TU CÓDIGO
-    import gestor_spawn
-    gestor_spawn.setup_gestor(bot)
-    gestor_spawn.aplicar_filtro_spawn(bot)
-    gestor_spawn.canales_ocupados.clear()
-
+    # Sincronización de slash commands
     try:
         synced = await bot.tree.sync()
         log.info(f"✅ {len(synced)} slash command(s) sincronizados.")
     except Exception as e:
         log.error(f"🚨 Error al sincronizar slash commands: {e}", exc_info=True)
 
-    print("Base de datos, módulos y sesión de red verificados.")
-        # Esto creará la tabla automáticamente si no existe al encender el bot
-    await db_cache.inicializar_bd()
+# Instanciación correcta
+bot = commands.Bot(
+    command_prefix=commands.when_mentioned_or('!'), 
+    intents=intents,
+    case_insensitive=True,
+    setup_hook=setup_hook # Aquí se hace todo el trabajo de inicio
+)
+
+# 2. Evento on_ready (Solo para logueo y tareas de estado)
+@bot.event
+async def on_ready():
+    configuracion.init_config_db()
+    print(f'Bot conectado como {bot.user}')
     
-    # Verificamos si la tabla está vacía
+    # Inicialización de módulos de gestión
+    import gestor_spawn
+    gestor_spawn.setup_gestor(bot)
+    gestor_spawn.aplicar_filtro_spawn(bot)
+    gestor_spawn.canales_ocupados.clear()
+    
+    # Verificación de caché
     ids = await db_cache.obtener_ids_por_filtro()
     if not ids:
         print("⚠️ Tabla detectada pero vacía. Iniciando carga masiva...")
         from setup_cache import prellenar_cache
-        await prellenar_cache() # Asegúrate de que prellenar_cache sea la función dentro de setup_cache
+        await prellenar_cache()
         print("✅ ¡Carga masiva completada!")
+    
+    print("✅ Sistema listo y verificado.")
 # 2. Tu evento de encendido con la inicialización correcta
 
 @bot.event
