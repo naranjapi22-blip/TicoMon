@@ -6,7 +6,7 @@ import math
 import io # Necesario para io.BytesIO
 from PIL import Image # Necesario para Image.open
 from logger_config import log # Necesario para el log
-import datetime # Asegúrate de tener este también
+from datetime import datetime, timezone # Asegúrate de tener este también
 from discord.ui import Button, View
 import records
 from mapeo_pokes import obtener_id_gif

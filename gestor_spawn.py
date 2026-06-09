@@ -1,6 +1,6 @@
 import os
 import database 
-import datetime
+from datetime import datetime, timezone
 import discord
 from discord.ext import commands
 from logger_config import log
@@ -45,7 +45,7 @@ vistas_activas = {}
 async def obtener_intentos(user_id):
     try:
         log.debug(f"🔍 Obteniendo intentos para user {user_id}")
-        ahora = datetime.datetime.now(datetime.timezone.utc)
+        ahora = datetime.now(timezone.utc)
         datos = database.obtener_energia_db(user_id)
         
         if not datos:
@@ -61,7 +61,7 @@ async def obtener_intentos(user_id):
             ultima_recarga = ultima_recarga_raw
         else:
             # Si es un string, lo convertimos
-            ultima_recarga = datetime.datetime.fromisoformat(str(ultima_recarga_raw))
+            ultima_recarga = datetime.fromisoformat(str(ultima_recarga_raw))
         # -----------------------
         
         # Asegurarnos de que ambas tengan zona horaria para comparar correctamente
@@ -79,7 +79,7 @@ async def obtener_intentos(user_id):
         return intentos, ultima_recarga
     except Exception as e:
         log.error(f"🚨 Error al obtener intentos para user {user_id}: {e}", exc_info=True)
-        return 0, datetime.datetime.now(datetime.timezone.utc)
+        return 0, datetime.now(timezone.utc)
 
 # --- 3. FILTRO DE SPAWN ---
 def aplicar_filtro_spawn(bot):

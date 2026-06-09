@@ -8,7 +8,6 @@ import aiohttp
 import psycopg2
 from discord.ext import commands
 from dotenv import load_dotenv
-from datetime import datetime, timezone
 # Módulos locales y de proyecto
 import database
 import servicios
