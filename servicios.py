@@ -353,7 +353,7 @@ async def procesar_imagen_fragmento(session, url):
         log.error(f"🚨 Error procesando fragmento de imagen: {e}", exc_info=True)
         return None
 
-async def generar_collage_siluetas(session, data_pokes, tenidos=None, es_shiny=False):
+async def generar_collage_siluetas(session, data_pokes, tenidos, es_shiny=False):
     """Genera un collage horizontal con los 3 fragmentos, aplicando silueta si no está capturado."""
     if tenidos is None:
         tenidos = []
