@@ -287,31 +287,34 @@ def obtener_energia_db(user_id):
         if conn:
             conn.close()
 
-def actualizar_energia_db(user_id, intentos, ultima_recarga):
-    conn = None
+async def actualizar_energia_db(bot, user_id, intentos, ultima_recarga):
+    """
+    Actualiza la energía utilizando el pool de conexiones de asyncpg.
+    Ahora es una corrutina asíncrona.
+    """
     try:
         log.debug(f"💾 Actualizando energía: User {user_id} - Intentos: {intentos}")
-        conn = get_connection()
-        cursor = conn.cursor()
-        ahora_str = ultima_recarga.isoformat()
         
-        if DATABASE_URL:
-            cursor.execute("""
-                INSERT INTO energia (user_id, intentos, ultima_recarga) VALUES (%s, %s, %s)
-                ON CONFLICT(user_id) DO UPDATE SET intentos = EXCLUDED.intentos, ultima_recarga = EXCLUDED.ultima_recarga
-            """, (str(user_id), intentos, ahora_str))
-        else:
-            cursor.execute("REPLACE INTO energia (user_id, intentos, ultima_recarga) VALUES (?, ?, ?)", 
-                           (user_id, intentos, ahora_str))
-        
-        conn.commit()
+        # Obtenemos una conexión del pool gestionado por el bot
+        async with bot.db_pool.acquire() as conn:
+            ahora_str = ultima_recarga.isoformat()
+            
+            # Nota: asyncpg utiliza $1, $2, $3 como marcadores de posición.
+            # Esta consulta es atómica y no requiere 'conn.commit()' manual.
+            await conn.execute("""
+                INSERT INTO energia (user_id, intentos, ultima_recarga) 
+                VALUES ($1, $2, $3)
+                ON CONFLICT(user_id) 
+                DO UPDATE SET 
+                    intentos = EXCLUDED.intentos, 
+                    ultima_recarga = EXCLUDED.ultima_recarga
+            """, str(user_id), intentos, ahora_str)
+            
         log.info(f"✅ Energía actualizada: User {user_id} - Intentos: {intentos}")
+        
     except Exception as e:
         log.error(f"🚨 Error al actualizar energía: {e}", exc_info=True)
         raise
-    finally:
-        if conn:
-            conn.close()
 
 def obtener_lista_capturas(user_id):
     conn = None

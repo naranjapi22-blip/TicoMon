@@ -1,6 +1,7 @@
 import os
 import random
 import asyncio
+import asyncpg
 import datetime
 import discord
 import aiohttp
@@ -82,18 +83,29 @@ def get_connection():
     if not db_url:
         # Esto lanzará un error descriptivo si el bot no tiene la URL configurada
         raise EnvironmentError("❌ La variable de entorno 'DATABASE_URL' no está definida.")
-    
     return psycopg2.connect(db_url)
 
 @bot.event
 async def on_ready():
+    # 0. Inicialización del Pool de conexiones de base de datos
+    try:
+        db_url = os.environ.get('DATABASE_URL')
+        bot.db_pool = await asyncpg.create_pool(
+            dsn=db_url,
+            min_size=5,
+            max_size=20
+        )
+        print("✅ Pool de base de datos inicializado correctamente.")
+    except Exception as e:
+        print(f"🚨 Error crítico al inicializar el pool de BD: {e}")
+
     configuracion.init_config_db()
     print(f'Bot conectado como {bot.user}')
     
     # 0. Inicializar sesión de red
     bot.session = aiohttp.ClientSession()
     
-    # 1. AQUÍ SÍ SE EJECUTARÁ TU CÓDIGO
+    # 1. SETUP DE GESTORES
     gestor_spawn.setup_gestor(bot)
     gestor_spawn.aplicar_filtro_spawn(bot)
     gestor_spawn.canales_ocupados.clear()
@@ -105,14 +117,15 @@ async def on_ready():
         log.error(f"🚨 Error al sincronizar slash commands: {e}", exc_info=True)
 
     print("Base de datos, módulos y sesión de red verificados.")
-        # Esto creará la tabla automáticamente si no existe al encender el bot
+    
+    # Esto creará la tabla automáticamente si no existe al encender el bot
     await db_cache.inicializar_bd()
     
     # Verificamos si la tabla está vacía
     ids = await db_cache.obtener_ids_por_filtro()
     if not ids:
         print("⚠️ Tabla detectada pero vacía. Iniciando carga masiva...")
-        await prellenar_cache() # Asegúrate de que prellenar_cache sea la función dentro de setup_cache
+        await prellenar_cache() 
         print("✅ ¡Carga masiva completada!")
 # 2. Tu evento de encendido con la inicialización correcta
 
@@ -273,7 +286,7 @@ async def spawn(ctx):
         return await ctx.send("❌ Has agotado tus intentos. Tus inciensos se recargan en 2 horas.")
 
     # 2. Descontamos energía inmediatamente (se revertirá si el proceso falla)
-    database.actualizar_energia_db(ctx.author.id, intentos - 1, ultima_recarga)
+    await database.actualizar_energia_db(ctx.author.id, intentos - 1, ultima_recarga)
 
     try:
         # --- GENERACIÓN HÍBRIDA: RANGOS PONDERADOS + FILTRO DE RAREZA ---
@@ -323,7 +336,7 @@ async def spawn(ctx):
         
         if not buffer_siluetas:
             # Revertimos energía si el collage falla
-            database.actualizar_energia_db(ctx.author.id, intentos, ultima_recarga)
+            await database.actualizar_energia_db(ctx.author.id, intentos, ultima_recarga)
             return await ctx.send("Hubo un problema al generar las siluetas.")
 
         imagen_final = discord.File(buffer_siluetas, filename="fragmentos.png")
@@ -365,7 +378,7 @@ async def spawn(ctx):
             # Limpieza en caso de fallo al enviar mensaje
             gestor_spawn.canales_ocupados.discard(ctx.channel.id)
             gestor_spawn.vistas_activas.pop(ctx.channel.id, None)
-            database.actualizar_energia_db(ctx.author.id, intentos, ultima_recarga)
+            await database.actualizar_energia_db(ctx.author.id, intentos, ultima_recarga)
             log.error(f"Error al enviar mensaje en spawn: {e}", exc_info=True)
             await ctx.send("¡Se escaparon! Hubo un error al intentar enviar el encuentro.")
 
@@ -373,7 +386,7 @@ async def spawn(ctx):
         # Limpieza global si algo falla en la lógica de generación
         gestor_spawn.canales_ocupados.discard(ctx.channel.id)
         gestor_spawn.vistas_activas.pop(ctx.channel.id, None)
-        database.actualizar_energia_db(ctx.author.id, intentos, ultima_recarga)
+        await database.actualizar_energia_db(ctx.author.id, intentos, ultima_recarga)
         log.error(f"Error crítico en generación de spawn para {ctx.author.id}: {e}", exc_info=True)
         await ctx.send("¡Se escaparon! Hubo un error al intentar generar el encuentro.")
 @bot.command()
@@ -476,7 +489,7 @@ async def resetintentos(ctx, usuario: discord.Member):
 
     
     # Reseteamos a 12 intentos y la hora actual
-    database.actualizar_energia_db(usuario.id, 12, datetime.datetime.now())
+    await database.actualizar_energia_db(usuario.id, 12, datetime.datetime.now())
     
     await ctx.send(f"✅ Se han reseteado los intentos de {usuario.display_name} a 12.")
 # Comando para establecer el canal (solo administradores)
