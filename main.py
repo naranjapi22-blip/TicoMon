@@ -286,7 +286,7 @@ async def spawn(ctx):
         return await ctx.send("❌ Has agotado tus intentos. Tus inciensos se recargan en 2 horas.")
 
     # 2. Descontamos energía inmediatamente (se revertirá si el proceso falla)
-    await database.actualizar_energia_db(ctx.author.id, intentos - 1, ultima_recarga)
+    await database.actualizar_energia_db(ctx.bot, ctx.author.id, intentos - 1, ultima_recarga)
 
     try:
         # --- GENERACIÓN HÍBRIDA: RANGOS PONDERADOS + FILTRO DE RAREZA ---
@@ -336,7 +336,7 @@ async def spawn(ctx):
         
         if not buffer_siluetas:
             # Revertimos energía si el collage falla
-            await database.actualizar_energia_db(ctx.author.id, intentos, ultima_recarga)
+            await database.actualizar_energia_db(ctx.bot, ctx.author.id, intentos, ultima_recarga)
             return await ctx.send("Hubo un problema al generar las siluetas.")
 
         imagen_final = discord.File(buffer_siluetas, filename="fragmentos.png")
@@ -378,7 +378,7 @@ async def spawn(ctx):
             # Limpieza en caso de fallo al enviar mensaje
             gestor_spawn.canales_ocupados.discard(ctx.channel.id)
             gestor_spawn.vistas_activas.pop(ctx.channel.id, None)
-            await database.actualizar_energia_db(ctx.author.id, intentos, ultima_recarga)
+            await database.actualizar_energia_db(ctx.bot, ctx.author.id, intentos, ultima_recarga)
             log.error(f"Error al enviar mensaje en spawn: {e}", exc_info=True)
             await ctx.send("¡Se escaparon! Hubo un error al intentar enviar el encuentro.")
 
@@ -386,7 +386,7 @@ async def spawn(ctx):
         # Limpieza global si algo falla en la lógica de generación
         gestor_spawn.canales_ocupados.discard(ctx.channel.id)
         gestor_spawn.vistas_activas.pop(ctx.channel.id, None)
-        await database.actualizar_energia_db(ctx.author.id, intentos, ultima_recarga)
+        await database.actualizar_energia_db(ctx.bot, ctx.author.id, intentos, ultima_recarga)
         log.error(f"Error crítico en generación de spawn para {ctx.author.id}: {e}", exc_info=True)
         await ctx.send("¡Se escaparon! Hubo un error al intentar generar el encuentro.")
 @bot.command()
@@ -489,7 +489,7 @@ async def resetintentos(ctx, usuario: discord.Member):
 
     
     # Reseteamos a 12 intentos y la hora actual
-    await database.actualizar_energia_db(usuario.id, 12, datetime.datetime.now())
+    await database.actualizar_energia_db(bot, usuario.id, 12, datetime.datetime.now())
     
     await ctx.send(f"✅ Se han reseteado los intentos de {usuario.display_name} a 12.")
 # Comando para establecer el canal (solo administradores)
