@@ -28,24 +28,38 @@ load_dotenv()
 TOKEN = os.getenv('TOKEN')
 intents = discord.Intents.default()
 intents.message_content = True
-async def cargar_extensiones():
-    # Agrega 'newpokedex' a tu lista principal. 
-    # Si newpokedex.py está en la carpeta principal, no uses 'cogs.'
-    extensiones = ['ivs_commands', 'inventario', 'equipo_slash', 'newpokedex']
+# 1. Conexión simplificada (Solo PostgreSQL)
+def get_connection():
+    """
+    Retorna una conexión a la base de datos PostgreSQL.
+    Asegúrate de que DATABASE_URL esté definida en tus variables de entorno.
+    """
+    db_url = os.environ.get('DATABASE_URL')
+    if not db_url:
+        raise ValueError("❌ ERROR: DATABASE_URL no está configurada en el entorno.")
     
+    return psycopg2.connect(db_url)
+
+# 2. Setup Hook (Carga de extensiones y sesión)
+async def setup_hook():
+    extensiones = ['ivs_commands', 'inventario', 'equipo_slash', 'newpokedex']
     for ext in extensiones:
         try:
             await bot.load_extension(ext)
-            log.info(f"✅ Extensión {ext} cargada correctamente.")
+            log.info(f"✅ Extensión {ext} cargada.")
         except Exception as e:
             log.error(f"❌ Error al cargar {ext}: {e}")
+    
+    bot.session = aiohttp.ClientSession()
+    await db_cache.inicializar_bd()
+    
+    try:
+        synced = await bot.tree.sync()
+        log.info(f"✅ {len(synced)} comandos sincronizados.")
+    except Exception as e:
+        log.error(f"🚨 Error de sincronización: {e}", exc_info=True)
 
-async def setup_hook():
-    # Simplemente llama a la función unificada
-    await cargar_extensiones()
-
-# 2. Reemplaza la línea que da error por esta (asegúrate de incluir tu prefijo real)
-# Si tu bot usaba un prefijo como "!" o algo distinto, ponlo ahí:
+# 3. Inicialización del Bot
 bot = commands.Bot(
     command_prefix=commands.when_mentioned_or('!'), 
     intents=intents,
@@ -53,53 +67,12 @@ bot = commands.Bot(
     setup_hook=setup_hook
 )
 
-
-bot.setup_hook = cargar_extensiones
-REGIONES = {
-    "1": (1, 151), "2": (152, 251), "3": (252, 386),
-    "4": (387, 493), "5": (494, 649), "6": (650, 721),
-    "7": (722, 809), "8": (810, 905), "9": (906, 1025)
-}
-
-# 1. Tu función de conexión limpia y eficiente
-# 1. Configuración del Bot (Centralizada)
-# El setup_hook es el lugar correcto para cargar extensiones y sesiones
-async def setup_hook():
-    # Carga de extensiones
-    extensiones = ['ivs_commands', 'inventario', 'equipo_slash', 'newpokedex']
-    for ext in extensiones:
-        try:
-            await bot.load_extension(ext)
-            log.info(f"✅ Extensión {ext} cargada correctamente.")
-        except Exception as e:
-            log.error(f"❌ Error al cargar {ext}: {e}")
-    
-    # Inicialización de sesión y caché
-    bot.session = aiohttp.ClientSession()
-    await db_cache.inicializar_bd()
-    
-    # Sincronización de slash commands
-    try:
-        synced = await bot.tree.sync()
-        log.info(f"✅ {len(synced)} slash command(s) sincronizados.")
-    except Exception as e:
-        log.error(f"🚨 Error al sincronizar slash commands: {e}", exc_info=True)
-
-# Instanciación correcta
-bot = commands.Bot(
-    command_prefix=commands.when_mentioned_or('!'), 
-    intents=intents,
-    case_insensitive=True,
-    setup_hook=setup_hook # Aquí se hace todo el trabajo de inicio
-)
-
-# 2. Evento on_ready (Solo para logueo y tareas de estado)
+# 4. Evento Ready (Lógica de inicio)
 @bot.event
 async def on_ready():
     configuracion.init_config_db()
     print(f'Bot conectado como {bot.user}')
     
-    # Inicialización de módulos de gestión
     import gestor_spawn
     gestor_spawn.setup_gestor(bot)
     gestor_spawn.aplicar_filtro_spawn(bot)
@@ -108,10 +81,8 @@ async def on_ready():
     # Verificación de caché
     ids = await db_cache.obtener_ids_por_filtro()
     if not ids:
-        print("⚠️ Tabla detectada pero vacía. Iniciando carga masiva...")
         from setup_cache import prellenar_cache
         await prellenar_cache()
-        print("✅ ¡Carga masiva completada!")
     
     print("✅ Sistema listo y verificado.")
 # 2. Tu evento de encendido con la inicialización correcta
