@@ -174,9 +174,13 @@ def aplicar_filtro_silueta(img):
 # 1. Definimos una caché global simple fuera de la función
 _cache_imagenes = {}
 
-async def generar_collage(session, data_pokes, tenidos, es_shiny=False):
+async def generar_collage(session, data_pokes, tenidos=None, es_shiny=False):
+    # 1. Protección contra NoneType
+    if tenidos is None:
+        tenidos = []
+
     try:
-        log.info(f"🎨 Generando collage para {len(data_pokes)} pokémon")
+        log.info(f"🎨 Generando collage para {len(data_pokes)} pokémon (Shiny={es_shiny})")
         celda_ancho = 110
         celda_alto = 130 
         cols = 5
@@ -185,17 +189,22 @@ async def generar_collage(session, data_pokes, tenidos, es_shiny=False):
         # Función interna para procesar una sola celda (con caché)
         async def obtener_y_procesar(id_poke, url):
             try:
+                # 2. LA MAGIA: Clave de caché única para no mezclar normales y shinys
+                cache_key = f"{id_poke}_shiny" if es_shiny else str(id_poke)
+
                 # Si no está en caché, descargamos
-                if id_poke not in _cache_imagenes:
+                if cache_key not in _cache_imagenes:
                     async with session.get(url) as resp:
                         if resp.status == 200:
-                            _cache_imagenes[id_poke] = await resp.read()
-                            log.debug(f"📥 Imagen descargada y cacheada: ID {id_poke}")
+                            _cache_imagenes[cache_key] = await resp.read()
+                            log.debug(f"📥 Imagen descargada y cacheada: Key {cache_key}")
                 
                 # Si logramos tener los bytes (ya sea desde caché o recién descargado)
-                if id_poke in _cache_imagenes:
-                    img = Image.open(io.BytesIO(_cache_imagenes[id_poke])).convert('RGBA')
+                if cache_key in _cache_imagenes:
+                    img = Image.open(io.BytesIO(_cache_imagenes[cache_key])).convert('RGBA')
                     img = img.resize((96, 96))
+                    
+                    # Filtro de silueta
                     if id_poke not in tenidos:
                         img = aplicar_filtro_silueta(img)
                     
@@ -205,11 +214,11 @@ async def generar_collage(session, data_pokes, tenidos, es_shiny=False):
                 log.error(f"🚨 Error procesando pokémon {id_poke}: {e}", exc_info=True)
             return None
 
-        # 2. Ejecutar todas las tareas en paralelo
+        # Ejecutar todas las tareas en paralelo
         tareas = [obtener_y_procesar(id_poke, url) for id_poke, url in data_pokes]
         resultados = await asyncio.gather(*tareas)
         
-        # 3. Dibujar el collage final
+        # Dibujar el collage final
         collage = Image.new('RGBA', (celda_ancho * cols, celda_alto * filas), (0, 0, 0, 0))
         draw = ImageDraw.Draw(collage)
         
@@ -344,8 +353,10 @@ async def procesar_imagen_fragmento(session, url):
         log.error(f"🚨 Error procesando fragmento de imagen: {e}", exc_info=True)
         return None
 
-async def generar_collage_siluetas(session, data_pokes, tenidos=None, es_shiny=False):
+async def generar_collage_siluetas(session, data_pokes, tenidos, es_shiny=False):
     """Genera un collage horizontal con los 3 fragmentos, aplicando silueta si no está capturado."""
+    if tenidos is None:
+        tenidos = []
     try:
         log.info(f"🎨 Generando collage de siluetas (Shiny={es_shiny}) para {len(data_pokes)} pokémon")
         siluetas = []
