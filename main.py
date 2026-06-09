@@ -328,7 +328,7 @@ async def spawn(ctx):
         datos_para_collage = [(d, s) for d, s, sh in data_pokes]
 
         # Pasamos la lista limpia al generador
-        buffer_siluetas = await servicios.generar_collage_siluetas(bot.session, datos_para_collage)
+        buffer_siluetas = await servicios.generar_collage_siluetas(bot.session, datos_para_collage, tenidos=[])
         
         if not buffer_siluetas:
             await database.actualizar_energia_db(ctx.bot, ctx.author.id, intentos, ultima_recarga)
