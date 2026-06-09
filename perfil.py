@@ -4,6 +4,7 @@ import sqlite3
 import database
 import servicios
 import os
+import random
 import psycopg2
 
 # --- 1. CONFIGURACIÓN DE BASE DE DATOS DEL PERFIL ---
@@ -12,7 +13,7 @@ def init_db_perfil():
     conn = database.get_connection()
     cursor = conn.cursor()
     
-    # 1. Crear tabla base (usamos BIGINT para asegurar compatibilidad con Discord IDs)
+    # 1. Crear tabla base
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS perfiles (
             user_id BIGINT PRIMARY KEY,
@@ -22,7 +23,7 @@ def init_db_perfil():
     ''')
     
     # 2. Actualización segura para la columna 'es_shiny'
-    # PostgreSQL requiere una verificación diferente antes de añadir la columna
+    # Verificación estricta para evitar errores de columnas existentes
     if os.environ.get('DATABASE_URL'):
         # Lógica para PostgreSQL
         cursor.execute("""
@@ -43,11 +44,11 @@ def guardar_destacado(user_id, pokemon_nombre, es_shiny):
     conn = database.get_connection()
     cursor = conn.cursor()
     
-    # Detectamos si estamos en Render (Postgres)
+    # Detectamos entorno
     is_postgres = os.environ.get('DATABASE_URL') is not None
     
     if is_postgres:
-        # Lógica para PostgreSQL (Upsert)
+        # Lógica PostgreSQL con upsert
         query = """
             INSERT INTO perfiles (user_id, pokemon_destacado, es_shiny)
             VALUES (%s, %s, %s)
@@ -57,7 +58,7 @@ def guardar_destacado(user_id, pokemon_nombre, es_shiny):
         """
         cursor.execute(query, (str(user_id), pokemon_nombre, es_shiny))
     else:
-        # Lógica para SQLite (REPLACE)
+        # Lógica SQLite con REPLACE
         cursor.execute('''
             REPLACE INTO perfiles (user_id, pokemon_destacado, es_shiny) 
             VALUES (?, ?, ?)
@@ -70,20 +71,15 @@ def obtener_destacado(user_id):
     conn = database.get_connection()
     cursor = conn.cursor()
     
-    # Detectamos si estamos en Render (Postgres)
     is_postgres = os.environ.get('DATABASE_URL') is not None
     
     if is_postgres:
-        # Consulta para PostgreSQL
         cursor.execute("SELECT pokemon_destacado, es_shiny FROM perfiles WHERE user_id = %s", (str(user_id),))
     else:
-        # Consulta para SQLite
         cursor.execute("SELECT pokemon_destacado, es_shiny FROM perfiles WHERE user_id = ?", (user_id,))
     
     resultado = cursor.fetchone()
     conn.close()
-    
-    # Devuelve (nombre, es_shiny) o None
     return resultado
 
 # --- 2. MÓDULO PRINCIPAL DE COMANDOS ---
@@ -95,7 +91,7 @@ def iniciar_modulo_perfil(bot):
         """Muestra la tarjeta de entrenador del usuario con su progreso y compañero."""
         usuario = miembro or ctx.author
         
-        # Extraemos datos
+        # Extraemos datos globales de capturas
         todas_las_capturas = database.obtener_capturas(usuario.id, solo_shiny=False)
         capturas_shinies = database.obtener_capturas(usuario.id, solo_shiny=True)
         
@@ -132,19 +128,16 @@ def iniciar_modulo_perfil(bot):
         
         if datos_destacado:
             destacado_nombre, es_shiny_db = datos_destacado
-            es_shiny = bool(es_shiny_db) # Convierte el 0/1 a False/True
+            es_shiny = bool(es_shiny_db)
             
             data, _ = await servicios.obtener_pokemon(bot.session, destacado_nombre)
             if data:
-                try:
-                    if es_shiny:
-                        url_imagen = data['sprites']['other']['official-artwork']['front_shiny']
-                    else:
-                        url_imagen = data['sprites']['other']['official-artwork']['front_default']
-                except KeyError:
-                    url_imagen = data['sprites']['front_default'] 
+                # Usamos la lógica de GIF animado integrado
+                dex_id = data['id']
+                path_folder = "shiny" if es_shiny else "regular"
+                url_gif = f"https://www.shinyhunters.com/images/{path_folder}/{dex_id}.gif"
                 
-                embed.set_image(url=url_imagen)
+                embed.set_image(url=url_gif)
                 titulo_destacado = f"**{destacado_nombre.capitalize()}** {'✨' if es_shiny else ''}"
                 embed.add_field(name="🌟 Compañero Destacado", value=titulo_destacado, inline=False)
                 
@@ -164,7 +157,6 @@ def iniciar_modulo_perfil(bot):
         quiere_shiny = False
         if argumentos.endswith(" shiny"):
             quiere_shiny = True
-            # Le quitamos la palabra " shiny" al final para quedarnos solo con el nombre
             nombre = argumentos[:-6].strip() 
         else:
             nombre = argumentos
@@ -172,19 +164,17 @@ def iniciar_modulo_perfil(bot):
         # 2. Revisamos su inventario
         versiones = database.obtener_versiones_pokemon(ctx.author.id, nombre)
         
-        # Filtro 1: No lo ha capturado en absoluto
+        # Filtros de validación
         if not versiones:
             return await ctx.send(f"❌ ¡Aún no has capturado a **{nombre.capitalize()}**!")
         
-        # Filtro 2: Pide shiny pero no lo tiene
         if quiere_shiny and 1 not in versiones:
             return await ctx.send(f"❌ ¡Aún no has capturado a **{nombre.capitalize()}** en su versión ✨ Shiny!")
             
-        # Filtro 3: Pide normal pero solo tiene el shiny
         if not quiere_shiny and 0 not in versiones:
             return await ctx.send(f"❌ Solo posees la versión ✨ Shiny de **{nombre.capitalize()}**. Usa el comando `destacar {nombre} shiny`.")
         
-        # 3. Guardamos la selección exacta en la base de datos
+        # 3. Guardamos la selección
         es_shiny_int = 1 if quiere_shiny else 0
         guardar_destacado(ctx.author.id, nombre, es_shiny_int)
         
