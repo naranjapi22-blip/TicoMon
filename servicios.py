@@ -159,15 +159,13 @@ async def obtener_id_por_nombre(session, nombre):
 def aplicar_filtro_silueta(img):
     try:
         img = img.convert("RGBA")
-        data = img.getdata()
-        new_data = []
-        for item in data:
-            if item[3] > 0: # Si no es transparente, lo pintamos negro
-                new_data.append((0, 0, 0, 255))
-            else:
-                new_data.append(item)
-        img.putdata(new_data)
-        log.debug(f"✅ Filtro de silueta aplicado")
+        # Separamos los canales
+        r, g, b, a = img.split()
+        # Creamos una máscara negra del mismo tamaño
+        silueta = Image.new("L", img.size, 0)
+        # Combinamos la silueta con el canal Alpha original
+        img = Image.merge("RGBA", (silueta, silueta, silueta, a))
+        log.debug(f"✅ Filtro de silueta aplicado (modo rápido)")
         return img
     except Exception as e:
         log.error(f"🚨 Error al aplicar filtro de silueta: {e}", exc_info=True)
@@ -346,57 +344,56 @@ async def procesar_imagen_fragmento(session, url):
         log.error(f"🚨 Error procesando fragmento de imagen: {e}", exc_info=True)
         return None
 
-async def generar_collage_siluetas(session, data_pokes, es_shiny=False):
-    """Genera un collage horizontal con los 3 fragmentos de silueta, soportando Shiny."""
+async def generar_collage_siluetas(session, data_pokes, tenidos, es_shiny=False):
+    """Genera un collage horizontal con los 3 fragmentos, aplicando silueta si no está capturado."""
     try:
         log.info(f"🎨 Generando collage de siluetas (Shiny={es_shiny}) para {len(data_pokes)} pokémon")
         siluetas = []
         
         for idx, (data, _) in enumerate(data_pokes):
             try:
-                # LÓGICA DE URL: Elegir entre versión normal o shiny
-                # La estructura de PokeAPI para artwork shiny es 'front_shiny'
+                # 1. Lógica de URL
                 if es_shiny:
-                    url = data['sprites']['other']['official-artwork']['front_shiny']
+                    url = data['sprites']['other']['official-artwork'].get('front_shiny')
+                    if not url: url = data['sprites'].get('front_shiny')
                 else:
-                    url = data['sprites']['other']['official-artwork']['front_default']
+                    url = data['sprites']['other']['official-artwork'].get('front_default')
+                    if not url: url = data['sprites'].get('front_default')
                 
-                # Respaldo si el artwork oficial falla
-                if not url:
-                    key = 'front_shiny' if es_shiny else 'front_default'
-                    url = data['sprites'][key]
-                    log.debug(f"⚠️ Usando sprite de respaldo para pokémon {idx + 1}")
-                    
+                # 2. Descargar y procesar imagen
                 fragmento = await procesar_imagen_fragmento(session, url)
                 
                 if fragmento:
-                    # Ajuste de tamaño y conversión a formato para collage
-                    siluetas.append(fragmento.resize((150, 150), Image.Resampling.LANCZOS))
-                    log.debug(f"✅ Silueta {idx + 1} procesada")
+                    # 3. FILTRO: Si el Pokémon no está en 'tenidos', aplicamos silueta
+                    # Nota: Asegúrate de que 'data['id']' sea el formato que guardas en 'tenidos'
+                    poke_id = data['id']
+                    if poke_id not in tenidos:
+                        fragmento = aplicar_filtro_silueta(fragmento)
                     
+                    siluetas.append(fragmento.resize((150, 150), Image.Resampling.LANCZOS))
+            
             except Exception as e:
                 log.error(f"🚨 Error procesando silueta {idx + 1}: {e}", exc_info=True)
                 
         if not siluetas:
-            log.error(f"❌ No se pudo procesar ninguna silueta")
             return None
         
-        log.info(f"✅ {len(siluetas)} siluetas procesadas")
-        
-        # Creación del lienzo
+        # 4. Creación del lienzo
         composite_width = (150 * len(siluetas)) + (10 * (len(siluetas) - 1))
         composite = Image.new('RGBA', (composite_width, 150), (255, 255, 255, 0))
         
         x_offset = 0
         for s in siluetas:
             composite.paste(s, (x_offset, 0), s)
-            x_offset += 160 # 150 (ancho) + 10 (espacio)
+            x_offset += 160
             
         buffer = io.BytesIO()
         composite.save(buffer, format='PNG')
         buffer.seek(0)
-        log.info(f"✅ Collage de siluetas generado: {composite_width}x150")
         return buffer
+    except Exception as e:
+        log.error(f"🚨 Error al generar collage: {e}", exc_info=True)
+        return None
         
     except Exception as e:
         log.error(f"🚨 Error al generar collage de siluetas: {e}", exc_info=True)
