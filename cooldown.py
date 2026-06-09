@@ -1,7 +1,7 @@
 import os
 import sqlite3
 import psycopg2
-import datetime
+from datetime import datetime, timezone
 from logger_config import log
 import logging
 
@@ -46,7 +46,7 @@ def verificar_cooldown(user_id):
         # Nota: Asegúrate de manejar si res[0] viene como cadena o datetime
         ultima_captura = datetime.datetime.fromisoformat(res[0]) if isinstance(res[0], str) else res[0]
         # Comparamos usando UTC para evitar problemas de zona horaria
-        if (datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None) - ultima_captura.replace(tzinfo=None)).total_seconds() < 180:
+        if (datetime.now(timezone.utc).replace(tzinfo=None) - ultima_captura.replace(tzinfo=None)).total_seconds() < 180:
             return False
     return True
 
@@ -55,7 +55,7 @@ def registrar_captura(user_id):
     try:
         conn = get_connection()
         cursor = conn.cursor()
-        ahora = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        ahora = datetime.now(timezone.utc).isoformat()
         
         if DATABASE_URL:
             # Upsert en PostgreSQL
