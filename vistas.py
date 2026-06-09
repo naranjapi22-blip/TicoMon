@@ -70,16 +70,14 @@ class TipoSelect(discord.ui.Select):
 
 # --- CLASE PRINCIPAL DE POKEDEX ---
 class PokedexView(discord.ui.View):
-    # Asegúrate de que el __init__ acepte inicio y fin, incluso si no los usas para filtrar
     def __init__(self, region, tenidos, inicio=1, fin=1025, es_coleccion_personal=False, modo_shiny=False):
         super().__init__(timeout=60)
         self.region = region
         self.tenidos = sorted(list(tenidos))
         self.es_coleccion_personal = es_coleccion_personal
-        self.modo_shiny = modo_shiny
+        self.modo_shiny = modo_shiny  # Guardamos el modo
         self.filtro_actual = "all"
         
-        # Lógica para definir qué se muestra
         if self.es_coleccion_personal:
             self.total_pokes = self.tenidos
         else:
@@ -88,19 +86,34 @@ class PokedexView(discord.ui.View):
         self.paginas = [self.total_pokes[i:i + 10] for i in range(0, len(self.total_pokes), 10)]
         self.pagina = 0
         
-        # AÑADIR EL MENÚ DE TIPOS AQUÍ
-        self.add_item(TipoSelect(self.tenidos))
+        # self.add_item(TipoSelect(self.tenidos)) # Asegúrate de tener esta clase definida
+
+class PokedexView(discord.ui.View):
+    def __init__(self, region, tenidos, inicio=1, fin=1025, es_coleccion_personal=False, modo_shiny=False):
+        super().__init__(timeout=60)
+        self.region = region
+        self.tenidos = sorted(list(tenidos))
+        self.es_coleccion_personal = es_coleccion_personal
+        self.modo_shiny = modo_shiny
+        self.filtro_actual = "all"
+        
+        if self.es_coleccion_personal:
+            self.total_pokes = self.tenidos
+        else:
+            self.total_pokes = list(range(inicio, fin + 1))
+            
+        self.paginas = [self.total_pokes[i:i + 10] for i in range(0, len(self.total_pokes), 10)]
+        self.pagina = 0
 
     async def generar_vista_pokedex(self, interaction_or_ctx, session):
         # 1. CASO: LISTA VACÍA
         if not self.total_pokes:
             embed = discord.Embed(
-                title=f"🎒 Colección | Tipo: {self.filtro_actual.capitalize()}",
+                title=f"🎒 Colección | {'Shiny ' if self.modo_shiny else ''}Tipo: {self.filtro_actual.capitalize()}",
                 description="¡No tienes Pokémon de ese tipo!"
             )
             
             if isinstance(interaction_or_ctx, discord.Interaction):
-                # Si la interacción ya fue diferida, usamos followup
                 if interaction_or_ctx.response.is_done():
                     await interaction_or_ctx.followup.edit_message(message_id=interaction_or_ctx.message.id, embed=embed, attachments=[], view=self)
                 else:
@@ -111,21 +124,25 @@ class PokedexView(discord.ui.View):
 
         # 2. CASO: LISTA CON DATOS
         ids_actuales = self.paginas[self.pagina]
-        url_base = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/"
+        
+        # Corrección: Definimos la ruta dependiendo del modo
+        sub_path = "shiny/" if self.modo_shiny else ""
+        url_base = f"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/{sub_path}"
+        
         data_pokes = [(i, f"{url_base}{i}.png") for i in ids_actuales]
         
-        buffer = await servicios.generar_collage(session, data_pokes, self.tenidos)
+        # Se pasa modo_shiny a la función para que el servicio sepa qué procesar
+        buffer = await servicios.generar_collage(session, data_pokes, self.tenidos, es_shiny=self.modo_shiny)
         file = discord.File(buffer, filename="pokedex.png")
         
         embed = discord.Embed(
-            title=f"🎒 Colección | Tipo: {self.filtro_actual.capitalize()}", 
+            title=f"🎒 Colección | {'Shiny ' if self.modo_shiny else ''}Tipo: {self.filtro_actual.capitalize()}", 
             description=f"Página {self.pagina + 1}/{max(1, len(self.paginas))}"
         )
         embed.set_image(url="attachment://pokedex.png")
         
-        # 3. EDICIÓN ROBUSTA (Solución al Mensajero)
+        # 3. EDICIÓN ROBUSTA
         if isinstance(interaction_or_ctx, discord.Interaction):
-            # Si ya se hizo defer(), response.is_done() será True
             if interaction_or_ctx.response.is_done():
                 await interaction_or_ctx.followup.edit_message(
                     message_id=interaction_or_ctx.message.id, 
@@ -134,14 +151,12 @@ class PokedexView(discord.ui.View):
                     view=self
                 )
             else:
-                # Si es la primera interacción y no hemos hecho defer()
                 await interaction_or_ctx.response.edit_message(
                     embed=embed, 
                     attachments=[file], 
                     view=self
                 )
         else:
-            # Comando inicial (ctx)
             await interaction_or_ctx.send(embed=embed, file=file, view=self)
 
     @discord.ui.button(label="⬅️", style=discord.ButtonStyle.primary)

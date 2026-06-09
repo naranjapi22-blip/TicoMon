@@ -176,7 +176,7 @@ def aplicar_filtro_silueta(img):
 # 1. Definimos una caché global simple fuera de la función
 _cache_imagenes = {}
 
-async def generar_collage(session, data_pokes, tenidos):
+async def generar_collage(session, data_pokes, tenidos, es_shiny=False):
     try:
         log.info(f"🎨 Generando collage para {len(data_pokes)} pokémon")
         celda_ancho = 110
@@ -346,25 +346,34 @@ async def procesar_imagen_fragmento(session, url):
         log.error(f"🚨 Error procesando fragmento de imagen: {e}", exc_info=True)
         return None
 
-async def generar_collage_siluetas(session, data_pokes):
-    """Genera un collage horizontal con los 3 fragmentos de silueta."""
+async def generar_collage_siluetas(session, data_pokes, es_shiny=False):
+    """Genera un collage horizontal con los 3 fragmentos de silueta, soportando Shiny."""
     try:
-        log.info(f"🎨 Generando collage de siluetas para {len(data_pokes)} pokémon")
+        log.info(f"🎨 Generando collage de siluetas (Shiny={es_shiny}) para {len(data_pokes)} pokémon")
         siluetas = []
+        
         for idx, (data, _) in enumerate(data_pokes):
             try:
-                # AQUÍ ESTÁ LA MAGIA: Cambiamos el sprite chiquito por el Arte Oficial gigante
-                try:
+                # LÓGICA DE URL: Elegir entre versión normal o shiny
+                # La estructura de PokeAPI para artwork shiny es 'front_shiny'
+                if es_shiny:
+                    url = data['sprites']['other']['official-artwork']['front_shiny']
+                else:
                     url = data['sprites']['other']['official-artwork']['front_default']
-                except KeyError:
-                    # Si por casualidad un Pokémon no tiene arte oficial, usamos el normal de respaldo
-                    url = data['sprites']['front_default']
+                
+                # Respaldo si el artwork oficial falla
+                if not url:
+                    key = 'front_shiny' if es_shiny else 'front_default'
+                    url = data['sprites'][key]
                     log.debug(f"⚠️ Usando sprite de respaldo para pokémon {idx + 1}")
                     
                 fragmento = await procesar_imagen_fragmento(session, url)
+                
                 if fragmento:
+                    # Ajuste de tamaño y conversión a formato para collage
                     siluetas.append(fragmento.resize((150, 150), Image.Resampling.LANCZOS))
                     log.debug(f"✅ Silueta {idx + 1} procesada")
+                    
             except Exception as e:
                 log.error(f"🚨 Error procesando silueta {idx + 1}: {e}", exc_info=True)
                 
@@ -374,19 +383,21 @@ async def generar_collage_siluetas(session, data_pokes):
         
         log.info(f"✅ {len(siluetas)} siluetas procesadas")
         
-        composite_width = (150 * 3) + (10 * 2) 
+        # Creación del lienzo
+        composite_width = (150 * len(siluetas)) + (10 * (len(siluetas) - 1))
         composite = Image.new('RGBA', (composite_width, 150), (255, 255, 255, 0))
         
         x_offset = 0
         for s in siluetas:
             composite.paste(s, (x_offset, 0), s)
-            x_offset += 160
+            x_offset += 160 # 150 (ancho) + 10 (espacio)
             
         buffer = io.BytesIO()
         composite.save(buffer, format='PNG')
         buffer.seek(0)
         log.info(f"✅ Collage de siluetas generado: {composite_width}x150")
         return buffer
+        
     except Exception as e:
         log.error(f"🚨 Error al generar collage de siluetas: {e}", exc_info=True)
         return None
