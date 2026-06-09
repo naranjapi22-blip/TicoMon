@@ -344,7 +344,7 @@ async def procesar_imagen_fragmento(session, url):
         log.error(f"🚨 Error procesando fragmento de imagen: {e}", exc_info=True)
         return None
 
-async def generar_collage_siluetas(session, data_pokes, tenidos, es_shiny=False):
+async def generar_collage_siluetas(session, data_pokes, tenidos=None, es_shiny=False):
     """Genera un collage horizontal con los 3 fragmentos, aplicando silueta si no está capturado."""
     try:
         log.info(f"🎨 Generando collage de siluetas (Shiny={es_shiny}) para {len(data_pokes)} pokémon")
@@ -365,7 +365,6 @@ async def generar_collage_siluetas(session, data_pokes, tenidos, es_shiny=False)
                 
                 if fragmento:
                     # 3. FILTRO: Si el Pokémon no está en 'tenidos', aplicamos silueta
-                    # Nota: Asegúrate de que 'data['id']' sea el formato que guardas en 'tenidos'
                     poke_id = data['id']
                     if poke_id not in tenidos:
                         fragmento = aplicar_filtro_silueta(fragmento)
@@ -391,10 +390,7 @@ async def generar_collage_siluetas(session, data_pokes, tenidos, es_shiny=False)
         composite.save(buffer, format='PNG')
         buffer.seek(0)
         return buffer
-    except Exception as e:
-        log.error(f"🚨 Error al generar collage: {e}", exc_info=True)
-        return None
-        
+
     except Exception as e:
         log.error(f"🚨 Error al generar collage de siluetas: {e}", exc_info=True)
         return None
