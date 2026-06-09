@@ -272,8 +272,6 @@ async def auto_liberar_canal(channel_id, segundos):
 @canal_restringido()
 @commands.cooldown(1, 10, commands.BucketType.user)
 async def spawn(ctx):
-
-    
     # 1. Filtros básicos de inicial y energía
     if not gestor_spawn.verificar_inicial(ctx.author.id):
         return await ctx.send("¡Bienvenido! Antes de tu aventura, elige tu Pokémon inicial con `!inicial`.")
@@ -289,52 +287,50 @@ async def spawn(ctx):
 
     try:
         # --- GENERACIÓN HÍBRIDA: RANGOS PONDERADOS + FILTRO DE RAREZA ---
-        # 1. Pesos: 75% Comunes, 20% Raros, 5% Legendarios
         opciones_rangos = [(1, 493), (494, 809), (810, 1025)]
         pesos_rangos = [75, 20, 5] 
 
         ids_spawn = []
-        data_pokes = [] # Inicializamos aquí
-        intentos_generacion = 0
+        data_pokes = []
         
+        # FASE 1: Intento de generación con filtro
+        intentos_generacion = 0
         while len(ids_spawn) < 3 and intentos_generacion < 50:
             intentos_generacion += 1
-            
             rango = random.choices(opciones_rangos, weights=pesos_rangos, k=1)[0]
             id_cand = random.randint(rango[0], rango[1])
-            
-            # Solo descargamos si no hemos procesado este ID
             if id_cand not in ids_spawn:
-                data, species = await servicios.obtener_pokemon(bot.session, id_cand)
-                capture_rate = data.get('capture_rate', 100)
-                
-                # Filtro de rareza
-                prob_spawn = min(1.0, capture_rate / 150) 
-                if random.random() > prob_spawn:
-                    continue 
-                es_shiny = (random.randint(1, 50) == 1)
-                # es_shiny = random.random() < (1 / 250)
                 ids_spawn.append(id_cand)
-                data_pokes.append((data, species, es_shiny))
-
-        # Si quedaron menos de 3, rellenamos sin filtro para asegurar 3 opciones
-        while len(data_pokes) < 3:
-            id_cand = random.randint(1, 493)
-            # Evitar repetidos en el relleno
-            if id_cand not in ids_spawn:
-                data, species = await servicios.obtener_pokemon(bot.session, id_cand)
-                es_shiny = random.random() < (1 / 250)
-                ids_spawn.append(id_cand)
-                data_pokes.append((data, species, es_shiny))
         
-        # Extraemos solo los datos que el collage necesita (data y species)
+        # FASE 2: Relleno para asegurar 3
+        while len(ids_spawn) < 3:
+            id_cand = random.randint(1, 493)
+            if id_cand not in ids_spawn:
+                ids_spawn.append(id_cand)
+
+        # FASE 3: DESCARGA PARALELA (Optimización)
+        tasks = [servicios.obtener_pokemon(bot.session, pid) for pid in ids_spawn]
+        resultados = await asyncio.gather(*tasks)
+
+        # FASE 4: Procesamiento de datos y aplicación de filtros
+        for data, species in resultados:
+            capture_rate = data.get('capture_rate', 100)
+            prob_spawn = min(1.0, capture_rate / 150)
+            
+            # Filtro de rareza
+            if random.random() > prob_spawn and len(ids_spawn) > 3:
+                continue
+            
+            es_shiny = (random.randint(1, 50) == 1)
+            data_pokes.append((data, species, es_shiny))
+
+        # Extraemos solo datos para collage
         datos_para_collage = [(d, s) for d, s, sh in data_pokes]
 
         # Pasamos la lista limpia al generador
         buffer_siluetas = await servicios.generar_collage_siluetas(bot.session, datos_para_collage)
         
         if not buffer_siluetas:
-            # Revertimos energía si el collage falla
             await database.actualizar_energia_db(ctx.bot, ctx.author.id, intentos, ultima_recarga)
             return await ctx.send("Hubo un problema al generar las siluetas.")
 
@@ -343,12 +339,7 @@ async def spawn(ctx):
         # Generación de pistas
         texto_pistas = ""
         pistas_usadas = []
-        
-        # CAMBIA ESTA LÍNEA DE AQUÍ ABAJO:
-        # De: for i, (data, species) in enumerate(data_pokes):
-        # A ESTO:
         for i, (data, species, es_shiny) in enumerate(data_pokes): 
-            
             pista_texto = generar_pista(data, species, pistas_usadas) 
             pistas_usadas.append(pista_texto) 
             texto_pistas += f"**Opción [{i+1}]:** 🔎 {pista_texto}\n\n"
@@ -364,17 +355,12 @@ async def spawn(ctx):
         
         try:
             mensaje_enviado = await ctx.send(embed=embed, file=imagen_final, view=view)
-            
-            # Vinculación de vista y bloqueo de canal
             view.message = mensaje_enviado
             gestor_spawn.vistas_activas[ctx.channel.id] = view 
             gestor_spawn.canales_ocupados.add(ctx.channel.id)
-            
-            # Tarea de fondo para liberar el canal tras 305 segundos
             asyncio.create_task(auto_liberar_canal(ctx.channel.id, 305))
 
         except Exception as e:
-            # Limpieza en caso de fallo al enviar mensaje
             gestor_spawn.canales_ocupados.discard(ctx.channel.id)
             gestor_spawn.vistas_activas.pop(ctx.channel.id, None)
             await database.actualizar_energia_db(ctx.bot, ctx.author.id, intentos, ultima_recarga)
@@ -382,7 +368,6 @@ async def spawn(ctx):
             await ctx.send("¡Se escaparon! Hubo un error al intentar enviar el encuentro.")
 
     except Exception as e:
-        # Limpieza global si algo falla en la lógica de generación
         gestor_spawn.canales_ocupados.discard(ctx.channel.id)
         gestor_spawn.vistas_activas.pop(ctx.channel.id, None)
         await database.actualizar_energia_db(ctx.bot, ctx.author.id, intentos, ultima_recarga)
