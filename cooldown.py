@@ -44,7 +44,7 @@ def verificar_cooldown(user_id):
 
     if res:
         # Nota: Asegúrate de manejar si res[0] viene como cadena o datetime
-        ultima_captura = datetime.datetime.fromisoformat(res[0]) if isinstance(res[0], str) else res[0]
+        ultima_captura = datetime.fromisoformat(res[0]) if isinstance(res[0], str) else res[0]
         # Comparamos usando UTC para evitar problemas de zona horaria
         if (datetime.now(timezone.utc).replace(tzinfo=None) - ultima_captura.replace(tzinfo=None)).total_seconds() < 180:
             return False

@@ -436,7 +436,7 @@ async def cooldowns(ctx):
         
         # Conversión segura
         if isinstance(ultima_recarga_raw, str):
-            ultima_recarga = datetime.datetime.fromisoformat(ultima_recarga_raw)
+            ultima_recarga = datetime.fromisoformat(ultima_recarga_raw)
         else:
             ultima_recarga = ultima_recarga_raw
 
@@ -488,7 +488,7 @@ async def resetintentos(ctx, usuario: discord.Member):
 
     
     # Reseteamos a 12 intentos y la hora actual
-    await database.actualizar_energia_db(bot, usuario.id, 12, datetime.datetime.now(datetime.timezone.utc))
+    await database.actualizar_energia_db(bot, usuario.id, 12, datetime.now(timezone.utc))
         
     await ctx.send(f"✅ Se han reseteado los intentos de {usuario.display_name} a 12.")
 # Comando para establecer el canal (solo administradores)

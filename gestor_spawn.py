@@ -57,7 +57,7 @@ async def obtener_intentos(user_id):
 
         # --- CORRECCIÓN AQUÍ ---
         # Si ya es un objeto datetime, no necesitamos convertirlo
-        if isinstance(ultima_recarga_raw, datetime.datetime):
+        if isinstance(ultima_recarga_raw, datetime):
             ultima_recarga = ultima_recarga_raw
         else:
             # Si es un string, lo convertimos
