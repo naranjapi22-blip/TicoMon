@@ -10,6 +10,7 @@ import gestor_spawn
 import servicios
 from logger_config import log
 import datetime
+from mapeo_pokes import obtener_id_gif # Asegúrate de tener este import al inicio del archivo
 import records  # Importa tu archivo de lógica de récords
 COOLDOWN_LANZAMIENTO = 10.0
 COOLDOWN_GRACE = 0.25
@@ -233,9 +234,15 @@ class SpawnSelectionView(discord.ui.View):
         data, species, es_shiny = self.data_pokes[indice]
         
         # 2. Lógica del GIF (Shinyhunters)
+        from mapeo_pokes import obtener_id_gif # Asegúrate de tener este import al inicio del archivo
+        
         dex_id = data['id']
+        # Aplicamos el mapeo: si el ID está en tu lista, usará el nuevo; si no, usará el original.
+        id_final = obtener_id_gif(dex_id)
+        
         path_folder = "shiny" if es_shiny else "regular"
-        url_gif = f"https://www.shinyhunters.com/images/{path_folder}/{dex_id}.gif"
+        # Usamos id_final en lugar de dex_id
+        url_gif = f"https://www.shinyhunters.com/images/{path_folder}/{id_final}.gif"
         
         # 3. Calculamos variables para la captura
         es_legendario = species.get('is_legendary', False)

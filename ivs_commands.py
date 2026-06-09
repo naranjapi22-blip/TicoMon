@@ -9,6 +9,7 @@ from logger_config import log # Necesario para el log
 import datetime # Asegúrate de tener este también
 from discord.ui import Button, View
 import records
+from mapeo_pokes import obtener_id_gif
 # Fórmulas oficiales de Pokémon
 def calcular_stat_lvl50(base, iv):
     return math.floor(((2 * base + iv) * 50 / 100) + 5)
@@ -156,14 +157,20 @@ class IvsCommands(commands.Cog):
         )
         embed.add_field(name="📝 Detalles", value=detalles, inline=False)
         
-        # 3. Asignación directa del GIF desde la URL
         try:
+            # Obtenemos el ID corregido usando tu archivo de mapeo
+            id_final = obtener_id_gif(dex_id)
+            
             path_folder = "shiny" if es_shiny else "regular"
-            url_gif = f"https://www.shinyhunters.com/images/{path_folder}/{dex_id}.gif"
+            # Usamos id_final en lugar de dex_id
+            url_gif = f"https://www.shinyhunters.com/images/{path_folder}/{id_final}.gif"
             
             embed.set_image(url=url_gif)
             await ctx.send(embed=embed)
             return 
+        except Exception as e:
+            log.error(f"Error cargando GIF: {e}")
+            await ctx.send(embed=embed)
         except Exception as e:
             log.error(f"Error cargando GIF: {e}")
             await ctx.send(embed=embed)

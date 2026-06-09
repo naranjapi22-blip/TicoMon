@@ -6,6 +6,7 @@ import servicios
 import os
 import random
 import psycopg2
+from mapeo_pokes import obtener_id_gif
 
 # --- 1. CONFIGURACIÓN DE BASE DE DATOS DEL PERFIL ---
 def init_db_perfil():
@@ -133,10 +134,13 @@ def iniciar_modulo_perfil(bot):
             data, _ = await servicios.obtener_pokemon(bot.session, destacado_nombre)
             if data:
                 # Usamos la lógica de GIF animado integrado
-                dex_id = data['id']
-                path_folder = "shiny" if es_shiny else "regular"
-                url_gif = f"https://www.shinyhunters.com/images/{path_folder}/{dex_id}.gif"
                 
+                dex_id = data['id']
+                id_final = obtener_id_gif(dex_id) # Aquí obtienes el ID correcto (ej: 739)
+                path_folder = "shiny" if es_shiny else "regular"
+                
+                # ¡CORRECCIÓN AQUÍ! Debes usar id_final en lugar de dex_id
+                url_gif = f"https://www.shinyhunters.com/images/{path_folder}/{id_final}.gif"
                 embed.set_image(url=url_gif)
                 titulo_destacado = f"**{destacado_nombre.capitalize()}** {'✨' if es_shiny else ''}"
                 embed.add_field(name="🌟 Compañero Destacado", value=titulo_destacado, inline=False)
