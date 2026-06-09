@@ -290,17 +290,15 @@ def obtener_energia_db(user_id):
 async def actualizar_energia_db(bot, user_id, intentos, ultima_recarga):
     """
     Actualiza la energía utilizando el pool de conexiones de asyncpg.
-    Ahora es una corrutina asíncrona.
     """
     try:
         log.debug(f"💾 Actualizando energía: User {user_id} - Intentos: {intentos}")
         
-        # Obtenemos una conexión del pool gestionado por el bot
+        # Obtenemos una conexión del pool
         async with bot.db_pool.acquire() as conn:
-            ahora_str = ultima_recarga.isoformat()
             
-            # Nota: asyncpg utiliza $1, $2, $3 como marcadores de posición.
-            # Esta consulta es atómica y no requiere 'conn.commit()' manual.
+            # PASAMOS 'ultima_recarga' DIRECTAMENTE (sin .isoformat())
+            # asyncpg se encarga de convertir el objeto datetime al formato de Postgres
             await conn.execute("""
                 INSERT INTO energia (user_id, intentos, ultima_recarga) 
                 VALUES ($1, $2, $3)
@@ -308,7 +306,7 @@ async def actualizar_energia_db(bot, user_id, intentos, ultima_recarga):
                 DO UPDATE SET 
                     intentos = EXCLUDED.intentos, 
                     ultima_recarga = EXCLUDED.ultima_recarga
-            """, str(user_id), intentos, ahora_str)
+            """, str(user_id), intentos, ultima_recarga)
             
         log.info(f"✅ Energía actualizada: User {user_id} - Intentos: {intentos}")
         
