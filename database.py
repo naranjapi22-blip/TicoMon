@@ -767,3 +767,32 @@ def obtener_tipo_especial(pokemon_id):
 
     finally:
         cursor.close()
+def actualizar_capture_rate(pokemon_id, capture_rate):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        if DATABASE_URL:
+            cursor.execute(
+                """
+                UPDATE pokemon_data
+                SET capture_rate = %s
+                WHERE id = %s
+                """,
+                (capture_rate, pokemon_id)
+            )
+        else:
+            cursor.execute(
+                """
+                UPDATE pokemon_data
+                SET capture_rate = ?
+                WHERE id = ?
+                """,
+                (capture_rate, pokemon_id)
+            )
+
+        conn.commit()
+
+    finally:
+        cursor.close()
+        conn.close()
