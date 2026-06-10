@@ -246,7 +246,7 @@ class SpawnSelectionView(discord.ui.View):
             child.disabled = True
 
         # Datos del Pokémon elegido
-        data, species, es_shiny = self.data_pokes[indice]
+        data, species, es_shiny, rareza = self.data_pokes[indice]
 
         from mapeo_pokes import obtener_id_gif
 

@@ -304,7 +304,7 @@ async def spawn(ctx):
 
     try:
         # --- GENERACIÓN POR RAREZA ---
-        ids_spawn = generar_ids_spawn()
+        ids_spawn, rarezas_spawn = generar_ids_spawn()
         data_pokes = []
 
         log.info(f"Spawn generado: {ids_spawn}")
@@ -320,7 +320,7 @@ async def spawn(ctx):
                 continue
 
             es_shiny = (random.randint(1, 50) == 1)
-            data_pokes.append((data, species, es_shiny))
+            data_pokes.append((data, species, es_shiny, rareza))
 
         # Extraemos solo datos para collage
         datos_para_collage = [(d, s) for d, s, sh in data_pokes]
@@ -769,7 +769,7 @@ async def inicializar_rarezas_spawn():
     log.info(f"Legendarios: {len(pokemon_por_rareza['legendario'])}")
 def generar_ids_spawn():
     ids_spawn = []
-
+    rarezas_spawn = {}
     rarezas = [
         "muy_comun",
         "comun",
@@ -825,6 +825,7 @@ def generar_ids_spawn():
             continue
 
         ids_spawn.append(pokemon_id)
+        rarezas_spawn[pokemon_id] = rareza_elegida
 
         if rareza_elegida == "legendario":
             salio_legendario = True
@@ -832,5 +833,5 @@ def generar_ids_spawn():
         elif rareza_elegida == "mitico":
             salio_mitico = True
     log.info(f"Spawn generado: {ids_spawn}")
-    return ids_spawn
+    return ids_spawn, rarezas_spawn
 bot.run(TOKEN)
