@@ -340,7 +340,7 @@ async def spawn(ctx):
         # Generación de pistas
         texto_pistas = ""
         pistas_usadas = []
-        for i, (data, species, es_shiny) in enumerate(data_pokes): 
+        for i, (data, species, es_shiny, rareza) in enumerate(data_pokes):
             pista_texto = generar_pista(data, species, pistas_usadas) 
             pistas_usadas.append(pista_texto) 
             texto_pistas += f"**Opción [{i+1}]:** 🔎 {pista_texto}\n\n"
