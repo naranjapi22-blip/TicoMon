@@ -505,8 +505,11 @@ async def verificar_canal(ctx):
         return True
     
     # Obtener el canal configurado
-    canal_permitido = configuracion.obtener_canal(ctx.guild.id)
-    
+    canal_permitido = await configuracion.obtener_canal(
+        ctx.bot,
+        ctx.guild.id
+    )
+
     # Si no hay canal configurado, se permite en todos
     if canal_permitido is None:
         return True
