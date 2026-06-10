@@ -113,11 +113,11 @@ async def on_ready():
     
     # 0. Inicializar sesión de red
     bot.session = aiohttp.ClientSession()
-
+    
     # Cargar listas de rareza
+    await rellenar_capture_rates()
     #await cargar_pokemon_por_rareza(bot.session)
     #print("✅ Pokémon clasificados por rareza.")
-    database.actualizar_capture_rate(25, 190)
     # 1. SETUP DE GESTORES
     gestor_spawn.setup_gestor(bot)
     gestor_spawn.aplicar_filtro_spawn(bot)
@@ -716,5 +716,20 @@ async def cargar_pokemon_por_rareza(session):
     print("=== Pokémon por rareza ===")
     for rareza, lista in pokemon_por_rareza.items():
         print(f"{rareza}: {len(lista)}")
+async def rellenar_capture_rates():
+    ids_pendientes = database.obtener_ids_sin_capture_rate()
 
-bot.run(TOKEN)
+    print(f"Pokémon pendientes: {len(ids_pendientes)}")
+
+    for pokemon_id in ids_pendientes:
+
+        data, species = await servicios.obtener_pokemon(bot.session, pokemon_id)
+
+        if not data:
+            continue
+
+        capture_rate = data.get("capture_rate", 45)
+
+        database.actualizar_capture_rate(pokemon_id, capture_rate)
+
+        print(f"{pokemon_id}: {capture_rate}")

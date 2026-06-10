@@ -796,3 +796,21 @@ def actualizar_capture_rate(pokemon_id, capture_rate):
     finally:
         cursor.close()
         conn.close()
+def obtener_ids_sin_capture_rate():
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute(
+            """
+            SELECT id
+            FROM pokemon_data
+            WHERE capture_rate IS NULL
+            """
+        )
+
+        return [fila[0] for fila in cursor.fetchall()]
+
+    finally:
+        cursor.close()
+        conn.close()
