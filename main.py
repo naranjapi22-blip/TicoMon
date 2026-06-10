@@ -735,3 +735,4 @@ async def rellenar_capture_rates():
         database.actualizar_capture_rate(pokemon_id, capture_rate)
 
         print(f"{pokemon_id}: {capture_rate}")
+bot.run(TOKEN)
