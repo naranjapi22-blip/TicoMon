@@ -290,7 +290,7 @@ class SpawnSelectionView(discord.ui.View):
 
         view_captura = BotonCaptura(
             pokemon_data=data,
-            es_legendario=es_legendario,
+            rareza=rareza,
             es_shiny=es_shiny,
             capture_rate=capture_rate,
             tamano_factor=tamano_factor
@@ -338,11 +338,11 @@ import random
 from logger_config import log
 
 class BotonCaptura(discord.ui.View):
-    def __init__(self, pokemon_data, es_legendario, es_shiny, capture_rate, tamano_factor):
+    def __init__(self, pokemon_data, rareza, es_shiny, capture_rate, tamano_factor):
         super().__init__(timeout=300.0)
         self.message = None # Se asignará desde SpawnSelectionView
         self.nombre = pokemon_data['name']
-        self.es_legendario = es_legendario
+        self.rareza = rareza
         self.es_shiny = es_shiny
         self.capture_rate = capture_rate
         self.tamano_factor = tamano_factor
