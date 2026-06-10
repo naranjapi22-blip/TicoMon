@@ -228,7 +228,7 @@ class SpawnSelectionView(discord.ui.View):
         # Si el que hace clic NO es el dueño del comando...
         if interaction.user != self.autor_original:
             # Mandamos el regaño privado (ephemeral=True hace que solo él lo vea)
-            await interaction.response.send_message(
+            await interaction.followup.send(
                 "¡Hey! 🛑 Consigue tu propio Pokémon usando `!spawn`. Este encuentro no es tuyo.", 
                 ephemeral=True
             )
@@ -362,7 +362,7 @@ class BotonCaptura(discord.ui.View):
     @discord.ui.button(label="¡Lanzar Pokéball!", style=discord.ButtonStyle.primary, emoji="🔴")
     async def boton_captura(self, interaction: discord.Interaction, button: discord.ui.Button):
         if self.alguien_lo_atrapo:
-            return await interaction.response.send_message("💨 ¡Llegaste tarde!", ephemeral=True)
+            return await interaction.followup.send("💨 ¡Llegaste tarde!", ephemeral=True)
 
         try:
             await interaction.response.defer(ephemeral=True)
@@ -376,7 +376,7 @@ class BotonCaptura(discord.ui.View):
             restante = self._segundos_restantes_cooldown(user_id, ahora)
             if restante > COOLDOWN_GRACE:
                 segundos = max(1, math.ceil(restante))
-                return await interaction.response.send_message(f"⏱️ Espera {segundos}s para volver a lanzar.", ephemeral=True)
+                return await interaction.followup.send(f"⏱️ Espera {segundos}s para volver a lanzar.", ephemeral=True)
 
             self.user_cooldowns[user_id] = ahora
             await interaction.response.defer(ephemeral=True)
