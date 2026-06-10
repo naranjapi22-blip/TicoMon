@@ -726,11 +726,11 @@ async def rellenar_capture_rates():
     for pokemon_id in ids_pendientes:
 
         try:
-            print(f"Procesando {pokemon_id}")
+            log.info(f"Procesando {pokemon_id}")
 
             data, species = await servicios.obtener_pokemon(bot.session, pokemon_id)
 
-            print(f"Datos obtenidos {pokemon_id}")
+            log.info(f"Datos obtenidos {pokemon_id}")
 
             if not data:
                 print(f"Sin datos {pokemon_id}")
@@ -738,12 +738,12 @@ async def rellenar_capture_rates():
 
             capture_rate = data.get("capture_rate", 45)
 
-            print(f"Capture rate {pokemon_id}: {capture_rate}")
+            log.info(f"Capture rate {pokemon_id}: {capture_rate}")
 
             database.actualizar_capture_rate(pokemon_id, capture_rate)
 
-            print(f"GUARDADO {pokemon_id}")
+            log.info(f"GUARDADO {pokemon_id}")
 
         except Exception as e:
-            print(f"ERROR EN {pokemon_id}: {e}")
+            log.error(f"ERROR EN {pokemon_id}: {e}")
 bot.run(TOKEN)
