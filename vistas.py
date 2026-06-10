@@ -185,7 +185,7 @@ def obtener_rareza(capture_rate):
         return "Legendario 👑"     # Ej: Mewtwo, Lugia, Rayquaza (Normalmente tienen 3)
 class SpawnSelectionView(discord.ui.View):
     def __init__(self, data_pokes, autor_original):
-        super().__init__(timeout=60) # Tienen 60 segundos para elegir
+        super().__init__(timeout=180) # Tienen 60 segundos para elegir
         self.data_pokes = data_pokes 
         self.autor_original = autor_original 
         self.message = None # <-- Añadimos esto para guardar el mensaje y poder editarlo al final
@@ -239,65 +239,67 @@ class SpawnSelectionView(discord.ui.View):
     # --- SE ELIMINÓ LA FUNCIÓN 'boton_captura' DE AQUÍ (Pertenece a la clase BotonCaptura) ---
 
     # --- MANEJO DE LA SELECCIÓN ---
-    async def manejar_seleccion(self, interaction: discord.Interaction, indice: int):
-        self.stop()
-        for child in self.children:
-            child.disabled = True
+async def manejar_seleccion(self, interaction: discord.Interaction, indice: int):
+    # 🔴 IMPORTANTE: defer inmediato
+    await interaction.response.defer()
+
+    self.stop()
+    for child in self.children:
+        child.disabled = True
+    
+    # 1. Obtenemos datos del elegido
+    data, species, es_shiny = self.data_pokes[indice]
+    
+    from mapeo_pokes import obtener_id_gif
         
-        # 1. Obtenemos datos del elegido
-        data, species, es_shiny = self.data_pokes[indice]
+    dex_id = data['id']
+    id_final = obtener_id_gif(dex_id)
+    
+    path_folder = "shiny" if es_shiny else "regular"
+    url_gif = f"https://www.shinyhunters.com/images/{path_folder}/{id_final}.gif"
+    
+    # 3. Variables
+    es_legendario = species.get('is_legendary', False)
+    capture_rate = species.get('capture_rate', 45)
+    tamano_factor = round(random.uniform(0.50, 1.50), 2)
+    
+    etiquetas = []
+    if es_shiny: etiquetas.append("✨ SHINY")
+    if es_legendario: etiquetas.append("👑 LEGENDARIO")
+    
+    rareza = obtener_rareza(capture_rate)
+    
+    titulo_revelado = f"¡Es un {data['name'].capitalize()} salvaje!"
+    if etiquetas: 
+        titulo_revelado = f"{' '.join(etiquetas)} {titulo_revelado}"
         
-        # 2. Lógica del GIF (Shinyhunters)
-        from mapeo_pokes import obtener_id_gif # Asegúrate de tener este import al inicio del archivo
-        
-        dex_id = data['id']
-        # Aplicamos el mapeo: si el ID está en tu lista, usará el nuevo; si no, usará el original.
-        id_final = obtener_id_gif(dex_id)
-        
-        path_folder = "shiny" if es_shiny else "regular"
-        # Usamos id_final en lugar de dex_id
-        url_gif = f"https://www.shinyhunters.com/images/{path_folder}/{id_final}.gif"
-        
-        # 3. Calculamos variables para la captura
-        es_legendario = species.get('is_legendary', False)
-        capture_rate = species.get('capture_rate', 45)
-        tamano_factor = round(random.uniform(0.50, 1.50), 2)
-        
-        etiquetas = []
-        if es_shiny: etiquetas.append("✨ SHINY")
-        if es_legendario: etiquetas.append("👑 LEGENDARIO")
-        
-        rareza = obtener_rareza(capture_rate)
-        
-        titulo_revelado = f"¡Es un {data['name'].capitalize()} salvaje!"
-        if etiquetas: 
-            titulo_revelado = f"{' '.join(etiquetas)} {titulo_revelado}"
-            
-        color_embed = discord.Color.gold() if (es_shiny or es_legendario) else discord.Color.green()
-        
-        # 4. Creamos el nuevo embed con el GIF
-        embed_revelado = discord.Embed(
-            title=titulo_revelado, 
-            description=f"**Rareza:** {rareza}", 
-            color=color_embed
-        )
-        embed_revelado.set_image(url=url_gif)
-        embed_revelado.set_footer(text="Intentos fallidos: 0")
-        
-        # 5. Preparamos la vista de captura
-        view_captura = BotonCaptura(
-            pokemon_data=data,
-            es_legendario=es_legendario, 
-            es_shiny=es_shiny,           
-            capture_rate=capture_rate,
-            tamano_factor=tamano_factor  
-        )
-        
-        # 6. Editamos el mensaje: 
-        # attachments=[] elimina la silueta anterior.
-        # embed=embed_revelado pone el GIF.
-        # view=view_captura activa los botones de lanzamiento.
-        await interaction.response.edit_message(embed=embed_revelado, attachments=[], view=view_captura)
+    color_embed = discord.Color.gold() if (es_shiny or es_legendario) else discord.Color.green()
+    
+    embed_revelado = discord.Embed(
+        title=titulo_revelado, 
+        description=f"**Rareza:** {rareza}", 
+        color=color_embed
+    )
+    embed_revelado.set_image(url=url_gif)
+    embed_revelado.set_footer(text="Intentos fallidos: 0")
+    
+    view_captura = BotonCaptura(
+        pokemon_data=data,
+        es_legendario=es_legendario, 
+        es_shiny=es_shiny,           
+        capture_rate=capture_rate,
+        tamano_factor=tamano_factor  
+    )
+    # 🔴 Editar mensaje de forma segura
+    try:
+        await interaction.followup.edit_message(
+        message_id=interaction.message.id,
+        embed=embed_revelado,
+        attachments=[],
+        view=view_captura
+    )
+    except discord.NotFound:
+        pass  # interacción muerta, ignoramos
 
     # --- BOTONES DE LA INTERFAZ ---
     @discord.ui.button(label="[1] Opción 1", style=discord.ButtonStyle.primary)
