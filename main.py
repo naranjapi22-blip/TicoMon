@@ -293,7 +293,10 @@ async def spawn(ctx):
     if not gestor_spawn.verificar_inicial(ctx.author.id):
         return await ctx.send("¡Bienvenido! Antes de tu aventura, elige tu Pokémon inicial con `!inicial`.")
     
-    datos_intentos = await gestor_spawn.obtener_intentos(ctx.author.id)
+    datos_intentos = await gestor_spawn.obtener_intentos(
+    ctx.bot,
+    ctx.author.id
+    )
     intentos, ultima_recarga = datos_intentos
     
     if intentos <= 0:

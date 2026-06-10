@@ -5,6 +5,7 @@ import discord
 from discord.ext import commands
 from logger_config import log
 import time
+from datetime import datetime, timezone, timedelta
 
 class CandadoInteligente(set):
     """
@@ -42,43 +43,86 @@ canales_ocupados = CandadoInteligente()
 vistas_activas = {}
 
 # --- 2. GESTIÓN DE ENERGÍA PERSISTENTE ---
-async def obtener_intentos(user_id):
+async def obtener_intentos(bot, user_id):
     try:
         log.debug(f"🔍 Obteniendo intentos para user {user_id}")
+
         ahora = datetime.now(timezone.utc)
         datos = database.obtener_energia_db(user_id)
-        
+
         if not datos:
             log.info(f"📍 Primer acceso de user {user_id}, creando registro con 12 intentos")
-            database.actualizar_energia_db(user_id, 12, ahora)
+
+            await database.actualizar_energia_db(
+                bot,
+                user_id,
+                12,
+                ahora
+            )
+
             return 12, ahora
-            
+
         intentos, ultima_recarga_raw = datos
 
-        # --- CORRECCIÓN AQUÍ ---
-        # Si ya es un objeto datetime, no necesitamos convertirlo
         if isinstance(ultima_recarga_raw, datetime):
             ultima_recarga = ultima_recarga_raw
         else:
-            # Si es un string, lo convertimos
             ultima_recarga = datetime.fromisoformat(str(ultima_recarga_raw))
-        # -----------------------
-        
-        # Asegurarnos de que ambas tengan zona horaria para comparar correctamente
+
         if ultima_recarga.tzinfo is None:
             ultima_recarga = ultima_recarga.replace(tzinfo=timezone.utc)
 
-        # Comprobar si pasaron 2 horas (7200 segundos)
+        # Cuántos bloques completos de 2 horas han pasado
         tiempo_transcurrido = (ahora - ultima_recarga).total_seconds()
-        if tiempo_transcurrido >= 7200:
-            log.info(f"⏰ Recarga de energía: User {user_id} - Tiempo transcurrido: {tiempo_transcurrido:.0f}s")
-            database.actualizar_energia_db(user_id, 12, ahora)
-            return 12, ahora
-        
-        log.info(f"✅ Intentos obtenidos: User {user_id} - Intentos: {intentos} - Próxima recarga en {7200 - tiempo_transcurrido:.0f}s")
+
+        energias_recuperadas = int(tiempo_transcurrido // 7200)
+
+        if energias_recuperadas > 0 and intentos < 12:
+
+            nuevos_intentos = min(
+                12,
+                intentos + energias_recuperadas
+            )
+
+            nueva_ultima_recarga = (
+                ultima_recarga +
+                timedelta(seconds=energias_recuperadas * 7200)
+            )
+
+            database.actualizar_energia_db(
+                user_id,
+                nuevos_intentos,
+                nueva_ultima_recarga
+            )
+
+            log.info(
+                f"⏰ Recarga de energía: User {user_id} "
+                f"+{energias_recuperadas} energía(s). "
+                f"Total: {nuevos_intentos}"
+            )
+
+            intentos = nuevos_intentos
+            ultima_recarga = nueva_ultima_recarga
+
+        proxima_recarga = max(
+            0,
+            7200 - ((ahora - ultima_recarga).total_seconds())
+        )
+
+        log.info(
+            f"✅ Intentos obtenidos: User {user_id} - "
+            f"Intentos: {intentos} - "
+            f"Próxima recarga en {proxima_recarga:.0f}s"
+        )
+
         return intentos, ultima_recarga
+
     except Exception as e:
-        log.error(f"🚨 Error al obtener intentos para user {user_id}: {e}", exc_info=True)
+        log.error(
+            f"🚨 Error al obtener intentos para user {user_id}: {e}",
+            exc_info=True
+        )
+
         return 0, datetime.now(timezone.utc)
 
 # --- 3. FILTRO DE SPAWN ---
