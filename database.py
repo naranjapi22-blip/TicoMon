@@ -772,6 +772,8 @@ def actualizar_capture_rate(pokemon_id, capture_rate):
     cursor = conn.cursor()
 
     try:
+        log.info(f"Actualizando Pokémon {pokemon_id} con rate {capture_rate}")
+
         if DATABASE_URL:
             cursor.execute(
                 """
@@ -785,15 +787,18 @@ def actualizar_capture_rate(pokemon_id, capture_rate):
             cursor.execute(
                 """
                 UPDATE pokemon_data
-                SET capture_rate = %s
-                WHERE id = %s
+                SET capture_rate = ?
+                WHERE id = ?
                 """,
                 (capture_rate, pokemon_id)
             )
 
-            print(f"Pokemon {pokemon_id} -> Filas afectadas: {cursor.rowcount}")
+        log.info(f"Pokémon {pokemon_id} -> Filas afectadas: {cursor.rowcount}")
 
-            conn.commit()
+        conn.commit()
+
+    except Exception as e:
+        log.error(f"Error actualizando capture_rate de {pokemon_id}: {e}")
 
     finally:
         cursor.close()
