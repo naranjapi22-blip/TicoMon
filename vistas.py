@@ -432,6 +432,9 @@ class BotonCaptura(discord.ui.View):
 
             if nombre_bola == "Master Ball":
                 prob_final = 1.0
+
+            else:
+
                 if self.rareza == "muy_comun":
                     base_pct = 0.10
 
@@ -455,40 +458,45 @@ class BotonCaptura(discord.ui.View):
 
                 else:
                     base_pct = 0.04
-                
-                # Ajustamos la probabilidad con el bono de la bola y la curva de dificultad
-                prob_con_bola = (base_pct * ((self.capture_rate / 255.0) ** 0.5)) * bonus_bola
-                
-                # Ajuste de desgaste mucho más lento para legendarios y míticos
-            if self.rareza == "legendario":
-                FACTOR_DESGASTE = 0.002
 
-            elif self.rareza == "mitico":
-                FACTOR_DESGASTE = 0.003
+                # Bono de bola
+                prob_con_bola = (
+                    base_pct *
+                    ((self.capture_rate / 255.0) ** 0.5)
+                ) * bonus_bola
 
-            elif self.rareza == "epico":
-                FACTOR_DESGASTE = 0.005
+                # Desgaste
+                if self.rareza == "legendario":
+                    FACTOR_DESGASTE = 0.002
 
-            elif self.rareza == "raro":
-                FACTOR_DESGASTE = 0.008
+                elif self.rareza == "mitico":
+                    FACTOR_DESGASTE = 0.003
 
-            elif self.rareza == "poco_comun":
-                FACTOR_DESGASTE = 0.010
+                elif self.rareza == "epico":
+                    FACTOR_DESGASTE = 0.005
 
-            elif self.rareza == "comun":
-                FACTOR_DESGASTE = 0.015
+                elif self.rareza == "raro":
+                    FACTOR_DESGASTE = 0.008
 
-            else:  # muy_comun
-                FACTOR_DESGASTE = 0.020
-                
-                prob_final = prob_con_bola + (self.intentos_fallidos * FACTOR_DESGASTE)
-                
-                # Manteniendo tus topes originales
+                elif self.rareza == "poco_comun":
+                    FACTOR_DESGASTE = 0.010
+
+                elif self.rareza == "comun":
+                    FACTOR_DESGASTE = 0.015
+
+                else:
+                    FACTOR_DESGASTE = 0.020
+
+                prob_final = prob_con_bola + (
+                    self.intentos_fallidos * FACTOR_DESGASTE
+                )
+
                 TOPE_MAXIMO = 0.30 if (
                     self.es_shiny or
                     self.rareza == "legendario" or
                     self.rareza == "mitico"
                 ) else 0.45
+
                 prob_final = min(prob_final, TOPE_MAXIMO)
 
             porcentaje = f"{max(0, prob_final * 100):.2f}"
