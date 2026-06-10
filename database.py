@@ -821,3 +821,18 @@ def obtener_ids_sin_capture_rate():
     finally:
         cursor.close()
         conn.close()
+def obtener_datos_rareza():
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("""
+            SELECT id, capture_rate, es_legendario, es_mitico
+            FROM pokemon_data
+        """)
+
+        return cursor.fetchall()
+
+    finally:
+        cursor.close()
+        conn.close()

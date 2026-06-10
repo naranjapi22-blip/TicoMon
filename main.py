@@ -114,11 +114,10 @@ async def on_ready():
     # 0. Inicializar sesión de red
     bot.session = aiohttp.ClientSession()
     
-    # Cargar listas de rareza
-    # await rellenar_capture_rates()   
+    # Cargar listas de rareza 
     print("Entrando en on_ready")
-    await rellenar_capture_rates()
-    print("Terminó rellenar_capture_rates")
+    await inicializar_rarezas_spawn()
+    print("Terminó inicializar_rarezas_spawn")
     #print("✅ Pokémon clasificados por rareza.")
     # 1. SETUP DE GESTORES
     gestor_spawn.setup_gestor(bot)
@@ -746,4 +745,45 @@ async def rellenar_capture_rates():
 
         except Exception as e:
             log.error(f"ERROR EN {pokemon_id}: {e}")
+async def inicializar_rarezas_spawn():
+    global pokemon_por_rareza
+
+    # Limpiar listas por si se vuelve a ejecutar
+    for rareza in pokemon_por_rareza:
+        pokemon_por_rareza[rareza].clear()
+
+    datos = database.obtener_datos_rareza()
+
+    for pokemon_id, capture_rate, es_legendario, es_mitico in datos:
+
+        if es_legendario:
+            pokemon_por_rareza["legendario"].append(pokemon_id)
+
+        elif es_mitico:
+            pokemon_por_rareza["mitico"].append(pokemon_id)
+
+        else:
+            if capture_rate >= 200:
+                pokemon_por_rareza["muy_comun"].append(pokemon_id)
+
+            elif capture_rate >= 120:
+                pokemon_por_rareza["comun"].append(pokemon_id)
+
+            elif capture_rate >= 60:
+                pokemon_por_rareza["poco_comun"].append(pokemon_id)
+
+            elif capture_rate >= 30:
+                pokemon_por_rareza["raro"].append(pokemon_id)
+
+            else:
+                pokemon_por_rareza["epico"].append(pokemon_id)
+
+    log.info("=== Rarezas cargadas ===")
+    log.info(f"Muy comunes: {len(pokemon_por_rareza['muy_comun'])}")
+    log.info(f"Comunes: {len(pokemon_por_rareza['comun'])}")
+    log.info(f"Poco comunes: {len(pokemon_por_rareza['poco_comun'])}")
+    log.info(f"Raros: {len(pokemon_por_rareza['raro'])}")
+    log.info(f"Épicos: {len(pokemon_por_rareza['epico'])}")
+    log.info(f"Míticos: {len(pokemon_por_rareza['mitico'])}")
+    log.info(f"Legendarios: {len(pokemon_por_rareza['legendario'])}")
 bot.run(TOKEN)
