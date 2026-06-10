@@ -461,12 +461,23 @@ class BotonCaptura(discord.ui.View):
                 prob_con_bola = (base_pct * ((self.capture_rate / 255.0) ** 0.5)) * bonus_bola
                 
                 # Ajuste de desgaste mucho más lento para legendarios y míticos
-                if self.capture_rate <= 5:   FACTOR_DESGASTE = 0.008   # Legendario: Tarda ~38 tiros en llegar al 30%
-                elif self.capture_rate <= 15: FACTOR_DESGASTE = 0.010  # Mítico: Tarda ~30 tiros
-                elif self.capture_rate <= 30: FACTOR_DESGASTE = 0.012  # Épico: Tarda ~25 tiros
-                elif self.capture_rate <= 60: FACTOR_DESGASTE = 0.015  # Raro
-                elif self.capture_rate <= 120: FACTOR_DESGASTE = 0.020 # Poco Común
-                else: FACTOR_DESGASTE = 0.030                          # Común / Muy Común
+            if self.rareza == "legendario":
+                FACTOR_DESGASTE = 0.008
+
+            elif self.rareza == "mitico":
+                FACTOR_DESGASTE = 0.010
+
+            elif self.rareza == "epico":
+                FACTOR_DESGASTE = 0.012
+
+            elif self.rareza == "raro":
+                FACTOR_DESGASTE = 0.015
+
+            elif self.rareza == "poco_comun":
+                FACTOR_DESGASTE = 0.020
+
+            else:
+                FACTOR_DESGASTE = 0.030                      # Común / Muy Común
                 
                 prob_final = prob_con_bola + (self.intentos_fallidos * FACTOR_DESGASTE)
                 
