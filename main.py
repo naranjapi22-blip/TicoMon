@@ -115,8 +115,10 @@ async def on_ready():
     bot.session = aiohttp.ClientSession()
     
     # Cargar listas de rareza
-    # await rellenar_capture_rates()
-    #await cargar_pokemon_por_rareza(bot.session)
+    # await rellenar_capture_rates()   
+    print("Entrando en on_ready")
+    await cargar_pokemon_por_rareza(bot.session)
+    print("Saliendo en on_ready")
     #print("✅ Pokémon clasificados por rareza.")
     # 1. SETUP DE GESTORES
     gestor_spawn.setup_gestor(bot)
@@ -133,8 +135,7 @@ async def on_ready():
     
     # Esto creará la tabla automáticamente si no existe al encender el bot
     await db_cache.inicializar_bd()
-    print("Entrando en on_ready")
-    print("Saliendo de on_ready")
+
     # Verificamos si la tabla está vacía
     ids = await db_cache.obtener_ids_por_filtro()
     if not ids:
