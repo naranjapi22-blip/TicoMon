@@ -361,13 +361,21 @@ class BotonCaptura(discord.ui.View):
 
     @discord.ui.button(label="¡Lanzar Pokéball!", style=discord.ButtonStyle.primary, emoji="🔴")
     async def boton_captura(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if self.alguien_lo_atrapo:
-            return await interaction.followup.send("💨 ¡Llegaste tarde!", ephemeral=True)
+        
+        # 1. EL ESCUDO: Va de primerito
+        if interaction.response.is_done():
+            return
 
+        # 2. Llegó tarde (Usamos response.send_message porque aún no hay defer)
+        if self.alguien_lo_atrapo:
+            return await interaction.response.send_message("💨 ¡Llegaste tarde!", ephemeral=True)
+
+        # 3. Reservamos la interacción
         try:
             await interaction.response.defer(ephemeral=True)
-        except discord.NotFound:
+        except (discord.NotFound, discord.errors.InteractionResponded):
             return
+            
         try:
             self.message = interaction.message # Aseguramos referencia
             user_id = interaction.user.id
@@ -379,7 +387,7 @@ class BotonCaptura(discord.ui.View):
                 return await interaction.followup.send(f"⏱️ Espera {segundos}s para volver a lanzar.", ephemeral=True)
 
             self.user_cooldowns[user_id] = ahora
-            await interaction.response.defer(ephemeral=True)
+            
 
             # --- LÓGICA DE SEGURIDAD (Timer y Huída) ---
             tiempo_pasado = (datetime.now(timezone.utc) - self.tiempo_aparicion).total_seconds()
