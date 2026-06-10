@@ -320,6 +320,9 @@ async def spawn(ctx):
                 continue
 
             es_shiny = (random.randint(1, 50) == 1)
+            pokemon_id = data["id"]
+            rareza = rarezas_spawn[pokemon_id]
+
             data_pokes.append((data, species, es_shiny, rareza))
 
         # Extraemos solo datos para collage
