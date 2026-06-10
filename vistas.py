@@ -456,7 +456,11 @@ class BotonCaptura(discord.ui.View):
                 prob_final = prob_con_bola + (self.intentos_fallidos * FACTOR_DESGASTE)
                 
                 # Manteniendo tus topes originales
-                TOPE_MAXIMO = 0.30 if (self.es_shiny or self.es_legendario) else 0.45
+                TOPE_MAXIMO = 0.30 if (
+                    self.es_shiny or
+                    self.rareza == "legendario" or
+                    self.rareza == "mitico"
+                ) else 0.45
                 prob_final = min(prob_final, TOPE_MAXIMO)
 
             porcentaje = f"{max(0, prob_final * 100):.2f}"
