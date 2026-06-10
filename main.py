@@ -780,7 +780,15 @@ def generar_ids_spawn():
         "legendario"
     ]
 
-    pesos = [45, 30, 15, 7.3, 2.5, 0.2, 0.1]
+    pesos = [
+    47,      # muy_comun
+    30,      # comun
+    15,      # poco_comun
+    7,       # raro
+    0.83,    # epico
+    0.067,   # mitico
+    0.033    # legendario
+    ]
 
     salio_legendario = False
     salio_mitico = False
