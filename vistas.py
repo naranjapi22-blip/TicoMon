@@ -240,79 +240,94 @@ class SpawnSelectionView(discord.ui.View):
 
     # --- MANEJO DE LA SELECCIÓN ---
     async def manejar_seleccion(self, interaction: discord.Interaction, indice: int):
-        # 🔴 IMPORTANTE: defer inmediato
-        await interaction.response.defer()
 
+        # Evita que se pulse dos veces
         self.stop()
         for child in self.children:
             child.disabled = True
-        
-        # 1. Obtenemos datos del elegido
+
+        # Datos del Pokémon elegido
         data, species, es_shiny = self.data_pokes[indice]
-        
+
         from mapeo_pokes import obtener_id_gif
-            
+
         dex_id = data['id']
         id_final = obtener_id_gif(dex_id)
-        
+
         path_folder = "shiny" if es_shiny else "regular"
         url_gif = f"https://www.shinyhunters.com/images/{path_folder}/{id_final}.gif"
-        
-        # 3. Variables
+
+        # Variables para captura
         es_legendario = species.get('is_legendary', False)
         capture_rate = species.get('capture_rate', 45)
         tamano_factor = round(random.uniform(0.50, 1.50), 2)
-        
+
         etiquetas = []
-        if es_shiny: etiquetas.append("✨ SHINY")
-        if es_legendario: etiquetas.append("👑 LEGENDARIO")
-        
+        if es_shiny:
+            etiquetas.append("✨ SHINY")
+        if es_legendario:
+            etiquetas.append("👑 LEGENDARIO")
+
         rareza = obtener_rareza(capture_rate)
-        
+
         titulo_revelado = f"¡Es un {data['name'].capitalize()} salvaje!"
-        if etiquetas: 
+        if etiquetas:
             titulo_revelado = f"{' '.join(etiquetas)} {titulo_revelado}"
-            
-        color_embed = discord.Color.gold() if (es_shiny or es_legendario) else discord.Color.green()
-        
+
+        color_embed = (
+            discord.Color.gold()
+            if (es_shiny or es_legendario)
+            else discord.Color.green()
+        )
+
         embed_revelado = discord.Embed(
-            title=titulo_revelado, 
-            description=f"**Rareza:** {rareza}", 
+            title=titulo_revelado,
+            description=f"**Rareza:** {rareza}",
             color=color_embed
         )
+
         embed_revelado.set_image(url=url_gif)
         embed_revelado.set_footer(text="Intentos fallidos: 0")
-        
+
         view_captura = BotonCaptura(
             pokemon_data=data,
-            es_legendario=es_legendario, 
-            es_shiny=es_shiny,           
+            es_legendario=es_legendario,
+            es_shiny=es_shiny,
             capture_rate=capture_rate,
-            tamano_factor=tamano_factor  
+            tamano_factor=tamano_factor
         )
-        # 🔴 Editar mensaje de forma segura
-        try:
-            await interaction.followup.edit_message(
-            message_id=interaction.message.id,
+
+        # Editar el mensaje original
+        await interaction.response.edit_message(
             embed=embed_revelado,
             attachments=[],
             view=view_captura
         )
-        except discord.NotFound:
-            pass  # interacción muerta, ignoramos
 
-        # --- BOTONES DE LA INTERFAZ ---
-        @discord.ui.button(label="[1] Opción 1", style=discord.ButtonStyle.primary)
-        async def btn_opcion_1(self, interaction: discord.Interaction, button: discord.ui.Button):
-            await self.manejar_seleccion(interaction, 0)
+    # --- BOTONES ---
+    @discord.ui.button(label="[1] Opción 1", style=discord.ButtonStyle.primary)
+    async def opcion1(
+        self,
+        interaction: discord.Interaction,
+        button: discord.ui.Button
+    ):
+        await self.manejar_seleccion(interaction, 0)
 
-        @discord.ui.button(label="[2] Opción 2", style=discord.ButtonStyle.primary)
-        async def btn_opcion_2(self, interaction: discord.Interaction, button: discord.ui.Button):
-            await self.manejar_seleccion(interaction, 1)
+    @discord.ui.button(label="[2] Opción 2", style=discord.ButtonStyle.primary)
+    async def opcion2(
+        self,
+        interaction: discord.Interaction,
+        button: discord.ui.Button
+    ):
+        await self.manejar_seleccion(interaction, 1)
 
-        @discord.ui.button(label="[3] Opción 3", style=discord.ButtonStyle.primary)
-        async def btn_opcion_3(self, interaction: discord.Interaction, button: discord.ui.Button):
-            await self.manejar_seleccion(interaction, 2)
+    @discord.ui.button(label="[3] Opción 3", style=discord.ButtonStyle.primary)
+    async def opcion3(
+        self,
+        interaction: discord.Interaction,
+        button: discord.ui.Button
+    ):
+        await self.manejar_seleccion(interaction, 2)
 
 # Configuración de logs solicitada
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
