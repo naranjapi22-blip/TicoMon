@@ -785,13 +785,15 @@ def actualizar_capture_rate(pokemon_id, capture_rate):
             cursor.execute(
                 """
                 UPDATE pokemon_data
-                SET capture_rate = ?
-                WHERE id = ?
+                SET capture_rate = %s
+                WHERE id = %s
                 """,
                 (capture_rate, pokemon_id)
             )
 
-        conn.commit()
+            print(f"Pokemon {pokemon_id} -> Filas afectadas: {cursor.rowcount}")
+
+            conn.commit()
 
     finally:
         cursor.close()
