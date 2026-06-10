@@ -432,27 +432,26 @@ class BotonCaptura(discord.ui.View):
 
             if nombre_bola == "Master Ball":
                 prob_final = 1.0
-            else:
                 if self.rareza == "muy_comun":
-                    base_pct = 0.15
-
-                elif self.rareza == "comun":
                     base_pct = 0.10
 
+                elif self.rareza == "comun":
+                    base_pct = 0.07
+
                 elif self.rareza == "poco_comun":
-                    base_pct = 0.08
+                    base_pct = 0.05
 
                 elif self.rareza == "raro":
-                    base_pct = 0.04
+                    base_pct = 0.03
 
                 elif self.rareza == "epico":
-                    base_pct = 0.02
+                    base_pct = 0.015
 
                 elif self.rareza == "mitico":
-                    base_pct = 0.008
+                    base_pct = 0.005
 
                 elif self.rareza == "legendario":
-                    base_pct = 0.003
+                    base_pct = 0.002
 
                 else:
                     base_pct = 0.04
@@ -462,22 +461,25 @@ class BotonCaptura(discord.ui.View):
                 
                 # Ajuste de desgaste mucho más lento para legendarios y míticos
             if self.rareza == "legendario":
-                FACTOR_DESGASTE = 0.008
+                FACTOR_DESGASTE = 0.002
 
             elif self.rareza == "mitico":
-                FACTOR_DESGASTE = 0.010
+                FACTOR_DESGASTE = 0.003
 
             elif self.rareza == "epico":
-                FACTOR_DESGASTE = 0.012
+                FACTOR_DESGASTE = 0.005
 
             elif self.rareza == "raro":
-                FACTOR_DESGASTE = 0.015
+                FACTOR_DESGASTE = 0.008
 
             elif self.rareza == "poco_comun":
-                FACTOR_DESGASTE = 0.020
+                FACTOR_DESGASTE = 0.010
 
-            else:
-                FACTOR_DESGASTE = 0.030                      # Común / Muy Común
+            elif self.rareza == "comun":
+                FACTOR_DESGASTE = 0.015
+
+            else:  # muy_comun
+                FACTOR_DESGASTE = 0.020
                 
                 prob_final = prob_con_bola + (self.intentos_fallidos * FACTOR_DESGASTE)
                 
