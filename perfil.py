@@ -10,63 +10,55 @@ from mapeo_pokes import obtener_id_gif
 
 # --- 1. CONFIGURACIÓN DE BASE DE DATOS DEL PERFIL ---
 def init_db_perfil():
-    """Prepara la tabla del perfil para SQLite o PostgreSQL."""
+    """Prepara la tabla del perfil."""
+
     conn = database.get_connection()
     cursor = conn.cursor()
-    
-    # 1. Crear tabla base
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS perfiles (
-            user_id BIGINT PRIMARY KEY,
-            pokemon_destacado TEXT,
-            es_shiny INTEGER DEFAULT 0
-        )
-    ''')
-    
-    # 2. Actualización segura para la columna 'es_shiny'
-    # Verificación estricta para evitar errores de columnas existentes
-    if os.environ.get('DATABASE_URL'):
-        # Lógica para PostgreSQL
+
+    try:
         cursor.execute("""
-            ALTER TABLE perfiles 
+            CREATE TABLE IF NOT EXISTS perfiles (
+                user_id BIGINT PRIMARY KEY,
+                pokemon_destacado TEXT,
+                es_shiny INTEGER DEFAULT 0
+            )
+        """)
+
+        cursor.execute("""
+            ALTER TABLE perfiles
             ADD COLUMN IF NOT EXISTS es_shiny INTEGER DEFAULT 0
         """)
-    else:
-        # Lógica para SQLite
-        try:
-            cursor.execute("ALTER TABLE perfiles ADD COLUMN es_shiny INTEGER DEFAULT 0")
-        except sqlite3.OperationalError:
-            pass # La columna ya existe
-            
-    conn.commit()
-    conn.close()
+
+        conn.commit()
+
+    finally:
+        cursor.close()
+        conn.close()
 
 def guardar_destacado(user_id, pokemon_nombre, es_shiny):
     conn = database.get_connection()
     cursor = conn.cursor()
-    
-    # Detectamos entorno
-    is_postgres = os.environ.get('DATABASE_URL') is not None
-    
-    if is_postgres:
-        # Lógica PostgreSQL con upsert
+
+    try:
         query = """
             INSERT INTO perfiles (user_id, pokemon_destacado, es_shiny)
             VALUES (%s, %s, %s)
-            ON CONFLICT(user_id) 
-            DO UPDATE SET pokemon_destacado = EXCLUDED.pokemon_destacado, 
-                          es_shiny = EXCLUDED.es_shiny
+            ON CONFLICT(user_id)
+            DO UPDATE SET
+                pokemon_destacado = EXCLUDED.pokemon_destacado,
+                es_shiny = EXCLUDED.es_shiny
         """
-        cursor.execute(query, (str(user_id), pokemon_nombre, es_shiny))
-    else:
-        # Lógica SQLite con REPLACE
-        cursor.execute('''
-            REPLACE INTO perfiles (user_id, pokemon_destacado, es_shiny) 
-            VALUES (?, ?, ?)
-        ''', (user_id, pokemon_nombre, es_shiny))
-        
-    conn.commit()
-    conn.close()
+
+        cursor.execute(
+            query,
+            (str(user_id), pokemon_nombre, es_shiny)
+        )
+
+        conn.commit()
+
+    finally:
+        cursor.close()
+        conn.close()
 
 def obtener_destacado(user_id):
     conn = database.get_connection()

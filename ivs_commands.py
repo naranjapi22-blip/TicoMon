@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from database import get_connection
+import database
 import servicios
 import math
 import io # Necesario para io.BytesIO
@@ -84,7 +84,7 @@ class IvsCommands(commands.Cog):
 
     @commands.command(name="ivs")
     async def ver_ivs(self, ctx, id_pokemon: int):
-        conn = get_connection()
+        conn = database.get_connection()
         cursor = conn.cursor()
         
         # 1. Obtenemos datos incluyendo nombre, tamaño y el dex_id de la tabla pokemon_data
@@ -176,7 +176,7 @@ class IvsCommands(commands.Cog):
             await ctx.send(embed=embed)
     @commands.command(name="misrecords")
     async def ver_mis_records(self, ctx):
-        conn = get_connection()
+        conn = database.get_connection()
         cursor = conn.cursor()
         
         # 1. Traemos los IDs además de los nombres y flags
@@ -223,7 +223,7 @@ class IvsCommands(commands.Cog):
         await ctx.send(embed=view.create_embed(), view=view)
     @commands.command(name="records")
     async def ver_records(self, ctx, *, pokemon_nombre: str):
-        conn = get_connection()
+        conn = database.get_connection()
         cursor = conn.cursor()
         
         cursor.execute("""

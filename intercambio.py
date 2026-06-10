@@ -11,44 +11,55 @@ usuarios_ocupados = set()
 # --- 2. LÓGICA DE TRANSFERENCIA SEGURA ---
 async def transferir_pokemon_seguro(user_de, user_para, nombre, es_shiny):
     """Busca un único Pokémon en el inventario y le cambia el dueño."""
-    # Usamos el candado compartido para evitar condiciones de carrera
+
     async with database.db_lock:
+
         conn = database.get_connection()
         cursor = conn.cursor()
-        
-        # Detectamos si estamos en Postgres para usar la sintaxis correcta
-        is_postgres = os.environ.get('DATABASE_URL') is not None
-        
-        # 1. Buscamos el ID exacto
-        if is_postgres:
-            cursor.execute('''
-                SELECT id FROM capturas 
-                WHERE user_id = %s AND pokemon_nombre = %s AND es_shiny = %s 
+
+        try:
+            cursor.execute(
+                '''
+                SELECT id
+                FROM capturas
+                WHERE user_id = %s
+                AND pokemon_nombre = %s
+                AND es_shiny = %s
                 LIMIT 1
-            ''', (str(user_de), nombre.lower(), 1 if es_shiny else 0))
-        else:
-            cursor.execute('''
-                SELECT id FROM capturas 
-                WHERE user_id = ? AND pokemon_nombre = ? AND es_shiny = ? 
-                LIMIT 1
-            ''', (user_de, nombre.lower(), 1 if es_shiny else 0))
-        
-        resultado = cursor.fetchone()
-        
-        exito = False
-        if resultado:
+                ''',
+                (
+                    str(user_de),
+                    nombre.lower(),
+                    1 if es_shiny else 0
+                )
+            )
+
+            resultado = cursor.fetchone()
+
+            if not resultado:
+                return False
+
             id_captura = resultado[0]
-            # 2. Actualizamos al nuevo dueño
-            if is_postgres:
-                cursor.execute('UPDATE capturas SET user_id = %s WHERE id = %s', (str(user_para), id_captura))
-            else:
-                cursor.execute('UPDATE capturas SET user_id = ? WHERE id = ?', (user_para, id_captura))
-            
+
+            cursor.execute(
+                '''
+                UPDATE capturas
+                SET user_id = %s
+                WHERE id = %s
+                ''',
+                (
+                    str(user_para),
+                    id_captura
+                )
+            )
+
             conn.commit()
-            exito = True
-            
-        conn.close()
-        return exito
+
+            return True
+
+        finally:
+            cursor.close()
+            conn.close()
 
 # --- 3. MODAL (Pop-up para escribir la oferta) ---
 class ModalOferta(discord.ui.Modal, title='Elige tu Pokémon para ofrecer'):

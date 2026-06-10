@@ -303,7 +303,7 @@ async def actualizar_energia_db(bot, user_id, intentos, ultima_recarga):
                     intentos = EXCLUDED.intentos, 
                     ultima_recarga = EXCLUDED.ultima_recarga
             """, str(user_id), intentos, ultima_recarga)
-            
+                                        
         log.info(f"✅ Energía actualizada: User {user_id}")
         
     except Exception as e:

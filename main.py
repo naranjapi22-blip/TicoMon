@@ -81,18 +81,6 @@ REGIONES = {
     "7": (722, 809), "8": (810, 905), "9": (906, 1025)
 }
 
-# 1. Tu función de conexión limpia y eficiente
-def get_connection():
-    """
-    Establece conexión a la base de datos PostgreSQL.
-    Requiere que la variable de entorno DATABASE_URL esté definida.
-    """
-    db_url = os.environ.get('DATABASE_URL')
-    
-    if not db_url:
-        # Esto lanzará un error descriptivo si el bot no tiene la URL configurada
-        raise EnvironmentError("❌ La variable de entorno 'DATABASE_URL' no está definida.")
-    return psycopg2.connect(db_url)
 
 @bot.event
 async def on_ready():
@@ -108,7 +96,7 @@ async def on_ready():
     except Exception as e:
         print(f"🚨 Error crítico al inicializar el pool de BD: {e}")
 
-    configuracion.init_config_db()
+    await configuracion.init_config_db(bot)
     print(f'Bot conectado como {bot.user}')
     
     # 0. Inicializar sesión de red
@@ -493,10 +481,16 @@ async def resetintentos(ctx, usuario: discord.Member):
 @bot.command(name="setcanal")
 @commands.has_permissions(administrator=True)
 async def setcanal(ctx, canal: discord.TextChannel):
-    configuracion.set_canal(ctx.guild.id, canal.id)
-    await ctx.send(f"✅ Los comandos ahora solo se permiten en {canal.mention}")
 
-# Check global para los comandos
+    await configuracion.set_canal(
+        ctx.bot,
+        ctx.guild.id,
+        canal.id
+    )
+
+    await ctx.send(
+        f"✅ Los comandos ahora solo se permiten en {canal.mention}"
+    )
 @bot.check
 async def verificar_canal(ctx):
     # Si es mensaje privado, permitir siempre

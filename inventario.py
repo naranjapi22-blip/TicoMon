@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from database import get_connection
+import database
 
 # --- CLASE PARA LOS BOTONES DE PÁGINAS ---
 class PaginadorInventario(discord.ui.View):
@@ -76,7 +76,7 @@ class Inventario(commands.Cog):
 
     @commands.command(name="top")
     async def ver_top(self, ctx):
-        conn = get_connection()
+        conn = database.get_connection()
         cursor = conn.cursor()
         
         # Ranking PERSONAL (solo tus Pokémon)
