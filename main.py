@@ -415,7 +415,10 @@ async def cooldowns(ctx):
 
     try:
         # Obtenemos los datos
-        intentos, ultima_recarga_raw = await gestor_spawn.obtener_intentos(ctx.author.id)
+        intentos, ultima_recarga_raw = await gestor_spawn.obtener_intentos(
+            ctx.bot,
+            ctx.author.id
+        )
         
         # Lógica de tiempo (normalizada a UTC)
         ahora = datetime.now(timezone.utc)
