@@ -722,6 +722,7 @@ async def rellenar_capture_rates():
     print(f"Pokémon pendientes: {len(ids_pendientes)}")
 
     for pokemon_id in ids_pendientes:
+        print(f"Procesando {pokemon_id}")
 
         data, species = await servicios.obtener_pokemon(bot.session, pokemon_id)
 
