@@ -303,41 +303,22 @@ async def spawn(ctx):
     await database.actualizar_energia_db(ctx.bot, ctx.author.id, intentos - 1, ultima_recarga)
 
     try:
-        # --- GENERACIÓN HÍBRIDA: RANGOS PONDERADOS + FILTRO DE RAREZA ---
-        opciones_rangos = [(1, 493), (494, 809), (810, 1025)]
-        pesos_rangos = [75, 20, 5] 
-
-        ids_spawn = []
+        # --- GENERACIÓN POR RAREZA ---
+        ids_spawn = generar_ids_spawn()
         data_pokes = []
-        
-        # FASE 1: Intento de generación con filtro
-        intentos_generacion = 0
-        while len(ids_spawn) < 3 and intentos_generacion < 50:
-            intentos_generacion += 1
-            rango = random.choices(opciones_rangos, weights=pesos_rangos, k=1)[0]
-            id_cand = random.randint(rango[0], rango[1])
-            if id_cand not in ids_spawn:
-                ids_spawn.append(id_cand)
-        
-        # FASE 2: Relleno para asegurar 3
-        while len(ids_spawn) < 3:
-            id_cand = random.randint(1, 493)
-            if id_cand not in ids_spawn:
-                ids_spawn.append(id_cand)
 
-        # FASE 3: DESCARGA PARALELA (Optimización)
+        log.info(f"Spawn generado: {ids_spawn}")
+
+        # FASE 3: DESCARGA PARALELA
         tasks = [servicios.obtener_pokemon(bot.session, pid) for pid in ids_spawn]
         resultados = await asyncio.gather(*tasks)
 
-        # FASE 4: Procesamiento de datos y aplicación de filtros
+        # FASE 4: Procesamiento de datos
         for data, species in resultados:
-            capture_rate = data.get('capture_rate', 100)
-            prob_spawn = min(1.0, capture_rate / 150)
-            
-            # Filtro de rareza
-            if random.random() > prob_spawn and len(ids_spawn) > 3:
+
+            if not data:
                 continue
-            
+
             es_shiny = (random.randint(1, 50) == 1)
             data_pokes.append((data, species, es_shiny))
 
@@ -786,4 +767,62 @@ async def inicializar_rarezas_spawn():
     log.info(f"Épicos: {len(pokemon_por_rareza['epico'])}")
     log.info(f"Míticos: {len(pokemon_por_rareza['mitico'])}")
     log.info(f"Legendarios: {len(pokemon_por_rareza['legendario'])}")
+def generar_ids_spawn():
+    ids_spawn = []
+
+    rarezas = [
+        "muy_comun",
+        "comun",
+        "poco_comun",
+        "raro",
+        "epico",
+        "mitico",
+        "legendario"
+    ]
+
+    pesos = [45, 30, 15, 7.3, 2.5, 0.2, 0.1]
+
+    salio_legendario = False
+    salio_mitico = False
+
+    while len(ids_spawn) < 3:
+
+        rarezas_disponibles = rarezas.copy()
+        pesos_disponibles = pesos.copy()
+
+        if salio_legendario:
+            indice = rarezas_disponibles.index("legendario")
+            rarezas_disponibles.pop(indice)
+            pesos_disponibles.pop(indice)
+
+        if salio_mitico:
+            indice = rarezas_disponibles.index("mitico")
+            rarezas_disponibles.pop(indice)
+            pesos_disponibles.pop(indice)
+
+        rareza_elegida = random.choices(
+            rarezas_disponibles,
+            weights=pesos_disponibles,
+            k=1
+        )[0]
+
+        pokemon_disponibles = pokemon_por_rareza[rareza_elegida]
+
+        if not pokemon_disponibles:
+            continue
+
+        pokemon_id = random.choice(pokemon_disponibles)
+
+        if pokemon_id in ids_spawn:
+            continue
+
+        ids_spawn.append(pokemon_id)
+
+        if rareza_elegida == "legendario":
+            salio_legendario = True
+
+        elif rareza_elegida == "mitico":
+            salio_mitico = True
+
+    return ids_spawn
 bot.run(TOKEN)
