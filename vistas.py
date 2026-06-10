@@ -433,14 +433,29 @@ class BotonCaptura(discord.ui.View):
             if nombre_bola == "Master Ball":
                 prob_final = 1.0
             else:
-                # Mapeo directo a tus % base (dividido entre 100 para formato decimal)
-                if self.capture_rate >= 225:   base_pct = 0.15  # Muy Común
-                elif self.capture_rate >= 150: base_pct = 0.10  # Común
-                elif self.capture_rate >= 90:  base_pct = 0.08  # Poco Común
-                elif self.capture_rate >= 45:  base_pct = 0.04  # Raro
-                elif self.capture_rate >= 20:  base_pct = 0.02  # Epico
-                elif self.capture_rate >= 5:   base_pct = 0.008 # Mitico
-                else:                          base_pct = 0.003 # Legendario
+                if self.rareza == "muy_comun":
+                    base_pct = 0.15
+
+                elif self.rareza == "comun":
+                    base_pct = 0.10
+
+                elif self.rareza == "poco_comun":
+                    base_pct = 0.08
+
+                elif self.rareza == "raro":
+                    base_pct = 0.04
+
+                elif self.rareza == "epico":
+                    base_pct = 0.02
+
+                elif self.rareza == "mitico":
+                    base_pct = 0.008
+
+                elif self.rareza == "legendario":
+                    base_pct = 0.003
+
+                else:
+                    base_pct = 0.04
                 
                 # Ajustamos la probabilidad con el bono de la bola y la curva de dificultad
                 prob_con_bola = (base_pct * ((self.capture_rate / 255.0) ** 0.5)) * bonus_bola
