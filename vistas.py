@@ -195,7 +195,6 @@ class SpawnSelectionView(discord.ui.View):
         for child in self.children:
             child.disabled = True
             
-        import gestor_spawn
         
         # 2. Seguridad: Intentamos editar el mensaje solo si existe
         if hasattr(self, 'message') and self.message:

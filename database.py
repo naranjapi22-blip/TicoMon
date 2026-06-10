@@ -735,3 +735,36 @@ def obtener_mejor_captura(user_id, nombre: str):
     """Retorna la mejor captura por IV total o None."""
     capturas = listar_capturas_por_especie(user_id, nombre)
     return capturas[0] if capturas else None
+
+
+def obtener_tipo_especial(pokemon_id):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        if DATABASE_URL:
+            cursor.execute(
+                "SELECT es_legendario, es_mitico FROM pokemon_data WHERE id = %s",
+                (pokemon_id,)
+            )
+        else:
+            cursor.execute(
+                "SELECT es_legendario, es_mitico FROM pokemon_data WHERE id = ?",
+                (pokemon_id,)
+            )
+
+        resultado = cursor.fetchone()
+
+        if resultado:
+            es_legendario, es_mitico = resultado
+            return bool(es_legendario), bool(es_mitico)
+
+        return False, False
+
+    except Exception as e:
+        log.error(f"Error obteniendo datos especiales del Pokémon {pokemon_id}: {e}")
+        return False, False
+
+    finally:
+        cursor.close()
+        conn.close()

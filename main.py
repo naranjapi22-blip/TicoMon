@@ -32,7 +32,16 @@ from vistas_combate import SelectorPaginado, VistaCombate
 import vistas_batalla
 from vistas_batalla import SelectorBatalla
 from vistas_equipo import abrir_equipo_en_privado
-
+# Variables globales
+pokemon_por_rareza = {
+    "muy_comun": [],
+    "comun": [],
+    "poco_comun": [],
+    "raro": [],
+    "epico": [],
+    "mitico": [],
+    "legendario": []
+}
 database.init_db()
 # 1. CONFIGURACIÓN
 load_dotenv()
@@ -150,7 +159,9 @@ async def pokedex(ctx, *, filtro: str = None):
     """
     if not hasattr(bot, 'session') or bot.session.closed:
         bot.session = aiohttp.ClientSession()
-
+        # Cargar listas de rareza
+        await cargar_pokemon_por_rareza(bot.session)
+        print("✅ Pokémon clasificados por rareza.")
     # 1. Obtener la lista base de capturas del usuario
     es_shiny_mode = (filtro == "shiny")
     nombres_tenidos = database.obtener_capturas(ctx.author.id, solo_shiny=es_shiny_mode)
@@ -661,6 +672,45 @@ async def equipo(ctx):
     if not hasattr(bot, "session") or bot.session.closed:
         bot.session = aiohttp.ClientSession()
     await abrir_equipo_en_privado(ctx, ctx.author, bot.session)
+async def cargar_pokemon_por_rareza(session):
+    # Limpiamos las listas por si la función se ejecuta más de una vez
+    for rareza in pokemon_por_rareza:
+        pokemon_por_rareza[rareza].clear()
 
+    for pokemon_id in range(1, 1026):
+        data, species = await servicios.obtener_pokemon(session, pokemon_id)
+
+        if not data:
+            continue
+
+        capture_rate = data.get("capture_rate", 45)
+
+        es_legendario, es_mitico = database.obtener_tipo_especial(pokemon_id)
+
+        if es_legendario:
+            pokemon_por_rareza["legendario"].append(pokemon_id)
+
+        elif es_mitico:
+            pokemon_por_rareza["mitico"].append(pokemon_id)
+
+        else:
+            if capture_rate >= 200:
+                pokemon_por_rareza["muy_comun"].append(pokemon_id)
+
+            elif capture_rate >= 120:
+                pokemon_por_rareza["comun"].append(pokemon_id)
+
+            elif capture_rate >= 60:
+                pokemon_por_rareza["poco_comun"].append(pokemon_id)
+
+            elif capture_rate >= 30:
+                pokemon_por_rareza["raro"].append(pokemon_id)
+
+            else:
+                pokemon_por_rareza["epico"].append(pokemon_id)
+
+    print("=== Pokémon por rareza ===")
+    for rareza, lista in pokemon_por_rareza.items():
+        print(f"{rareza}: {len(lista)}")
 
 bot.run(TOKEN)
