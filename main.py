@@ -117,8 +117,8 @@ async def on_ready():
     # Cargar listas de rareza
     # await rellenar_capture_rates()   
     print("Entrando en on_ready")
-    await cargar_pokemon_por_rareza(bot.session)
-    print("Saliendo en on_ready")
+    await rellenar_capture_rates()
+    print("Terminó rellenar_capture_rates")
     #print("✅ Pokémon clasificados por rareza.")
     # 1. SETUP DE GESTORES
     gestor_spawn.setup_gestor(bot)
