@@ -767,4 +767,3 @@ def obtener_tipo_especial(pokemon_id):
 
     finally:
         cursor.close()
-        conn.close()

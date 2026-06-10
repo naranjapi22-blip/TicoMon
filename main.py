@@ -115,9 +115,9 @@ async def on_ready():
     bot.session = aiohttp.ClientSession()
 
     # Cargar listas de rareza
-    await cargar_pokemon_por_rareza(bot.session)
-    print("✅ Pokémon clasificados por rareza.")
-
+    #await cargar_pokemon_por_rareza(bot.session)
+    #print("✅ Pokémon clasificados por rareza.")
+    database.actualizar_capture_rate(25, 190)
     # 1. SETUP DE GESTORES
     gestor_spawn.setup_gestor(bot)
     gestor_spawn.aplicar_filtro_spawn(bot)
