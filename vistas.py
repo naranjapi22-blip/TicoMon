@@ -542,18 +542,30 @@ class BotonCaptura(discord.ui.View):
                 await interaction.followup.send(f"❌ Fallaste la {nombre_bola} con un ({porcentaje}%). ¡El Pokémon está más cansado!", ephemeral=True)
 
         except Exception as e:
-            # --- NUEVO: Manejo de errores seguro ---
             import gestor_spawn
+            import traceback
+
             liberar_canal_completo(interaction.channel.id)
             gestor_spawn.canales_ocupados.discard(interaction.channel.id)
             self.alguien_lo_atrapo = True
-            log.error(f"🚨 Error crítico en captura: {e}", exc_info=True)
-            
-            try: 
-                # Usamos followup porque ya hicimos defer
-                await interaction.followup.send("⚠️ El encuentro ha finalizado debido a un error.", ephemeral=True)
+
+            log.error(
+                f"🚨 Error crítico en captura: {e}",
+                exc_info=True
+            )
+
+            print("========== TRACEBACK COMPLETO ==========")
+            traceback.print_exc()
+            print("========================================")
+
+            try:
+                await interaction.followup.send(
+                    "⚠️ El encuentro ha finalizado debido a un error.",
+                    ephemeral=True
+                )
             except discord.NotFound:
                 pass
+
             self.stop()
 
 class InfoView(discord.ui.View):
