@@ -89,7 +89,8 @@ async def obtener_intentos(bot, user_id):
                 timedelta(seconds=energias_recuperadas * 7200)
             )
 
-            database.actualizar_energia_db(
+            await database.actualizar_energia_db(
+                bot,
                 user_id,
                 nuevos_intentos,
                 nueva_ultima_recarga
@@ -151,7 +152,7 @@ def aplicar_filtro_spawn(bot):
                 return False
             
             # 4. Verificar energía/intentos
-            datos_energia = await obtener_intentos(ctx.author.id)
+            datos_energia = await obtener_intentos(ctx.bot, ctx.author.id)
             # datos_energia suele ser (intentos, ultima_recarga)
             if datos_energia[0] <= 0:
                 log.warning(f"⚠️ Usuario sin intentos: {ctx.author.id}")
