@@ -805,7 +805,7 @@ def generar_ids_spawn():
             weights=pesos_disponibles,
             k=1
         )[0]
-
+        log.info(f"Rareza elegida: {rareza_elegida}")
         pokemon_disponibles = pokemon_por_rareza[rareza_elegida]
 
         if not pokemon_disponibles:
@@ -823,6 +823,6 @@ def generar_ids_spawn():
 
         elif rareza_elegida == "mitico":
             salio_mitico = True
-
+    log.info(f"Spawn generado: {ids_spawn}")
     return ids_spawn
 bot.run(TOKEN)
