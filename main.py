@@ -326,7 +326,7 @@ async def spawn(ctx):
             data_pokes.append((data, species, es_shiny, rareza))
 
         # Extraemos solo datos para collage
-        datos_para_collage = [(d, s) for d, s, sh in data_pokes]
+        datos_para_collage = [(d, s) for d, s, sh, r in data_pokes]
 
         # Pasamos la lista limpia al generador
         buffer_siluetas = await servicios.generar_collage_siluetas(bot.session, datos_para_collage, tenidos=[])
