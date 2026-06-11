@@ -170,19 +170,19 @@ class PokedexView(discord.ui.View):
         await self.generar_vista_pokedex(interaction, interaction.client.session)
 def obtener_rareza(capture_rate):
     if capture_rate >= 225:
-        return "Muy Común 🟢"      # Ej: Pidgey, Rattata, Caterpie (255)
+        return "muy_comun"
     elif capture_rate >= 150:
-        return "Común ⚪"          # Ej: Pikachu (190), Eevee (150)
+        return "comun"
     elif capture_rate >= 90:
-        return "Poco Común 🔵"     # Ej: Evoluciones medias como Charmeleon (90)
+        return "poco_comun"
     elif capture_rate >= 45:
-        return "Raro 🟣"           # Ej: Iniciales como Bulbasaur (45) o Lapras (45)
+        return "raro"
     elif capture_rate >= 20:
-        return "Épico 🔴"          # Ej: Snorlax (25), Skarmory (25)
+        return "epico"
     elif capture_rate >= 5:
-        return "Mítico 🟡"         # Ej: Algunos ultraentes o muy difíciles (15-5)
+        return "mitico"
     else:
-        return "Legendario 👑"     # Ej: Mewtwo, Lugia, Rayquaza (Normalmente tienen 3)
+        return "legendario"
 class SpawnSelectionView(discord.ui.View):
     def __init__(self, data_pokes, autor_original):
         super().__init__(timeout=180) # Tienen 60 segundos para elegir
@@ -725,5 +725,15 @@ class SeleccionInicialView(discord.ui.View):
     async def next(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.index = (self.index + 1) % len(INICIALES)
         await interaction.response.edit_message(embed=self.get_embed())
-
+def obtener_nombre_rareza(rareza):
+    nombres = {
+        "muy_comun": "Muy Común 🟢",
+        "comun": "Común ⚪",
+        "poco_comun": "Poco Común 🔵",
+        "raro": "Raro 🟣",
+        "epico": "Épico 🔴",
+        "mitico": "Mítico 🟡",
+        "legendario": "Legendario 👑"
+    }
+    return nombres.get(rareza, rareza)
 
