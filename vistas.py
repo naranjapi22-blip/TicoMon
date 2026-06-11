@@ -285,7 +285,7 @@ class SpawnSelectionView(discord.ui.View):
 
         embed_revelado = discord.Embed(
             title=titulo_revelado,
-            description=f"**Rareza:** {rareza}",
+            description=f"**Rareza:** {obtener_nombre_rareza(rareza)}",
             color=color_embed
         )
 
