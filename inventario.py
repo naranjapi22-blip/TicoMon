@@ -6,27 +6,76 @@ import database
 class PaginadorInventario(discord.ui.View):
     def __init__(self, ctx, embeds):
         super().__init__(timeout=180)
+
         self.ctx = ctx
         self.embeds = embeds
         self.pagina_actual = 0
-        
+        self.message = None
+
         if len(self.embeds) <= 1:
             self.btn_anterior.disabled = True
             self.btn_siguiente.disabled = True
 
-    @discord.ui.button(label="◀️ Anterior", style=discord.ButtonStyle.secondary, custom_id="ant")
-    async def btn_anterior(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.ctx.author:
-            return await interaction.response.send_message("❌ Solo el dueño puede cambiar de página.", ephemeral=True)
-        self.pagina_actual = (self.pagina_actual - 1) % len(self.embeds)
-        await interaction.response.edit_message(embed=self.embeds[self.pagina_actual])
+    async def on_timeout(self):
 
-    @discord.ui.button(label="Siguiente ▶️", style=discord.ButtonStyle.secondary, custom_id="sig")
-    async def btn_siguiente(self, interaction: discord.Interaction, button: discord.ui.Button):
+        for item in self.children:
+            item.disabled = True
+
+        try:
+            if self.message:
+                await self.message.edit(view=self)
+        except Exception:
+            pass
+
+    @discord.ui.button(
+        label="◀️ Anterior",
+        style=discord.ButtonStyle.secondary,
+        custom_id="ant"
+    )
+    async def btn_anterior(
+        self,
+        interaction: discord.Interaction,
+        button: discord.ui.Button
+    ):
+
         if interaction.user != self.ctx.author:
-            return await interaction.response.send_message("❌ Solo el dueño puede cambiar de página.", ephemeral=True)
-        self.pagina_actual = (self.pagina_actual + 1) % len(self.embeds)
-        await interaction.response.edit_message(embed=self.embeds[self.pagina_actual])
+            return await interaction.response.send_message(
+                "❌ Solo el dueño puede cambiar de página.",
+                ephemeral=True
+            )
+
+        self.pagina_actual = (
+            self.pagina_actual - 1
+        ) % len(self.embeds)
+
+        await interaction.response.edit_message(
+            embed=self.embeds[self.pagina_actual]
+        )
+
+    @discord.ui.button(
+        label="Siguiente ▶️",
+        style=discord.ButtonStyle.secondary,
+        custom_id="sig"
+    )
+    async def btn_siguiente(
+        self,
+        interaction: discord.Interaction,
+        button: discord.ui.Button
+    ):
+
+        if interaction.user != self.ctx.author:
+            return await interaction.response.send_message(
+                "❌ Solo el dueño puede cambiar de página.",
+                ephemeral=True
+            )
+
+        self.pagina_actual = (
+            self.pagina_actual + 1
+        ) % len(self.embeds)
+
+        await interaction.response.edit_message(
+            embed=self.embeds[self.pagina_actual]
+        )
 
 
 class Inventario(commands.Cog):
@@ -71,8 +120,14 @@ class Inventario(commands.Cog):
             embed.set_footer(text=f"Página {i+1}/{len(paginas)} | Usa !ivs [ID] para detalles.")
             embeds.append(embed)
 
-        view = PaginadorInventario(ctx, embeds)
-        await ctx.send(embed=embeds[0], view=view)
+            view = PaginadorInventario(ctx, embeds)
+
+            mensaje = await ctx.send(
+                embed=embeds[0],
+                view=view
+            )
+
+            view.message = mensaje
 
     @commands.command(name="top")
     async def ver_top(self, ctx):
