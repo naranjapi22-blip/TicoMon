@@ -168,7 +168,9 @@ class RankingRoles(commands.Cog):
 
         if canal_id:
             canal = guild.get_channel(canal_id)
-        
+        print(
+            f"[ANUNCIOS] Canal encontrado: {canal}"
+        )
         
 
         if lider_actual and lider_actual.id == user_id:
