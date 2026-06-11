@@ -183,7 +183,8 @@ def iniciar_modulo_ranking(bot):
             compartidos = mis_pokemon & sus_pokemon
             solo_mios = mis_pokemon - sus_pokemon
             solo_suyos = sus_pokemon - mis_pokemon
-
+            print(f"Mis especies: {len(mis_pokemon)}")
+            print(f"Sus especies: {len(sus_pokemon)}")
             embed = discord.Embed(
                 title="📊 Comparación de Pokédex",
                 color=discord.Color.blue()
