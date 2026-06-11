@@ -2,9 +2,17 @@ import discord
 from discord.ext import commands
 import database
 from database import guardar_canal_rankings
-
+from database import obtener_canal_rankings
 async def actualizar_roles_competitivos(cog, guild):
+    canal_id = obtener_canal_rankings(guild.id)
 
+    print(f"[RANKINGS] Canal configurado: {canal_id}")
+    canal = None
+
+    if canal_id:
+        canal = guild.get_channel(canal_id)
+
+    print(f"[RANKINGS] Canal encontrado: {canal}")
     roles = await cog.asegurar_roles(guild)
 
     lider_pokedex = await cog.obtener_lider_pokedex()
