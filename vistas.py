@@ -332,14 +332,6 @@ class SpawnSelectionView(discord.ui.View):
     ):
         await self.manejar_seleccion(interaction, 2)
 
-# Configuración de logs solicitada
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-log = logging.getLogger('bot_captura') # Opcional: Nombre para identificar el log
-
-import discord
-import math
-import random
-from logger_config import log
 
 class BotonCaptura(discord.ui.View):
     def __init__(self, pokemon_data, rareza, es_shiny, capture_rate, tamano_factor):

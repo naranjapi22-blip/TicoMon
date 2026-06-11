@@ -7,7 +7,7 @@ def setup_logger():
     
     # Nivel mínimo a capturar (INFO capturará INFO, WARNING, ERROR y CRITICAL)
     logger.setLevel(logging.INFO)
-
+    logger.propagate = False
     # Formato de salida: Fecha - Nivel - Archivo:Línea - Mensaje
     formatter = logging.Formatter('%(asctime)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s')
 
