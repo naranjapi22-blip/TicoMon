@@ -33,6 +33,7 @@ import vistas_batalla
 from vistas_batalla import SelectorBatalla
 from vistas_equipo import abrir_equipo_en_privado
 from rankingdex import iniciar_modulo_ranking
+from rankinglegend import iniciar_modulo_ranking_legend
 # Variables globales
 pokemon_por_rareza = {
     "muy_comun": [],
@@ -113,6 +114,7 @@ async def on_ready():
     gestor_spawn.aplicar_filtro_spawn(bot)
     gestor_spawn.canales_ocupados.clear()
     iniciar_modulo_ranking(bot)
+    iniciar_modulo_ranking_legend(bot)
     try:
         synced = await bot.tree.sync()
         log.info(f"✅ {len(synced)} slash command(s) sincronizados.")
