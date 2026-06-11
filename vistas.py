@@ -1,3 +1,5 @@
+import asyncio
+
 import discord
 import random
 import math
@@ -554,6 +556,13 @@ class BotonCaptura(discord.ui.View):
                     # 4. Enviamos el mensaje final
                     await interaction.message.edit(content=mensaje, view=None)
                     self.stop()
+                    if ranking_cog:
+                        asyncio.create_task(
+                            actualizar_roles_competitivos(
+                                ranking_cog,
+                                interaction.guild
+                            )
+                        )
                 except Exception as db_error:
                     self.alguien_lo_atrapo = False
                     log.error(f"Error BD: {db_error}", exc_info=True)
