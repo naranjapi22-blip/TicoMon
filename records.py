@@ -5,7 +5,6 @@ def verificar_y_actualizar_record(cursor, pokemon_nombre, id_nuevo, user_id_nuev
     UMBRAL_XXS = 0.8
     tamano_nuevo = float(tamano_nuevo)
     
-    print(f"DEBUG: Verificando récord para {pokemon_nombre}. Tamaño: {tamano_nuevo}")
 
     cursor.execute("SELECT * FROM RECORDS_ESPECIE WHERE pokemon_nombre = %s", (pokemon_nombre,))
     row = cursor.fetchone()

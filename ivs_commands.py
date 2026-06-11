@@ -105,7 +105,7 @@ class IvsCommands(commands.Cog):
             return
 
         nombre, hp, atk, defs, spa, spd, spe, es_shiny, naturaleza, tamano, dex_id = resultado
-        print(f"DEBUG IVS -> {nombre} | dex_id={dex_id}")
+
         
         # 2. Verificación de Récord para el Boost Visual
         estado_record = records.obtener_estado_record(cursor, nombre.lower(), id_pokemon)
@@ -179,10 +179,6 @@ class IvsCommands(commands.Cog):
                     f"{path_folder}/{id_final}.gif"
                 )
 
-                print(f"DEBUG nombre={nombre}")
-                print(f"DEBUG dex_id={dex_id}")
-                print(f"DEBUG id_final={id_final}")
-                print(f"DEBUG url={url_gif}")
 
                 embed.set_image(url=url_gif)
 
