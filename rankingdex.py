@@ -1,5 +1,4 @@
 import discord
-from discord.ext import commands
 
 import database
 
@@ -16,11 +15,13 @@ def iniciar_modulo_ranking(bot):
         cursor = conn.cursor()
 
         try:
-            # Ranking global
+
             cursor.execute("""
                 SELECT
                     user_id,
-                    COUNT(DISTINCT pokemon_nombre) AS especies
+                    COUNT(DISTINCT pokemon_nombre) AS especies,
+                    SUM(CASE WHEN es_shiny = 1 THEN 1 ELSE 0 END) AS shinies,
+                    COUNT(*) AS capturas
                 FROM capturas
                 GROUP BY user_id
                 ORDER BY especies DESC
@@ -29,18 +30,10 @@ def iniciar_modulo_ranking(bot):
             ranking = cursor.fetchall()
 
             if not ranking:
-                await ctx.send("❌ No hay datos suficientes para generar el ranking.")
+                await ctx.send(
+                    "❌ No hay datos suficientes para generar el ranking."
+                )
                 return
-
-            # Shinies del usuario
-            cursor.execute("""
-                SELECT COUNT(*)
-                FROM capturas
-                WHERE user_id = %s
-                AND es_shiny = 1
-            """, (str(ctx.author.id),))
-
-            total_shinies = cursor.fetchone()[0] or 0
 
             embed = discord.Embed(
                 title="🏆 Ranking Global de Pokédex",
@@ -49,13 +42,18 @@ def iniciar_modulo_ranking(bot):
             )
 
             top_texto = ""
+
             posicion_usuario = None
             especies_usuario = 0
+            shinies_usuario = 0
+            capturas_usuario = 0
 
             for posicion, fila in enumerate(ranking, start=1):
 
                 user_id = int(fila[0])
                 especies = fila[1]
+                shinies = fila[2] or 0
+                capturas = fila[3] or 0
 
                 if posicion == 1:
                     emoji = "🥇"
@@ -68,9 +66,9 @@ def iniciar_modulo_ranking(bot):
                 elif posicion == 5:
                     emoji = "5️⃣"
                 else:
-                    emoji = f"{posicion}️⃣"
+                    emoji = f"#{posicion}"
 
-                # Mostrar solo Top 5
+                # Mostrar Top 5
                 if posicion <= 5:
 
                     usuario = bot.get_user(user_id)
@@ -88,14 +86,16 @@ def iniciar_modulo_ranking(bot):
 
                     top_texto += (
                         f"{emoji} **{nombre}**\n"
-                        f"📚 {especies} especies • "
-                        f"📈 {porcentaje:.1f}%\n\n"
+                        f"📚 {especies} especies • 📈 {porcentaje:.1f}%\n"
+                        f"✨ {shinies} shinies • 🎯 {capturas} capturas\n\n"
                     )
 
-                # Guardar posición del usuario actual
+                # Datos del usuario actual
                 if user_id == ctx.author.id:
                     posicion_usuario = posicion
                     especies_usuario = especies
+                    shinies_usuario = shinies
+                    capturas_usuario = capturas
 
             embed.add_field(
                 name="🏆 Top 5 Pokédex",
@@ -109,7 +109,6 @@ def iniciar_modulo_ranking(bot):
                     especies_usuario / MAX_POKEDEX
                 ) * 100
 
-                # Diferencia con el puesto superior
                 diferencia_texto = ""
 
                 if posicion_usuario > 1:
@@ -127,7 +126,8 @@ def iniciar_modulo_ranking(bot):
                         f"**#{posicion_usuario}**\n"
                         f"📚 {especies_usuario} especies\n"
                         f"📈 {porcentaje_usuario:.1f}% completado\n"
-                        f"✨ Shinies capturados: **{total_shinies}**"
+                        f"✨ Shinies capturados: **{shinies_usuario}**\n"
+                        f"🎯 Capturas totales: **{capturas_usuario}**"
                         f"{diferencia_texto}"
                     ),
                     inline=False
@@ -138,6 +138,9 @@ def iniciar_modulo_ranking(bot):
             )
 
             await ctx.send(embed=embed)
+
+        except Exception as e:
+            await ctx.send(f"❌ Error al generar el ranking: {e}")
 
         finally:
             conn.close()
