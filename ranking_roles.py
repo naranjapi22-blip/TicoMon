@@ -200,6 +200,13 @@ class RankingRoles(commands.Cog):
                 reason="Líder actual del ranking"
             )
 
+            if canal:
+
+                await canal.send(
+                    f"🏆 Cambio de líder detectado en {rol.name}\n"
+                    f"Nuevo líder: {miembro.mention}"
+                )
+
             print(
                 f"✅ {rol.name} asignado a {miembro}"
             )
