@@ -224,16 +224,20 @@ class SpawnSelectionView(discord.ui.View):
             print("on_timeout: No se pudo liberar el canal automáticamente (falta referencia self.message).")
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        # Si el que hace clic NO es el dueño del comando...
+
         if interaction.user != self.autor_original:
-            # Mandamos el regaño privado (ephemeral=True hace que solo él lo vea)
-            await interaction.followup.send(
-                "¡Hey! 🛑 Consigue tu propio Pokémon usando `!spawn`. Este encuentro no es tuyo.", 
-                ephemeral=True
-            )
-            return False # Bloquea el clic
-        
-        return True # Si es el dueño, lo deja pasar con normalidad
+
+            try:
+                await interaction.followup.send(
+                    "¡Hey! 🛑 Consigue tu propio Pokémon usando `!spawn`. Este encuentro no es tuyo.",
+                    ephemeral=True
+                )
+            except discord.InteractionResponded:
+                pass
+
+            return False
+
+        return True
 
     # --- SE ELIMINÓ LA FUNCIÓN 'boton_captura' DE AQUÍ (Pertenece a la clase BotonCaptura) ---
 

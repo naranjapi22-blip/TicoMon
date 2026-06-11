@@ -280,7 +280,13 @@ async def spawn(ctx):
     # 1. Filtros básicos de inicial y energía
     if not gestor_spawn.verificar_inicial(ctx.author.id):
         return await ctx.send("¡Bienvenido! Antes de tu aventura, elige tu Pokémon inicial con `!inicial`.")
-    
+    if ctx.channel.id in gestor_spawn.canales_ocupados:
+        return await ctx.send(
+            "⚠️ Ya hay un encuentro activo en este canal."
+        )
+
+    gestor_spawn.canales_ocupados.add(ctx.channel.id)
+
     datos_intentos = await gestor_spawn.obtener_intentos(
     ctx.bot,
     ctx.author.id
@@ -323,8 +329,19 @@ async def spawn(ctx):
         buffer_siluetas = await servicios.generar_collage_siluetas(bot.session, datos_para_collage, tenidos=[])
         
         if not buffer_siluetas:
-            await database.actualizar_energia_db(ctx.bot, ctx.author.id, intentos, ultima_recarga)
-            return await ctx.send("Hubo un problema al generar las siluetas.")
+
+            gestor_spawn.canales_ocupados.discard(ctx.channel.id)
+
+            await database.actualizar_energia_db(
+                ctx.bot,
+                ctx.author.id,
+                intentos,
+                ultima_recarga
+            )
+
+            return await ctx.send(
+                "Hubo un problema al generar las siluetas."
+            )
 
         imagen_final = discord.File(buffer_siluetas, filename="fragmentos.png")
         
@@ -349,7 +366,7 @@ async def spawn(ctx):
             mensaje_enviado = await ctx.send(embed=embed, file=imagen_final, view=view)
             view.message = mensaje_enviado
             gestor_spawn.vistas_activas[ctx.channel.id] = view 
-            gestor_spawn.canales_ocupados.add(ctx.channel.id)
+
             asyncio.create_task(auto_liberar_canal(ctx.channel.id, 305))
 
         except Exception as e:
