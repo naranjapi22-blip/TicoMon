@@ -159,16 +159,26 @@ class IvsCommands(commands.Cog):
         embed.add_field(name="📝 Detalles", value=detalles, inline=False)
         
         try:
-            # Obtenemos el ID corregido usando tu archivo de mapeo
-            id_final = obtener_id_gif(dex_id)
-            
-            path_folder = "shiny" if es_shiny else "regular"
-            # Usamos id_final en lugar de dex_id
-            url_gif = f"https://www.shinyhunters.com/images/{path_folder}/{id_final}.gif"
-            
-            embed.set_image(url=url_gif)
+            if dex_id is not None:
+
+                # Obtenemos el ID corregido usando tu archivo de mapeo
+                id_final = obtener_id_gif(dex_id)
+
+                path_folder = "shiny" if es_shiny else "regular"
+
+                url_gif = (
+                    f"https://www.shinyhunters.com/images/"
+                    f"{path_folder}/{id_final}.gif"
+                )
+
+                embed.set_image(url=url_gif)
+
             await ctx.send(embed=embed)
-            return 
+            return
+
+        except Exception as e:
+            log.error(f"Error cargando GIF: {e}")
+            await ctx.send(embed=embed)
         except Exception as e:
             log.error(f"Error cargando GIF: {e}")
             await ctx.send(embed=embed)
