@@ -293,11 +293,8 @@ async def spawn(ctx):
 
     gestor_spawn.canales_ocupados.add(ctx.channel.id)
 
-    datos_intentos = await gestor_spawn.obtener_intentos(
-    ctx.bot,
-    ctx.author.id
-    )
-    intentos, ultima_recarga = datos_intentos
+    intentos = ctx.intentos
+    ultima_recarga = ctx.ultima_recarga
     
     if intentos <= 0:
         return await ctx.send("❌ Has agotado tus intentos. Tus inciensos se recargan en 2 horas.")

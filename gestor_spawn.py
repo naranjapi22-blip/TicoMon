@@ -152,7 +152,13 @@ def aplicar_filtro_spawn(bot):
                 return False
             
             # 4. Verificar energía/intentos
-            datos_energia = await obtener_intentos(ctx.bot, ctx.author.id)
+            datos_energia = await obtener_intentos(
+                ctx.bot,
+                ctx.author.id
+            )
+
+            ctx.intentos = datos_energia[0]
+            ctx.ultima_recarga = datos_energia[1]
             # datos_energia suele ser (intentos, ultima_recarga)
             if datos_energia[0] <= 0:
                 log.warning(f"⚠️ Usuario sin intentos: {ctx.author.id}")
