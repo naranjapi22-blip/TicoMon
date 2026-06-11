@@ -836,3 +836,38 @@ def obtener_datos_rareza():
     finally:
         cursor.close()
         conn.close()
+def guardar_canal_rankings(guild_id, canal_id):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        INSERT INTO configuracion_servidor
+        (guild_id, canal_rankings)
+        VALUES (%s, %s)
+        ON CONFLICT (guild_id)
+        DO UPDATE SET
+        canal_rankings = EXCLUDED.canal_rankings
+    """, (guild_id, canal_id))
+
+    conn.commit()
+    cur.close()
+    conn.close()
+def obtener_canal_rankings(guild_id):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT canal_rankings
+        FROM configuracion_servidor
+        WHERE guild_id = %s
+    """, (guild_id,))
+
+    resultado = cur.fetchone()
+
+    cur.close()
+    conn.close()
+
+    if resultado:
+        return resultado[0]
+
+    return None

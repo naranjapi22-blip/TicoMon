@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 import database
-
+from database import guardar_canal_rankings
 
 async def actualizar_roles_competitivos(cog, guild):
 
@@ -210,7 +210,32 @@ class RankingRoles(commands.Cog):
         )
 
         await ctx.send(embed=embed)
+    @commands.has_permissions(administrator=True)
+    @commands.guild_only()
+    @commands.command(name="setrankings")
+    async def setrankings(self, ctx):
 
+        guardar_canal_rankings(
+            ctx.guild.id,
+            ctx.channel.id
+        )
 
+        embed = discord.Embed(
+            title="✅ Canal de rankings configurado",
+            description=(
+                "Los anuncios automáticos de cambios "
+                "de líder se enviarán en este canal."
+            ),
+            color=discord.Color.green()
+        )
+
+        await ctx.send(embed=embed)
+    @setrankings.error
+    async def setrankings_error(self, ctx, error):
+
+        if isinstance(error, commands.MissingPermissions):
+            await ctx.send(
+                "❌ Necesitas permisos de administrador."
+            )
 async def setup(bot):
     await bot.add_cog(RankingRoles(bot))
