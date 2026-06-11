@@ -343,7 +343,7 @@ class BotonCaptura(discord.ui.View):
         self.es_shiny = es_shiny
         self.capture_rate = capture_rate
         self.tamano_factor = tamano_factor
-        
+        self.usuario_capturador = None
         self.tiempo_aparicion = datetime.now(timezone.utc)
         self.intentos_fallidos = 0
         self.user_cooldowns = {}
@@ -417,6 +417,7 @@ class BotonCaptura(discord.ui.View):
             
             if tiempo_pasado > 300:
                 self.alguien_lo_atrapo = True
+                self.usuario_capturador = interaction.user.id
                 liberar_canal_completo(interaction.channel.id)
                 await interaction.message.edit(content="💨 ¡El tiempo se ha agotado! El Pokémon ha huido.", view=None)
                 return self.stop()
@@ -424,6 +425,7 @@ class BotonCaptura(discord.ui.View):
             if self.intentos_fallidos > 30:
                 if random.random() < (self.intentos_fallidos * 0.003):
                     self.alguien_lo_atrapo = True
+                    self.usuario_capturador = interaction.user.id
                     liberar_canal_completo(interaction.channel.id)
                     await interaction.message.edit(content="💨 ¡El Pokémon se ha asustado y ha huido!", view=None)
                     return self.stop()
@@ -512,6 +514,7 @@ class BotonCaptura(discord.ui.View):
             # --- INTENTO DE CAPTURA ---
             if random.random() < prob_final:
                 self.alguien_lo_atrapo = True 
+                self.usuario_capturador = interaction.user.id
                 try:
                     # 1. Guardamos la captura y recibimos el ID y si hubo récord
                     id_captura, resultado_record = await database.guardar_captura(
@@ -570,7 +573,7 @@ class BotonCaptura(discord.ui.View):
             liberar_canal_completo(interaction.channel.id)
             gestor_spawn.canales_ocupados.discard(interaction.channel.id)
             self.alguien_lo_atrapo = True
-
+            self.usuario_capturador = interaction.user.id
             log.error(
                 f"🚨 Error crítico en captura: {e}",
                 exc_info=True
