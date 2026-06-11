@@ -6,7 +6,7 @@ import asyncio
 from logger_config import log
 from PIL import Image, ImageFilter, ImageEnhance, ImageDraw, ImageChops, ImageOps
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
-
+import time
 
 
 # 1. Creamos una caché que:
@@ -101,7 +101,9 @@ def generar_mascara_hierba(width, height):
 # 1. Obtener datos de un Pokémon desde PokeAPI
 async def obtener_pokemon(session, nombre_o_id):
     try:
+        inicio = time.perf_counter()
         url = f"https://pokeapi.co/api/v2/pokemon/{str(nombre_o_id).lower()}"
+        log.info(f"⏳ Iniciando carga de {nombre_o_id}")
         async with session.get(url) as response:
             if response.status == 200:
                 data = await response.json()
