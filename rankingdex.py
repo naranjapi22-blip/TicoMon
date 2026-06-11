@@ -37,7 +37,7 @@ def iniciar_modulo_ranking(bot):
                 SELECT COUNT(*)
                 FROM capturas
                 WHERE user_id = %s
-                AND (es_shiny = TRUE OR es_shiny = 1)
+                AND es_shiny = 1
             """, (str(ctx.author.id),))
 
             total_shinies = cursor.fetchone()[0] or 0
