@@ -315,15 +315,27 @@ async def spawn(ctx):
         # FASE 3: DESCARGA PARALELA
         tasks = [
             servicios.obtener_pokemon(
-                ctx.bot.session,
+                bot.session,
                 pid
             )
             for pid in ids_spawn
         ]
-        resultados = await asyncio.gather(*tasks)
+
+        resultados = await asyncio.gather(
+            *tasks,
+            return_exceptions=True
+        )
 
         # FASE 4: Procesamiento de datos
-        for data, species in resultados:
+        for resultado in resultados:
+
+            if isinstance(resultado, Exception):
+                log.warning(
+                    f"Error obteniendo Pokémon: {resultado}"
+                )
+                continue
+
+            data, species = resultado
 
             if not data:
                 continue
@@ -332,7 +344,9 @@ async def spawn(ctx):
             pokemon_id = data["id"]
             rareza = rarezas_spawn[pokemon_id]
 
-            data_pokes.append((data, species, es_shiny, rareza))
+            data_pokes.append(
+                (data, species, es_shiny, rareza)
+            )
 
         # Extraemos solo datos para collage
         datos_para_collage = [(d, s) for d, s, sh, r in data_pokes]
