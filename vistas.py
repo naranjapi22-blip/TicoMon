@@ -9,6 +9,7 @@ import os
 import gestor_spawn
 import servicios
 from logger_config import log
+from ranking_roles import actualizar_roles_competitivos
 from mapeo_pokes import obtener_id_gif # Asegúrate de tener este import al inicio del archivo
 import records  # Importa tu archivo de lógica de récords
 COOLDOWN_LANZAMIENTO = 10.0
@@ -510,13 +511,28 @@ class BotonCaptura(discord.ui.View):
                         es_shiny=self.es_shiny,           # Especificas que este es el shiny
                         pokeball=nombre_bola
                     )
+                    try:
+                        ranking_cog = interaction.client.get_cog(
+                            "RankingRoles"
+                        )
+
+                        if ranking_cog:
+                            await actualizar_roles_competitivos(
+                                ranking_cog,
+                                interaction.guild
+                            )
+
+                    except Exception as e:
+                        log.error(
+                            f"Error actualizando rankings: {e}"
+                        )
                     liberar_canal_completo(interaction.channel.id)
                     
                     # Se eliminó la reconexión y la doble verificación aquí para no sobreescribir 'resultado_record'
 
                     # 2. Construimos el mensaje base
                     mensaje = f"🎉 {interaction.user.mention} capturó a **{self.nombre.capitalize()}** (ID: {id_captura}) usando una **{nombre_bola}**! ({porcentaje}%)"
-                    
+
                     # 3. Añadimos el aviso de récord si database.guardar_captura devolvió algo
                     if resultado_record == "NUEVO_RECORD_GRANDE":
                         mensaje += "\n👑 **¡Nuevo Récord XXL!** Has entrado en el Salón de la Fama."

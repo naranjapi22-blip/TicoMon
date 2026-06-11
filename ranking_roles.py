@@ -1,8 +1,36 @@
 import discord
 from discord.ext import commands
-
 import database
 
+
+async def actualizar_roles_competitivos(cog, guild):
+
+    roles = await cog.asegurar_roles(guild)
+
+    lider_pokedex = await cog.obtener_lider_pokedex()
+    lider_shiny = await cog.obtener_lider_shiny()
+    lider_legend = await cog.obtener_lider_legendario()
+
+    if lider_pokedex:
+        await cog.asignar_rol_exclusivo(
+            guild,
+            roles["🏆 Maestro Pokédex"],
+            lider_pokedex
+        )
+
+    if lider_shiny:
+        await cog.asignar_rol_exclusivo(
+            guild,
+            roles["✨ Rey Shiny"],
+            lider_shiny
+        )
+
+    if lider_legend:
+        await cog.asignar_rol_exclusivo(
+            guild,
+            roles["👑 Rey Legendario"],
+            lider_legend
+        )
 
 class RankingRoles(commands.Cog):
 
@@ -157,34 +185,10 @@ class RankingRoles(commands.Cog):
     @commands.has_permissions(administrator=True)
     async def actualizar_rankings(self, ctx):
 
-        guild = ctx.guild
-
-        roles = await self.asegurar_roles(guild)
-
-        lider_pokedex = await self.obtener_lider_pokedex()
-        lider_shiny = await self.obtener_lider_shiny()
-        lider_legend = await self.obtener_lider_legendario()
-
-        if lider_pokedex:
-            await self.asignar_rol_exclusivo(
-                guild,
-                roles["🏆 Maestro Pokédex"],
-                lider_pokedex
-            )
-
-        if lider_shiny:
-            await self.asignar_rol_exclusivo(
-                guild,
-                roles["✨ Rey Shiny"],
-                lider_shiny
-            )
-
-        if lider_legend:
-            await self.asignar_rol_exclusivo(
-                guild,
-                roles["👑 Rey Legendario"],
-                lider_legend
-            )
+        await actualizar_roles_competitivos(
+            self,
+            ctx.guild
+        )
 
         embed = discord.Embed(
             title="🏆 Rankings actualizados",
