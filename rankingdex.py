@@ -180,11 +180,6 @@ def iniciar_modulo_ranking(bot):
                 for fila in cursor.fetchall()
             }
 
-            sus_pokemon = {
-                fila[0]
-                for fila in cursor.fetchall()
-            }
-
             compartidos = mis_pokemon & sus_pokemon
             solo_mios = mis_pokemon - sus_pokemon
             solo_suyos = sus_pokemon - mis_pokemon
