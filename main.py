@@ -836,7 +836,7 @@ def generar_ids_spawn():
             weights=pesos_disponibles,
             k=1
         )[0]
-        log.info(f"Rareza elegida: {rareza_elegida}")
+        
         pokemon_disponibles = pokemon_por_rareza[rareza_elegida]
 
         if not pokemon_disponibles:
