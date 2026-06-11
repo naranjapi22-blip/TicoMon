@@ -855,6 +855,5 @@ def generar_ids_spawn():
 
         elif rareza_elegida == "mitico":
             salio_mitico = True
-    log.info(f"Spawn generado: {ids_spawn}")
     return ids_spawn, rarezas_spawn
 bot.run(TOKEN)

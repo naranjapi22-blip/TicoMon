@@ -96,31 +96,47 @@ def generar_mascara_hierba(width, height):
     except Exception as e:
         log.error(f"🚨 Error al generar máscara de hierba: {e}", exc_info=True)
         return None
+pokemon_cache = {}
 
-
-# 1. Obtener datos de un Pokémon desde PokeAPI
 async def obtener_pokemon(session, nombre_o_id):
     try:
-        inicio = time.perf_counter()
-        url = f"https://pokeapi.co/api/v2/pokemon/{str(nombre_o_id).lower()}"
-        log.info(f"⏳ Iniciando carga de {nombre_o_id}")
+        cache_key = str(nombre_o_id).lower()
+
+        if cache_key in pokemon_cache:
+            log.info(f"⚡ Cache hit: {cache_key}")
+            return pokemon_cache[cache_key]
+
+        log.info(f"🌐 Cache miss: {cache_key}")
+
+        url = f"https://pokeapi.co/api/v2/pokemon/{cache_key}"
+
         async with session.get(url) as response:
             if response.status == 200:
                 data = await response.json()
+
                 species_url = data['species']['url']
+
                 async with session.get(species_url) as s_resp:
                     if s_resp.status == 200:
                         species = await s_resp.json()
-                        
-                        # --- AQUÍ ESTÁ EL DATO CRÍTICO ---
-                        # capture_rate viene en el objeto species de la PokeAPI
-                        rate = species.get('capture_rate', 45) # 45 es el estándar para raros
-                        
-                        log.info(f"✅ Pokémon {data['name']} cargado. Rate: {rate}")
-                        # Devolvemos el rate dentro del diccionario de datos
-                        data['capture_rate'] = rate 
+
+                        rate = species.get('capture_rate', 45)
+
+                        log.info(
+                            f"✅ Pokémon {data['name']} cargado. Rate: {rate}"
+                        )
+
+                        data['capture_rate'] = rate
+
+                        pokemon_cache[cache_key] = (
+                            data,
+                            species
+                        )
+
                         return data, species
+
         return None, None
+
     except Exception as e:
         log.error(f"🚨 Error al obtener datos: {e}")
         return None, None
