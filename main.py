@@ -139,10 +139,16 @@ async def on_ready():
 
 @bot.event
 async def on_command_error(ctx, error):
-    if isinstance(error, commands.CommandNotFound):
+
+    ignorar = (
+        commands.CommandNotFound,
+        commands.MissingRequiredArgument,
+        commands.CheckFailure
+    )
+
+    if isinstance(error, ignorar):
         return
-    if isinstance(error, commands.MissingRequiredArgument):
-        return
+
     print(f"Error inesperado: {error}")
 
 @bot.command()
