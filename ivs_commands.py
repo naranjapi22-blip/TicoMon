@@ -129,7 +129,15 @@ class IvsCommands(commands.Cog):
         emoji_shiny = "✨ " if es_shiny else ""
         embed = discord.Embed(title=f"{emoji_shiny}{nombre.capitalize()}", color=color)
         
-        data, species = await servicios.obtener_pokemon(self.bot.session, nombre)
+        data, species = await servicios.obtener_pokemon(
+            self.bot.session,
+            nombre
+        )
+
+        # Si pokemon_data no tiene la forma especial,
+        # usamos el ID que devuelve PokéAPI
+        if data:
+            dex_id = data["id"]
         nat_stats = NATURALEZAS.get(naturaleza.capitalize(), NATURALEZAS["Fuerte"])
 
         def format_stat_con_nat(base_lvl50, iv, stat_name):
