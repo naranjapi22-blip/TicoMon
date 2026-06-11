@@ -160,23 +160,16 @@ class RankingRoles(commands.Cog):
         # Verificar si el líder actual ya tiene el rol
         lider_actual = None
 
-        print(f"[DEBUG] rol.members = {len(rol.members)}")
 
         if rol.members:
             lider_actual = rol.members[0]
 
-        print(f"[DEBUG] lider_actual = {lider_actual}")
-        print(f"[DEBUG] user_id = {user_id}")
-
-        print(f"[DEBUG] Rol: {rol.name}")
-        print(f"[DEBUG] Miembros con el rol:")
 
         for m in guild.members:
             if rol in m.roles:
                 print(f"   - {m} ({m.id})")
 
-        print(f"[DEBUG] lider_actual = {lider_actual}")
-        print(f"[DEBUG] user_id = {user_id}")
+
 
         canal = None
         canal_id = obtener_canal_rankings(guild.id)
@@ -189,6 +182,11 @@ class RankingRoles(commands.Cog):
         
 
         if lider_actual and lider_actual.id == user_id:
+
+            print(
+                f"[DEBUG] Sin cambios en {rol.name}"
+            )
+
             return
 
         # Quitar el rol al líder anterior
