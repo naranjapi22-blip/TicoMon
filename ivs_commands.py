@@ -92,7 +92,8 @@ class IvsCommands(commands.Cog):
             SELECT c.pokemon_nombre, c.iv_hp, c.iv_atk, c.iv_def, c.iv_spa, c.iv_spd, c.iv_spe, 
                    c.es_shiny, c.naturaleza, c.tamano_factor, p.id
             FROM capturas c
-            JOIN pokemon_data p ON c.pokemon_nombre = p.nombre
+            LEFT JOIN pokemon_data p
+            ON c.pokemon_nombre = p.nombre
             WHERE c.id = %s AND c.user_id = %s
         """, (str(id_pokemon), str(ctx.author.id)))
         
