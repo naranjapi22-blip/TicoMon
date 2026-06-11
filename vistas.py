@@ -430,7 +430,7 @@ class BotonCaptura(discord.ui.View):
                 prob_final = 1.0
 
             else:
-                log.info(f"🎯 Rareza recibida en captura: [{self.rareza}]")
+                
                 if self.rareza == "muy_comun":
                     base_pct = 0.10
 
