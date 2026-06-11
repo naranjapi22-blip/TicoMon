@@ -158,10 +158,15 @@ class RankingRoles(commands.Cog):
     ):
 
         # Verificar si el líder actual ya tiene el rol
-        lider_actual = next(
-            (m for m in guild.members if rol in m.roles),
-            None
-        )
+        lider_actual = None
+
+        print(f"[DEBUG] rol.members = {len(rol.members)}")
+
+        if rol.members:
+            lider_actual = rol.members[0]
+
+        print(f"[DEBUG] lider_actual = {lider_actual}")
+        print(f"[DEBUG] user_id = {user_id}")
 
         print(f"[DEBUG] Rol: {rol.name}")
         print(f"[DEBUG] Miembros con el rol:")
