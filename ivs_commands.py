@@ -277,6 +277,58 @@ class IvsCommands(commands.Cog):
         )
         
         await ctx.send(embed=embed)
+
+
+    @commands.command(name="liberar")
+    async def liberar(self, ctx, id_pokemon: int):
+
+        conn = database.get_connection()
+        cursor = conn.cursor()
+
+        try:
+
+            cursor.execute("""
+                SELECT
+                    pokemon_nombre,
+                    es_shiny,
+                    iv_hp,
+                    iv_atk,
+                    iv_def,
+                    iv_spa,
+                    iv_spd,
+                    iv_spe
+                FROM capturas
+                WHERE id = %s
+                AND user_id = %s
+            """, (
+                str(id_pokemon),
+                str(ctx.author.id)
+            ))
+
+            resultado = cursor.fetchone()
+
+            if not resultado:
+                await ctx.send(
+                    "❌ No existe ningún Pokémon con ese ID en tu inventario."
+                )
+                return
+
+            nombre, shiny, hp, atk, de, spa, spd, spe = resultado
+
+            total = hp + atk + de + spa + spd + spe
+            porcentaje = round((total / 186) * 100, 2)
+
+            emoji = "✨" if shiny else ""
+
+            await ctx.send(
+                f"⚠️ Vas a liberar:\n"
+                f"{emoji} **{nombre.capitalize()}**\n"
+                f"🆔 ID: `{id_pokemon}`\n"
+                f"📈 IV: `{porcentaje}%`"
+            )
+
+        finally:
+            conn.close()
 async def setup(bot):
     await bot.add_cog(IvsCommands(bot))
     
