@@ -35,7 +35,7 @@ class Inventario(commands.Cog):
     
     @commands.command(name="inventario")
     async def ver_inventario(self, ctx):
-        conn = get_connection()
+        conn = database.get_connection()
         cursor = conn.cursor()
         cursor.execute("""
             SELECT id, pokemon_nombre, es_shiny, 
