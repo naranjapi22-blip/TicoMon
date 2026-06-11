@@ -162,8 +162,18 @@ class RankingRoles(commands.Cog):
             (m for m in guild.members if rol in m.roles),
             None
         )
-        canal = None
 
+        print(f"[DEBUG] Rol: {rol.name}")
+        print(f"[DEBUG] Miembros con el rol:")
+
+        for m in guild.members:
+            if rol in m.roles:
+                print(f"   - {m} ({m.id})")
+
+        print(f"[DEBUG] lider_actual = {lider_actual}")
+        print(f"[DEBUG] user_id = {user_id}")
+
+        canal = None
         canal_id = obtener_canal_rankings(guild.id)
 
         if canal_id:
