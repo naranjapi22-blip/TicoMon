@@ -173,7 +173,12 @@ def iniciar_modulo_ranking(bot):
                 SELECT DISTINCT pokemon_nombre
                 FROM capturas
                 WHERE user_id = %s
-            """, (str(ctx.author.id),))
+            """, (str(miembro.id),))
+
+            sus_pokemon = {
+                fila[0]
+                for fila in cursor.fetchall()
+            }
 
             sus_pokemon = {
                 fila[0]
