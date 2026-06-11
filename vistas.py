@@ -382,11 +382,22 @@ class BotonCaptura(discord.ui.View):
         # 2. Llegó tarde (Usamos response.send_message porque aún no hay defer)
         if self.alguien_lo_atrapo:
 
-            if interaction.user.id == self.usuario_capturador:
-                return await interaction.response.send_message(
-                    "✅ Ya capturaste este Pokémon.",
-                    ephemeral=True
-                )
+            try:
+                if interaction.user.id == self.usuario_capturador:
+                    await interaction.response.send_message(
+                        "✅ Ya capturaste este Pokémon.",
+                        ephemeral=True
+                    )
+                else:
+                    await interaction.response.send_message(
+                        "💨 ¡Llegaste tarde!",
+                        ephemeral=True
+                    )
+
+            except discord.NotFound:
+                pass
+
+            return
 
             return await interaction.response.send_message(
                 "💨 ¡Llegaste tarde!",
@@ -524,21 +535,9 @@ class BotonCaptura(discord.ui.View):
                         es_shiny=self.es_shiny,           # Especificas que este es el shiny
                         pokeball=nombre_bola
                     )
-                    try:
-                        ranking_cog = interaction.client.get_cog(
-                            "RankingRoles"
-                        )
-
-                        if ranking_cog:
-                            await actualizar_roles_competitivos(
-                                ranking_cog,
-                                interaction.guild
-                            )
-
-                    except Exception as e:
-                        log.error(
-                            f"Error actualizando rankings: {e}"
-                        )
+                    ranking_cog = interaction.client.get_cog(
+                        "RankingRoles"
+)
                     liberar_canal_completo(interaction.channel.id)
                     
                     # Se eliminó la reconexión y la doble verificación aquí para no sobreescribir 'resultado_record'
