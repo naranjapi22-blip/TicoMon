@@ -124,21 +124,41 @@ def iniciar_modulo_perfil(bot):
             es_shiny = bool(es_shiny_db)
             
             data, _ = await servicios.obtener_pokemon(bot.session, destacado_nombre)
-            if data:
-                # Usamos la lógica de GIF animado integrado
-                
-                dex_id = data['id']
-                id_final = obtener_id_gif(dex_id) # Aquí obtienes el ID correcto (ej: 739)
+        if data:
+            try:
+
+                dex_id = data["id"]
+
+                id_final = obtener_id_gif(dex_id)
+
                 path_folder = "shiny" if es_shiny else "regular"
-                
-                # ¡CORRECCIÓN AQUÍ! Debes usar id_final en lugar de dex_id
-                url_gif = f"https://www.shinyhunters.com/images/{path_folder}/{id_final}.gif"
+
+                url_gif = (
+                    f"https://www.shinyhunters.com/images/"
+                    f"{path_folder}/{id_final}.gif"
+                )
+
                 embed.set_image(url=url_gif)
-                titulo_destacado = f"**{destacado_nombre.capitalize()}** {'✨' if es_shiny else ''}"
-                embed.add_field(name="🌟 Compañero Destacado", value=titulo_destacado, inline=False)
-                
-                if es_shiny:
-                    embed.color = discord.Color.gold()
+
+            except Exception as e:
+                log.warning(
+                    f"No se pudo cargar GIF para "
+                    f"{destacado_nombre}: {e}"
+                )
+
+            titulo_destacado = (
+                f"**{destacado_nombre.capitalize()}** "
+                f"{'✨' if es_shiny else ''}"
+            )
+
+            embed.add_field(
+                name="🌟 Compañero Destacado",
+                value=titulo_destacado,
+                inline=False
+            )
+
+            if es_shiny:
+                embed.color = discord.Color.gold()
         else:
             embed.add_field(name="🌟 Compañero Destacado", value="*No ha destacado ningún Pokémon.*\nUsa `@Bot destacar <nombre> [shiny]`", inline=False)
             
