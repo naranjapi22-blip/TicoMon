@@ -121,12 +121,9 @@ class RankingRoles(commands.Cog):
         user_id
     ):
 
-        print(f"=== ASIGNANDO {rol.name} ===")
-        print(f"user_id: {user_id}")
-
         for miembro in guild.members:
+
             if rol in miembro.roles:
-                print(f"Quitando rol a {miembro}")
                 await miembro.remove_roles(
                     rol,
                     reason="Actualización de ranking"
@@ -134,27 +131,26 @@ class RankingRoles(commands.Cog):
 
         miembro = guild.get_member(user_id)
 
-        print(f"Resultado get_member: {miembro}")
-
-        if miembro:
+        if miembro is None:
             try:
-                await miembro.add_roles(
-                    rol,
-                    reason="Líder actual del ranking"
-                )
-
-                print(
-                    f"✅ Rol {rol.name} asignado a {miembro}"
-                )
-
+                miembro = await guild.fetch_member(user_id)
             except Exception as e:
-                print(
-                    f"❌ Error asignando rol: {e}"
-                )
+                print(f"No se pudo obtener miembro {user_id}: {e}")
+                return
 
-        else:
+        try:
+            await miembro.add_roles(
+                rol,
+                reason="Líder actual del ranking"
+            )
+
             print(
-                f"❌ No se encontró miembro para {user_id}"
+                f"✅ {rol.name} asignado a {miembro}"
+            )
+
+        except Exception as e:
+            print(
+                f"❌ Error asignando {rol.name}: {e}"
             )
 
     @commands.command(name="actualizarrankings")
