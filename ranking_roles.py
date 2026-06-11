@@ -183,10 +183,6 @@ class RankingRoles(commands.Cog):
 
         if lider_actual and lider_actual.id == user_id:
 
-            print(
-                f"[DEBUG] Sin cambios en {rol.name}"
-            )
-
             return
 
         # Quitar el rol al líder anterior
@@ -212,6 +208,30 @@ class RankingRoles(commands.Cog):
                 rol,
                 reason="Líder actual del ranking"
             )
+
+            if canal:
+
+                embed = discord.Embed(
+                    title=f"🎉 Nuevo líder: {rol.name}",
+                    description=(
+                        f"{miembro.mention} ha tomado el liderato."
+                    ),
+                    color=discord.Color.gold()
+                )
+
+                if lider_actual:
+                    embed.add_field(
+                        name="Líder anterior",
+                        value=lider_actual.mention,
+                        inline=False
+                    )
+
+                await canal.send(embed=embed)
+
+            print(
+                f"✅ {rol.name} asignado a {miembro}"
+            )
+                        
 
             if canal:
 
