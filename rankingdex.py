@@ -144,85 +144,85 @@ def iniciar_modulo_ranking(bot):
 
         finally:
             conn.close()
-@bot.command(name="comparar")
-async def comparar(ctx, miembro: discord.Member):
+    @bot.command(name="comparar")
+    async def comparar(ctx, miembro: discord.Member):
 
-    if miembro.bot:
-        await ctx.send("❌ No puedes comparar con un bot.")
-        return
+        if miembro.bot:
+            await ctx.send("❌ No puedes comparar con un bot.")
+            return
 
-    conn = database.get_connection()
-    cursor = conn.cursor()
+        conn = database.get_connection()
+        cursor = conn.cursor()
 
-    try:
+        try:
 
-        # Pokémon del usuario actual
-        cursor.execute("""
-            SELECT DISTINCT pokemon_nombre
-            FROM capturas
-            WHERE user_id = %s
-        """, (ctx.author.id,))
+            # Pokémon del usuario actual
+            cursor.execute("""
+                SELECT DISTINCT pokemon_nombre
+                FROM capturas
+                WHERE user_id = %s
+            """, (ctx.author.id,))
 
-        mis_pokemon = {
-            fila[0]
-            for fila in cursor.fetchall()
-        }
+            mis_pokemon = {
+                fila[0]
+                for fila in cursor.fetchall()
+            }
 
-        # Pokémon del usuario objetivo
-        cursor.execute("""
-            SELECT DISTINCT pokemon_nombre
-            FROM capturas
-            WHERE user_id = %s
-        """, (miembro.id,))
+            # Pokémon del usuario objetivo
+            cursor.execute("""
+                SELECT DISTINCT pokemon_nombre
+                FROM capturas
+                WHERE user_id = %s
+            """, (miembro.id,))
 
-        sus_pokemon = {
-            fila[0]
-            for fila in cursor.fetchall()
-        }
+            sus_pokemon = {
+                fila[0]
+                for fila in cursor.fetchall()
+            }
 
-        compartidos = mis_pokemon & sus_pokemon
-        solo_mios = mis_pokemon - sus_pokemon
-        solo_suyos = sus_pokemon - mis_pokemon
+            compartidos = mis_pokemon & sus_pokemon
+            solo_mios = mis_pokemon - sus_pokemon
+            solo_suyos = sus_pokemon - mis_pokemon
 
-        embed = discord.Embed(
-            title="📊 Comparación de Pokédex",
-            color=discord.Color.blue()
-        )
+            embed = discord.Embed(
+                title="📊 Comparación de Pokédex",
+                color=discord.Color.blue()
+            )
 
-        embed.add_field(
-            name=f"📖 {ctx.author.display_name}",
-            value=f"{len(mis_pokemon)} especies",
-            inline=True
-        )
+            embed.add_field(
+                name=f"📖 {ctx.author.display_name}",
+                value=f"{len(mis_pokemon)} especies",
+                inline=True
+            )
 
-        embed.add_field(
-            name=f"📖 {miembro.display_name}",
-            value=f"{len(sus_pokemon)} especies",
-            inline=True
-        )
+            embed.add_field(
+                name=f"📖 {miembro.display_name}",
+                value=f"{len(sus_pokemon)} especies",
+                inline=True
+            )
 
-        embed.add_field(
-            name="🤝 Compartidos",
-            value=str(len(compartidos)),
-            inline=False
-        )
+            embed.add_field(
+                name="🤝 Compartidos",
+                value=str(len(compartidos)),
+                inline=False
+            )
 
-        embed.add_field(
-            name="✅ Tú tienes y él no",
-            value=str(len(solo_mios)),
-            inline=True
-        )
+            embed.add_field(
+                name="✅ Tú tienes y él no",
+                value=str(len(solo_mios)),
+                inline=True
+            )
 
-        embed.add_field(
-            name="❌ Él tiene y tú no",
-            value=str(len(solo_suyos)),
-            inline=True
-        )
+            embed.add_field(
+                name="❌ Él tiene y tú no",
+                value=str(len(solo_suyos)),
+                inline=True
+            )
 
-        await ctx.send(embed=embed)
+            await ctx.send(embed=embed)
 
-    except Exception as e:
-        await ctx.send(f"❌ Error: {e}")
+        except Exception as e:
+            await ctx.send(f"❌ Error: {e}")
 
-    finally:
-        conn.close()
+        finally:
+            conn.close()
