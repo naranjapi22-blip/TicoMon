@@ -149,6 +149,16 @@ class RankingRoles(commands.Cog):
         user_id
     ):
 
+        # Verificar si el líder actual ya tiene el rol
+        lider_actual = next(
+            (m for m in guild.members if rol in m.roles),
+            None
+        )
+
+        if lider_actual and lider_actual.id == user_id:
+            return
+
+        # Quitar el rol al líder anterior
         for miembro in guild.members:
 
             if rol in miembro.roles:
