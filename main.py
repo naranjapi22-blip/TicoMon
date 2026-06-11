@@ -348,8 +348,29 @@ async def spawn(ctx):
                 (data, species, es_shiny, rareza)
             )
 
+        # NUEVO BLOQUE
+        if not data_pokes:
+
+            gestor_spawn.canales_ocupados.discard(
+                ctx.channel.id
+            )
+
+            await database.actualizar_energia_db(
+                ctx.bot,
+                ctx.author.id,
+                intentos,
+                ultima_recarga
+            )
+
+            return await ctx.send(
+                "❌ No se pudo generar ningún Pokémon válido."
+            )
+
         # Extraemos solo datos para collage
-        datos_para_collage = [(d, s) for d, s, sh, r in data_pokes]
+        datos_para_collage = [
+            (d, s)
+            for d, s, sh, r in data_pokes
+        ]
 
         # Pasamos la lista limpia al generador
         buffer_siluetas = await servicios.generar_collage_siluetas(
