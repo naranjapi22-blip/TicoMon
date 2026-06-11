@@ -105,6 +105,7 @@ class IvsCommands(commands.Cog):
             return
 
         nombre, hp, atk, defs, spa, spd, spe, es_shiny, naturaleza, tamano, dex_id = resultado
+        print(f"DEBUG IVS -> {nombre} | dex_id={dex_id}")
         
         # 2. Verificación de Récord para el Boost Visual
         estado_record = records.obtener_estado_record(cursor, nombre.lower(), id_pokemon)
@@ -161,7 +162,6 @@ class IvsCommands(commands.Cog):
         try:
             if dex_id is not None:
 
-                # Obtenemos el ID corregido usando tu archivo de mapeo
                 id_final = obtener_id_gif(dex_id)
 
                 path_folder = "shiny" if es_shiny else "regular"
@@ -171,19 +171,24 @@ class IvsCommands(commands.Cog):
                     f"{path_folder}/{id_final}.gif"
                 )
 
+                print(f"DEBUG nombre={nombre}")
+                print(f"DEBUG dex_id={dex_id}")
+                print(f"DEBUG id_final={id_final}")
+                print(f"DEBUG url={url_gif}")
+
                 embed.set_image(url=url_gif)
 
             await ctx.send(embed=embed)
             return
 
         except Exception as e:
-            log.error(f"Error cargando GIF: {e}")
-            await ctx.send(embed=embed)
-        except Exception as e:
-            log.error(f"Error cargando GIF: {e}")
-            await ctx.send(embed=embed)
-        except Exception as e:
-            log.error(f"Error cargando GIF: {e}")
+            import traceback
+
+            print("=== ERROR GIF IVS ===")
+            traceback.print_exc()
+
+            log.error(f"Error cargando GIF: {e}", exc_info=True)
+
             await ctx.send(embed=embed)
     @commands.command(name="misrecords")
     async def ver_mis_records(self, ctx):
