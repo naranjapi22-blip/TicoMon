@@ -162,6 +162,14 @@ class RankingRoles(commands.Cog):
             (m for m in guild.members if rol in m.roles),
             None
         )
+        canal = None
+
+        canal_id = obtener_canal_rankings(guild.id)
+
+        if canal_id:
+            canal = guild.get_channel(canal_id)
+        
+        
 
         if lider_actual and lider_actual.id == user_id:
             return
