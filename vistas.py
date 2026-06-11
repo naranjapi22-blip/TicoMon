@@ -709,9 +709,9 @@ class SeleccionInicialView(discord.ui.View):
         # 3. INICIALIZAR ENERGÍA EN LA BASE DE DATOS (Persistente)
         # Usamos la función de base de datos directamente
         await database.actualizar_energia_db(
-            self.bot, 
-            self.user_id, 
-            12, 
+            interaction.client,
+            self.user_id,
+            12,
             datetime.now(timezone.utc)
         )
         
@@ -725,4 +725,5 @@ class SeleccionInicialView(discord.ui.View):
     async def next(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.index = (self.index + 1) % len(INICIALES)
         await interaction.response.edit_message(embed=self.get_embed())
+
 
