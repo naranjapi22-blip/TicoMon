@@ -694,7 +694,13 @@ class SeleccionInicialView(discord.ui.View):
         conn.close()
         
         # 2. Guardar inicial en capturas
-        await database.guardar_captura(self.user_id, poke['nombre'], es_shiny=False, pokeball='Pokéball')
+        await database.guardar_captura(
+            self.user_id,
+            poke['nombre'],
+            tamano_factor=1.0,
+            es_shiny=False,
+            pokeball='Pokéball'
+        )
         
         # 3. INICIALIZAR ENERGÍA EN LA BASE DE DATOS (Persistente)
         # Usamos la función de base de datos directamente
