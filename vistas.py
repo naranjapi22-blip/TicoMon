@@ -381,7 +381,17 @@ class BotonCaptura(discord.ui.View):
 
         # 2. Llegó tarde (Usamos response.send_message porque aún no hay defer)
         if self.alguien_lo_atrapo:
-            return await interaction.response.send_message("💨 ¡Llegaste tarde!", ephemeral=True)
+
+            if interaction.user.id == self.usuario_capturador:
+                return await interaction.response.send_message(
+                    "✅ Ya capturaste este Pokémon.",
+                    ephemeral=True
+                )
+
+            return await interaction.response.send_message(
+                "💨 ¡Llegaste tarde!",
+                ephemeral=True
+            )
 
         # 3. Reservamos la interacción
         try:
