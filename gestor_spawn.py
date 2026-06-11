@@ -152,25 +152,29 @@ def aplicar_filtro_spawn(bot):
                 return False
             
             # 4. Verificar energía/intentos
-            datos_energia = await obtener_intentos(
+            ctx.intentos, ctx.ultima_recarga = await obtener_intentos(
                 ctx.bot,
                 ctx.author.id
             )
 
-            ctx.intentos = datos_energia[0]
-            ctx.ultima_recarga = datos_energia[1]
-            # datos_energia suele ser (intentos, ultima_recarga)
-            if datos_energia[0] <= 0:
-                log.warning(f"⚠️ Usuario sin intentos: {ctx.author.id}")
-                await ctx.send("❌ Has agotado tus intentos. Tus inciensos se recargan en 2 horas.")
+            if ctx.intentos <= 0:
+                log.warning(
+                    f"⚠️ Usuario sin intentos: {ctx.author.id}"
+                )
+
+                await ctx.send(
+                    "❌ Has agotado tus intentos. "
+                    "Tus inciensos se recargan en 2 horas."
+                )
+
                 return False
-            
+
             # 5. Todo validado
-            log.info(f"✅ Spawn validado: User {ctx.author.id} - Intentos disponibles: {datos_energia[0]}")
-            
-            # Opcional: Aquí podrías reservar el canal inmediatamente si quieres ser ultra-estricto
-            # gestor_spawn.canales_ocupados.add(ctx.channel.id) 
-            
+            log.info(
+                f"✅ Spawn validado: User {ctx.author.id} "
+                f"- Intentos disponibles: {ctx.intentos}"
+            )
+
             return True
 
         except Exception as e:

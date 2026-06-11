@@ -283,24 +283,21 @@ async def auto_liberar_canal(channel_id, segundos):
 @canal_restringido()
 @commands.cooldown(1, 10, commands.BucketType.user)
 async def spawn(ctx):
-    # 1. Filtros básicos de inicial y energía
-    if not gestor_spawn.verificar_inicial(ctx.author.id):
-        return await ctx.send("¡Bienvenido! Antes de tu aventura, elige tu Pokémon inicial con `!inicial`.")
-    if ctx.channel.id in gestor_spawn.canales_ocupados:
-        return await ctx.send(
-            "⚠️ Ya hay un encuentro activo en este canal."
-        )
 
+    # Estas validaciones ahora las hace check_spawn()
     gestor_spawn.canales_ocupados.add(ctx.channel.id)
 
     intentos = ctx.intentos
     ultima_recarga = ctx.ultima_recarga
-    
-    if intentos <= 0:
-        return await ctx.send("❌ Has agotado tus intentos. Tus inciensos se recargan en 2 horas.")
 
-    # 2. Descontamos energía inmediatamente (se revertirá si el proceso falla)
-    await database.actualizar_energia_db(ctx.bot, ctx.author.id, intentos - 1, ultima_recarga)
+
+    # Descontamos energía inmediatamente
+    await database.actualizar_energia_db(
+        ctx.bot,
+        ctx.author.id,
+        intentos - 1,
+        ultima_recarga
+    )
 
     try:
         # --- GENERACIÓN POR RAREZA ---
@@ -310,7 +307,13 @@ async def spawn(ctx):
         log.info(f"Spawn generado: {ids_spawn}")
 
         # FASE 3: DESCARGA PARALELA
-        tasks = [servicios.obtener_pokemon(bot.session, pid) for pid in ids_spawn]
+        tasks = [
+            servicios.obtener_pokemon(
+                ctx.bot.session,
+                pid
+            )
+            for pid in ids_spawn
+        ]
         resultados = await asyncio.gather(*tasks)
 
         # FASE 4: Procesamiento de datos
@@ -329,7 +332,11 @@ async def spawn(ctx):
         datos_para_collage = [(d, s) for d, s, sh, r in data_pokes]
 
         # Pasamos la lista limpia al generador
-        buffer_siluetas = await servicios.generar_collage_siluetas(bot.session, datos_para_collage, tenidos=[])
+        buffer_siluetas = await servicios.generar_collage_siluetas(
+            ctx.bot.session,
+            datos_para_collage,
+            tenidos=[]
+        )
         
         if not buffer_siluetas:
 
