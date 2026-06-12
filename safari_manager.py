@@ -169,8 +169,14 @@ class SafariManager:
         buffer = await crear_imagen_encuentro(
             self.encuentro_actual["pokemons"],
             self.session
+            print("URL:", url)
         )
+        print("POKEMONS:", pokemons)
         print("BUFFER:", buffer)
+        if buffer:
+            print("IMAGEN GENERADA")
+        else:
+            print("NO SE GENERÓ IMAGEN")
         file = None
 
         if buffer:
