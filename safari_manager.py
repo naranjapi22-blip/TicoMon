@@ -187,14 +187,15 @@ class SafariManager:
 
         pokemon_texto = "\n".join(
             [
-                f"{p['slot']}. {'✨ SHINY ✨ ' if p['es_shiny'] else ''}{p['nombre'].capitalize()}"
+                f"{p['slot']}️⃣ {'✨ SHINY ✨ ' if p['es_shiny'] else ''}{p['nombre'].capitalize()}"
                 for p in self.encuentro_actual["pokemons"]
             ]
         )
         embed = discord.Embed(
             title=f"🚙 Encuentro {self.encuentro_numero}/{self.max_encuentros}",
             description=(
-                f"🐾 ¡Un {pokemon_texto} apareció!\n\n"
+                f"🐾 Pokémon disponibles:\n\n"
+                f"{pokemon_texto}\n\n"
                 f"⏳ Tienen 30 segundos para apostar."
             )
         )
@@ -225,11 +226,11 @@ class SafariManager:
 
             lista = []
 
-            for user_id, balls in apuestas.items():
+        for user_id, datos_apuesta in apuestas.items():
 
-                lista.extend(
-                    [user_id] * balls
-                )
+            lista.extend(
+                [user_id] * datos_apuesta["balls"]
+            )
 
             ganador_id = random.choice(
                 lista
@@ -324,7 +325,8 @@ class SafariManager:
 
         self.encuentro_actual = {
             "pokemons": pokemons,
-            "apuestas": {}
+            "apuestas": {},
+            "selecciones": {}
         }
 
         log.info(
@@ -334,7 +336,8 @@ class SafariManager:
     def registrar_apuesta(
         self,
         user_id,
-        cantidad
+        cantidad,
+        slot=1
     ):
 
         if user_id not in self.participantes:
@@ -350,8 +353,13 @@ class SafariManager:
 
         datos["balls"] -= cantidad
 
-        self.encuentro_actual["apuestas"][user_id] = cantidad
-
+        self.encuentro_actual["apuestas"][user_id] = {
+            "balls": cantidad,
+            "slot": slot
+        }
+        log.info(
+            f"🎯 Apuesta: user={user_id} slot={slot} balls={cantidad}"
+        )
         log.info(
             f"🎯 Usuario {user_id} apostó {cantidad} balls"
         )
