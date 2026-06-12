@@ -981,7 +981,8 @@ async def safari(ctx):
         ctx.guild.id,
         ctx.channel.id,
         ctx.channel,
-        bot.session
+        bot.session,
+        lambda guild_id: VistaApuestasSafari(guild_id)
     )
 
     embed = discord.Embed(

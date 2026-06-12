@@ -18,6 +18,7 @@ class SafariManager:
         self.participantes = {}
         self.canal = None
         self.session = None
+        self.creador_vistas = None
         self.encuentro_actual = {
             "pokemon_id": None,
             "nombre": None,
@@ -27,7 +28,7 @@ class SafariManager:
         }
 
         self.encuentro_numero = 0
-        self.max_encuentros = 2
+        self.max_encuentros = 3
 
         self.tarea_principal = None
 
@@ -36,7 +37,8 @@ class SafariManager:
         guild_id,
         canal_id,
         canal,
-        session
+        session,
+        creador_vistas
     ):
 
         self.activo = True
@@ -45,12 +47,8 @@ class SafariManager:
         self.canal_id = canal_id
         self.canal = canal
         self.session = session
-
+        self.creador_vistas = creador_vistas
         self.activo = True
-
-        self.guild_id = guild_id
-        self.canal_id = canal_id
-
         self.participantes.clear()
 
         self.encuentro_actual = {
@@ -120,10 +118,15 @@ class SafariManager:
             tamano_factor
         )
 
+        view = self.creador_vistas(
+            self.guild_id
+        )
+
         mensaje = await self.canal.send(
             f"🚙 Encuentro {self.encuentro_numero}/{self.max_encuentros}\n\n"
             f"🐾 ¡Un {nombre} apareció!\n\n"
             f"⏳ Tienen 30 segundos para apostar.",
+            view=view
         )
 
 
