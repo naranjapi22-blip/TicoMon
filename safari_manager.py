@@ -163,6 +163,14 @@ class SafariManager:
                 lista
             )
 
+            self.participantes[
+                ganador_id
+            ]["capturas"] += 1
+            await self.canal.send(
+            f"DEBUG capturas: {self.participantes[ganador_id]['capturas']}"
+                )
+
+
             nombre = self.encuentro_actual["nombre"]
 
             await self.canal.send(
