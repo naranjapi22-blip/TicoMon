@@ -79,6 +79,18 @@ class SafariManager:
 
         self.encuentro_numero = 0
 
+    async def ejecutar_encuentro(self):
+        print(
+            f"Encuentro {self.encuentro_numero}/{self.max_encuentros}"
+        )
+
+    async def ejecutar_safari(self):
+        self.encuentro_numero = 1
+
+        while self.encuentro_numero <= self.max_encuentros:
+            await self.ejecutar_encuentro()
+            self.encuentro_numero += 1
+
     def agregar_participante(
         self,
         user_id

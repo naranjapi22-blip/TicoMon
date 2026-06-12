@@ -1029,7 +1029,8 @@ async def safari(ctx):
         f"🚙 El Safari ha comenzado.\n\n"
         f"👥 Participantes: {participantes}"
     )
-
+    await safari.ejecutar_safari()
+    return
     # -------------------------
     # PRIMER ENCUENTRO
     # -------------------------
