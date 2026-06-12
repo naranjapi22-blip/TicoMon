@@ -134,7 +134,7 @@ class BotonApuesta(discord.ui.Button):
         if ok:
 
             return await interaction.response.send_message(
-                f"🎯 Apostaste {self.cantidad} Safari Ball{'s' if self.cantidad > 1 else ''}.",
+                f"🎯 Apostaste {self.cantidad} Safari Ball{'s' if self.cantidad > 1 else ''} al slot {self.slot}.",
                 ephemeral=True
             )
 
