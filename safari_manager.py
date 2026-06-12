@@ -148,19 +148,40 @@ class SafariManager:
             2
         )
 
-        pokemons = [
-            {
-                "slot": 1,
-                "pokemon_id": pokemon_id,
-                "nombre": nombre.lower(),
-                "es_shiny": es_shiny,
-                "tamano_factor": tamano_factor
-            }
-        ]
+        pokemons = []
+
+        for slot in range(1, 4):
+
+            pokemon_id_tmp = random.randint(1, 151)
+
+            data_tmp, species_tmp = await servicios.obtener_pokemon(
+                self.session,
+                pokemon_id_tmp
+            )
+
+            if not data_tmp:
+                continue
+
+            pokemons.append({
+                "slot": slot,
+                "pokemon_id": pokemon_id_tmp,
+                "nombre": data_tmp["name"].lower(),
+                "es_shiny": random.random() <= 0.01,
+                "tamano_factor": round(
+                    random.uniform(0.50, 1.50),
+                    2
+                )
+            })
 
         self.crear_encuentro(
             pokemons
         )
+        await self.canal.send(
+            str(self.encuentro_actual["pokemons"])
+        )
+
+
+
 
         view = self.creador_vistas(
             self.guild_id
