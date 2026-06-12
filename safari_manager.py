@@ -140,6 +140,32 @@ class SafariManager:
                 "💨 Nadie intentó capturar al Pokémon."
             )
 
+        else:
+
+            await self.canal.send(
+                f"🎯 Participaron {len(apuestas)} entrenador(es)."
+            )
+        lista = []
+
+        for user_id, balls in apuestas.items():
+
+            lista.extend(
+                [user_id] * balls
+            )
+        ganador_id = random.choice(
+            lista
+        )
+
+        await self.canal.send(
+            f"🏆 Ganador provisional: <@{ganador_id}>"
+        )   
+
+        await self.canal.send(
+            f"DEBUG boletos: {len(lista)}"
+        )
+
+
+
     async def ejecutar_safari(self):
         self.encuentro_numero = 1
 
