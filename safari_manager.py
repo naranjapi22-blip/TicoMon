@@ -1,5 +1,7 @@
 import asyncio
 import logging
+import random
+import servicios
 
 log = logging.getLogger(__name__)
 
@@ -89,8 +91,29 @@ class SafariManager:
 
     async def ejecutar_encuentro(self):
 
+        pokemon_id = random.randint(1, 151)
+
+        data, species = await servicios.obtener_pokemon(
+            bot.session,
+            pokemon_id
+        )
+
+        nombre = data["name"].capitalize()
+
+        tamano_factor = round(
+            random.uniform(0.50, 1.50),
+            2
+        )
+
+        self.crear_encuentro(
+            pokemon_id,
+            nombre,
+            False,
+            tamano_factor
+        )
+
         await self.canal.send(
-            f"🚙 Encuentro {self.encuentro_numero}/{self.max_encuentros}"
+            f"🐾 ¡Un {nombre} apareció!"
         )
 
     async def ejecutar_safari(self):
