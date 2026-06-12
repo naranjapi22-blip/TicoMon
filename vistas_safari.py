@@ -99,7 +99,7 @@ class VistaParticiparSafari(discord.ui.View):
             pass
 class BotonApuesta(discord.ui.Button):
 
-    def __init__(self, guild_id, cantidad):
+    def __init__(self, guild_id, cantidad,slot=1):
 
         super().__init__(
             label=f"{cantidad} Ball{'s' if cantidad > 1 else ''}",
@@ -109,7 +109,7 @@ class BotonApuesta(discord.ui.Button):
 
         self.guild_id = guild_id
         self.cantidad = cantidad
-
+        self.slot = slot
     async def callback(
         self,
         interaction: discord.Interaction
@@ -128,9 +128,9 @@ class BotonApuesta(discord.ui.Button):
 
         ok, mensaje = safari.registrar_apuesta(
             interaction.user.id,
-            self.cantidad
+            self.cantidad,
+            self.slot
         )
-
         if ok:
 
             return await interaction.response.send_message(
