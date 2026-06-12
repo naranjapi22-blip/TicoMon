@@ -6,6 +6,7 @@ log = logging.getLogger(__name__)
 from database import guardar_captura
 import discord
 from utils_imagenes import crear_imagen_encuentro
+from vistas_safari import VistaSeleccionPokemon
 class SafariManager:
 
     def __init__(self):
@@ -148,8 +149,9 @@ class SafariManager:
             pokemons
         )
 
-        view = self.creador_vistas(
-            self.guild_id
+        view = VistaSeleccionPokemon(
+            self.guild_id,
+            self.encuentro_actual["pokemons"]
         )
 
         pokemon_texto = "\n".join(

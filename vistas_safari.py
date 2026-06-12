@@ -151,6 +151,78 @@ class VistaApuestasSafari(discord.ui.View):
     def __init__(
         self,
         guild_id,
+        slot,
+        timeout=30
+    ):
+
+        super().__init__(
+            timeout=timeout
+        )
+
+        self.guild_id = guild_id
+        self.slot = slot
+
+        self.add_item(
+            BotonApuesta(
+                guild_id,
+                1,
+                slot
+            )
+        )
+
+        self.add_item(
+            BotonApuesta(
+                guild_id,
+                2,
+                slot
+            )
+        )
+
+        self.add_item(
+            BotonApuesta(
+                guild_id,
+                3,
+                slot
+            )
+        )
+class BotonSeleccionPokemon(discord.ui.Button):
+
+    def __init__(
+        self,
+        guild_id,
+        slot,
+        nombre
+    ):
+
+        super().__init__(
+            label=f"{slot}️⃣ {nombre}",
+            style=discord.ButtonStyle.success
+        )
+
+        self.guild_id = guild_id
+        self.slot = slot
+        self.nombre = nombre
+
+    async def callback(
+        self,
+        interaction: discord.Interaction
+    ):
+
+        await interaction.response.send_message(
+            f"🎯 Elegiste a {self.nombre}.\n\n"
+            f"¿Cuántas Safari Balls deseas apostar?",
+            view=VistaApuestasSafari(
+                self.guild_id,
+                self.slot
+            ),
+            ephemeral=True
+        )
+class VistaSeleccionPokemon(discord.ui.View):
+
+    def __init__(
+        self,
+        guild_id,
+        pokemons,
         timeout=30
     ):
 
@@ -160,26 +232,15 @@ class VistaApuestasSafari(discord.ui.View):
 
         self.guild_id = guild_id
 
-        self.add_item(
-            BotonApuesta(
-                guild_id,
-                1
-            )
-        )
+        for pokemon in pokemons:
 
-        self.add_item(
-            BotonApuesta(
-                guild_id,
-                2
+            self.add_item(
+                BotonSeleccionPokemon(
+                    guild_id,
+                    pokemon["slot"],
+                    pokemon["nombre"].capitalize()
+                )
             )
-        )
-
-        self.add_item(
-            BotonApuesta(
-                guild_id,
-                3
-            )
-        )
 
     async def on_timeout(self):
 
