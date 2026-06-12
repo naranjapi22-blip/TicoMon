@@ -103,31 +103,53 @@ class Inventario(commands.Cog):
         elementos_por_pagina = 10
         paginas = [pokemones[i:i + elementos_por_pagina] for i in range(0, len(pokemones), elementos_por_pagina)]
         embeds = []
+
         for i, pagina in enumerate(paginas):
             lista = ""
+
             for p in pagina:
                 id_p, nombre, shiny, porc = p
-                
+
                 emoji = "✨" if shiny else "⚪"
-                if porc >= 85: color_pc = "💎" 
-                elif porc >= 70: color_pc = "🔥" 
-                else: color_pc = "⏺️" 
-                
-                lista += f"{emoji} **{nombre.capitalize()}** `[{id_p}]` | {color_pc} `{int(porc)}%`\n"
-            
-            embed = discord.Embed(title=f"🎒 Inventario de {ctx.author.name}", color=discord.Color.green())
-            embed.description = lista
-            embed.set_footer(text=f"Página {i+1}/{len(paginas)} | Usa !ivs [ID] para detalles.")
-            embeds.append(embed)
 
-            view = PaginadorInventario(ctx, embeds)
+                if porc >= 85:
+                    color_pc = "💎"
+                elif porc >= 70:
+                    color_pc = "🔥"
+                else:
+                    color_pc = "⏺️"
 
-            mensaje = await ctx.send(
-                embed=embeds[0],
-                view=view
+                lista += (
+                    f"{emoji} **{nombre.capitalize()}** "
+                    f"`[{id_p}]` | {color_pc} `{int(porc)}%`\n"
+                )
+
+            embed = discord.Embed(
+                title=f"🎒 Inventario de {ctx.author.name}",
+                color=discord.Color.green()
             )
 
-            view.message = mensaje
+            embed.description = lista
+
+            embed.set_footer(
+                text=f"Página {i+1}/{len(paginas)} | Usa !ivs [ID] para detalles."
+            )
+
+            embeds.append(embed)
+
+        # ← AQUÍ TERMINA EL FOR
+
+        view = PaginadorInventario(
+            ctx,
+            embeds
+        )
+
+        mensaje = await ctx.send(
+            embed=embeds[0],
+            view=view
+        )
+
+        view.message = mensaje
 
     @commands.command(name="top")
     async def ver_top(self, ctx):
