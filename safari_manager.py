@@ -89,10 +89,6 @@ class SafariManager:
 
     async def ejecutar_encuentro(self):
 
-        log.info(
-            f"🚙 Encuentro {self.encuentro_numero}/{self.max_encuentros}"
-        )
-
         await self.canal.send(
             f"🚙 Encuentro {self.encuentro_numero}/{self.max_encuentros}"
         )
