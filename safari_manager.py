@@ -7,7 +7,9 @@ from database import guardar_captura
 import discord
 from utils_imagenes import crear_imagen_encuentro
 from regiones import obtener_siguiente_region, obtener_rango_region
-
+from rarezas import (
+    generar_ids_safari_region
+)
 class SafariManager:
 
     def __init__(self):
@@ -123,16 +125,24 @@ class SafariManager:
 
         pokemons = []
 
-        for slot in range(1, 4):
+        rango = obtener_rango_region(
+            self.region_actual
+        )
 
-            rango = obtener_rango_region(
-                self.region_actual
-            )
+        ids_safari = generar_ids_safari_region(
+            rango["inicio"],
+            rango["fin"]
+        )
+        print("IDS SAFARI:", ids_safari)
+        print(
+            f"REGION: {self.region_actual} | "
+            f"RANGO: {rango['inicio']}-{rango['fin']}"
+        )
 
-            pokemon_id_tmp = random.randint(
-                rango["inicio"],
-                rango["fin"]
-            )
+        for slot, pokemon_id_tmp in enumerate(
+            ids_safari,
+            start=1
+        ):
 
             data_tmp, species_tmp = await servicios.obtener_pokemon(
                 self.session,
