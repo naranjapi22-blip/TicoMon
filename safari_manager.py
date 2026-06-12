@@ -170,7 +170,7 @@ class SafariManager:
             self.encuentro_actual["pokemons"],
             self.session
         )
-
+        print("BUFFER:", buffer)
         file = None
 
         if buffer:
