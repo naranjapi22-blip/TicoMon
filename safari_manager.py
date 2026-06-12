@@ -154,7 +154,7 @@ class SafariManager:
             es_shiny,
             tamano_factor
         )
-        log.info(
+        await self.canal.send(
             f"DEBUG pokemons={self.encuentro_actual['pokemons']}"
         )
         view = self.creador_vistas(
