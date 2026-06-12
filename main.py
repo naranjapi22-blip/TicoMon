@@ -377,35 +377,54 @@ async def spawn(ctx):
             )
 
         # NUEVO BLOQUE
-        if 
+        if not data_pokes:
 
-                # Extraemos solo datos para collage
-                datos_para_collage = [
-                    (d, s)
-                    for d, s, sh, r in data_pokes
-                ]
+            liberar_canal_completo(
+                ctx.channel.id
+            )
 
-                # Pasamos la lista limpia al generador
-                buffer_siluetas = await servicios.generar_collage_siluetas(
-                    ctx.bot.session,
-                    datos_para_collage,
-                    tenidos=[]
-                )
-                
-                if not buffer_siluetas:
+            await database.actualizar_energia_db(
+                ctx.bot,
+                ctx.author.id,
+                intentos,
+                ultima_recarga
+            )
 
-                    gestor_spawn.canales_ocupados.discard(ctx.channel.id)
+            log.warning(
+                "⚠️ Spawn cancelado: no se pudo obtener ningún Pokémon válido."
+            )
 
-                    await database.actualizar_energia_db(
-                        ctx.bot,
-                        ctx.author.id,
-                        intentos,
-                        ultima_recarga
-                    )
+            return await ctx.send(
+                "❌ No se pudo generar ningún Pokémon válido."
+            )
 
-                    return await ctx.send(
-                        "Hubo un problema al generar las siluetas."
-                    )
+        # Extraemos solo datos para collage
+        datos_para_collage = [
+            (d, s)
+            for d, s, sh, r in data_pokes
+        ]
+
+        # Pasamos la lista limpia al generador
+        buffer_siluetas = await servicios.generar_collage_siluetas(
+            ctx.bot.session,
+            datos_para_collage,
+            tenidos=[]
+        )
+        
+        if not buffer_siluetas:
+
+            gestor_spawn.canales_ocupados.discard(ctx.channel.id)
+
+            await database.actualizar_energia_db(
+                ctx.bot,
+                ctx.author.id,
+                intentos,
+                ultima_recarga
+            )
+
+            return await ctx.send(
+                "Hubo un problema al generar las siluetas."
+            )
 
         imagen_final = discord.File(buffer_siluetas, filename="fragmentos.png")
         
