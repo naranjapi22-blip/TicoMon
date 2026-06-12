@@ -274,13 +274,31 @@ def generar_pista(data, species, pistas_usadas):
     else:
         return "Una criatura sumamente misteriosa..."
 # NOTA: Agrega este método auxiliar en tu clase o como función fuera:
-async def auto_liberar_canal(channel_id, segundos):
+async def auto_liberar_canal(
+    channel_id,
+    segundos
+):
+    try:
 
-    await asyncio.sleep(segundos)
-    if channel_id in gestor_spawn.canales_ocupados:
-        gestor_spawn.canales_ocupados.discard(channel_id)
-        gestor_spawn.vistas_activas.pop(channel_id, None)
-        print(f"🧹 [LIMPIEZA FORZADA] Canal {channel_id} liberado por seguridad.")
+        await asyncio.sleep(segundos)
+
+        if channel_id in gestor_spawn.canales_ocupados:
+
+            gestor_spawn.canales_ocupados.discard(
+                channel_id
+            )
+
+            gestor_spawn.vistas_activas.pop(
+                channel_id,
+                None
+            )
+
+            print(
+                f"🧹 [LIMPIEZA FORZADA] Canal {channel_id} liberado por seguridad."
+            )
+
+    except asyncio.CancelledError:
+        pass
 
 
 
@@ -418,7 +436,16 @@ async def spawn(ctx):
             view.message = mensaje_enviado
             gestor_spawn.vistas_activas[ctx.channel.id] = view 
 
-            asyncio.create_task(auto_liberar_canal(ctx.channel.id, 305))
+            task = asyncio.create_task(
+                auto_liberar_canal(
+                    ctx.channel.id,
+                    305
+                )
+            )
+
+            gestor_spawn.tareas_limpieza[
+                ctx.channel.id
+            ] = task
 
         except Exception as e:
             gestor_spawn.canales_ocupados.discard(ctx.channel.id)

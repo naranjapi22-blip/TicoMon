@@ -6,7 +6,7 @@ from discord.ext import commands
 from logger_config import log
 import time
 from datetime import datetime, timezone, timedelta
-
+tareas_limpieza = {}
 class CandadoInteligente(set):
     """
     Un 'set' personalizado que elimina automáticamente los canales 

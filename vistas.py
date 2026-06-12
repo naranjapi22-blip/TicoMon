@@ -23,10 +23,27 @@ COOLDOWN_GRACE = 0.25
 
 def liberar_canal_completo(channel_id):
     import gestor_spawn
-    gestor_spawn.canales_ocupados.discard(channel_id)
-    # Limpiamos también la vista activa para quitar el "doble candado"
-    if hasattr(gestor_spawn, 'vistas_activas'):
-        gestor_spawn.vistas_activas.pop(channel_id, None)
+
+    gestor_spawn.canales_ocupados.discard(
+        channel_id
+    )
+
+    if hasattr(
+        gestor_spawn,
+        "vistas_activas"
+    ):
+        gestor_spawn.vistas_activas.pop(
+            channel_id,
+            None
+        )
+
+    task = gestor_spawn.tareas_limpieza.pop(
+        channel_id,
+        None
+    )
+
+    if task:
+        task.cancel()
 
 
 INICIALES = [
