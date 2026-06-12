@@ -37,6 +37,7 @@ from rankinglegend import iniciar_modulo_ranking_legend
 from rankingshiny import iniciar_modulo_ranking_shiny
 from vistas import liberar_canal_completo
 from database import guardar_captura
+from regiones import obtener_siguiente_region
 # Variables globales
 pokemon_por_rareza = {
     "muy_comun": [],
@@ -1030,7 +1031,8 @@ async def safari(ctx):
 
     await ctx.send(
         f"🚙 El Safari ha comenzado.\n\n"
-        f"👥 Participantes: {participantes}"
+        f"🌎 Región: {self.region_actual}\n"
+        f"👥 Participantes: {len(self.participantes)}"
     )
     await safari.ejecutar_safari()
     return

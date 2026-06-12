@@ -6,6 +6,7 @@ log = logging.getLogger(__name__)
 from database import guardar_captura
 import discord
 from utils_imagenes import crear_imagen_encuentro
+from regiones import obtener_siguiente_region
 class SafariManager:
 
     def __init__(self):
@@ -47,7 +48,7 @@ class SafariManager:
         self.creador_vistas = creador_vistas
         self.activo = True
         self.participantes.clear()
-
+        self.region_actual = obtener_siguiente_region()
         self.encuentro_actual = {
             "pokemon_id": None,
             "nombre": None,
