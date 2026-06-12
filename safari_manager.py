@@ -148,15 +148,20 @@ class SafariManager:
             2
         )
 
+        pokemons = [
+            {
+                "slot": 1,
+                "pokemon_id": pokemon_id,
+                "nombre": nombre.lower(),
+                "es_shiny": es_shiny,
+                "tamano_factor": tamano_factor
+            }
+        ]
+
         self.crear_encuentro(
-            pokemon_id,
-            nombre,
-            es_shiny,
-            tamano_factor
+            pokemons
         )
-        await self.canal.send(
-            f"DEBUG pokemons={self.encuentro_actual['pokemons']}"
-        )
+
         view = self.creador_vistas(
             self.guild_id
         )
@@ -294,27 +299,18 @@ class SafariManager:
 
     def crear_encuentro(
         self,
-        pokemon_id,
-        nombre,
-        es_shiny=False,
-        tamano_factor=1.0
+        pokemons
     ):
 
         self.encuentro_actual = {
-            "pokemons": [
-                {
-                    "slot": 1,
-                    "pokemon_id": pokemon_id,
-                    "nombre": nombre.lower(),
-                    "es_shiny": es_shiny,
-                    "tamano_factor": tamano_factor
-                }
-            ],
+            "pokemons": pokemons,
             "apuestas": {}
         }
+
         log.info(
-            f"🐾 Encuentro creado: {nombre}"
+            f"🐾 Encuentro creado con {len(pokemons)} Pokémon(s)"
         )
+
     def registrar_apuesta(
         self,
         user_id,
