@@ -89,6 +89,9 @@ class SafariManager:
 
         while self.encuentro_numero <= self.max_encuentros:
             await self.ejecutar_encuentro()
+
+            await asyncio.sleep(3)
+
             self.encuentro_numero += 1
 
     def agregar_participante(
