@@ -39,15 +39,7 @@ from vistas import liberar_canal_completo
 from database import guardar_captura
 from regiones import obtener_siguiente_region
 # Variables globales
-pokemon_por_rareza = {
-    "muy_comun": [],
-    "comun": [],
-    "poco_comun": [],
-    "raro": [],
-    "epico": [],
-    "mitico": [],
-    "legendario": []
-}
+from rarezas import pokemon_por_rareza
 database.init_db()
 # 1. CONFIGURACIÓN
 load_dotenv()
