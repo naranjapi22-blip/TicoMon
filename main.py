@@ -1004,14 +1004,47 @@ async def safari(ctx):
 
     await asyncio.sleep(60)
 
-    # -------------------------
-    # PRUEBA
-    # -------------------------
+    participantes = safari.cantidad_participantes()
+
+    if participantes == 0:
+
+        await ctx.send(
+            "🚙 Nadie abordó la camioneta.\n"
+            "El Safari fue cancelado."
+        )
+
+        await safari.finalizar_safari()
+
+        eliminar_safari(
+            ctx.guild.id
+        )
+
+        return
 
     await ctx.send(
-        f"👥 Participantes: {safari.cantidad_participantes()}"
+        f"🚙 El Safari ha comenzado.\n\n"
+        f"👥 Participantes: {participantes}"
     )
 
+    # -------------------------
+    # PRIMER ENCUENTRO
+    # -------------------------
+
+    pokemon_id = random.randint(
+        1,
+        151
+    )
+
+    data, species = await servicios.obtener_pokemon(
+        bot.session,
+        pokemon_id
+    )
+
+    nombre = data["name"].capitalize()
+
+    await ctx.send(
+        f"🐾 ¡Un {nombre} apareció!"
+    )
 
 
 
