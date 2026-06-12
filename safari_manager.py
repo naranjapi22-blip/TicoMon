@@ -8,6 +8,7 @@ import discord
 from utils_imagenes import crear_imagen_encuentro
 from regiones import obtener_siguiente_region, obtener_rango_region
 from rarezas import (
+    pokemon_por_rareza,
     generar_ids_safari_region
 )
 class SafariManager:
