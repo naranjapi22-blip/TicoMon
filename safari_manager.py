@@ -357,6 +357,9 @@ class SafariManager:
             "balls": cantidad,
             "slot": slot
         }
+        print(
+            f"DEBUG APUESTA -> user={user_id} slot={slot} balls={cantidad}"
+        )
         log.info(
             f"🎯 Apuesta: user={user_id} slot={slot} balls={cantidad}"
         )
