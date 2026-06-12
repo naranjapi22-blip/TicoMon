@@ -124,7 +124,14 @@ class SafariManager:
 
         for slot in range(1, 4):
 
-            pokemon_id_tmp = random.randint(1, 151)
+            rango = obtener_rango_region(
+                self.region_actual
+            )
+
+            pokemon_id_tmp = random.randint(
+                rango["inicio"],
+                rango["fin"]
+            )
 
             data_tmp, species_tmp = await servicios.obtener_pokemon(
                 self.session,
