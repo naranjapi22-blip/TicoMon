@@ -296,7 +296,10 @@ class SafariManager:
                 )
 
                 return
-
+            print(
+                f"GUARDANDO: {nombre} "
+                f"user={ganador_id}"
+            )
             try:
 
                 await guardar_captura(
