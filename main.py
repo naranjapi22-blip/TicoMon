@@ -948,4 +948,41 @@ def generar_ids_spawn():
         elif rareza_elegida == "mitico":
             salio_mitico = True
     return ids_spawn, rarezas_spawn
+
+from safari_manager import (
+    obtener_safari,
+    crear_safari,
+    eliminar_safari
+)
+
+@bot.command()
+@canal_restringido()
+async def safari(ctx):
+
+    safari = obtener_safari(
+        ctx.guild.id
+    )
+
+    if safari and safari.activo:
+        return await ctx.send(
+            "🚙 Ya hay un Safari activo."
+        )
+
+    safari = crear_safari(
+        ctx.guild.id,
+        ctx.channel.id
+    )
+
+    await safari.iniciar_safari(
+        ctx.guild.id,
+        ctx.channel.id
+    )
+
+    await ctx.send(
+        "🚙 Safari creado correctamente."
+    )
+
+
+
+
 bot.run(TOKEN)
