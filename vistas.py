@@ -258,12 +258,18 @@ class SpawnSelectionView(discord.ui.View):
         if interaction.user != self.autor_original:
 
             try:
-                await interaction.followup.send(
+                await interaction.response.send_message(
                     "¡Hey! 🛑 Consigue tu propio Pokémon usando `!spawn`. Este encuentro no es tuyo.",
                     ephemeral=True
                 )
             except discord.InteractionResponded:
-                pass
+                try:
+                    await interaction.followup.send(
+                        "¡Hey! 🛑 Consigue tu propio Pokémon usando `!spawn`. Este encuentro no es tuyo.",
+                        ephemeral=True
+                    )
+                except discord.NotFound:
+                    pass
 
             return False
 

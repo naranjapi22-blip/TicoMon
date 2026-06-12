@@ -307,7 +307,6 @@ async def auto_liberar_canal(channel_id, segundos):
 async def spawn(ctx):
 
     # Estas validaciones ahora las hace check_spawn()
-    gestor_spawn.canales_ocupados.add(ctx.channel.id)
 
     intentos = ctx.intentos
     ultima_recarga = ctx.ultima_recarga
