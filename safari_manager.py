@@ -4,7 +4,7 @@ import random
 import servicios
 log = logging.getLogger(__name__)
 from database import guardar_captura
-
+import discord
 
 class SafariManager:
 
@@ -162,12 +162,18 @@ class SafariManager:
             if es_shiny
             else nombre
         )
-        await self.canal.send(url_gif)
+        embed = discord.Embed(
+            title=f"🚙 Encuentro {self.encuentro_numero}/{self.max_encuentros}",
+            description=(
+                f"🐾 ¡Un {pokemon_texto} apareció!\n\n"
+                f"⏳ Tienen 30 segundos para apostar."
+            )
+        )
+
+        embed.set_image(url=url_gif)
 
         mensaje = await self.canal.send(
-            f"🚙 Encuentro {self.encuentro_numero}/{self.max_encuentros}\n\n"
-            f"🐾 ¡Un {pokemon_texto} apareció!\n\n"
-            f"⏳ Tienen 30 segundos para apostar.",
+            embed=embed,
             view=view
         )
         view.message = mensaje
