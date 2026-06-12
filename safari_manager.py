@@ -123,6 +123,9 @@ class SafariManager:
 
 
         await asyncio.sleep(30)
+        log.info(
+            f"✅ Encuentro {self.encuentro_numero} finalizado"
+        )       
 
     async def ejecutar_safari(self):
         self.encuentro_numero = 1
