@@ -1,4 +1,8 @@
-pokemon_por_rareza = {
+import random
+
+
+
+okemon_por_rareza = {
     "muy_comun": [],
     "comun": [],
     "poco_comun": [],
