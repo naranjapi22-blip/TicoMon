@@ -154,7 +154,6 @@ class SafariManager:
         tamano_factor = pokemon_principal["tamano_factor"]
         pokemon_id = pokemon_principal["pokemon_id"]
         from mapeo_pokes import obtener_id_gif
-
         dex_id = pokemon_id
         id_final = obtener_id_gif(dex_id)
 
