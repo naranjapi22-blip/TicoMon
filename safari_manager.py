@@ -176,9 +176,7 @@ class SafariManager:
         self.crear_encuentro(
             pokemons
         )
-        await self.canal.send(
-            str(self.encuentro_actual["pokemons"])
-        )
+
 
 
 
@@ -187,10 +185,11 @@ class SafariManager:
             self.guild_id
         )
 
-        pokemon_texto = (
-            f"✨ SHINY ✨ {nombre}"
-            if es_shiny
-            else nombre
+        pokemon_texto = "\n".join(
+            [
+                f"{p['slot']}. {'✨ SHINY ✨ ' if p['es_shiny'] else ''}{p['nombre'].capitalize()}"
+                for p in self.encuentro_actual["pokemons"]
+            ]
         )
         embed = discord.Embed(
             title=f"🚙 Encuentro {self.encuentro_numero}/{self.max_encuentros}",
