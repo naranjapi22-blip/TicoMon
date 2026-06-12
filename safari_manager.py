@@ -245,11 +245,13 @@ class SafariManager:
             )
 
             slot_ganador = apuestas[ganador_id]["slot"]
+
             pokemon_elegido = next(
                 p
                 for p in self.encuentro_actual["pokemons"]
                 if p["slot"] == slot_ganador
             )
+
             capture_rate = pokemon_elegido[
                 "capture_rate"
             ]
@@ -271,27 +273,65 @@ class SafariManager:
                 probabilidad,
                 0.95
             )
+
             capturado = (
                 random.random() <= probabilidad
             )
+
             print(
                 f"CAPTURE RATE: {capture_rate} | "
                 f"BALLS: {balls} | "
                 f"PROB: {probabilidad:.2%}"
             )
+
             nombre = pokemon_elegido["nombre"].capitalize()
             es_shiny = pokemon_elegido["es_shiny"]
             tamano_factor = pokemon_elegido["tamano_factor"]
 
-        if not capturado:
+            if not capturado:
 
-            await self.canal.send(
-                f"💨 {nombre.capitalize()} escapó de las Safari Balls de <@{ganador_id}>.\n"
-                f"🎯 Probabilidad de captura: {probabilidad:.0%}"
+                await self.canal.send(
+                    f"💨 {nombre} escapó de las Safari Balls de <@{ganador_id}>.\n"
+                    f"🎯 Probabilidad de captura: {probabilidad:.0%}"
+                )
+
+                return
+
+            try:
+
+                await guardar_captura(
+                    ganador_id,
+                    nombre,
+                    tamano_factor,
+                    es_shiny
+                )
+
+            except Exception as e:
+
+                log.error(
+                    f"Error guardando captura Safari: {e}",
+                    exc_info=True
+                )
+
+                await self.canal.send(
+                    "❌ Ocurrió un error al guardar la captura."
+                )
+
+                return
+
+            self.participantes[
+                ganador_id
+            ]["capturas"] += 1
+
+            captura_texto = (
+                f"✨ SHINY ✨ {nombre}"
+                if es_shiny
+                else nombre
             )
 
-            return
-
+            await self.canal.send(
+                f"🎉 <@{ganador_id}> capturó a {captura_texto}."
+            )
         try:
 
             await guardar_captura(
