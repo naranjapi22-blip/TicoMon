@@ -100,7 +100,8 @@ class SafariManager:
             self.session,
             pokemon_id
         )
-
+        log.info(f"DEBUG data={data}")
+        log.info(f"DEBUG species={species}")
         nombre = data["name"].capitalize()
 
         tamano_factor = round(
