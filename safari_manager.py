@@ -143,8 +143,18 @@ class SafariManager:
         user_id,
         cantidad
     ):
-        ...
-        
+
+        if user_id not in self.participantes:
+            return False, "No participas en este Safari."
+
+        if user_id in self.encuentro_actual["apuestas"]:
+            return False, "Ya apostaste en este encuentro."
+
+        datos = self.participantes[user_id]
+
+        if datos["balls"] < cantidad:
+            return False, "No tienes suficientes Safari Balls."
+
         datos["balls"] -= cantidad
 
         self.encuentro_actual["apuestas"][user_id] = cantidad
