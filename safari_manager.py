@@ -139,7 +139,9 @@ class SafariManager:
             f"REGION: {self.region_actual} | "
             f"RANGO: {rango['inicio']}-{rango['fin']}"
         )
-
+        encuentro_shiny = (
+            random.random() <= 0.0025
+        )
         for slot, pokemon_id_tmp in enumerate(
             ids_safari,
             start=1
@@ -157,7 +159,8 @@ class SafariManager:
                 "slot": slot,
                 "pokemon_id": pokemon_id_tmp,
                 "nombre": data_tmp["name"].lower(),
-                "es_shiny": random.random() <= 0.01,
+                "capture_rate": species_tmp["capture_rate"],
+                "es_shiny": encuentro_shiny,
                 "tamano_factor": round(
                     random.uniform(0.50, 1.50),
                     2
@@ -247,7 +250,35 @@ class SafariManager:
                 for p in self.encuentro_actual["pokemons"]
                 if p["slot"] == slot_ganador
             )
+            capture_rate = pokemon_elegido[
+                "capture_rate"
+            ]
 
+            balls = apuestas[
+                ganador_id
+            ]["balls"]
+
+            probabilidad = (
+                0.10 +
+                (capture_rate / 255) * 0.70
+            )
+
+            probabilidad += (
+                (balls - 1) * 0.05
+            )
+
+            probabilidad = min(
+                probabilidad,
+                0.95
+            )
+            capturado = (
+                random.random() <= probabilidad
+            )
+            print(
+                f"CAPTURE RATE: {capture_rate} | "
+                f"BALLS: {balls} | "
+                f"PROB: {probabilidad:.2%}"
+            )
             nombre = pokemon_elegido["nombre"].capitalize()
             es_shiny = pokemon_elegido["es_shiny"]
             tamano_factor = pokemon_elegido["tamano_factor"]
@@ -255,7 +286,14 @@ class SafariManager:
             self.participantes[
                 ganador_id
             ]["capturas"] += 1
+        if not capturado:
 
+            await self.canal.send(
+                f"💨 {nombre.capitalize()} escapó de las Safari Balls de <@{ganador_id}>.\n"
+                f"🎯 Probabilidad de captura: {probabilidad:.0%}"
+            )
+
+            return
             try:
 
                 await guardar_captura(
@@ -307,7 +345,7 @@ class SafariManager:
             return False
 
         self.participantes[user_id] = {
-            "balls": 15,
+            "balls": 18,
             "capturas": 0
         }
 
