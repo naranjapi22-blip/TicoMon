@@ -4,16 +4,25 @@ import logging
 log = logging.getLogger(__name__)
 
 
+
 class SafariManager:
 
     def __init__(self):
+
         self.activo = False
+
         self.guild_id = None
         self.canal_id = None
 
         self.participantes = {}
 
-        self.encuentro_actual = None
+        self.encuentro_actual = {
+            "pokemon_id": None,
+            "nombre": None,
+            "es_shiny": False,
+            "tamano_factor": 1.0,
+            "apuestas": {}
+        }
 
         self.encuentro_numero = 0
         self.max_encuentros = 10
@@ -25,6 +34,7 @@ class SafariManager:
         guild_id,
         canal_id
     ):
+
         self.activo = True
 
         self.guild_id = guild_id
@@ -32,7 +42,13 @@ class SafariManager:
 
         self.participantes.clear()
 
-        self.encuentro_actual = None
+        self.encuentro_actual = {
+            "pokemon_id": None,
+            "nombre": None,
+            "es_shiny": False,
+            "tamano_factor": 1.0,
+            "apuestas": {}
+        }
 
         self.encuentro_numero = 0
 
@@ -53,7 +69,13 @@ class SafariManager:
 
         self.participantes.clear()
 
-        self.encuentro_actual = None
+        self.encuentro_actual = {
+            "pokemon_id": None,
+            "nombre": None,
+            "es_shiny": False,
+            "tamano_factor": 1.0,
+            "apuestas": {}
+        }
 
         self.encuentro_numero = 0
 
@@ -74,7 +96,7 @@ class SafariManager:
         }
 
         log.info(
-            f"✅ Participante agregado: {user_id}"
+            f"🚙 Participante agregado: {user_id}"
         )
 
         return True
@@ -89,16 +111,55 @@ class SafariManager:
         self,
         user_id
     ):
-        return self.participantes.get(
-            user_id
-        )
+        return self.participantes.get(user_id)
 
     def cantidad_participantes(
         self
     ):
-        return len(
-            self.participantes
+        return len(self.participantes)
+
+    def crear_encuentro(
+        self,
+        pokemon_id,
+        nombre,
+        es_shiny=False,
+        tamano_factor=1.0
+    ):
+
+        self.encuentro_actual = {
+            "pokemon_id": pokemon_id,
+            "nombre": nombre.lower(),
+            "es_shiny": es_shiny,
+            "tamano_factor": tamano_factor,
+            "apuestas": {}
+        }
+
+        log.info(
+            f"🐾 Encuentro creado: {nombre}"
         )
+
+    def registrar_apuesta(
+        self,
+        user_id,
+        cantidad
+    ):
+
+        if user_id not in self.participantes:
+            return False, "No participas en este Safari."
+
+        if user_id in self.encuentro_actual["apuestas"]:
+            return False, "Ya apostaste en este encuentro."
+
+        datos = self.participantes[user_id]
+
+        if datos["balls"] < cantidad:
+            return False, "No tienes suficientes Safari Balls."
+
+        datos["balls"] -= cantidad
+
+        self.encuentro_actual["apuestas"][user_id] = cantidad
+
+        return True, "Apuesta registrada."
 
 
 # ==========================
@@ -108,9 +169,8 @@ class SafariManager:
 safaris_activos = {}
 
 
-def obtener_safari(
-    guild_id
-):
+def obtener_safari(guild_id):
+
     return safaris_activos.get(
         guild_id
     )
@@ -123,9 +183,7 @@ def crear_safari(
 
     safari = SafariManager()
 
-    safaris_activos[
-        guild_id
-    ] = safari
+    safaris_activos[guild_id] = safari
 
     return safari
 
