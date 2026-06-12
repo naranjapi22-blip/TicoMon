@@ -998,6 +998,20 @@ async def safari(ctx):
 
     view.message = mensaje
 
+    # -------------------------
+    # ESPERA INSCRIPCIONES
+    # -------------------------
+
+    await asyncio.sleep(60)
+
+    # -------------------------
+    # PRUEBA
+    # -------------------------
+
+    await ctx.send(
+        f"👥 Participantes: {safari.cantidad_participantes()}"
+    )
+
 
 
 
