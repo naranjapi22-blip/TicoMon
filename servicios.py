@@ -7,7 +7,7 @@ from logger_config import log
 from PIL import Image, ImageFilter, ImageEnhance, ImageDraw, ImageChops, ImageOps
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 import time
-
+import aiohttp
 
 # 1. Creamos una caché que:
 # - Guarda máximo 600 imágenes (maxsize)
@@ -110,17 +110,30 @@ async def obtener_pokemon(session, nombre_o_id):
 
         url = f"https://pokeapi.co/api/v2/pokemon/{cache_key}"
 
-        async with session.get(url) as response:
+        timeout = aiohttp.ClientTimeout(total=5)
+
+        async with session.get(
+            url,
+            timeout=timeout
+        ) as response:
+
             if response.status == 200:
                 data = await response.json()
 
                 species_url = data['species']['url']
 
-                async with session.get(species_url) as s_resp:
+                async with session.get(
+                    species_url,
+                    timeout=timeout
+                ) as s_resp:
+
                     if s_resp.status == 200:
                         species = await s_resp.json()
 
-                        rate = species.get('capture_rate', 45)
+                        rate = species.get(
+                            'capture_rate',
+                            45
+                        )
 
                         log.info(
                             f"✅ Pokémon {data['name']} cargado. Rate: {rate}"

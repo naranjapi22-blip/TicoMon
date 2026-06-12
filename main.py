@@ -606,15 +606,32 @@ async def verificar_canal(ctx):
 
 # 1. Añade esta función para verificar la rareza
 async def es_legendario(session, poke_id):
-    url = f"https://pokeapi.co/api/v2/pokemon-species/{poke_id}/"
-    async with session.get(url) as resp:
-        if resp.status == 200:
-            data = await resp.json()
-            return data.get('is_legendary', False) or data.get('is_mythical', False)
+    try:
+        url = f"https://pokeapi.co/api/v2/pokemon-species/{poke_id}/"
+
+        timeout = aiohttp.ClientTimeout(
+            total=5
+        )
+
+        async with session.get(
+            url,
+            timeout=timeout
+        ) as resp:
+
+            if resp.status == 200:
+                data = await resp.json()
+
+                return (
+                    data.get('is_legendary', False)
+                    or data.get('is_mythical', False)
+                )
+
+    except Exception as e:
+        log.warning(
+            f"Error verificando legendario {poke_id}: {e}"
+        )
+
     return False
-
-admin.setup(bot)
-
 
 async def _validar_retador(ctx, oponente: discord.Member) -> bool:
     if oponente.bot:
