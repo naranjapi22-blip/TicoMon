@@ -1031,8 +1031,7 @@ async def safari(ctx):
 
     await ctx.send(
         f"🚙 El Safari ha comenzado.\n\n"
-        f"🌎 Región: {self.region_actual}\n"
-        f"👥 Participantes: {len(self.participantes)}"
+        f"🌎 Región: {safari.region_actual}"
     )
     await safari.ejecutar_safari()
     return
