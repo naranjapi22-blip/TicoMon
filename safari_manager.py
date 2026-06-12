@@ -150,20 +150,24 @@ class SafariManager:
             await self.canal.send(
                 f"🎯 Participaron {len(apuestas)} entrenador(es)."
             )
-        lista = []
 
-        for user_id, balls in apuestas.items():
+            lista = []
 
-            lista.extend(
-                [user_id] * balls
+            for user_id, balls in apuestas.items():
+
+                lista.extend(
+                    [user_id] * balls
+                )
+
+            ganador_id = random.choice(
+                lista
             )
-        ganador_id = random.choice(
-            lista
-        )
 
-        await self.canal.send(
-            f"🏆 Ganador provisional: <@{ganador_id}>"
-        )   
+            nombre = self.encuentro_actual["nombre"]
+
+            await self.canal.send(
+                f"🎉 <@{ganador_id}> capturó a {nombre.capitalize()}."
+            )
 
 
 
