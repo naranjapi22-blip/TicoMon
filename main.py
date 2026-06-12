@@ -1069,6 +1069,13 @@ async def safari(ctx):
         )
 
         view.message = mensaje
+        await asyncio.sleep(30)
+
+        await ctx.send(
+            str(
+                safari.encuentro_actual["apuestas"]
+            )
+        )   
 
     except Exception as e:
 
