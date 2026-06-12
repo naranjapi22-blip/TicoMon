@@ -2,7 +2,6 @@ import asyncio
 import logging
 import random
 import servicios
-from vistas_safari import VistaApuestasSafari
 log = logging.getLogger(__name__)
 
 
@@ -125,10 +124,7 @@ class SafariManager:
 
         view.message = mensaje
 
-        view = VistaApuestasSafari(
-            self.guild_id
-        )
-
+        view = None
         await asyncio.sleep(30)
 
     async def ejecutar_safari(self):
