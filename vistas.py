@@ -45,6 +45,16 @@ def liberar_canal_completo(channel_id):
     if task:
         task.cancel()
 
+    log.info(
+        f"🟢 Canal liberado: {channel_id}"
+    )
+
+    if task:
+        task.cancel()
+
+        log.info(
+            f"🧹 Tarea de limpieza cancelada: {channel_id}"
+        )
 
 INICIALES = [
     {"nombre": "Bulbasaur", "id": 1}, {"nombre": "Charmander", "id": 4}, {"nombre": "Squirtle", "id": 7},
