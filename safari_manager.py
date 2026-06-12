@@ -123,6 +123,8 @@ class SafariManager:
             await self.canal.send(
                 f"❌ Error obteniendo Pokémon {pokemon_id}"
             )
+
+            self.encuentro_numero -= 1
             return
 
         nombre = data["name"].capitalize()
@@ -152,7 +154,9 @@ class SafariManager:
             es_shiny,
             tamano_factor
         )
-
+        log.info(
+            f"DEBUG pokemons={self.encuentro_actual['pokemons']}"
+        )
         view = self.creador_vistas(
             self.guild_id
         )
@@ -297,17 +301,20 @@ class SafariManager:
     ):
 
         self.encuentro_actual = {
-            "pokemon_id": pokemon_id,
-            "nombre": nombre.lower(),
-            "es_shiny": es_shiny,
-            "tamano_factor": tamano_factor,
+            "pokemons": [
+                {
+                    "slot": 1,
+                    "pokemon_id": pokemon_id,
+                    "nombre": nombre.lower(),
+                    "es_shiny": es_shiny,
+                    "tamano_factor": tamano_factor
+                }
+            ],
             "apuestas": {}
         }
-
         log.info(
             f"🐾 Encuentro creado: {nombre}"
         )
-
     def registrar_apuesta(
         self,
         user_id,
