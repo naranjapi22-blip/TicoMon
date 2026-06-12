@@ -579,8 +579,6 @@ class BotonCaptura(discord.ui.View):
 
             # --- INTENTO DE CAPTURA ---
             if random.random() < prob_final:
-                self.alguien_lo_atrapo = True 
-                self.usuario_capturador = interaction.user.id
                 try:
                     # 1. Guardamos la captura y recibimos el ID y si hubo récord
                     id_captura, resultado_record = await database.guardar_captura(
@@ -592,7 +590,7 @@ class BotonCaptura(discord.ui.View):
                     )
                     ranking_cog = interaction.client.get_cog(
                         "RankingRoles"
-)
+                    )
                     liberar_canal_completo(interaction.channel.id)
                     
                     # Se eliminó la reconexión y la doble verificación aquí para no sobreescribir 'resultado_record'
@@ -618,14 +616,28 @@ class BotonCaptura(discord.ui.View):
                         )
                 except Exception as db_error:
                     self.alguien_lo_atrapo = False
+                    self.usuario_capturador = None
                     log.error(f"Error BD: {db_error}", exc_info=True)
                     await interaction.followup.send("⚠️ Error interno de base de datos.", ephemeral=True)
             else:
+
+                # Liberar reserva
+                self.alguien_lo_atrapo = False
+                self.usuario_capturador = None
+
                 self.intentos_fallidos += 1
+
                 embed = interaction.message.embeds[0]
-                embed.set_footer(text=f"Intentos fallidos: {self.intentos_fallidos}")
+                embed.set_footer(
+                    text=f"Intentos fallidos: {self.intentos_fallidos}"
+                )
+
                 await interaction.message.edit(embed=embed)
-                await interaction.followup.send(f"❌ Fallaste la {nombre_bola} con un ({porcentaje}%). ¡El Pokémon está más cansado!", ephemeral=True)
+
+                await interaction.followup.send(
+                    f"❌ Fallaste la {nombre_bola} con un ({porcentaje}%). ¡El Pokémon está más cansado!",
+                    ephemeral=True
+                )
 
         except Exception as e:
             import gestor_spawn
