@@ -338,7 +338,7 @@ class SafariManager:
         user_id,
         cantidad,
         slot=1
-    ):
+        ):
 
         if user_id not in self.participantes:
             return False, "No participas en este Safari."
