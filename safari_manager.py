@@ -134,13 +134,11 @@ class SafariManager:
 
         apuestas = self.encuentro_actual["apuestas"]
 
-        await self.canal.send(
-            f"DEBUG apuestas: {apuestas}"
-        )
+        if not apuestas:
 
-        await self.canal.send(
-            f"DEBUG fin encuentro {self.encuentro_numero}"
-        )
+            await self.canal.send(
+                "💨 Nadie intentó capturar al Pokémon."
+            )
 
     async def ejecutar_safari(self):
         self.encuentro_numero = 1
