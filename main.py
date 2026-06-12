@@ -36,6 +36,7 @@ from rankingdex import iniciar_modulo_ranking
 from rankinglegend import iniciar_modulo_ranking_legend
 from rankingshiny import iniciar_modulo_ranking_shiny
 from vistas import liberar_canal_completo
+from database import guardar_captura
 # Variables globales
 pokemon_por_rareza = {
     "muy_comun": [],
@@ -1095,15 +1096,43 @@ async def safari(ctx):
                 lista
             )
 
+        nombre = safari.encuentro_actual["nombre"]
+
+        tamano_factor = safari.encuentro_actual[
+            "tamano_factor"
+        ]
+
+        es_shiny = safari.encuentro_actual[
+            "es_shiny"
+        ]
+
+        try:
+
+            await guardar_captura(
+                ganador_id,
+                nombre,
+                tamano_factor,
+                es_shiny
+            )
+
+            safari.participantes[
+                ganador_id
+            ]["capturas"] += 1
+
             await ctx.send(
-                f"🎉 Ganador: <@{ganador_id}>"
+                f"🎉 <@{ganador_id}> capturó a {nombre.capitalize()}."
+            )
+
+        except Exception as e:
+
+            log.error(
+                f"Error guardando captura Safari: {e}",
+                exc_info=True
             )
 
             await ctx.send(
-                str(
-                    safari.encuentro_actual["apuestas"]
-                )
-            )   
+                "❌ Ocurrió un error al guardar la captura."
+            )
 
     except Exception as e:
 
