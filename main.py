@@ -27,7 +27,7 @@ from cache_service import db_cache
 from setup_cache import prellenar_cache
 
 # Vistas e interfaces
-from vistas import PokedexView, BotonCaptura, InfoView, SpawnSelectionView,
+from vistas import PokedexView, BotonCaptura, InfoView, SpawnSelectionView
 from vistas_combate import SelectorPaginado, VistaCombate
 import vistas_batalla
 from vistas_batalla import SelectorBatalla
