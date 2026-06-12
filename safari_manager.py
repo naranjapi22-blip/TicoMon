@@ -150,7 +150,12 @@ class SafariManager:
         pokemon_principal = pokemons[0]
 
         pokemon_id = pokemon_principal["pokemon_id"]
+        nombre = pokemon_principal["nombre"].capitalize()
+        es_shiny = pokemon_principal["es_shiny"]
+        tamano_factor = pokemon_principal["tamano_factor"]
+
         from mapeo_pokes import obtener_id_gif
+
         dex_id = pokemon_id
         id_final = obtener_id_gif(dex_id)
 
