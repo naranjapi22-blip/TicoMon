@@ -97,3 +97,97 @@ class VistaParticiparSafari(discord.ui.View):
                 )
         except Exception:
             pass
+class BotonApuesta(discord.ui.Button):
+
+    def __init__(self, guild_id, cantidad):
+
+        super().__init__(
+            label=f"{cantidad} Ball{'s' if cantidad > 1 else ''}",
+            emoji="🎯",
+            style=discord.ButtonStyle.primary
+        )
+
+        self.guild_id = guild_id
+        self.cantidad = cantidad
+
+    async def callback(
+        self,
+        interaction: discord.Interaction
+    ):
+
+        safari = obtener_safari(
+            self.guild_id
+        )
+
+        if not safari:
+
+            return await interaction.response.send_message(
+                "❌ El Safari ya no existe.",
+                ephemeral=True
+            )
+
+        ok, mensaje = safari.registrar_apuesta(
+            interaction.user.id,
+            self.cantidad
+        )
+
+        if ok:
+
+            return await interaction.response.send_message(
+                f"🎯 Apostaste {self.cantidad} Safari Ball{'s' if self.cantidad > 1 else ''}.",
+                ephemeral=True
+            )
+
+        await interaction.response.send_message(
+            f"❌ {mensaje}",
+            ephemeral=True
+        )
+
+
+class VistaApuestasSafari(discord.ui.View):
+
+    def __init__(
+        self,
+        guild_id,
+        timeout=30
+    ):
+
+        super().__init__(
+            timeout=timeout
+        )
+
+        self.guild_id = guild_id
+
+        self.add_item(
+            BotonApuesta(
+                guild_id,
+                1
+            )
+        )
+
+        self.add_item(
+            BotonApuesta(
+                guild_id,
+                2
+            )
+        )
+
+        self.add_item(
+            BotonApuesta(
+                guild_id,
+                3
+            )
+        )
+
+    async def on_timeout(self):
+
+        for item in self.children:
+            item.disabled = True
+
+        try:
+            if hasattr(self, "message"):
+                await self.message.edit(
+                    view=self
+                )
+        except Exception:
+            pass

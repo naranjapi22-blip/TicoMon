@@ -954,7 +954,10 @@ from safari_manager import (
     crear_safari,
     eliminar_safari
 )
-from vistas_safari import VistaParticiparSafari
+from vistas_safari import (
+    VistaParticiparSafari,
+    VistaApuestasSafari
+)
 @bot.command()
 @canal_restringido()
 async def safari(ctx):
@@ -1055,9 +1058,17 @@ async def safari(ctx):
         log.info(
             f"🎯 Encuentro Safari: {safari.encuentro_actual}"
         )
-        await ctx.send(
-            f"🐾 ¡Un {nombre} apareció!"
+        view = VistaApuestasSafari(
+            ctx.guild.id
         )
+
+        mensaje = await ctx.send(
+            f"🐾 ¡Un {nombre} apareció!\n\n"
+            f"⏳ Tienen 30 segundos para apostar.",
+            view=view
+        )
+
+        view.message = mensaje
 
     except Exception as e:
 
