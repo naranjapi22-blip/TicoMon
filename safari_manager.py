@@ -3,7 +3,7 @@ import logging
 import random
 import servicios
 log = logging.getLogger(__name__)
-
+from database import guardar_captura
 
 
 class SafariManager:
@@ -166,9 +166,17 @@ class SafariManager:
             self.participantes[
                 ganador_id
             ]["capturas"] += 1
+
+            await guardar_captura(
+                ganador_id,
+                nombre,
+                tamano_factor,
+                False
+            )
+
             await self.canal.send(
-            f"DEBUG capturas: {self.participantes[ganador_id]['capturas']}"
-                )
+                f"🎉 <@{ganador_id}> capturó a {nombre.capitalize()}."
+            )
 
 
             nombre = self.encuentro_actual["nombre"]
