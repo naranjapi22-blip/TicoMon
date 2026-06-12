@@ -219,11 +219,14 @@ class SafariManager:
             )
 
             slot_ganador = apuestas[ganador_id]["slot"]
-
-            await self.canal.send(
-                f"DEBUG ganador apostó al slot {slot_ganador}"
+            pokemon_elegido = next(
+                p
+                for p in self.encuentro_actual["pokemons"]
+                if p["slot"] == slot_ganador
             )
-
+            await self.canal.send(
+                f"DEBUG Pokémon elegido: {pokemon_elegido['nombre']}"
+            )
             self.participantes[
                 ganador_id
             ]["capturas"] += 1
