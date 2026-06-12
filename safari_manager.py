@@ -18,6 +18,7 @@ class SafariManager:
 
         self.participantes = {}
         self.canal = None
+        self.session = None
         self.encuentro_actual = {
             "pokemon_id": None,
             "nombre": None,
@@ -35,7 +36,8 @@ class SafariManager:
         self,
         guild_id,
         canal_id,
-        canal
+        canal,
+        session
     ):
 
         self.activo = True
@@ -43,6 +45,7 @@ class SafariManager:
         self.guild_id = guild_id
         self.canal_id = canal_id
         self.canal = canal
+        self.session = session
 
         self.activo = True
 
@@ -94,7 +97,7 @@ class SafariManager:
         pokemon_id = random.randint(1, 151)
 
         data, species = await servicios.obtener_pokemon(
-            bot.session,
+            self.session,
             pokemon_id
         )
 

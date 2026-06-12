@@ -980,7 +980,8 @@ async def safari(ctx):
     await safari.iniciar_safari(
         ctx.guild.id,
         ctx.channel.id,
-        ctx.channel
+        ctx.channel,
+        bot.session
     )
 
     embed = discord.Embed(
