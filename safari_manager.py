@@ -15,7 +15,7 @@ class SafariManager:
         self.canal_id = None
 
         self.participantes = {}
-
+        self.canal = None
         self.encuentro_actual = {
             "pokemon_id": None,
             "nombre": None,
@@ -32,8 +32,15 @@ class SafariManager:
     async def iniciar_safari(
         self,
         guild_id,
-        canal_id
+        canal_id,
+        canal
     ):
+
+        self.activo = True
+
+        self.guild_id = guild_id
+        self.canal_id = canal_id
+        self.canal = canal
 
         self.activo = True
 
@@ -80,8 +87,8 @@ class SafariManager:
         self.encuentro_numero = 0
 
     async def ejecutar_encuentro(self):
-        print(
-            f"Encuentro {self.encuentro_numero}/{self.max_encuentros}"
+        log.info(
+            f"🚙 Encuentro {self.encuentro_numero}/{self.max_encuentros}"
         )
 
     async def ejecutar_safari(self):
