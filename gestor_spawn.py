@@ -128,36 +128,58 @@ async def obtener_intentos(bot, user_id):
 
 # --- 3. FILTRO DE SPAWN ---
 def aplicar_filtro_spawn(bot):
+
     @bot.check
     async def check_spawn(ctx):
-        # 1. Ignorar comandos que no son !spawn
+
         if ctx.command is None or ctx.command.name != "spawn":
             return True
-        
+
         try:
-            log.debug(f"🎯 Validando spawn: User {ctx.author.id} - Canal {ctx.channel.id}")
-            
-            # 2. Verificar si el canal ya está ocupado
-            # Usamos gestor_spawn directamente para acceder al set compartido
+            log.debug(
+                f"🎯 Validando spawn: User {ctx.author.id} - Canal {ctx.channel.id}"
+            )
+
             import gestor_spawn
+
+            # 1. Canal ocupado
             if ctx.channel.id in gestor_spawn.canales_ocupados:
-                log.warning(f"⚠️ Canal ocupado: {ctx.channel.id} - User {ctx.author.id}")
-                await ctx.send("❌ Ya hay un encuentro en curso en este canal. ¡Espera a que termine!")
+
+                log.warning(
+                    f"⚠️ Canal ocupado: {ctx.channel.id} - User {ctx.author.id}"
+                )
+
+                await ctx.send(
+                    "❌ Ya hay un encuentro en curso en este canal. "
+                    "¡Espera a que termine!"
+                )
+
                 return False
-            
-            # 3. Verificar inicial
+
+            # 2. Inicial
             if not verificar_inicial(ctx.author.id):
-                log.warning(f"⚠️ Usuario sin inicial: {ctx.author.id}")
-                await ctx.send("¡Bienvenido! Antes de tu aventura, elige tu Pokémon inicial con el comando `!inicial`.")
+
+                log.warning(
+                    f"⚠️ Usuario sin inicial: {ctx.author.id}"
+                )
+
+                await ctx.send(
+                    "¡Bienvenido! Antes de tu aventura, "
+                    "elige tu Pokémon inicial con el comando `!inicial`."
+                )
+
                 return False
-            
-            # 4. Verificar energía/intentos
-            ctx.intentos, ctx.ultima_recarga = await obtener_intentos(
-                ctx.bot,
-                ctx.author.id
+
+            # 3. Energía
+            ctx.intentos, ctx.ultima_recarga = (
+                await obtener_intentos(
+                    ctx.bot,
+                    ctx.author.id
+                )
             )
 
             if ctx.intentos <= 0:
+
                 log.warning(
                     f"⚠️ Usuario sin intentos: {ctx.author.id}"
                 )
@@ -169,7 +191,11 @@ def aplicar_filtro_spawn(bot):
 
                 return False
 
-            # 5. Todo validado
+            # 4. RESERVAR CANAL AQUÍ
+            gestor_spawn.canales_ocupados.add(
+                ctx.channel.id
+            )
+
             log.info(
                 f"✅ Spawn validado: User {ctx.author.id} "
                 f"- Intentos disponibles: {ctx.intentos}"
@@ -178,8 +204,18 @@ def aplicar_filtro_spawn(bot):
             return True
 
         except Exception as e:
-            log.error(f"🚨 Error crítico en check_spawn para {ctx.author.id}: {e}", exc_info=True)
-            await ctx.send("⚠️ Ocurrió un error al verificar tu estado. Intenta de nuevo en unos segundos.")
+
+            log.error(
+                f"🚨 Error crítico en check_spawn para "
+                f"{ctx.author.id}: {e}",
+                exc_info=True
+            )
+
+            await ctx.send(
+                "⚠️ Ocurrió un error al verificar tu estado. "
+                "Intenta de nuevo en unos segundos."
+            )
+
             return False
 
 # --- 4. CONFIGURACIÓN DE INICIALIZACIÓN ---
