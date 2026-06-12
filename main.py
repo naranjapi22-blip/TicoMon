@@ -954,7 +954,7 @@ from safari_manager import (
     crear_safari,
     eliminar_safari
 )
-
+from vistas_safari import VistaParticiparSafari
 @bot.command()
 @canal_restringido()
 async def safari(ctx):
@@ -978,9 +978,25 @@ async def safari(ctx):
         ctx.channel.id
     )
 
-    await ctx.send(
-        "🚙 Safari creado correctamente."
+    embed = discord.Embed(
+        title="🚙 Safari Pokémon",
+        description=(
+            "El recorrido comenzará en 60 segundos.\n\n"
+            "Presiona el botón para subir a la camioneta."
+        ),
+        color=discord.Color.green()
     )
+
+    view = VistaParticiparSafari(
+        ctx.guild.id
+    )
+
+    mensaje = await ctx.send(
+        embed=embed,
+        view=view
+    )
+
+    view.message = mensaje
 
 
 
