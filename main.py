@@ -27,7 +27,7 @@ from cache_service import db_cache
 from setup_cache import prellenar_cache
 
 # Vistas e interfaces
-from vistas import PokedexView, BotonCaptura, InfoView, SpawnSelectionView
+from vistas import PokedexView, BotonCaptura, InfoView, SpawnSelectionView,
 from vistas_combate import SelectorPaginado, VistaCombate
 import vistas_batalla
 from vistas_batalla import SelectorBatalla
@@ -35,6 +35,7 @@ from vistas_equipo import abrir_equipo_en_privado
 from rankingdex import iniciar_modulo_ranking
 from rankinglegend import iniciar_modulo_ranking_legend
 from rankingshiny import iniciar_modulo_ranking_shiny
+from vistas import liberar_canal_completo
 # Variables globales
 pokemon_por_rareza = {
     "muy_comun": [],
@@ -284,28 +285,15 @@ def generar_pista(data, species, pistas_usadas):
     else:
         return "Una criatura sumamente misteriosa..."
 # NOTA: Agrega este método auxiliar en tu clase o como función fuera:
-async def auto_liberar_canal(
-    channel_id,
-    segundos
-):
+async def auto_liberar_canal(channel_id, segundos):
     try:
-
         await asyncio.sleep(segundos)
 
-        if channel_id in gestor_spawn.canales_ocupados:
+        liberar_canal_completo(channel_id)
 
-            gestor_spawn.canales_ocupados.discard(
-                channel_id
-            )
-
-            gestor_spawn.vistas_activas.pop(
-                channel_id,
-                None
-            )
-
-            print(
-                f"🧹 [LIMPIEZA FORZADA] Canal {channel_id} liberado por seguridad."
-            )
+        print(
+            f"🧹 [LIMPIEZA FORZADA] Canal {channel_id} liberado por seguridad."
+        )
 
     except asyncio.CancelledError:
         pass
@@ -413,7 +401,9 @@ async def spawn(ctx):
         
         if not buffer_siluetas:
 
-            gestor_spawn.canales_ocupados.discard(ctx.channel.id)
+            liberar_canal_completo(
+                ctx.channel.id
+            )
 
             await database.actualizar_energia_db(
                 ctx.bot,
@@ -462,15 +452,17 @@ async def spawn(ctx):
             ] = task
 
         except Exception as e:
-            gestor_spawn.canales_ocupados.discard(ctx.channel.id)
-            gestor_spawn.vistas_activas.pop(ctx.channel.id, None)
+            liberar_canal_completo(
+                ctx.channel.id
+            )
             await database.actualizar_energia_db(ctx.bot, ctx.author.id, intentos, ultima_recarga)
             log.error(f"Error al enviar mensaje en spawn: {e}", exc_info=True)
             await ctx.send("¡Se escaparon! Hubo un error al intentar enviar el encuentro.")
 
     except Exception as e:
-        gestor_spawn.canales_ocupados.discard(ctx.channel.id)
-        gestor_spawn.vistas_activas.pop(ctx.channel.id, None)
+        liberar_canal_completo(
+            ctx.channel.id
+        )
         await database.actualizar_energia_db(ctx.bot, ctx.author.id, intentos, ultima_recarga)
         log.error(f"Error crítico en generación de spawn para {ctx.author.id}: {e}", exc_info=True)
         await ctx.send("¡Se escaparon! Hubo un error al intentar generar el encuentro.")
