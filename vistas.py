@@ -452,8 +452,6 @@ class BotonCaptura(discord.ui.View):
                 pass
 
             return
-        self.alguien_lo_atrapo = True
-        self.usuario_capturador = interaction.user.id
         # 3. Reservamos la interacción
         try:
 
@@ -605,6 +603,8 @@ class BotonCaptura(discord.ui.View):
                         mensaje += "\n🤏 **¡Nuevo Récord XXS!** Has entrado en el Salón de la Fama."
 
                     # 4. Enviamos el mensaje final
+                    self.alguien_lo_atrapo = True
+                    self.usuario_capturador = interaction.user.id
                     await interaction.message.edit(content=mensaje, view=None)
                     self.stop()
                     if ranking_cog:
