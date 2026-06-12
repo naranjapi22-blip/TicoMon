@@ -40,9 +40,6 @@ class SafariManager:
         session,
         creador_vistas
     ):
-
-        self.activo = True
-
         self.guild_id = guild_id
         self.canal_id = canal_id
         self.canal = canal
@@ -80,8 +77,23 @@ class SafariManager:
 
         self.guild_id = None
         self.canal_id = None
-        self.canal = None
+        if self.canal:
+            await self.canal.send(
+                "🏁 Safari finalizado."
+            )
 
+        ranking = sorted(
+            self.participantes.items(),
+            key=lambda x: x[1]["capturas"],
+            reverse=True
+        )
+
+        await self.canal.send(
+            f"DEBUG ranking: {ranking}"
+        )
+        self.session = None
+        self.creador_vistas = None
+        
         self.participantes.clear()
 
         self.encuentro_actual = {
@@ -167,27 +179,31 @@ class SafariManager:
                 ganador_id
             ]["capturas"] += 1
 
-            await guardar_captura(
-                ganador_id,
-                nombre,
-                tamano_factor,
-                False
-            )
+            try:
+
+                await guardar_captura(
+                    ganador_id,
+                    nombre,
+                    tamano_factor,
+                    False
+                )
+
+            except Exception as e:
+
+                log.error(
+                    f"Error guardando captura Safari: {e}",
+                    exc_info=True
+                )
+
+                await self.canal.send(
+                    "❌ Ocurrió un error al guardar la captura."
+                )
+
+                return
 
             await self.canal.send(
                 f"🎉 <@{ganador_id}> capturó a {nombre.capitalize()}."
             )
-
-
-            nombre = self.encuentro_actual["nombre"]
-
-            await self.canal.send(
-                f"🎉 <@{ganador_id}> capturó a {nombre.capitalize()}."
-            )
-
-
-
-
     async def ejecutar_safari(self):
         self.encuentro_numero = 1
 
