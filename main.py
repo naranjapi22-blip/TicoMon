@@ -1042,8 +1042,16 @@ async def safari(ctx):
 
     nombre = data["name"].capitalize()
 
-    await ctx.send(
-        f"🐾 ¡Un {nombre} apareció!"
+    tamano_factor = round(
+        random.uniform(0.50, 1.50),
+        2
+    )
+
+    safari.crear_encuentro(
+        pokemon_id,
+        nombre,
+        False,
+        tamano_factor
     )
 
 
