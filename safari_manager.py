@@ -335,43 +335,7 @@ class SafariManager:
             await self.canal.send(
                 f"🎉 <@{ganador_id}> capturó a {captura_texto}."
             )
-        try:
 
-            await guardar_captura(
-                ganador_id,
-                nombre,
-                tamano_factor,
-                es_shiny
-            )
-            self.participantes[
-                ganador_id
-            ]["capturas"] += 1
-        except Exception as e:
-
-            log.error(
-                f"Error guardando captura Safari: {e}",
-                exc_info=True
-            )
-
-            await self.canal.send(
-                "❌ Ocurrió un error al guardar la captura."
-            )
-
-            return
-
-        self.participantes[
-            ganador_id
-        ]["capturas"] += 1
-
-        captura_texto = (
-            f"✨ SHINY ✨ {nombre.capitalize()}"
-            if es_shiny
-            else nombre.capitalize()
-        )
-
-        await self.canal.send(
-            f"🎉 <@{ganador_id}> capturó a {captura_texto}."
-        )
     async def ejecutar_safari(self):
         self.encuentro_numero = 1
 
