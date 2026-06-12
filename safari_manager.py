@@ -128,7 +128,7 @@ class SafariManager:
             f"⏳ Tienen 30 segundos para apostar.",
             view=view
         )
-
+        view.message = mensaje
 
         await asyncio.sleep(30)
 
