@@ -1030,29 +1030,43 @@ async def safari(ctx):
     # PRIMER ENCUENTRO
     # -------------------------
 
-    pokemon_id = random.randint(
-        1,
-        151
-    )
+    try:
 
-    data, species = await servicios.obtener_pokemon(
-        bot.session,
-        pokemon_id
-    )
+        pokemon_id = random.randint(1, 151)
 
-    nombre = data["name"].capitalize()
+        data, species = await servicios.obtener_pokemon(
+            bot.session,
+            pokemon_id
+        )
 
-    tamano_factor = round(
-        random.uniform(0.50, 1.50),
-        2
-    )
+        nombre = data["name"].capitalize()
 
-    safari.crear_encuentro(
-        pokemon_id,
-        nombre,
-        False,
-        tamano_factor
-    )
+        tamano_factor = round(
+            random.uniform(0.50, 1.50),
+            2
+        )
+
+        safari.crear_encuentro(
+            pokemon_id,
+            nombre,
+            False,
+            tamano_factor
+        )
+
+        await ctx.send(
+            f"🐾 ¡Un {nombre} apareció!"
+        )
+
+    except Exception as e:
+
+        log.error(
+            f"ERROR EN ENCUENTRO SAFARI: {e}",
+            exc_info=True
+        )
+
+        await ctx.send(
+            f"❌ Error Safari: {e}"
+        )
 
 
 
