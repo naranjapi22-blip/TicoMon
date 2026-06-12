@@ -27,7 +27,7 @@ class SafariManager:
         }
 
         self.encuentro_numero = 0
-        self.max_encuentros = 10
+        self.max_encuentros = 2
 
         self.tarea_principal = None
 
@@ -68,6 +68,11 @@ class SafariManager:
         )
 
     async def finalizar_safari(self):
+
+        if self.canal:
+            await self.canal.send(
+                "🏁 Safari finalizado."
+            )
 
         log.info(
             f"🏁 Safari finalizado en guild {self.guild_id}"
@@ -133,6 +138,7 @@ class SafariManager:
         while self.encuentro_numero <= self.max_encuentros:
             await self.ejecutar_encuentro()
             self.encuentro_numero += 1
+        await self.finalizar_safari()
 
     def agregar_participante(
         self,
