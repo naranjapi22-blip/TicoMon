@@ -168,8 +168,7 @@ class SafariManager:
         )
         buffer = await crear_imagen_encuentro(
             self.encuentro_actual["pokemons"],
-            self.session
-            print("URL:", url)
+            self.session,
         )
         print("POKEMONS:", pokemons)
         print("BUFFER:", buffer)
