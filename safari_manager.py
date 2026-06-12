@@ -77,10 +77,7 @@ class SafariManager:
 
         self.guild_id = None
         self.canal_id = None
-        if self.canal:
-            await self.canal.send(
-                "🏁 Safari finalizado."
-            )
+
 
         ranking = sorted(
             self.participantes.items(),
@@ -88,9 +85,16 @@ class SafariManager:
             reverse=True
         )
 
-        await self.canal.send(
-            f"DEBUG ranking: {ranking}"
-        )
+        texto = "🏆 Resultados del Safari\n\n"
+
+        for posicion, (user_id, datos) in enumerate(ranking, start=1):
+
+            texto += (
+                f"{posicion}. <@{user_id}> - "
+                f"{datos['capturas']} captura(s)\n"
+            )
+
+        await self.canal.send(texto)
         self.session = None
         self.creador_vistas = None
         
@@ -122,26 +126,43 @@ class SafariManager:
             return
 
         nombre = data["name"].capitalize()
+        from mapeo_pokes import obtener_id_gif
+
+        dex_id = data["id"]
+        id_final = obtener_id_gif(dex_id)
+
+        path_folder = "shiny" if es_shiny else "regular"
+
+        url_gif = (
+            f"https://www.shinyhunters.com/images/"
+            f"{path_folder}/{id_final}.gif"
+        )
 
         tamano_factor = round(
             random.uniform(0.50, 1.50),
             2
         )
 
+        es_shiny = random.random() <= 0.01
+
         self.crear_encuentro(
             pokemon_id,
             nombre,
-            False,
+            es_shiny,
             tamano_factor
         )
 
         view = self.creador_vistas(
             self.guild_id
         )
-
+        await self.canal.send(url_gif)
         mensaje = await self.canal.send(
             f"🚙 Encuentro {self.encuentro_numero}/{self.max_encuentros}\n\n"
-            f"🐾 ¡Un {nombre} apareció!\n\n"
+            pokemon_texto = (
+                f"✨ SHINY ✨ {nombre}"
+                if es_shiny
+                else nombre
+            )
             f"⏳ Tienen 30 segundos para apostar.",
             view=view
         )
@@ -185,7 +206,7 @@ class SafariManager:
                     ganador_id,
                     nombre,
                     tamano_factor,
-                    False
+                    es_shiny
                 )
 
             except Exception as e:
@@ -201,8 +222,14 @@ class SafariManager:
 
                 return
 
+            captura_texto = (
+                f"✨ SHINY ✨ {nombre.capitalize()}"
+                if es_shiny
+                else nombre.capitalize()
+            )
+
             await self.canal.send(
-                f"🎉 <@{ganador_id}> capturó a {nombre.capitalize()}."
+                f"🎉 <@{ganador_id}> capturó a {captura_texto}."
             )
     async def ejecutar_safari(self):
         self.encuentro_numero = 1
