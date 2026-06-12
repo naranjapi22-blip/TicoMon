@@ -5,7 +5,7 @@ import servicios
 log = logging.getLogger(__name__)
 from database import guardar_captura
 import discord
-from vistas_safari import crear_imagen_encuentro
+from utils_imagenes import crear_imagen_encuentro
 class SafariManager:
 
     def __init__(self):
