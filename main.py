@@ -306,11 +306,8 @@ async def auto_liberar_canal(channel_id, segundos):
 @commands.cooldown(1, 10, commands.BucketType.user)
 async def spawn(ctx):
 
-    # Estas validaciones ahora las hace check_spawn()
-
     intentos = ctx.intentos
     ultima_recarga = ctx.ultima_recarga
-
 
     # Descontamos energía inmediatamente
     await database.actualizar_energia_db(
@@ -318,6 +315,15 @@ async def spawn(ctx):
         ctx.author.id,
         intentos - 1,
         ultima_recarga
+    )
+
+    # 🔒 Bloquear canal inmediatamente
+    gestor_spawn.canales_ocupados.add(
+        ctx.channel.id
+    )
+
+    log.info(
+        f"🔒 Canal bloqueado: {ctx.channel.id}"
     )
 
     try:
