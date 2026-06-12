@@ -131,9 +131,16 @@ class SafariManager:
 
 
         await asyncio.sleep(30)
+
+        apuestas = self.encuentro_actual["apuestas"]
+
+        log.info(
+            f"🎯 Apuestas recibidas: {apuestas}"
+        )
+
         log.info(
             f"✅ Encuentro {self.encuentro_numero} finalizado"
-        )       
+        )
 
     async def ejecutar_safari(self):
         self.encuentro_numero = 1
