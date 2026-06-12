@@ -102,8 +102,13 @@ class SafariManager:
             self.session,
             pokemon_id
         )
-        log.info(f"DEBUG data={data}")
-        log.info(f"DEBUG species={species}")
+
+        if not data:
+            await self.canal.send(
+                f"❌ Error obteniendo Pokémon {pokemon_id}"
+            )
+            return
+
         nombre = data["name"].capitalize()
 
         tamano_factor = round(
@@ -160,9 +165,6 @@ class SafariManager:
             f"🏆 Ganador provisional: <@{ganador_id}>"
         )   
 
-        await self.canal.send(
-            f"DEBUG boletos: {len(lista)}"
-        )
 
 
 
