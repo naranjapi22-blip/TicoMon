@@ -2,7 +2,7 @@ import asyncio
 import logging
 import random
 import servicios
-
+from vistas_safari import VistaApuestasSafari
 log = logging.getLogger(__name__)
 
 
@@ -116,18 +116,26 @@ class SafariManager:
             tamano_factor
         )
 
-        await self.canal.send(
-            f"🐾 ¡Un {nombre} apareció!"
+        mensaje = await self.canal.send(
+            f"🚙 Encuentro {self.encuentro_numero}/{self.max_encuentros}\n\n"
+            f"🐾 ¡Un {nombre} apareció!\n\n"
+            f"⏳ Tienen 30 segundos para apostar.",
+            view=view
         )
+
+        view.message = mensaje
+
+        view = VistaApuestasSafari(
+            self.guild_id
+        )
+
+        await asyncio.sleep(30)
 
     async def ejecutar_safari(self):
         self.encuentro_numero = 1
 
         while self.encuentro_numero <= self.max_encuentros:
             await self.ejecutar_encuentro()
-
-            await asyncio.sleep(3)
-
             self.encuentro_numero += 1
 
     def agregar_participante(
