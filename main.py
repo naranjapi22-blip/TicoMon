@@ -140,13 +140,23 @@ async def on_ready():
 @bot.event
 async def on_command_error(ctx, error):
 
-    ignorar = (
-        commands.CommandNotFound,
-        commands.MissingRequiredArgument,
-        commands.CheckFailure
-    )
+    if isinstance(error, commands.CommandNotFound):
+        return
 
-    if isinstance(error, ignorar):
+    if isinstance(error, commands.MissingRequiredArgument):
+        return
+
+    if isinstance(error, commands.CheckFailure):
+        return
+
+    if isinstance(error, commands.CommandOnCooldown):
+        seconds = round(error.retry_after, 2)
+
+        await ctx.send(
+            f"⏳ Estás en cooldown. "
+            f"Intenta de nuevo en **{seconds} segundos**."
+        )
+
         return
 
     print(f"Error inesperado: {error}")
@@ -367,50 +377,35 @@ async def spawn(ctx):
             )
 
         # NUEVO BLOQUE
-        if not data_pokes:
+        if 
 
-            gestor_spawn.canales_ocupados.discard(
-                ctx.channel.id
-            )
+                # Extraemos solo datos para collage
+                datos_para_collage = [
+                    (d, s)
+                    for d, s, sh, r in data_pokes
+                ]
 
-            await database.actualizar_energia_db(
-                ctx.bot,
-                ctx.author.id,
-                intentos,
-                ultima_recarga
-            )
+                # Pasamos la lista limpia al generador
+                buffer_siluetas = await servicios.generar_collage_siluetas(
+                    ctx.bot.session,
+                    datos_para_collage,
+                    tenidos=[]
+                )
+                
+                if not buffer_siluetas:
 
-            return await ctx.send(
-                "❌ No se pudo generar ningún Pokémon válido."
-            )
+                    gestor_spawn.canales_ocupados.discard(ctx.channel.id)
 
-        # Extraemos solo datos para collage
-        datos_para_collage = [
-            (d, s)
-            for d, s, sh, r in data_pokes
-        ]
+                    await database.actualizar_energia_db(
+                        ctx.bot,
+                        ctx.author.id,
+                        intentos,
+                        ultima_recarga
+                    )
 
-        # Pasamos la lista limpia al generador
-        buffer_siluetas = await servicios.generar_collage_siluetas(
-            ctx.bot.session,
-            datos_para_collage,
-            tenidos=[]
-        )
-        
-        if not buffer_siluetas:
-
-            gestor_spawn.canales_ocupados.discard(ctx.channel.id)
-
-            await database.actualizar_energia_db(
-                ctx.bot,
-                ctx.author.id,
-                intentos,
-                ultima_recarga
-            )
-
-            return await ctx.send(
-                "Hubo un problema al generar las siluetas."
-            )
+                    return await ctx.send(
+                        "Hubo un problema al generar las siluetas."
+                    )
 
         imagen_final = discord.File(buffer_siluetas, filename="fragmentos.png")
         
@@ -478,21 +473,7 @@ async def info(ctx, *, nombre: str):
 perfil.iniciar_modulo_perfil(bot)
 
 intercambio.iniciar_modulo_intercambio(bot)
-@bot.event
-async def on_command_error(ctx, error):
-    # 1. Ignorar errores de comando no encontrado
-    if isinstance(error, commands.CommandNotFound):
-        return
 
-    # 2. Manejar específicamente el cooldown
-    if isinstance(error, commands.CommandOnCooldown):
-        seconds = round(error.retry_after, 2)
-        await ctx.send(f"⏳ Estás en cooldown. Intenta de nuevo en **{seconds} segundos**.")
-        return
-
-    # 3. Para otros errores, puedes decidir si quieres elevarlos o mostrarlos
-    # Si quieres que el error se imprima en consola sin crash, simplemente haz:
-    print(f"Error inesperado: {error}")
 @bot.command(name="unlock")
 @canal_restringido()
 @commands.has_permissions(administrator=True)
