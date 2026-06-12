@@ -119,12 +119,9 @@ class SafariManager:
             f"🚙 Encuentro {self.encuentro_numero}/{self.max_encuentros}\n\n"
             f"🐾 ¡Un {nombre} apareció!\n\n"
             f"⏳ Tienen 30 segundos para apostar.",
-            view=view
         )
 
-        view.message = mensaje
 
-        view = None
         await asyncio.sleep(30)
 
     async def ejecutar_safari(self):
