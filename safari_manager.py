@@ -134,12 +134,12 @@ class SafariManager:
 
         apuestas = self.encuentro_actual["apuestas"]
 
-        log.info(
-            f"🎯 Apuestas recibidas: {apuestas}"
+        await self.canal.send(
+            f"DEBUG apuestas: {apuestas}"
         )
 
-        log.info(
-            f"✅ Encuentro {self.encuentro_numero} finalizado"
+        await self.canal.send(
+            f"DEBUG fin encuentro {self.encuentro_numero}"
         )
 
     async def ejecutar_safari(self):
