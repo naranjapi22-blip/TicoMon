@@ -73,6 +73,7 @@ class SafariManager:
 
         self.guild_id = None
         self.canal_id = None
+        self.canal = None
 
         self.participantes.clear()
 
@@ -87,7 +88,12 @@ class SafariManager:
         self.encuentro_numero = 0
 
     async def ejecutar_encuentro(self):
+
         log.info(
+            f"🚙 Encuentro {self.encuentro_numero}/{self.max_encuentros}"
+        )
+
+        await self.canal.send(
             f"🚙 Encuentro {self.encuentro_numero}/{self.max_encuentros}"
         )
 
