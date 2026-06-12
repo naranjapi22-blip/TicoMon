@@ -283,9 +283,6 @@ class SafariManager:
             es_shiny = pokemon_elegido["es_shiny"]
             tamano_factor = pokemon_elegido["tamano_factor"]
 
-            self.participantes[
-                ganador_id
-            ]["capturas"] += 1
         if not capturado:
 
             await self.canal.send(
@@ -294,37 +291,44 @@ class SafariManager:
             )
 
             return
-            try:
 
-                await guardar_captura(
-                    ganador_id,
-                    nombre,
-                    tamano_factor,
-                    es_shiny
-                )
+        try:
 
-            except Exception as e:
+            await guardar_captura(
+                ganador_id,
+                nombre,
+                tamano_factor,
+                es_shiny
+            )
+            self.participantes[
+                ganador_id
+            ]["capturas"] += 1
+        except Exception as e:
 
-                log.error(
-                    f"Error guardando captura Safari: {e}",
-                    exc_info=True
-                )
-
-                await self.canal.send(
-                    "❌ Ocurrió un error al guardar la captura."
-                )
-
-                return
-
-            captura_texto = (
-                f"✨ SHINY ✨ {nombre.capitalize()}"
-                if es_shiny
-                else nombre.capitalize()
+            log.error(
+                f"Error guardando captura Safari: {e}",
+                exc_info=True
             )
 
             await self.canal.send(
-                f"🎉 <@{ganador_id}> capturó a {captura_texto}."
+                "❌ Ocurrió un error al guardar la captura."
             )
+
+            return
+
+        self.participantes[
+            ganador_id
+        ]["capturas"] += 1
+
+        captura_texto = (
+            f"✨ SHINY ✨ {nombre.capitalize()}"
+            if es_shiny
+            else nombre.capitalize()
+        )
+
+        await self.canal.send(
+            f"🎉 <@{ganador_id}> capturó a {captura_texto}."
+        )
     async def ejecutar_safari(self):
         self.encuentro_numero = 1
 
