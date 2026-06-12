@@ -208,14 +208,20 @@ class SafariManager:
 
             lista = []
 
-        for user_id, datos_apuesta in apuestas.items():
+            for user_id, datos_apuesta in apuestas.items():
 
-            lista.extend(
-                [user_id] * datos_apuesta["balls"]
-            )
+                lista.extend(
+                    [user_id] * datos_apuesta["balls"]
+                )
 
             ganador_id = random.choice(
                 lista
+            )
+
+            slot_ganador = apuestas[ganador_id]["slot"]
+
+            await self.canal.send(
+                f"DEBUG ganador apostó al slot {slot_ganador}"
             )
 
             self.participantes[
