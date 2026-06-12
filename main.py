@@ -1068,42 +1068,42 @@ async def safari(ctx):
             view=view
         )
 
-    view.message = mensaje
+        view.message = mensaje
 
-    # Esperar apuestas
-    await asyncio.sleep(30)
+        # Esperar apuestas
+        await asyncio.sleep(30)
 
-    apuestas = safari.encuentro_actual["apuestas"]
+        apuestas = safari.encuentro_actual["apuestas"]
 
-    if not apuestas:
+        if not apuestas:
 
-        await ctx.send(
-            "💨 Nadie intentó capturar al Pokémon."
-        )
-
-    else:
-
-        lista = []
-
-        for user_id, balls in apuestas.items():
-
-            lista.extend(
-                [user_id] * balls
+            await ctx.send(
+                "💨 Nadie intentó capturar al Pokémon."
             )
 
-        ganador_id = random.choice(
-            lista
-        )
+        else:
 
-        await ctx.send(
-            f"🎉 Ganador: <@{ganador_id}>"
-        )
+            lista = []
 
-        await ctx.send(
-            str(
-                safari.encuentro_actual["apuestas"]
+            for user_id, balls in apuestas.items():
+
+                lista.extend(
+                    [user_id] * balls
+                )
+
+            ganador_id = random.choice(
+                lista
             )
-        )   
+
+            await ctx.send(
+                f"🎉 Ganador: <@{ganador_id}>"
+            )
+
+            await ctx.send(
+                str(
+                    safari.encuentro_actual["apuestas"]
+                )
+            )   
 
     except Exception as e:
 
