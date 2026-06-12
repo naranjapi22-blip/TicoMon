@@ -2,7 +2,7 @@ import random
 
 
 
-okemon_por_rareza = {
+pokemon_por_rareza = {
     "muy_comun": [],
     "comun": [],
     "poco_comun": [],
