@@ -155,14 +155,17 @@ class SafariManager:
         view = self.creador_vistas(
             self.guild_id
         )
+
+        pokemon_texto = (
+            f"✨ SHINY ✨ {nombre}"
+            if es_shiny
+            else nombre
+        )
         await self.canal.send(url_gif)
+
         mensaje = await self.canal.send(
             f"🚙 Encuentro {self.encuentro_numero}/{self.max_encuentros}\n\n"
-            pokemon_texto = (
-                f"✨ SHINY ✨ {nombre}"
-                if es_shiny
-                else nombre
-            )
+            f"🐾 ¡Un {pokemon_texto} apareció!\n\n"
             f"⏳ Tienen 30 segundos para apostar.",
             view=view
         )
