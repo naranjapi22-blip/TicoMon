@@ -149,9 +149,6 @@ class SafariManager:
         )
         pokemon_principal = pokemons[0]
 
-        nombre = pokemon_elegido["nombre"].capitalize()
-        es_shiny = pokemon_elegido["es_shiny"]
-        tamano_factor = pokemon_elegido["tamano_factor"]
         pokemon_id = pokemon_principal["pokemon_id"]
         from mapeo_pokes import obtener_id_gif
         dex_id = pokemon_id
@@ -224,6 +221,10 @@ class SafariManager:
                 for p in self.encuentro_actual["pokemons"]
                 if p["slot"] == slot_ganador
             )
+
+            nombre = pokemon_elegido["nombre"].capitalize()
+            es_shiny = pokemon_elegido["es_shiny"]
+            tamano_factor = pokemon_elegido["tamano_factor"]
 
             self.participantes[
                 ganador_id
