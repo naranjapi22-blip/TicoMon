@@ -112,36 +112,7 @@ class SafariManager:
 
     async def ejecutar_encuentro(self):
 
-        pokemon_id = random.randint(1, 151)
 
-        data, species = await servicios.obtener_pokemon(
-            self.session,
-            pokemon_id
-        )
-
-        if not data:
-            await self.canal.send(
-                f"❌ Error obteniendo Pokémon {pokemon_id}"
-            )
-
-            self.encuentro_numero -= 1
-            return
-
-        nombre = data["name"].capitalize()
-
-        es_shiny = random.random() <= 0.01
-
-        from mapeo_pokes import obtener_id_gif
-
-        dex_id = data["id"]
-        id_final = obtener_id_gif(dex_id)
-
-        path_folder = "shiny" if es_shiny else "regular"
-
-        url_gif = (
-            f"https://www.shinyhunters.com/images/"
-            f"{path_folder}/{id_final}.gif"
-        )
 
         tamano_factor = round(
             random.uniform(0.50, 1.50),
@@ -176,11 +147,23 @@ class SafariManager:
         self.crear_encuentro(
             pokemons
         )
+        pokemon_principal = pokemons[0]
 
+        nombre = pokemon_principal["nombre"].capitalize()
+        es_shiny = pokemon_principal["es_shiny"]
+        tamano_factor = pokemon_principal["tamano_factor"]
+        pokemon_id = pokemon_principal["pokemon_id"]
+        from mapeo_pokes import obtener_id_gif
 
+        dex_id = pokemon_id
+        id_final = obtener_id_gif(dex_id)
 
+        path_folder = "shiny" if es_shiny else "regular"
 
-
+        url_gif = (
+            f"https://www.shinyhunters.com/images/"
+            f"{path_folder}/{id_final}.gif"
+        )
         view = self.creador_vistas(
             self.guild_id
         )
@@ -357,9 +340,7 @@ class SafariManager:
             "balls": cantidad,
             "slot": slot
         }
-        print(
-            f"DEBUG APUESTA -> user={user_id} slot={slot} balls={cantidad}"
-        )
+
         log.info(
             f"🎯 Apuesta: user={user_id} slot={slot} balls={cantidad}"
         )
