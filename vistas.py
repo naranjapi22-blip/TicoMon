@@ -278,10 +278,28 @@ class SpawnSelectionView(discord.ui.View):
     # --- SE ELIMINÓ LA FUNCIÓN 'boton_captura' DE AQUÍ (Pertenece a la clase BotonCaptura) ---
 
     # --- MANEJO DE LA SELECCIÓN ---
-    async def manejar_seleccion(self, interaction: discord.Interaction, indice: int):
+    async def manejar_seleccion(
+        self,
+        interaction: discord.Interaction,
+        indice: int
+    ):
 
-        # Evita que se pulse dos veces
+        # Validación defensiva
+        if indice < 0 or indice >= len(self.data_pokes):
+
+            try:
+                await interaction.response.send_message(
+                    "❌ Esta opción ya no está disponible.",
+                    ephemeral=True
+                )
+            except discord.InteractionResponded:
+                pass
+
+            return
+
+        # Evita doble clic
         self.stop()
+
         for child in self.children:
             child.disabled = True
 
@@ -372,6 +390,7 @@ class SpawnSelectionView(discord.ui.View):
 class BotonCaptura(discord.ui.View):
     def __init__(self, pokemon_data, rareza, es_shiny, capture_rate, tamano_factor):
         super().__init__(timeout=300.0)
+        self.lock_captura = asyncio.Lock()
         self.message = None # Se asignará desde SpawnSelectionView
         self.nombre = pokemon_data['name']
         self.rareza = rareza
@@ -414,7 +433,7 @@ class BotonCaptura(discord.ui.View):
         if interaction.response.is_done():
             return
 
-        # 2. Llegó tarde (Usamos response.send_message porque aún no hay defer)
+        # 2. Llegó tarde
         if self.alguien_lo_atrapo:
 
             try:
@@ -433,16 +452,17 @@ class BotonCaptura(discord.ui.View):
                 pass
 
             return
-
-            return await interaction.response.send_message(
-                "💨 ¡Llegaste tarde!",
-                ephemeral=True
-            )
-
+        self.alguien_lo_atrapo = True
+        self.usuario_capturador = interaction.user.id
         # 3. Reservamos la interacción
         try:
+
             await interaction.response.defer(ephemeral=True)
         except (discord.NotFound, discord.errors.InteractionResponded):
+
+            self.alguien_lo_atrapo = False
+            self.usuario_capturador = None
+
             return
             
         try:
