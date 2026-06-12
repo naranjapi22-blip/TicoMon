@@ -1,3 +1,6 @@
+from PIL import Image
+from io import BytesIO
+
 async def crear_imagen_encuentro(pokemons, session):
 
     sprites = []
@@ -21,7 +24,11 @@ async def crear_imagen_encuentro(pokemons, session):
 
         try:
 
+            print("URL:", url)
+
             async with session.get(url) as resp:
+
+                print("STATUS:", resp.status)
 
                 if resp.status != 200:
                     continue
