@@ -5,7 +5,7 @@ import servicios
 log = logging.getLogger(__name__)
 from database import guardar_captura
 import discord
-
+from vistas_safari import crear_imagen_encuentro
 class SafariManager:
 
     def __init__(self):
@@ -111,7 +111,7 @@ class SafariManager:
         self.encuentro_numero = 0
 
     async def ejecutar_encuentro(self):
-
+    
 
 
         tamano_factor = round(
@@ -147,24 +147,7 @@ class SafariManager:
         self.crear_encuentro(
             pokemons
         )
-        pokemon_principal = pokemons[0]
 
-        pokemon_id = pokemon_principal["pokemon_id"]
-        nombre = pokemon_principal["nombre"].capitalize()
-        es_shiny = pokemon_principal["es_shiny"]
-        tamano_factor = pokemon_principal["tamano_factor"]
-
-        from mapeo_pokes import obtener_id_gif
-
-        dex_id = pokemon_id
-        id_final = obtener_id_gif(dex_id)
-
-        path_folder = "shiny" if es_shiny else "regular"
-
-        url_gif = (
-            f"https://www.shinyhunters.com/images/"
-            f"{path_folder}/{id_final}.gif"
-        )
         view = self.creador_vistas(
             self.guild_id
         )
@@ -183,11 +166,23 @@ class SafariManager:
                 f"⏳ Tienen 30 segundos para apostar."
             )
         )
+        buffer = await crear_imagen_encuentro(
+            self.encuentro_actual["pokemons"],
+            self.session
+        )
 
-        embed.set_image(url=url_gif)
+        file = None
+
+        if buffer:
+            file = discord.File(
+                buffer,
+                filename="encuentro.png"
+            )
+        embed.set_image(url="attachment://encuentro.png")
 
         mensaje = await self.canal.send(
             embed=embed,
+            file=file,
             view=view
         )
         view.message = mensaje
