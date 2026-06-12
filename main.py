@@ -1052,7 +1052,9 @@ async def safari(ctx):
             False,
             tamano_factor
         )
-
+        log.info(
+            f"🎯 Encuentro Safari: {safari.encuentro_actual}"
+        )
         await ctx.send(
             f"🐾 ¡Un {nombre} apareció!"
         )
@@ -1067,7 +1069,6 @@ async def safari(ctx):
         await ctx.send(
             f"❌ Error Safari: {e}"
         )
-
 
 
 bot.run(TOKEN)
