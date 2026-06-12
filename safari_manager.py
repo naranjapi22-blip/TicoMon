@@ -126,6 +126,9 @@ class SafariManager:
             return
 
         nombre = data["name"].capitalize()
+
+        es_shiny = random.random() <= 0.01
+
         from mapeo_pokes import obtener_id_gif
 
         dex_id = data["id"]
@@ -142,8 +145,6 @@ class SafariManager:
             random.uniform(0.50, 1.50),
             2
         )
-
-        es_shiny = random.random() <= 0.01
 
         self.crear_encuentro(
             pokemon_id,
