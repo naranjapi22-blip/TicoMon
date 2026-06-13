@@ -133,10 +133,11 @@ class BotonApuesta(discord.ui.Button):
             self.cantidad,
             self.slot
         )
+
         if ok:
 
             return await interaction.response.send_message(
-                f"🎯 Apostaste {self.cantidad} Safari Ball{'s' if self.cantidad > 1 else ''} al slot {self.slot}.",
+                mensaje,
                 ephemeral=True
             )
 
@@ -210,7 +211,7 @@ class BotonSeleccionPokemon(discord.ui.Button):
 
         await interaction.response.send_message(
             f"🎯 Elegiste a {self.nombre}.\n\n"
-            f"¿Cuántas Safari Balls deseas apostar?",
+            f"¿Cuántas Safari Balls deseas usar?",
             view=VistaApuestasSafari(
                 self.guild_id,
                 self.slot
