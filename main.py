@@ -1036,7 +1036,7 @@ async def safari(ctx):
     return
 async def rellenar_stats_pokemon():
 
-    ids_pendientes = [1]
+    ids_pendientes = database.obtener_ids_sin_stats()
 
     print(f"Pokémon pendientes: {len(ids_pendientes)}")
 
