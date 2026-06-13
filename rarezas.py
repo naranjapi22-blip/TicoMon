@@ -64,8 +64,11 @@ def obtener_pokemon_safari_region(
         return pokemon_id
 def generar_ids_safari_region(
     inicio,
-    fin
+    fin,
+    excluidos=None
 ):
+    if excluidos is None:
+        excluidos = set()
 
     ids_spawn = []
 
@@ -77,6 +80,9 @@ def generar_ids_safari_region(
         )
 
         if pokemon_id in ids_spawn:
+            continue
+
+        if pokemon_id in excluidos:
             continue
 
         ids_spawn.append(

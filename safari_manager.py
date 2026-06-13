@@ -14,7 +14,7 @@ from rarezas import (
 class SafariManager:
 
     def __init__(self):
-
+        self.pokemons_vistos = set()
         self.activo = False
 
         self.guild_id = None
@@ -52,6 +52,7 @@ class SafariManager:
         self.creador_vistas = creador_vistas
         self.activo = True
         self.participantes.clear()
+        self.pokemons_vistos.clear()
         self.region_actual = obtener_siguiente_region()
         self.encuentro_actual = {
             "pokemon_id": None,
@@ -132,7 +133,8 @@ class SafariManager:
 
         ids_safari = generar_ids_safari_region(
             rango["inicio"],
-            rango["fin"]
+            rango["fin"],
+            self.pokemons_vistos
         )
         print("IDS SAFARI:", ids_safari)
         print(
