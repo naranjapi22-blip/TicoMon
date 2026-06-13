@@ -19,7 +19,7 @@ class SafariManager:
 
         self.guild_id = None
         self.canal_id = None
-
+        self.modo_test = False
         self.participantes = {}
         self.canal = None
         self.session = None
@@ -100,7 +100,8 @@ class SafariManager:
                 f"{datos['capturas']} captura(s)\n"
             )
 
-        await self.canal.send(texto)
+        if self.canal:
+            await self.canal.send(texto)
         self.session = None
         self.creador_vistas = None
         
@@ -239,7 +240,13 @@ class SafariManager:
                 f"🎯 Participaron {len(apuestas)} entrenador(es)."
             )
 
+        await self.resolver_apuestas()
+    async def resolver_apuestas(self):
+
+        apuestas = self.encuentro_actual["apuestas"]
+
         for pokemon in self.encuentro_actual["pokemons"]:
+
             print(
                 f"RESOLVIENDO SLOT {pokemon['slot']} "
                 f"{pokemon['nombre']}"
@@ -252,6 +259,7 @@ class SafariManager:
                 for user_id, datos in apuestas.items()
                 if datos["slot"] == slot
             }
+
             print(
                 f"APUESTAS SLOT {slot}: "
                 f"{apuestas_slot}"
@@ -280,6 +288,7 @@ class SafariManager:
                     0.05 +
                     (capture_rate / 255) * 0.35
                 )
+
                 probabilidad = min(
                     probabilidad,
                     0.95
@@ -293,14 +302,20 @@ class SafariManager:
                     f"ROLL={capturado} "
                     f"prob={probabilidad:.2%}"
                 )
-                if capturado:
-                    print(
-                        f"CAPTURADO -> {pokemon['nombre']} "
-                        f"por {user_id}"
-                    )
-                    nombre = pokemon["nombre"].capitalize()
-                    es_shiny = pokemon["es_shiny"]
-                    tamano_factor = pokemon["tamano_factor"]
+
+                if not capturado:
+                    continue
+
+                print(
+                    f"CAPTURADO -> {pokemon['nombre']} "
+                    f"por {user_id}"
+                )
+
+                nombre = pokemon["nombre"].capitalize()
+                es_shiny = pokemon["es_shiny"]
+                tamano_factor = pokemon["tamano_factor"]
+
+                if not self.modo_test:
 
                     try:
 
@@ -320,26 +335,49 @@ class SafariManager:
 
                         continue
 
-                    self.participantes[
-                        user_id
-                    ]["capturas"] += 1
+                self.participantes[user_id]["capturas"] += 1
 
+                if self.canal and not self.modo_test:
                     await self.canal.send(
                         f"🎉 <@{user_id}> capturó a {nombre}."
                     )
 
-                    pokemon_capturado = True
+                pokemon_capturado = True
 
-                    break
+                break
 
             if not pokemon_capturado:
 
                 nombre = pokemon["nombre"].capitalize()
 
-                await self.canal.send(
-                    f"💨 {nombre} escapó del Safari."
-                )
+                if self.canal and not self.modo_test:
+                    await self.canal.send(
+                        f"💨 {nombre} escapó del Safari."
+                    )
+    async def simular_encuentro(self):
 
+        self.encuentro_actual["apuestas"] = {}
+
+        for user_id, datos in self.participantes.items():
+
+            if datos["balls"] <= 0:
+                continue
+
+            balls = min(
+                random.randint(1, 3),
+                datos["balls"]
+            )
+
+            slot = random.randint(1, 3)
+
+            datos["balls"] -= balls
+
+            self.encuentro_actual["apuestas"][user_id] = {
+                "balls": balls,
+                "slot": slot
+            }
+
+        await self.resolver_apuestas()
     async def ejecutar_safari(self):
         self.encuentro_numero = 1
 
