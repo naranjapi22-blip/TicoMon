@@ -151,13 +151,23 @@ def _resumen_captura(b: dict, captura) -> str:
     return texto
 
 
-def _stats_todas_capturas(data, capturas: list) -> str:
-    if not capturas:
-        return "Sin capturas de esta especie."
-    if not data:
-        return "Sin datos de PokeAPI."
-    b = {s["stat"]["name"]: s["base_stat"] for s in data["stats"]}
-    tipos = ", ".join(t["type"]["name"].capitalize() for t in data.get("types", []))
+def _stats_todas_capturas(pokemon, capturas: list) -> str:
+    if not pokemon:
+        return "Sin datos del Pokémon."
+
+    b = {
+        "hp": pokemon["hp"],
+        "attack": pokemon["attack"],
+        "defense": pokemon["defense"],
+        "special-attack": pokemon["special_attack"],
+        "special-defense": pokemon["special_defense"],
+        "speed": pokemon["speed"]
+    }
+
+    tipos = ", ".join(
+        t.capitalize()
+        for t in pokemon["tipos"].split(",")
+    )
     bloques = [f"**Tipos:** {tipos or '—'}"]
     for i, captura in enumerate(capturas):
         if i > 0:
@@ -170,8 +180,13 @@ def _stats_todas_capturas(data, capturas: list) -> str:
 
 
 async def crear_embed_comparacion(session, user_id, nombre_a: str, nombre_b: str) -> discord.Embed:
-    data_a, _ = await servicios.obtener_pokemon(session, nombre_a)
-    data_b, _ = await servicios.obtener_pokemon(session, nombre_b)
+    pokemon_a = database.obtener_pokemon_local_nombre(
+        nombre_a
+    )
+
+    pokemon_b = database.obtener_pokemon_local_nombre(
+        nombre_b
+    )
     caps_a = database.listar_capturas_por_especie(user_id, nombre_a)
     caps_b = database.listar_capturas_por_especie(user_id, nombre_b)
 
@@ -181,15 +196,15 @@ async def crear_embed_comparacion(session, user_id, nombre_a: str, nombre_b: str
     )
     embed.add_field(
         name=f"{nombre_a.capitalize()} ({len(caps_a)})",
-        value=_stats_todas_capturas(data_a, caps_a),
+        value=_stats_todas_capturas(pokemon_a, caps_a),
         inline=True,
     )
     embed.add_field(
         name=f"{nombre_b.capitalize()} ({len(caps_b)})",
-        value=_stats_todas_capturas(data_b, caps_b),
+        value=_stats_todas_capturas(pokemon_b, caps_b),
         inline=True,
     )
-    poke_id = await servicios.obtener_id_por_nombre(session, nombre_a)
+    poke_id = pokemon_a["id"] if pokemon_a else None
     if poke_id:
         embed.set_thumbnail(url=SPRITE_URL.format(poke_id=poke_id))
     return embed

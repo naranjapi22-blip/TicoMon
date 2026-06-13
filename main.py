@@ -203,23 +203,14 @@ async def pokedex(ctx, *, filtro: str = None):
         elif filtro.lower() == "legendarios":
             ids_filtrados = []
             for id_p in ids_tenidos:
-                resultado = await servicios.obtener_pokemon(bot.session, id_p)
-                # Extraemos 'data' y 'species' correctamente
-                data, species = resultado if isinstance(resultado, tuple) else (resultado, None)
-                
-                # Si no obtuvimos species directamente, lo buscamos en el diccionario
-                if not species and isinstance(data, dict):
-                    # Asumimos que la lógica para obtener species ya ocurrió en servicios.obtener_pokemon
-                    pass 
 
-                # --- AQUÍ ESTÁ LA CORRECCIÓN ---
-                # Ahora preguntamos por ambos: si es legendario O si es mítico
-                es_legendario = species.get('is_legendary', False) if species else False
-                es_mitico = species.get('is_mythical', False) if species else False
-                
-                if es_legendario or es_mitico:
+                pokemon = database.obtener_pokemon_local(id_p)
+
+                if pokemon and (
+                    pokemon["es_legendario"]
+                    or pokemon["es_mitico"]
+                ):
                     ids_filtrados.append(id_p)
-            
             if ids_filtrados:
                 ids_tenidos = set(ids_filtrados)
                 region_label = "Legendarios y Míticos"
