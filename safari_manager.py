@@ -33,7 +33,7 @@ class SafariManager:
         }
 
         self.encuentro_numero = 0
-        self.max_encuentros = 10
+        self.max_encuentros = 5
 
         self.tarea_principal = None
 
@@ -187,7 +187,7 @@ class SafariManager:
             description=(
                 f"🐾 Pokémon disponibles:\n\n"
                 f"{pokemon_texto}\n\n"
-                f"⏳ Tienen 30 segundos para apostar."
+                f"⏳ Tienen 30 segundos para elegir."
             )
         )
         buffer = await crear_imagen_encuentro(
@@ -270,10 +270,9 @@ class SafariManager:
                 capture_rate = pokemon["capture_rate"]
 
                 probabilidad = (
-                    0.10 +
-                    (capture_rate / 255) * 0.70
+                    0.05 +
+                    (capture_rate / 255) * 0.35
                 )
-
                 probabilidad = min(
                     probabilidad,
                     0.95
@@ -407,7 +406,7 @@ class SafariManager:
             return False, "No participas en este Safari."
 
         if user_id in self.encuentro_actual["apuestas"]:
-            return False, "Ya apostaste en este encuentro."
+            return False, "Ya elegiste en este encuentro."
 
         datos = self.participantes[user_id]
 
@@ -415,6 +414,8 @@ class SafariManager:
             return False, "No tienes suficientes Safari Balls."
 
         datos["balls"] -= cantidad
+
+        balls_restantes = datos["balls"]
 
         self.encuentro_actual["apuestas"][user_id] = {
             "balls": cantidad,
@@ -431,8 +432,22 @@ class SafariManager:
         log.info(
             f"🎯 Apuestas actuales: {self.encuentro_actual['apuestas']}"
         )
+        pokemon = next(
+            p
+            for p in self.encuentro_actual["pokemons"]
+            if p["slot"] == slot
+        )
 
-        return True, "Apuesta registrada."
+        nombre_pokemon = (
+            f"✨ SHINY ✨ {pokemon['nombre'].capitalize()}"
+            if pokemon["es_shiny"]
+            else pokemon["nombre"].capitalize()
+        )
+        return (
+            True,
+            f"🎾 Lanzarás {cantidad} Safari Balls a {nombre_pokemon}.\n\n"
+            f"🎒 Safari Balls restantes: {balls_restantes}"
+        )
 
 
 # ==========================
