@@ -1080,7 +1080,7 @@ async def stress(ctx, cantidad: int = 100):
             for d, s, sh, r in data_pokes
         ]
 
-        await servicios.generar_collage_siluetas(
+        buffer_siluetas = await servicios.generar_collage_siluetas(
             bot.session,
             datos_para_collage
         )
@@ -1101,12 +1101,26 @@ async def stress(ctx, cantidad: int = 100):
 
             texto_pistas += pista + "\n"
 
-        discord.Embed(
+        imagen_final = discord.File(
+            buffer_siluetas,
+            filename="fragmentos.png"
+        )
+
+        embed = discord.Embed(
             title="Stress Test",
             description=texto_pistas
         )
 
-        return True
+        embed.set_image(
+            url="attachment://fragmentos.png"
+        )
+
+        view = SpawnSelectionView(
+            data_pokes,
+            ctx.author
+        )
+
+        return embed, imagen_final, view
 
     gc.collect()
 
