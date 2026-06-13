@@ -107,10 +107,24 @@ async def crear_embed_captura_stats(session, user_id, captura_id: int) -> discor
         inline=False,
     )
 
-    data, _ = await servicios.obtener_pokemon(session, nombre)
-    if data:
-        tipos = ", ".join(t["type"]["name"].capitalize() for t in data.get("types", []))
-        b = {s["stat"]["name"]: s["base_stat"] for s in data["stats"]}
+    pokemon = database.obtener_pokemon_local_nombre(
+        nombre
+    )
+    if pokemon:
+
+        tipos = ", ".join(
+            t.capitalize()
+            for t in pokemon["tipos"].split(",")
+        )
+
+        b = {
+            "hp": pokemon["hp"],
+            "attack": pokemon["attack"],
+            "defense": pokemon["defense"],
+            "special-attack": pokemon["special_attack"],
+            "special-defense": pokemon["special_defense"],
+            "speed": pokemon["speed"]
+        }
         embed.insert_field_at(
             0,
             name="Tipos",
@@ -125,7 +139,7 @@ async def crear_embed_captura_stats(session, user_id, captura_id: int) -> discor
         embed.add_field(name="✨ SpD", value=_format_stat(calcular_stat_lvl50(b.get("special-defense", 0), spd), spd), inline=True)
         embed.add_field(name="⚡ Spe", value=_format_stat(calcular_stat_lvl50(b.get("speed", 0), spe), spe), inline=True)
 
-        poke_id = data.get("id") or await servicios.obtener_id_por_nombre(session, nombre)
+        poke_id = pokemon["id"]
         if poke_id:
             embed.set_thumbnail(url=SPRITE_URL.format(poke_id=poke_id))
 

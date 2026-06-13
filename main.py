@@ -823,34 +823,7 @@ async def cargar_pokemon_por_rareza(session):
     for rareza, lista in pokemon_por_rareza.items():
         print(f"{rareza}: {len(lista)}")
 
-async def rellenar_capture_rates():
-    ids_pendientes = database.obtener_ids_sin_capture_rate()
 
-    print(f"Pokémon pendientes: {len(ids_pendientes)}")
-
-    for pokemon_id in ids_pendientes:
-
-        try:
-            log.info(f"Procesando {pokemon_id}")
-
-            data, species = await servicios.obtener_pokemon(bot.session, pokemon_id)
-
-            log.info(f"Datos obtenidos {pokemon_id}")
-
-            if not data:
-                print(f"Sin datos {pokemon_id}")
-                continue
-
-            capture_rate = data.get("capture_rate", 45)
-
-            log.info(f"Capture rate {pokemon_id}: {capture_rate}")
-
-            database.actualizar_capture_rate(pokemon_id, capture_rate)
-
-            log.info(f"GUARDADO {pokemon_id}")
-
-        except Exception as e:
-            log.error(f"ERROR EN {pokemon_id}: {e}")
 async def inicializar_rarezas_spawn():
     global pokemon_por_rareza
 
@@ -1043,50 +1016,6 @@ async def safari(ctx):
     )
     await safari.ejecutar_safari()
     return
-async def rellenar_stats_pokemon():
-
-    ids_pendientes = database.obtener_ids_sin_stats()
-
-    print(f"Pokémon pendientes: {len(ids_pendientes)}")
-
-    for pokemon_id in ids_pendientes:
-
-        try:
-
-            log.info(f"Procesando {pokemon_id}")
-
-            data, species = await servicios.obtener_pokemon(
-                bot.session,
-                pokemon_id
-            )
-
-            if not data:
-                continue
-
-            stats = {
-                s["stat"]["name"]: s["base_stat"]
-                for s in data["stats"]
-            }
-
-            database.actualizar_stats_pokemon(
-                pokemon_id,
-                stats.get("hp", 0),
-                stats.get("attack", 0),
-                stats.get("defense", 0),
-                stats.get("special-attack", 0),
-                stats.get("special-defense", 0),
-                stats.get("speed", 0),
-                data.get("height", 0),
-                data.get("weight", 0)
-            )
-
-            log.info(f"GUARDADO {pokemon_id}")
-
-        except Exception as e:
-
-            log.error(
-                f"ERROR EN {pokemon_id}: {e}"
-            )
 
 
 bot.run(TOKEN)
