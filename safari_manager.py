@@ -134,7 +134,7 @@ class SafariManager:
         ids_safari = generar_ids_safari_region(
             rango["inicio"],
             rango["fin"],
-            self.pokemons_vistos
+            self.pokemons_vistos,
             self.encuentro_numero
         )
         print("IDS SAFARI:", ids_safari)
