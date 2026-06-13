@@ -1039,8 +1039,6 @@ async def stress(ctx, cantidad: int = 100):
 
     import time
     import asyncio
-    import psutil
-    import os
     import gc
 
     async def spawn_falso():
@@ -1130,18 +1128,9 @@ async def stress(ctx, cantidad: int = 100):
         if isinstance(r, Exception)
     )
 
-    proceso = psutil.Process(os.getpid())
-
-    ram_actual = (
-        proceso.memory_info().rss
-        / 1024
-        / 1024
-    )
-
     await ctx.send(
         f"✅ {cantidad:,} spawns simulados en {tiempo:.2f}s\n"
-        f"❌ Errores: {errores}\n"
-        f"🧠 RAM actual: {ram_actual:.2f} MB"
+        f"❌ Errores: {errores}"
     )
 
 bot.run(TOKEN)
