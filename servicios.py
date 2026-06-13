@@ -147,7 +147,8 @@ async def obtener_pokemon(session, nombre_o_id):
                         )
 
                         return data, species
-
+                        
+        print(f"POKEAPI -> {cache_key}")
         return None, None
 
     except Exception as e:

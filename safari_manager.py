@@ -2,6 +2,7 @@ import asyncio
 import logging
 import random
 import servicios
+import database
 log = logging.getLogger(__name__)
 from database import guardar_captura
 import discord
@@ -155,19 +156,18 @@ class SafariManager:
             start=1
         ):
 
-            data_tmp, species_tmp = await servicios.obtener_pokemon(
-                self.session,
+            pokemon_local = database.obtener_pokemon_local(
                 pokemon_id_tmp
             )
 
-            if not data_tmp:
+            if not pokemon_local:
                 continue
 
             pokemons.append({
                 "slot": slot,
                 "pokemon_id": pokemon_id_tmp,
-                "nombre": data_tmp["name"].lower(),
-                "capture_rate": species_tmp["capture_rate"],
+                "nombre": pokemon_local["nombre"].lower(),
+                "capture_rate": pokemon_local["capture_rate"],
                 "es_shiny": encuentro_shiny,
                 "tamano_factor": round(
                     random.uniform(0.50, 1.50),
