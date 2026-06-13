@@ -64,11 +64,7 @@ class SafariManager:
         self.activo = True
         self.participantes.clear()
         self.pokemons_vistos.clear()       
-        cantidad_eventos = random.choices(
-            [0, 1, 2],
-            weights=[50, 40, 10],
-            k=1
-        )[0]
+        cantidad_eventos = 1
 
         self.encuentros_evento = set(
             random.sample(
