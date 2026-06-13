@@ -150,6 +150,15 @@ class SafariManager:
         self.encuentro_numero = 0
 
     async def ejecutar_encuentro(self):
+        print(
+            f"ENCUENTRO ACTUAL: "
+            f"{self.encuentro_numero}"
+        )
+
+        print(
+            f"EVENTOS PROGRAMADOS: "
+            f"{self.encuentros_evento}"
+        )
         evento = None
 
         if self.encuentro_numero in self.encuentros_evento:
