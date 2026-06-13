@@ -1039,12 +1039,13 @@ async def stress(ctx, cantidad: int = 100):
 
     import time
     import asyncio
+    import psutil
+    import os
+    import gc
 
     async def spawn_falso():
 
         ids_spawn, rarezas_spawn = generar_ids_spawn()
-
-        data_pokes = []
 
         tareas = [
             servicios.obtener_pokemon(
@@ -1055,6 +1056,8 @@ async def stress(ctx, cantidad: int = 100):
         ]
 
         resultados = await asyncio.gather(*tareas)
+
+        data_pokes = []
 
         for data, species in resultados:
 
@@ -1079,7 +1082,7 @@ async def stress(ctx, cantidad: int = 100):
             for d, s, sh, r in data_pokes
         ]
 
-        buffer_siluetas = await servicios.generar_collage_siluetas(
+        await servicios.generar_collage_siluetas(
             bot.session,
             datos_para_collage
         )
@@ -1100,12 +1103,14 @@ async def stress(ctx, cantidad: int = 100):
 
             texto_pistas += pista + "\n"
 
-        embed = discord.Embed(
+        discord.Embed(
             title="Stress Test",
             description=texto_pistas
         )
 
-        return embed, buffer_siluetas
+        return True
+
+    gc.collect()
 
     inicio = time.perf_counter()
 
@@ -1117,16 +1122,26 @@ async def stress(ctx, cantidad: int = 100):
         return_exceptions=True
     )
 
+    tiempo = time.perf_counter() - inicio
+
     errores = sum(
-        1 for r in resultados
+        1
+        for r in resultados
         if isinstance(r, Exception)
     )
 
-    tiempo = time.perf_counter() - inicio
+    proceso = psutil.Process(os.getpid())
+
+    ram_actual = (
+        proceso.memory_info().rss
+        / 1024
+        / 1024
+    )
 
     await ctx.send(
-        f"✅ {cantidad} spawns simulados en {tiempo:.2f}s\n"
-        f"❌ Errores: {errores}"
+        f"✅ {cantidad:,} spawns simulados en {tiempo:.2f}s\n"
+        f"❌ Errores: {errores}\n"
+        f"🧠 RAM actual: {ram_actual:.2f} MB"
     )
 
 bot.run(TOKEN)
