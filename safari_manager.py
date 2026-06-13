@@ -33,7 +33,7 @@ class SafariManager:
         }
 
         self.encuentro_numero = 0
-        self.max_encuentros = 3
+        self.max_encuentros = 10
 
         self.tarea_principal = None
 
@@ -284,8 +284,7 @@ class SafariManager:
                 )
 
                 print(
-                    f"{pokemon['nombre']} | "
-                    f"rate={capture_rate} | "
+                    f"ROLL={capturado} "
                     f"prob={probabilidad:.2%}"
                 )
                 if capturado:
@@ -326,12 +325,7 @@ class SafariManager:
                     pokemon_capturado = True
 
                     break
-                print(
-                    f"CAPTURA -> "
-                    f"user={user_id} "
-                    f"pokemon={pokemon['nombre']} "
-                    f"slot={slot}"
-                )
+
             if not pokemon_capturado:
 
                 nombre = pokemon["nombre"].capitalize()
