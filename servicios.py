@@ -441,11 +441,13 @@ async def generar_collage_siluetas(session, data_pokes, tenidos=None, es_shiny=F
         x_offset = 0
 
         for s in siluetas:
-            composite.paste(s, (x_offset, 0), s)
+            composite.paste(
+                s,
+                (x_offset, 0),
+                s
+            )
+
             x_offset += 138
-        for s in siluetas:
-            composite.paste(s, (x_offset, 0), s)
-            x_offset += 130
             
         buffer = io.BytesIO()
         composite.save(buffer, format='PNG')
