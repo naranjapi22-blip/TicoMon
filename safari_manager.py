@@ -283,8 +283,16 @@ class SafariManager:
                     random.random() <= probabilidad
                 )
 
+                print(
+                    f"{pokemon['nombre']} | "
+                    f"rate={capture_rate} | "
+                    f"prob={probabilidad:.2%}"
+                )
                 if capturado:
-
+                    print(
+                        f"CAPTURADO -> {pokemon['nombre']} "
+                        f"por {user_id}"
+                    )
                     nombre = pokemon["nombre"].capitalize()
                     es_shiny = pokemon["es_shiny"]
                     tamano_factor = pokemon["tamano_factor"]
