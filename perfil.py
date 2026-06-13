@@ -1,6 +1,5 @@
 import discord
 from discord.ext import commands
-import sqlite3
 import database
 import servicios
 import os
@@ -123,11 +122,12 @@ def iniciar_modulo_perfil(bot):
             destacado_nombre, es_shiny_db = datos_destacado
             es_shiny = bool(es_shiny_db)
             
-            data, _ = await servicios.obtener_pokemon(bot.session, destacado_nombre)
-        if data:
-            try:
+        dex_id = database.obtener_id_pokemon(
+            destacado_nombre
+        )
 
-                dex_id = data["id"]
+        if dex_id:
+            try:
 
                 id_final = obtener_id_gif(dex_id)
 

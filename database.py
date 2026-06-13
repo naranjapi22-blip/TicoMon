@@ -983,3 +983,12 @@ def obtener_pokemon_local_nombre(nombre):
     finally:
         cursor.close()
         conn.close()
+def obtener_id_pokemon(nombre):
+    pokemon = obtener_pokemon_local_nombre(
+        nombre
+    )
+
+    if not pokemon:
+        return None
+
+    return pokemon["id"]
