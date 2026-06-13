@@ -884,8 +884,6 @@ def obtener_pokemon_local(pokemon_id):
 
     if pokemon:
 
-        print(f"CACHE -> {pokemon_id}")
-
         return pokemon
 
     conn = get_connection()
@@ -940,7 +938,6 @@ def obtener_pokemon_local(pokemon_id):
             "es_legendario": fila[4],
             "es_mitico": fila[5]
         }
-        print(f"CACHE -> {pokemon_id}")
         return pokemon
 
     finally:

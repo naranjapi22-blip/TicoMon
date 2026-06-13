@@ -1,6 +1,6 @@
 from PIL import Image
 from io import BytesIO
-
+import os
 async def crear_imagen_encuentro(pokemons, session):
 
     sprites = []
@@ -15,6 +15,11 @@ async def crear_imagen_encuentro(pokemons, session):
                 "PokeAPI/sprites/master/"
                 f"sprites/pokemon/shiny/{pokemon_id}.png"
             )
+
+            ruta_local = (
+                f"sprites/shiny/{pokemon_id}.png"
+            )
+
         else:
             url = (
                 "https://raw.githubusercontent.com/"
@@ -22,7 +27,26 @@ async def crear_imagen_encuentro(pokemons, session):
                 f"sprites/pokemon/{pokemon_id}.png"
             )
 
+            ruta_local = (
+                f"sprites/regular/{pokemon_id}.png"
+            )
+
         try:
+
+            if os.path.exists(ruta_local):
+
+                print(
+                    f"SPRITE LOCAL -> "
+                    f"{pokemon_id}"
+                )
+
+                sprite = Image.open(
+                    ruta_local
+                ).convert("RGBA")
+
+                sprites.append(sprite)
+
+                continue
 
             print("URL:", url)
 
