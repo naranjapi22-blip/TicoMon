@@ -232,30 +232,38 @@ class SafariManager:
                 f"🎯 Participaron {len(apuestas)} entrenador(es)."
             )
 
-            for pokemon in self.encuentro_actual["pokemons"]:
+        for pokemon in self.encuentro_actual["pokemons"]:
+            print(
+                f"RESOLVIENDO SLOT {pokemon['slot']} "
+                f"{pokemon['nombre']}"
+            )
 
-                slot = pokemon["slot"]
+            slot = pokemon["slot"]
 
-                apuestas_slot = {
-                    user_id: datos
-                    for user_id, datos in apuestas.items()
-                    if datos["slot"] == slot
-                }
+            apuestas_slot = {
+                user_id: datos
+                for user_id, datos in apuestas.items()
+                if datos["slot"] == slot
+            }
+            print(
+                f"APUESTAS SLOT {slot}: "
+                f"{apuestas_slot}"
+            )
 
-                if not apuestas_slot:
-                    continue
+            if not apuestas_slot:
+                continue
 
-                intentos = []
+            intentos = []
 
-                for user_id, datos_apuesta in apuestas_slot.items():
+            for user_id, datos_apuesta in apuestas_slot.items():
 
-                    intentos.extend(
-                        [user_id] * datos_apuesta["balls"]
-                    )
+                intentos.extend(
+                    [user_id] * datos_apuesta["balls"]
+                )
 
-                random.shuffle(intentos)
+            random.shuffle(intentos)
 
-                pokemon_capturado = False
+            pokemon_capturado = False
 
             for user_id in intentos:
 
@@ -280,11 +288,6 @@ class SafariManager:
                     nombre = pokemon["nombre"].capitalize()
                     es_shiny = pokemon["es_shiny"]
                     tamano_factor = pokemon["tamano_factor"]
-
-                    print(
-                        f"GUARDANDO: {nombre} "
-                        f"user={user_id}"
-                    )
 
                     try:
 
@@ -315,6 +318,19 @@ class SafariManager:
                     pokemon_capturado = True
 
                     break
+                print(
+                    f"CAPTURA -> "
+                    f"user={user_id} "
+                    f"pokemon={pokemon['nombre']} "
+                    f"slot={slot}"
+                )
+            if not pokemon_capturado:
+
+                nombre = pokemon["nombre"].capitalize()
+
+                await self.canal.send(
+                    f"💨 {nombre} escapó del Safari."
+                )
 
     async def ejecutar_safari(self):
         self.encuentro_numero = 1
