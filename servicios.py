@@ -401,9 +401,11 @@ async def generar_collage_siluetas(session, data_pokes, tenidos=None, es_shiny=F
                 if es_shiny:
                     ruta_sprite = f"sprites/shiny/{pokemon_id}.png"
                 else:
-                    ruta_sprite = f"sprites/{pokemon_id}.png"
+                    ruta_sprite = f"sprites/regular/{pokemon_id}.png"
 
-                img = Image.open(ruta_sprite).convert("RGBA")
+                img = Image.open(
+                    ruta_sprite
+                ).convert("RGBA")
 
                 silueta = generar_silueta_simple(img)
 
