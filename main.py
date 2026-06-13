@@ -439,12 +439,12 @@ async def spawn(ctx):
             texto_pistas += f"**Opción [{i+1}]:** 🔎 {pista_texto}\n\n"
 
         embed = discord.Embed(
-            title="❓ ¡Tres siluetas misteriosas han aparecido!"
+            title="❓ ¡Tres siluetas misteriosas han aparecido!",
             description=(
-                "Observa las siluetas y lee las pistas...\n\n"
+                f"Observa las siluetas y lee las pistas...\n\n"
                 f"{texto_pistas}"
-                "**¿A cuál vas a intentar atrapar?**"
-            )
+                f"**¿A cuál vas a intentar atrapar?**"
+            ),
             color=discord.Color.dark_grey()
         )
         embed.set_image(url="attachment://fragmentos.png")       
