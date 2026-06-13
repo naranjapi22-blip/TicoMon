@@ -480,10 +480,19 @@ async def info(ctx, *, nombre: str):
     if not versiones:
         return await ctx.send(f"❌ No tienes a **{nombre.capitalize()}**.")
 
-    data, _ = await servicios.obtener_pokemon(bot.session, nombre)
+    pokemon = database.obtener_pokemon_local_nombre(nombre)
+
+    if not pokemon:
+        return await ctx.send("Pokémon no encontrado.")
+
     mostrar_shiny = (1 in versiones)
-    
-    view = InfoView(ctx.author.id, data, versiones, mostrar_shiny)
+
+    view = InfoView(
+        ctx.author.id,
+        pokemon,
+        versiones,
+        mostrar_shiny
+    )
     await view.enviar_embed(ctx)
 
 perfil.iniciar_modulo_perfil(bot)
