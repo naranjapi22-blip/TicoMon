@@ -19,7 +19,12 @@ NATURALEZAS = [
 
 DATABASE_URL = os.environ.get('DATABASE_URL')
 db_lock = asyncio.Lock()
+POKEMON_CACHE = {}
+def obtener_pokemon_cache(pokemon_id):
 
+    return POKEMON_CACHE.get(
+        pokemon_id
+    )
 # --- Lógica de IVs (puedes poner esto en utils.py e importarlo) ---
 def generar_iv_final():
     if random.random() < 0.005:  # 0.5% probabilidad de 0
@@ -872,6 +877,15 @@ def obtener_canal_rankings(guild_id):
 
     return None
 def obtener_pokemon_local(pokemon_id):
+
+    pokemon = POKEMON_CACHE.get(
+        pokemon_id
+    )
+
+    if pokemon:
+
+        return pokemon
+
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -916,7 +930,7 @@ def obtener_pokemon_local(pokemon_id):
         if not fila:
             return None
 
-        return {
+        pokemon = {
             "id": fila[0],
             "nombre": fila[1],
             "tipos": fila[2],
@@ -925,10 +939,11 @@ def obtener_pokemon_local(pokemon_id):
             "es_mitico": fila[5]
         }
 
+        return pokemon
+
     finally:
         cursor.close()
         conn.close()
-        print(f"LOCAL DB -> {pokemon_id}")
 def obtener_pokemon_local_nombre(nombre):
     conn = get_connection()
     cursor = conn.cursor()
@@ -992,3 +1007,47 @@ def obtener_id_pokemon(nombre):
         return None
 
     return pokemon["id"]
+def cargar_cache_pokemon():
+
+    global POKEMON_CACHE
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+
+        cursor.execute("""
+            SELECT
+                id,
+                nombre,
+                tipos,
+                capture_rate,
+                es_legendario,
+                es_mitico
+            FROM pokemon_data
+        """)
+
+        filas = cursor.fetchall()
+
+        POKEMON_CACHE.clear()
+
+        for fila in filas:
+
+            POKEMON_CACHE[fila[0]] = {
+                "id": fila[0],
+                "nombre": fila[1],
+                "tipos": fila[2],
+                "capture_rate": fila[3],
+                "es_legendario": fila[4],
+                "es_mitico": fila[5]
+            }
+
+        log.info(
+            f"✅ Cache Pokémon cargada: "
+            f"{len(POKEMON_CACHE)} registros"
+        )
+
+    finally:
+
+        cursor.close()
+        conn.close()

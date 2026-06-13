@@ -105,6 +105,8 @@ async def on_ready():
     print("Entrando en on_ready")
     await inicializar_rarezas_spawn()
     print("Terminó inicializar_rarezas_spawn")
+    database.cargar_cache_pokemon()
+    print("✅ Cache Pokémon cargada")
     #print("✅ Pokémon clasificados por rareza.")
     # 1. SETUP DE GESTORES
     gestor_spawn.setup_gestor(bot)
