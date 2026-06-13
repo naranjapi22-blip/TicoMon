@@ -402,7 +402,10 @@ async def generar_collage_siluetas(session, data_pokes, tenidos=None, es_shiny=F
 
                 fragmento = await procesar_imagen_fragmento(session, url)
                 if fragmento:
-                    siluetas.append(fragmento.resize((150, 150), Image.Resampling.LANCZOS))
+                    siluetas.append(fragmento.resize((120, 120),Image.Resampling.NEAREST))
+                                                            
+                                                            
+                                                        
             
             except Exception as e:
                 log.error(f"🚨 Error procesando silueta {idx + 1}: {e}", exc_info=True)
@@ -410,14 +413,17 @@ async def generar_collage_siluetas(session, data_pokes, tenidos=None, es_shiny=F
         if not siluetas:
             return None
         
-        # 3. Creación del lienzo
-        composite_width = (150 * len(siluetas)) + (10 * (len(siluetas) - 1))
-        composite = Image.new('RGBA', (composite_width, 150), (255, 255, 255, 0))
+        composite_width = (120 * len(siluetas)) + (10 * (len(siluetas) - 1))
+        composite = Image.new(
+            'RGBA',
+            (composite_width, 120),
+            (255, 255, 255, 0)
+        )
         
         x_offset = 0
         for s in siluetas:
             composite.paste(s, (x_offset, 0), s)
-            x_offset += 160
+            x_offset += 130
             
         buffer = io.BytesIO()
         composite.save(buffer, format='PNG')
