@@ -1039,7 +1039,6 @@ async def stress(ctx, cantidad: int = 100):
 
     import time
     import asyncio
-    import random
 
     async def spawn_falso():
 
@@ -1089,7 +1088,7 @@ async def stress(ctx, cantidad: int = 100):
 
         pistas_usadas = []
 
-        for i, (data, species, es_shiny, rareza) in enumerate(data_pokes):
+        for data, species, es_shiny, rareza in data_pokes:
 
             pista = generar_pista(
                 data,
@@ -1107,5 +1106,27 @@ async def stress(ctx, cantidad: int = 100):
         )
 
         return embed, buffer_siluetas
+
+    inicio = time.perf_counter()
+
+    resultados = await asyncio.gather(
+        *[
+            spawn_falso()
+            for _ in range(cantidad)
+        ],
+        return_exceptions=True
+    )
+
+    errores = sum(
+        1 for r in resultados
+        if isinstance(r, Exception)
+    )
+
+    tiempo = time.perf_counter() - inicio
+
+    await ctx.send(
+        f"✅ {cantidad} spawns simulados en {tiempo:.2f}s\n"
+        f"❌ Errores: {errores}"
+    )
 
 bot.run(TOKEN)
