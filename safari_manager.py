@@ -232,109 +232,89 @@ class SafariManager:
                 f"🎯 Participaron {len(apuestas)} entrenador(es)."
             )
 
-            lista = []
+            for pokemon in self.encuentro_actual["pokemons"]:
 
-            for user_id, datos_apuesta in apuestas.items():
+                slot = pokemon["slot"]
 
-                lista.extend(
-                    [user_id] * datos_apuesta["balls"]
+                apuestas_slot = {
+                    user_id: datos
+                    for user_id, datos in apuestas.items()
+                    if datos["slot"] == slot
+                }
+
+                if not apuestas_slot:
+                    continue
+
+                intentos = []
+
+                for user_id, datos_apuesta in apuestas_slot.items():
+
+                    intentos.extend(
+                        [user_id] * datos_apuesta["balls"]
+                    )
+
+                random.shuffle(intentos)
+
+                pokemon_capturado = False
+
+            for user_id in intentos:
+
+                capture_rate = pokemon["capture_rate"]
+
+                probabilidad = (
+                    0.10 +
+                    (capture_rate / 255) * 0.70
                 )
 
-            ganador_id = random.choice(
-                lista
-            )
-
-            slot_ganador = apuestas[ganador_id]["slot"]
-
-            pokemon_elegido = next(
-                p
-                for p in self.encuentro_actual["pokemons"]
-                if p["slot"] == slot_ganador
-            )
-
-            capture_rate = pokemon_elegido[
-                "capture_rate"
-            ]
-
-            balls = apuestas[
-                ganador_id
-            ]["balls"]
-
-            probabilidad = (
-                0.10 +
-                (capture_rate / 255) * 0.70
-            )
-
-            probabilidad += (
-                (balls - 1) * 0.05
-            )
-
-            probabilidad = min(
-                probabilidad,
-                0.95
-            )
-
-            capturado = (
-                random.random() <= probabilidad
-            )
-
-            print(
-                f"CAPTURE RATE: {capture_rate} | "
-                f"BALLS: {balls} | "
-                f"PROB: {probabilidad:.2%}"
-            )
-
-            nombre = pokemon_elegido["nombre"].capitalize()
-            es_shiny = pokemon_elegido["es_shiny"]
-            tamano_factor = pokemon_elegido["tamano_factor"]
-
-            if not capturado:
-
-                await self.canal.send(
-                    f"💨 {nombre} escapó de las Safari Balls de <@{ganador_id}>.\n"
-                    f"🎯 Probabilidad de captura: {probabilidad:.0%}"
+                probabilidad = min(
+                    probabilidad,
+                    0.95
                 )
 
-                return
-            print(
-                f"GUARDANDO: {nombre} "
-                f"user={ganador_id}"
-            )
-            try:
-
-                await guardar_captura(
-                    ganador_id,
-                    nombre,
-                    tamano_factor,
-                    es_shiny
+                capturado = (
+                    random.random() <= probabilidad
                 )
 
-            except Exception as e:
+                if capturado:
 
-                log.error(
-                    f"Error guardando captura Safari: {e}",
-                    exc_info=True
-                )
+                    nombre = pokemon["nombre"].capitalize()
+                    es_shiny = pokemon["es_shiny"]
+                    tamano_factor = pokemon["tamano_factor"]
 
-                await self.canal.send(
-                    "❌ Ocurrió un error al guardar la captura."
-                )
+                    print(
+                        f"GUARDANDO: {nombre} "
+                        f"user={user_id}"
+                    )
 
-                return
+                    try:
 
-            self.participantes[
-                ganador_id
-            ]["capturas"] += 1
+                        await guardar_captura(
+                            user_id,
+                            nombre,
+                            tamano_factor,
+                            es_shiny
+                        )
 
-            captura_texto = (
-                f"✨ SHINY ✨ {nombre}"
-                if es_shiny
-                else nombre
-            )
+                    except Exception as e:
 
-            await self.canal.send(
-                f"🎉 <@{ganador_id}> capturó a {captura_texto}."
-            )
+                        log.error(
+                            f"Error guardando captura Safari: {e}",
+                            exc_info=True
+                        )
+
+                        continue
+
+                    self.participantes[
+                        user_id
+                    ]["capturas"] += 1
+
+                    await self.canal.send(
+                        f"🎉 <@{user_id}> capturó a {nombre}."
+                    )
+
+                    pokemon_capturado = True
+
+                    break
 
     async def ejecutar_safari(self):
         self.encuentro_numero = 1
