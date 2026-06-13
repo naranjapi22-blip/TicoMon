@@ -47,6 +47,10 @@ TOKEN = os.getenv('TOKEN')
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
+
+
+
+
 async def cargar_extensiones():
     # Agrega 'newpokedex' a tu lista principal. 
     # Si newpokedex.py está en la carpeta principal, no uses 'cogs.'
@@ -809,6 +813,7 @@ async def cargar_pokemon_por_rareza(session):
     print("=== Pokémon por rareza ===")
     for rareza, lista in pokemon_por_rareza.items():
         print(f"{rareza}: {len(lista)}")
+
 async def rellenar_capture_rates():
     ids_pendientes = database.obtener_ids_sin_capture_rate()
 
@@ -1029,7 +1034,50 @@ async def safari(ctx):
     )
     await safari.ejecutar_safari()
     return
+async def rellenar_stats_pokemon():
 
+    ids_pendientes = [1]
+
+    print(f"Pokémon pendientes: {len(ids_pendientes)}")
+
+    for pokemon_id in ids_pendientes:
+
+        try:
+
+            log.info(f"Procesando {pokemon_id}")
+
+            data, species = await servicios.obtener_pokemon(
+                bot.session,
+                pokemon_id
+            )
+
+            if not data:
+                continue
+
+            stats = {
+                s["stat"]["name"]: s["base_stat"]
+                for s in data["stats"]
+            }
+
+            database.actualizar_stats_pokemon(
+                pokemon_id,
+                stats.get("hp", 0),
+                stats.get("attack", 0),
+                stats.get("defense", 0),
+                stats.get("special-attack", 0),
+                stats.get("special-defense", 0),
+                stats.get("speed", 0),
+                data.get("height", 0),
+                data.get("weight", 0)
+            )
+
+            log.info(f"GUARDADO {pokemon_id}")
+
+        except Exception as e:
+
+            log.error(
+                f"ERROR EN {pokemon_id}: {e}"
+            )
 
 
 bot.run(TOKEN)
