@@ -1033,6 +1033,71 @@ async def safari(ctx):
     )
     await safari.ejecutar_safari()
     return
+@bot.command()
+@commands.is_owner()
+async def stress(ctx, cantidad: int = 100):
 
+    import time
+    import asyncio
+    import random
+
+    async def spawn_falso():
+
+        ids_spawn, rarezas_spawn = generar_ids_spawn()
+
+        data_pokes = []
+
+        tareas = [
+            servicios.obtener_pokemon(
+                bot.session,
+                pid
+            )
+            for pid in ids_spawn
+        ]
+
+        resultados = await asyncio.gather(*tareas)
+
+        for data, species in resultados:
+
+            if not data:
+                continue
+
+            pokemon_id = data["id"]
+
+            rareza = rarezas_spawn[pokemon_id]
+
+            data_pokes.append(
+                (
+                    data,
+                    species,
+                    False,
+                    rareza
+                )
+            )
+
+        datos_para_collage = [
+            (d, s)
+            for d, s, sh, r in data_pokes
+        ]
+
+        await servicios.generar_collage_siluetas(
+            bot.session,
+            datos_para_collage
+        )
+
+    inicio = time.perf_counter()
+
+    await asyncio.gather(
+        *[
+            spawn_falso()
+            for _ in range(cantidad)
+        ]
+    )
+
+    tiempo = time.perf_counter() - inicio
+
+    await ctx.send(
+        f"✅ {cantidad} spawns simulados en {tiempo:.2f}s"
+    )
 
 bot.run(TOKEN)
