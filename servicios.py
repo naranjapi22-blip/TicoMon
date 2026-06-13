@@ -397,17 +397,29 @@ async def generar_collage_siluetas(session, data_pokes, tenidos=None, es_shiny=F
             try:
                 # 1. Lógica de URL Shiny o Normal
                 if es_shiny:
-                    url = data['sprites']['other']['official-artwork'].get('front_shiny')
-                    if not url:
-                        url = data['sprites'].get('front_shiny')
+                    url = data['sprites'].get('front_shiny')
                 else:
-                    url = data['sprites']['other']['official-artwork'].get('front_default')
-                    if not url:
-                        url = data['sprites'].get('front_default')
+                    url = data['sprites'].get('front_default')
 
-                fragmento = await procesar_imagen_fragmento(session, url)
-                if fragmento:
-                    siluetas.append(fragmento.resize((120, 120),Image.Resampling.NEAREST))
+                async with session.get(url) as r:
+
+                    if r.status != 200:
+                        continue
+
+                    data_img = await r.read()
+
+                img = Image.open(
+                    io.BytesIO(data_img)
+                ).convert("RGBA")
+
+                silueta = generar_silueta_simple(img)
+
+                siluetas.append(
+                    silueta.resize(
+                        (128, 128),
+                        Image.Resampling.NEAREST
+                    )
+                )
                                                             
                                                             
                                                         
@@ -418,14 +430,15 @@ async def generar_collage_siluetas(session, data_pokes, tenidos=None, es_shiny=F
         if not siluetas:
             return None
         
-        composite_width = (120 * len(siluetas)) + (10 * (len(siluetas) - 1))
+        composite_width = (128 * len(siluetas)) + (10 * (len(siluetas) - 1))
+
         composite = Image.new(
             'RGBA',
-            (composite_width, 120),
+            (composite_width, 128),
             (255, 255, 255, 0)
         )
         
-        x_offset = 0
+        x_offset += 138
         for s in siluetas:
             composite.paste(s, (x_offset, 0), s)
             x_offset += 130
@@ -586,3 +599,19 @@ def procesar_sprite_pokemon(imagen_base, tamano_factor, estado_record=None):
     except Exception as e:
         log.error(f"🚨 Error al procesar sprite con Boost Visual: {e}")
         return imagen_base
+def generar_silueta_simple(imagen):
+    """
+    Convierte un sprite PNG transparente en una silueta negra.
+    """
+
+    _, _, _, alpha = imagen.split()
+
+    silueta = Image.new(
+        "RGBA",
+        imagen.size,
+        (0, 0, 0, 255)
+    )
+
+    silueta.putalpha(alpha)
+
+    return silueta
