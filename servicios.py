@@ -397,9 +397,13 @@ async def generar_collage_siluetas(session, data_pokes, tenidos=None, es_shiny=F
             try:
                 # 1. Lógica de URL Shiny o Normal
                 if es_shiny:
-                    url = data['sprites'].get('front_shiny')
+                    url = data['sprites']['other']['official-artwork'].get('front_shiny')
+                    if not url:
+                        url = data['sprites'].get('front_shiny')
                 else:
-                    url = data['sprites'].get('front_default')
+                    url = data['sprites']['other']['official-artwork'].get('front_default')
+                    if not url:
+                        url = data['sprites'].get('front_default')
 
                 fragmento = await procesar_imagen_fragmento(session, url)
                 if fragmento:

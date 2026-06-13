@@ -448,7 +448,13 @@ async def spawn(ctx):
         view = SpawnSelectionView(data_pokes, ctx.author)
         
         try:
+            inicio_discord = time.perf_counter()
             mensaje_enviado = await ctx.send(embed=embed, file=imagen_final, view=view)
+            print(
+                f"DISCORD_SEND: "
+                f"{time.perf_counter() - inicio_discord:.3f}s"
+            )
+
             view.message = mensaje_enviado
             gestor_spawn.vistas_activas[ctx.channel.id] = view 
 
