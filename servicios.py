@@ -437,8 +437,12 @@ async def generar_collage_siluetas(session, data_pokes, tenidos=None, es_shiny=F
             (composite_width, 128),
             (255, 255, 255, 0)
         )
-        
-        x_offset += 138
+
+        x_offset = 0
+
+        for s in siluetas:
+            composite.paste(s, (x_offset, 0), s)
+            x_offset += 138
         for s in siluetas:
             composite.paste(s, (x_offset, 0), s)
             x_offset += 130
