@@ -137,6 +137,10 @@ class SafariManager:
             self.pokemons_vistos,
             self.encuentro_numero
         )
+        for pokemon_id in ids_safari:
+            self.pokemons_vistos.add(
+                pokemon_id
+            )
         print("IDS SAFARI:", ids_safari)
         print(
             f"REGION: {self.region_actual} | "

@@ -66,7 +66,9 @@ def obtener_pokemon_safari_region(
 
     while True:
 
-        rareza = obtener_rareza_safari()
+        rareza = obtener_rareza_safari(
+            encuentro_numero
+        )
 
         pokemon_disponibles = [
             pokemon_id
