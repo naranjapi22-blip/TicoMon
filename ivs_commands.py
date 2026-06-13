@@ -129,15 +129,13 @@ class IvsCommands(commands.Cog):
         emoji_shiny = "✨ " if es_shiny else ""
         embed = discord.Embed(title=f"{emoji_shiny}{nombre.capitalize()}", color=color)
         
-        data, species = await servicios.obtener_pokemon(
-            self.bot.session,
+        pokemon = database.obtener_pokemon_local_nombre(
             nombre
         )
+        dex_id = None
 
-        # Si pokemon_data no tiene la forma especial,
-        # usamos el ID que devuelve PokéAPI
-        if data:
-            dex_id = data["id"]
+        if pokemon:
+            dex_id = pokemon["id"]
         nat_stats = NATURALEZAS.get(naturaleza.capitalize(), NATURALEZAS["Fuerte"])
 
         def format_stat_con_nat(base_lvl50, iv, stat_name):
@@ -148,8 +146,16 @@ class IvsCommands(commands.Cog):
             flecha = " ⬆️" if mult > 1.0 else (" ⬇️" if mult < 1.0 else "")
             return f"**{val:>3}**{flecha} | {iv:>2}/31"
 
-        if data:
-            b = {s['stat']['name']: s['base_stat'] for s in data['stats']}
+        if pokemon:
+
+            b = {
+                "hp": pokemon["hp"],
+                "attack": pokemon["attack"],
+                "defense": pokemon["defense"],
+                "special-attack": pokemon["special_attack"],
+                "special-defense": pokemon["special_defense"],
+                "speed": pokemon["speed"]
+            }
             embed.add_field(name="📊 Estadísticas (Lvl 50 | IVs)", value="━━━━━━━━━━━━━━━━━━━━", inline=False)
             embed.add_field(name="❤️ HP",  value=format_stat_con_nat(calcular_hp_lvl50(b.get('hp',0), hp), hp, "hp"), inline=True)
             embed.add_field(name="⚔️ Atk", value=format_stat_con_nat(calcular_stat_lvl50(b.get('attack',0), atk), atk, "attack"), inline=True)

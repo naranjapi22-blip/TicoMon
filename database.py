@@ -978,7 +978,15 @@ def cargar_cache_pokemon():
                 tipos,
                 capture_rate,
                 es_legendario,
-                es_mitico
+                es_mitico,
+                hp,
+                attack,
+                defense,
+                special_attack,
+                special_defense,
+                speed,
+                height,
+                weight
             FROM pokemon_data
         """)
 
@@ -994,7 +1002,16 @@ def cargar_cache_pokemon():
                 "tipos": fila[2],
                 "capture_rate": fila[3],
                 "es_legendario": fila[4],
-                "es_mitico": fila[5]
+                "es_mitico": fila[5],
+
+                "hp": fila[6],
+                "attack": fila[7],
+                "defense": fila[8],
+                "special_attack": fila[9],
+                "special_defense": fila[10],
+                "speed": fila[11],
+                "height": fila[12],
+                "weight": fila[13]
             }
 
             POKEMON_CACHE[fila[0]] = pokemon
