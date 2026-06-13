@@ -135,6 +135,7 @@ class SafariManager:
             rango["inicio"],
             rango["fin"],
             self.pokemons_vistos
+            self.encuentro_numero
         )
         print("IDS SAFARI:", ids_safari)
         print(

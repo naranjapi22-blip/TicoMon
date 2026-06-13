@@ -12,7 +12,8 @@ pokemon_por_rareza = {
     "legendario": []
 }
 # safari_manager.py
-def obtener_rareza_safari():
+def obtener_rareza_safari(encuentro_numero=1):
+
 
     rarezas = [
         "muy_comun",
@@ -25,14 +26,32 @@ def obtener_rareza_safari():
     ]
 
     pesos = [
-        47,
         30,
-        15,
-        7,
-        0.83,
-        0.067,
-        0.033
+        28,
+        23,
+        12,
+        5,
+        1.5,
+        0.25
     ]
+
+    boosts = {
+        1: 1.00,
+        2: 1.00,
+        3: 1.10,
+        4: 1.15,
+        5: 1.25
+    }
+
+    boost = boosts.get(
+        encuentro_numero,
+        1.25
+    )
+
+    pesos[3] *= boost
+    pesos[4] *= boost
+    pesos[5] *= boost
+    pesos[6] *= boost
 
     return random.choices(
         rarezas,
@@ -41,7 +60,8 @@ def obtener_rareza_safari():
     )[0]
 def obtener_pokemon_safari_region(
     inicio,
-    fin
+    fin,
+    encuentro_numero=1
 ):
 
     while True:
@@ -65,7 +85,8 @@ def obtener_pokemon_safari_region(
 def generar_ids_safari_region(
     inicio,
     fin,
-    excluidos=None
+    excluidos=None,
+    encuentro_numero=1
 ):
     if excluidos is None:
         excluidos = set()
@@ -76,7 +97,8 @@ def generar_ids_safari_region(
 
         pokemon_id = obtener_pokemon_safari_region(
             inicio,
-            fin
+            fin,
+            encuentro_numero
         )
 
         if pokemon_id in ids_spawn:
