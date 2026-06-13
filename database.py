@@ -929,3 +929,57 @@ def obtener_pokemon_local(pokemon_id):
         cursor.close()
         conn.close()
         print(f"LOCAL DB -> {pokemon_id}")
+def obtener_pokemon_local_nombre(nombre):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+
+        if DATABASE_URL:
+            cursor.execute(
+                """
+                SELECT
+                    id,
+                    nombre,
+                    tipos,
+                    capture_rate,
+                    es_legendario,
+                    es_mitico
+                FROM pokemon_data
+                WHERE LOWER(nombre) = LOWER(%s)
+                """,
+                (nombre,)
+            )
+        else:
+            cursor.execute(
+                """
+                SELECT
+                    id,
+                    nombre,
+                    tipos,
+                    capture_rate,
+                    es_legendario,
+                    es_mitico
+                FROM pokemon_data
+                WHERE LOWER(nombre) = LOWER(?)
+                """,
+                (nombre,)
+            )
+
+        fila = cursor.fetchone()
+
+        if not fila:
+            return None
+
+        return {
+            "id": fila[0],
+            "nombre": fila[1],
+            "tipos": fila[2],
+            "capture_rate": fila[3],
+            "es_legendario": fila[4],
+            "es_mitico": fila[5]
+        }
+
+    finally:
+        cursor.close()
+        conn.close()

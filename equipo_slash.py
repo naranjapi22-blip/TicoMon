@@ -15,14 +15,25 @@ equipo_group = app_commands.Group(name="equipo", description="Gestiona tu equipo
 
 async def _tipos_de(session, nombre: str) -> str:
     clave = nombre.lower()
+
     if clave in _tipos_cache:
         return _tipos_cache[clave]
-    data, _ = await servicios.obtener_pokemon(session, nombre)
-    if not data:
+
+    pokemon = database.obtener_pokemon_local_nombre(
+        nombre
+    )
+
+    if not pokemon:
         _tipos_cache[clave] = "?"
         return "?"
-    tipos = " / ".join(t["type"]["name"].capitalize() for t in data.get("types", []))
+
+    tipos = " / ".join(
+        tipo.capitalize()
+        for tipo in pokemon["tipos"].split(",")
+    )
+
     _tipos_cache[clave] = tipos
+
     return tipos
 
 
