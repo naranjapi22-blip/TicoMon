@@ -48,11 +48,9 @@ async def crear_imagen_encuentro(pokemons, session):
 
                 continue
 
-            print("URL:", url)
 
             async with session.get(url) as resp:
 
-                print("STATUS:", resp.status)
 
                 if resp.status != 200:
                     continue

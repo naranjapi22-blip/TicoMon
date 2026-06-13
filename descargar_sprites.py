@@ -1,13 +1,13 @@
 import os
 import requests
 
-os.makedirs("sprites/regular", exist_ok=True)
+os.makedirs("sprites/shiny", exist_ok=True)
 
 TOTAL_POKEMON = 1025
 
 for pokemon_id in range(1, TOTAL_POKEMON + 1):
 
-    ruta = f"sprites/regular/{pokemon_id}.png"
+    ruta = f"sprites/shiny/{pokemon_id}.png"
 
     if os.path.exists(ruta):
         continue
@@ -15,7 +15,7 @@ for pokemon_id in range(1, TOTAL_POKEMON + 1):
     url = (
         "https://raw.githubusercontent.com/"
         "PokeAPI/sprites/master/"
-        f"sprites/pokemon/{pokemon_id}.png"
+        f"sprites/pokemon/shiny/{pokemon_id}.png"
     )
 
     try:
@@ -49,4 +49,4 @@ for pokemon_id in range(1, TOTAL_POKEMON + 1):
         )
 
 print()
-print("✅ DESCARGA COMPLETADA")
+print("✅ DESCARGA SHINY COMPLETADA")
