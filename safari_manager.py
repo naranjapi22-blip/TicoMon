@@ -360,7 +360,7 @@ class SafariManager:
             return False
 
         self.participantes[user_id] = {
-            "balls": 18,
+            "balls": 9,
             "capturas": 0
         }
 

@@ -62,7 +62,7 @@ class BotonParticipar(discord.ui.Button):
         await interaction.response.send_message(
             (
                 "🚙 Te has unido al Safari.\n\n"
-                "🎯 Safari Balls: 18"
+                "🎯 Safari Balls: 9"
             ),
             ephemeral=True
         )
