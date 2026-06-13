@@ -396,21 +396,14 @@ async def generar_collage_siluetas(session, data_pokes, tenidos=None, es_shiny=F
         for idx, (data, _) in enumerate(data_pokes):
             try:
                 # 1. Lógica de URL Shiny o Normal
+                pokemon_id = data["id"]
+
                 if es_shiny:
-                    url = data['sprites'].get('front_shiny')
+                    ruta_sprite = f"sprites/shiny/{pokemon_id}.png"
                 else:
-                    url = data['sprites'].get('front_default')
+                    ruta_sprite = f"sprites/{pokemon_id}.png"
 
-                async with session.get(url) as r:
-
-                    if r.status != 200:
-                        continue
-
-                    data_img = await r.read()
-
-                img = Image.open(
-                    io.BytesIO(data_img)
-                ).convert("RGBA")
+                img = Image.open(ruta_sprite).convert("RGBA")
 
                 silueta = generar_silueta_simple(img)
 
