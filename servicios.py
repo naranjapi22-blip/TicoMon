@@ -99,6 +99,7 @@ def generar_mascara_hierba(width, height):
 pokemon_cache = {}
 
 async def obtener_pokemon(session, nombre_o_id):
+    print(f"🌐 POKEAPI -> {nombre_o_id}")
     try:
         cache_key = str(nombre_o_id).lower()
 
