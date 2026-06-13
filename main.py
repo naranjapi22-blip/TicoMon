@@ -1045,7 +1045,40 @@ async def stress(ctx, cantidad: int = 100):
 
         ids_spawn, rarezas_spawn = generar_ids_spawn()
 
-        ...
+        data_pokes = []
+
+        tareas = [
+            servicios.obtener_pokemon(
+                bot.session,
+                pid
+            )
+            for pid in ids_spawn
+        ]
+
+        resultados = await asyncio.gather(*tareas)
+
+        for data, species in resultados:
+
+            if not data:
+                continue
+
+            pokemon_id = data["id"]
+
+            rareza = rarezas_spawn[pokemon_id]
+
+            data_pokes.append(
+                (
+                    data,
+                    species,
+                    False,
+                    rareza
+                )
+            )
+
+        datos_para_collage = [
+            (d, s)
+            for d, s, sh, r in data_pokes
+        ]
 
         buffer_siluetas = await servicios.generar_collage_siluetas(
             bot.session,
@@ -1066,7 +1099,7 @@ async def stress(ctx, cantidad: int = 100):
 
             pistas_usadas.append(pista)
 
-            texto_pistas += pista
+            texto_pistas += pista + "\n"
 
         embed = discord.Embed(
             title="Stress Test",
