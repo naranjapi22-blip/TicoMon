@@ -104,7 +104,7 @@ async def on_ready():
     
     # 0. Inicializar sesión de red
     bot.session = aiohttp.ClientSession()
-    await rellenar_stats_pokemon()
+
     # Cargar listas de rareza 
     print("Entrando en on_ready")
     await inicializar_rarezas_spawn()
