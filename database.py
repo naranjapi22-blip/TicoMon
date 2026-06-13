@@ -20,6 +20,7 @@ NATURALEZAS = [
 DATABASE_URL = os.environ.get('DATABASE_URL')
 db_lock = asyncio.Lock()
 POKEMON_CACHE = {}
+POKEMON_CACHE_NOMBRE = {}
 def obtener_pokemon_cache(pokemon_id):
 
     return POKEMON_CACHE.get(
@@ -944,59 +945,13 @@ def obtener_pokemon_local(pokemon_id):
         cursor.close()
         conn.close()
 def obtener_pokemon_local_nombre(nombre):
-    conn = get_connection()
-    cursor = conn.cursor()
 
-    try:
+    if not nombre:
+        return None
 
-        if DATABASE_URL:
-            cursor.execute(
-                """
-                SELECT
-                    id,
-                    nombre,
-                    tipos,
-                    capture_rate,
-                    es_legendario,
-                    es_mitico
-                FROM pokemon_data
-                WHERE LOWER(nombre) = LOWER(%s)
-                """,
-                (nombre,)
-            )
-        else:
-            cursor.execute(
-                """
-                SELECT
-                    id,
-                    nombre,
-                    tipos,
-                    capture_rate,
-                    es_legendario,
-                    es_mitico
-                FROM pokemon_data
-                WHERE LOWER(nombre) = LOWER(?)
-                """,
-                (nombre,)
-            )
-
-        fila = cursor.fetchone()
-
-        if not fila:
-            return None
-
-        return {
-            "id": fila[0],
-            "nombre": fila[1],
-            "tipos": fila[2],
-            "capture_rate": fila[3],
-            "es_legendario": fila[4],
-            "es_mitico": fila[5]
-        }
-
-    finally:
-        cursor.close()
-        conn.close()
+    return POKEMON_CACHE_NOMBRE.get(
+        nombre.lower()
+    )
 def obtener_id_pokemon(nombre):
     pokemon = obtener_pokemon_local_nombre(
         nombre
@@ -1009,6 +964,7 @@ def obtener_id_pokemon(nombre):
 def cargar_cache_pokemon():
 
     global POKEMON_CACHE
+    global POKEMON_CACHE_NOMBRE
 
     conn = get_connection()
     cursor = conn.cursor()
@@ -1029,10 +985,10 @@ def cargar_cache_pokemon():
         filas = cursor.fetchall()
 
         POKEMON_CACHE.clear()
-
+        POKEMON_CACHE_NOMBRE.clear()
         for fila in filas:
 
-            POKEMON_CACHE[fila[0]] = {
+            pokemon = {
                 "id": fila[0],
                 "nombre": fila[1],
                 "tipos": fila[2],
@@ -1040,6 +996,12 @@ def cargar_cache_pokemon():
                 "es_legendario": fila[4],
                 "es_mitico": fila[5]
             }
+
+            POKEMON_CACHE[fila[0]] = pokemon
+
+            POKEMON_CACHE_NOMBRE[
+                fila[1].lower()
+            ] = pokemon
 
         log.info(
             f"✅ Cache Pokémon cargada: "
