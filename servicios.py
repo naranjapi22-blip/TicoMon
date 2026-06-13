@@ -249,8 +249,9 @@ async def generar_collage(session, data_pokes, tenidos=None, es_shiny=False):
 
         # Ejecutar todas las tareas en paralelo
         tareas = [obtener_y_procesar(id_poke, url) for id_poke, url in data_pokes]
+
         resultados = await asyncio.gather(*tareas)
-        
+
         # Dibujar el collage final
         collage = Image.new('RGBA', (celda_ancho * cols, celda_alto * filas), (0, 0, 0, 0))
         draw = ImageDraw.Draw(collage)

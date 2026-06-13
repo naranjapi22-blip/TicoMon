@@ -333,9 +333,18 @@ async def spawn(ctx):
             for pid in ids_spawn
         ]
 
+        import time
+
+        inicio_api = time.perf_counter()
+
         resultados = await asyncio.gather(
             *tasks,
             return_exceptions=True
+        )
+
+        print(
+            f"OBTENER_POKEMON: "
+            f"{time.perf_counter() - inicio_api:.3f}s"
         )
 
         # FASE 4: Procesamiento de datos
@@ -389,10 +398,17 @@ async def spawn(ctx):
         ]
 
         # Pasamos la lista limpia al generador
+        inicio_siluetas = time.perf_counter()
+
         buffer_siluetas = await servicios.generar_collage_siluetas(
             ctx.bot.session,
             datos_para_collage,
             tenidos=[]
+        )
+
+        print(
+            f"SILUETAS: "
+            f"{time.perf_counter() - inicio_siluetas:.3f}s"
         )
         
         if not buffer_siluetas:
