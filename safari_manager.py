@@ -14,10 +14,20 @@ from rarezas import (
 )
 class SafariManager:
 
+    def generar_evento_safari():
+
+        eventos = [
+            "nido",
+            "lago",
+            "enjambre",
+            "manada"
+        ]
+
+        return random.choice(eventos)
     def __init__(self):
         self.pokemons_vistos = set()
         self.activo = False
-
+        self.evento_actual = None
         self.guild_id = None
         self.canal_id = None
         self.modo_test = False
@@ -53,7 +63,28 @@ class SafariManager:
         self.creador_vistas = creador_vistas
         self.activo = True
         self.participantes.clear()
-        self.pokemons_vistos.clear()
+        self.pokemons_vistos.clear()       
+        cantidad_eventos = random.choices(
+            [0, 1, 2],
+            weights=[50, 40, 10],
+            k=1
+        )[0]
+
+        self.encuentros_evento = set(
+            random.sample(
+                range(
+                    1,
+                    self.max_encuentros + 1
+                ),
+                cantidad_eventos
+            )
+        )
+
+        print(
+            f"EVENTOS SAFARI: "
+            f"{self.encuentros_evento}"
+        )
+        self.encuentros_evento = set()
         self.region_actual = obtener_siguiente_region()
         self.encuentro_actual = {
             "pokemon_id": None,
@@ -119,13 +150,28 @@ class SafariManager:
         self.encuentro_numero = 0
 
     async def ejecutar_encuentro(self):
-    
+        evento = None
 
+        if self.encuentro_numero in self.encuentros_evento:
 
-        tamano_factor = round(
-            random.uniform(0.50, 1.50),
-            2
-        )
+            print(
+                f"EVENTO ENCUENTRO "
+                f"{self.encuentro_numero}"
+            )
+
+            evento = random.choice(
+                [
+                    "nido",
+                    "lago",
+                    "enjambre",
+                    "manada"
+                ]
+            )
+
+            print(
+                f"EVENTO SAFARI: {evento}"
+            )
+
 
         pokemons = []
 
@@ -178,6 +224,29 @@ class SafariManager:
         self.crear_encuentro(
             pokemons
         )
+        if evento == "nido":
+
+            await self.canal.send(
+                "🥚 **¡Encontraron un nido Pokémon!**"
+            )
+
+        elif evento == "lago":
+
+            await self.canal.send(
+                "🌊 **La camioneta se desvía hacia un lago cercano.**"
+            )
+
+        elif evento == "enjambre":
+
+            await self.canal.send(
+                "🐝 **¡Un enjambre Pokémon aparece en la zona!**"
+            )
+
+        elif evento == "manada":
+
+            await self.canal.send(
+                "🐎 **¡Una manada bloquea el camino!**"
+            )        
         from vistas_safari import VistaSeleccionPokemon
         view = VistaSeleccionPokemon(
             self.guild_id,
