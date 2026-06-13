@@ -80,7 +80,6 @@ class SafariManager:
             f"EVENTOS SAFARI: "
             f"{self.encuentros_evento}"
         )
-        self.encuentros_evento = set()
         self.region_actual = obtener_siguiente_region()
         self.encuentro_actual = {
             "pokemon_id": None,
