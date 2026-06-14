@@ -77,81 +77,79 @@ class PhotoDex(commands.Cog):
                 font_nombre = ImageFont.load_default()
                 font_info = ImageFont.load_default()
 
+
+
             # =====================
-            # SPRITE
+            # OFFICIAL ARTWORK
             # =====================
 
-# =====================
-# OFFICIAL ARTWORK
-# =====================
-
-        data, species = await servicios.obtener_pokemon(
-            self.bot.session,
-            dex_id
-        )
-
-        if not data:
-            await ctx.send(
-                "❌ No se pudo obtener información del Pokémon."
-            )
-            return
-
-        if es_shiny:
-
-            artwork_url = (
-                data["sprites"]["other"]["official-artwork"]
-                .get("front_shiny")
+            data, species = await servicios.obtener_pokemon(
+                self.bot.session,
+                dex_id
             )
 
-            if not artwork_url:
+            if not data:
+                await ctx.send(
+                    "❌ No se pudo obtener información del Pokémon."
+                )
+                return
+
+            if es_shiny:
+
+                artwork_url = (
+                    data["sprites"]["other"]["official-artwork"]
+                    .get("front_shiny")
+                )
+
+                if not artwork_url:
+                    artwork_url = (
+                        data["sprites"]["other"]["official-artwork"]
+                        .get("front_default")
+                    )
+
+            else:
+
                 artwork_url = (
                     data["sprites"]["other"]["official-artwork"]
                     .get("front_default")
                 )
 
-        else:
-
-            artwork_url = (
-                data["sprites"]["other"]["official-artwork"]
-                .get("front_default")
-            )
-
-        if not artwork_url:
-            await ctx.send(
-                "❌ No se encontró artwork."
-            )
-            return
-
-        async with self.bot.session.get(
-            artwork_url
-        ) as resp:
-
-            if resp.status != 200:
+            if not artwork_url:
                 await ctx.send(
-                    "❌ Error descargando artwork."
+                    "❌ No se encontró artwork."
                 )
                 return
 
-            artwork_bytes = await resp.read()
+            async with self.bot.session.get(
+                artwork_url
+            ) as resp:
 
-        sprite = Image.open(
-            io.BytesIO(artwork_bytes)
-        ).convert("RGBA")
+                if resp.status != 200:
+                    await ctx.send(
+                        "❌ Error descargando artwork."
+                    )
+                    return
 
-        sprite.thumbnail(
-            (320, 320),
-            Image.Resampling.LANCZOS
-        )
+                artwork_bytes = await resp.read()
+
+            sprite = Image.open(
+                io.BytesIO(artwork_bytes)
+            ).convert("RGBA")
+
+            sprite.thumbnail(
+                (320, 320),
+                Image.Resampling.LANCZOS
+            )
 
             # =====================
             # CENTRADO
             # =====================
 
-            pantalla_x = 50
-            pantalla_y = 85
+            pantalla_x = 30
+            pantalla_y = 80
 
-            pantalla_w = 260
-            pantalla_h = 220
+            pantalla_w = 300
+            pantalla_h = 260
 
             x = pantalla_x + (
                 (pantalla_w - sprite.width) // 2
