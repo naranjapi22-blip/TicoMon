@@ -163,14 +163,7 @@ class SafariManager:
                 f"{self.encuentro_numero}"
             )
 
-            evento = random.choice(
-                [
-                    "nido",
-                    "lago",
-                    "enjambre",
-                    "manada"
-                ]
-            )
+            evento = "lago"
 
             print(
                 f"EVENTO SAFARI: {evento}"
@@ -183,12 +176,26 @@ class SafariManager:
             self.region_actual
         )
 
-        ids_safari = generar_ids_safari_region(
-            rango["inicio"],
-            rango["fin"],
-            self.pokemons_vistos,
-            self.encuentro_numero
+        if evento == "lago":
+
+            ids_safari = generar_pokemons_por_tipo(
+                "water",
+                self.pokemons_vistos
+            )
+
+        else:
+
+            ids_safari = generar_ids_safari_region(
+                rango["inicio"],
+                rango["fin"],
+                self.pokemons_vistos,
+                self.encuentro_numero
+            )
+        print(
+            f"TIPO EVENTO: {evento} | "
+            f"IDS: {ids_safari}"
         )
+
         for pokemon_id in ids_safari:
             self.pokemons_vistos.add(
                 pokemon_id
@@ -212,7 +219,9 @@ class SafariManager:
 
             if not pokemon_local:
                 continue
-
+        print(
+            f"{pokemon_local['nombre']} | "
+            f"{pokemon_local['tipos']}"
             pokemons.append({
                 "slot": slot,
                 "pokemon_id": pokemon_id_tmp,
@@ -228,16 +237,16 @@ class SafariManager:
         self.crear_encuentro(
             pokemons
         )
-        if evento == "nido":
-
-            await self.canal.send(
-                "🥚 **¡Encontraron un nido Pokémon!**"
-            )
-
-        elif evento == "lago":
+        if evento == "lago":
 
             await self.canal.send(
                 "🌊 **La camioneta se desvía hacia un lago cercano.**"
+            )
+
+        elif evento == "manada":
+
+            await self.canal.send(
+                "🐎 **¡Una manada bloquea el camino!**"
             )
 
         elif evento == "enjambre":
@@ -246,11 +255,11 @@ class SafariManager:
                 "🐝 **¡Un enjambre Pokémon aparece en la zona!**"
             )
 
-        elif evento == "manada":
+        elif evento == "nido":
 
             await self.canal.send(
-                "🐎 **¡Una manada bloquea el camino!**"
-            )        
+                "🥚 **¡Encontraron un nido Pokémon!**"
+            ) 
         from vistas_safari import VistaSeleccionPokemon
         view = VistaSeleccionPokemon(
             self.guild_id,
@@ -601,4 +610,36 @@ def eliminar_safari(
     safaris_activos.pop(
         guild_id,
         None
+    )
+def generar_pokemons_por_tipo(
+    tipo,
+    excluidos=None
+):
+    if excluidos is None:
+        excluidos = set()
+
+    conn = database.get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT id
+        FROM pokemon_data
+        WHERE tipos ILIKE %s
+        """
+        ,
+        (f"%{tipo}%",)
+    )
+
+    ids = [
+        fila[0]
+        for fila in cursor.fetchall()
+        if fila[0] not in excluidos
+    ]
+
+    conn.close()
+
+    return random.sample(
+        ids,
+        min(3, len(ids))
     )
