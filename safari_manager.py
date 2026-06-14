@@ -12,18 +12,19 @@ from rarezas import (
     pokemon_por_rareza,
     generar_ids_safari_region
 )
+EVENTOS_COMUNES = [
+    "lago",
+    "volcan",
+    "ventisca",
+    "rafaga",
+    "bruma",
+    "abismo",
+    "nido",
+    "enjambre",
+    "manada"
+]
 class SafariManager:
 
-    def generar_evento_safari():
-
-        eventos = [
-            "nido",
-            "lago",
-            "enjambre",
-            "manada"
-        ]
-
-        return random.choice(eventos)
     def __init__(self):
         self.pokemons_vistos = set()
         self.activo = False
@@ -64,7 +65,16 @@ class SafariManager:
         self.activo = True
         self.participantes.clear()
         self.pokemons_vistos.clear()       
-        cantidad_eventos = 1
+        roll = random.random()
+
+        if roll < 0.75:
+            cantidad_eventos = 1
+
+        elif roll < 0.95:
+            cantidad_eventos = 2
+
+        else:
+            cantidad_eventos = 3
 
         self.encuentros_evento = set(
             random.sample(
@@ -76,9 +86,39 @@ class SafariManager:
             )
         )
 
+        self.eventos_safari = random.sample(
+            EVENTOS_COMUNES,
+            cantidad_eventos
+        )
+        if random.random() <= 0.05:
+
+            posicion = random.randint(
+                0,
+                len(self.eventos_safari) - 1
+            )
+
+            self.eventos_safari[posicion] = "guarida"
+
+        self.mapa_eventos = dict(
+            zip(
+                sorted(self.encuentros_evento),
+                self.eventos_safari
+            )
+        )
+
         print(
             f"EVENTOS SAFARI: "
             f"{self.encuentros_evento}"
+        )
+
+        print(
+            f"TIPOS EVENTO: "
+            f"{self.eventos_safari}"
+        )
+
+        print(
+            f"MAPA EVENTOS: "
+            f"{self.mapa_eventos}"
         )
         self.region_actual = obtener_siguiente_region()
         self.encuentro_actual = {
@@ -173,28 +213,21 @@ class SafariManager:
                 f"{self.encuentro_numero}"
             )
 
-            evento = "guarida"
+            evento = self.mapa_eventos[
+                self.encuentro_numero
+            ]
 
-            legendario_evento = True
+            legendario_evento = (
+                random.random() <= 0.02
+            )
 
             print(
                 f"EVENTO SAFARI: {evento}"
             )
-            print(
-                    f"EVENTOS PROGRAMADOS: "
-                    f"{self.encuentros_evento}"
-                )
-
-            evento = "guarida"
-
-            # legendario_evento = (
-            #     random.random() <= 0.02
-            # )
-
-            legendario_evento = True
 
             print(
-                f"EVENTO SAFARI: {evento}"
+                f"EVENTOS PROGRAMADOS: "
+                f"{self.encuentros_evento}"
             )
 
         pokemons = []
