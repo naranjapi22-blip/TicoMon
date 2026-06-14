@@ -174,6 +174,10 @@ class SafariManager:
 
             evento = "guarida"
 
+           # legendario_evento = (
+          #      random.random() <= 0.02
+         #   )
+            legendario_evento = True
             print(
                 f"EVENTO SAFARI: {evento}"
             )
@@ -191,7 +195,8 @@ class SafariManager:
                 EVENTOS_TIPO[evento],
                 rango["inicio"],
                 rango["fin"],
-                self.pokemons_vistos
+                self.pokemons_vistos,
+                incluir_legendarios=legendario_evento
             )
 
         else:
@@ -289,22 +294,10 @@ class SafariManager:
                 "🐲 **¡Han descubierto una Guarida Dragón!**"
             )
 
-        elif evento == "manada":
+        if legendario_evento:
 
             await self.canal.send(
-                "🐎 **¡Una manada bloquea el camino!**"
-            )
-
-        elif evento == "enjambre":
-
-            await self.canal.send(
-                "🐝 **¡Un enjambre Pokémon aparece en la zona!**"
-            )
-
-        elif evento == "nido":
-
-            await self.canal.send(
-                "🥚 **¡Encontraron un nido Pokémon!**"
+                "✨ **¡Se siente una presencia extraordinaria en la zona!**"
             )
         from vistas_safari import VistaSeleccionPokemon
         view = VistaSeleccionPokemon(
@@ -661,9 +654,9 @@ def generar_pokemons_por_tipo(
     tipo,
     inicio,
     fin,
-    excluidos=None
+    excluidos=None,
+    incluir_legendarios=False
 ):
-    
 
     if excluidos is None:
         excluidos = set()
@@ -671,31 +664,45 @@ def generar_pokemons_por_tipo(
     conn = database.get_connection()
     cursor = conn.cursor()
 
-    cursor.execute(
-        """
-        SELECT id
-        FROM pokemon_data
-        WHERE tipos ILIKE %s
-        AND id BETWEEN %s AND %s
-        """,
-        (
-            f"%{tipo}%",
-            inicio,
-            fin
+    if incluir_legendarios:
+
+        cursor.execute(
+            """
+            SELECT id
+            FROM pokemon_data
+            WHERE tipos ILIKE %s
+            AND id BETWEEN %s AND %s
+            """,
+            (
+                f"%{tipo}%",
+                inicio,
+                fin
+            )
         )
-    )
+
+    else:
+
+        cursor.execute(
+            """
+            SELECT id
+            FROM pokemon_data
+            WHERE tipos ILIKE %s
+            AND id BETWEEN %s AND %s
+            AND es_legendario = false
+            AND es_mitico = false
+            """,
+            (
+                f"%{tipo}%",
+                inicio,
+                fin
+            )
+        )
 
     ids = [
         fila[0]
         for fila in cursor.fetchall()
         if fila[0] not in excluidos
     ]
-
-    print(
-        f"TIPO={tipo} "
-        f"REGION={inicio}-{fin} "
-        f"CANDIDATOS={len(ids)}"
-    )
 
     conn.close()
 
