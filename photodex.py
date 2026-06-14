@@ -135,28 +135,27 @@ class PhotoDex(commands.Cog):
             sprite = Image.open(
                 io.BytesIO(artwork_bytes)
             ).convert("RGBA")
+            MARCO_X = 50
+            MARCO_Y = 80
 
+            MARCO_W = 260
+            MARCO_H = 220
+            max_w = MARCO_W - 10
+            max_h = MARCO_H - 10
             sprite.thumbnail(
-                (360, 360),
+                (
+                    MARCO_W - 10,
+                    MARCO_H - 10
+                ),
                 Image.Resampling.LANCZOS
             )
 
-            # =====================
-            # CENTRADO
-            # =====================
-
-            pantalla_x = 30
-            pantalla_y = 105
-
-            pantalla_w = 300
-            pantalla_h = 260
-
-            x = pantalla_x + (
-                (pantalla_w - sprite.width) // 2
+            x = MARCO_X + (
+                (MARCO_W - sprite.width) // 2
             )
 
-            y = pantalla_y + (
-                (pantalla_h - sprite.height) // 2
+            y = MARCO_Y + (
+                (MARCO_H - sprite.height) // 2
             )
 
             base.paste(
@@ -182,7 +181,7 @@ class PhotoDex(commands.Cog):
             )
 
             draw.text(
-                (440, 2100),
+                (440, 210),
                 f"Captura #{id_pokemon}",
                 fill="black",
                 font=font_info
