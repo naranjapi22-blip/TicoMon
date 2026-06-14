@@ -289,9 +289,6 @@ class SafariManager:
 
             if not pokemon_local:
                 continue
-            print(
-                f"{pokemon_local['nombre']} | "
-                f"{pokemon_local['tipos']}")
             pokemons.append({
                 "slot": slot,
                 "pokemon_id": pokemon_id_tmp,
