@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 import io
 
 import database
@@ -49,17 +49,34 @@ class PhotoDex(commands.Cog):
                 )
                 return
 
-            # =========================
-            # Plantilla
-            # =========================
+            # =====================
+            # PLANTILLA
+            # =====================
 
             base = Image.open(
                 "assets/photodex_base.png"
             ).convert("RGBA")
 
-            # =========================
-            # Sprite
-            # =========================
+            draw = ImageDraw.Draw(base)
+
+            try:
+                font_nombre = ImageFont.truetype(
+                    "arial.ttf",
+                    28
+                )
+
+                font_info = ImageFont.truetype(
+                    "arial.ttf",
+                    22
+                )
+
+            except:
+                font_nombre = ImageFont.load_default()
+                font_info = ImageFont.load_default()
+
+            # =====================
+            # SPRITE
+            # =====================
 
             carpeta = "shiny" if es_shiny else "regular"
 
@@ -71,18 +88,28 @@ class PhotoDex(commands.Cog):
                 ruta_sprite
             ).convert("RGBA")
 
-            # Tamaño inicial para prueba
             sprite.thumbnail(
-                (600, 600),
-                Image.Resampling.LANCZOS
+                (220, 220),
+                Image.Resampling.NEAREST
             )
 
-            # =========================
-            # Posición en pantalla izquierda
-            # =========================
+            # =====================
+            # CENTRAR SPRITE
+            # =====================
 
-            x = 220
-            y = 120
+            pantalla_x = 30
+            pantalla_y = 85
+
+            pantalla_w = 320
+            pantalla_h = 265
+
+            x = pantalla_x + (
+                (pantalla_w - sprite.width) // 2
+            )
+
+            y = pantalla_y + (
+                (pantalla_h - sprite.height) // 2
+            )
 
             base.paste(
                 sprite,
@@ -90,9 +117,39 @@ class PhotoDex(commands.Cog):
                 sprite
             )
 
-            # =========================
-            # Guardar
-            # =========================
+            # =====================
+            # TEXTO
+            # =====================
+
+            texto_nombre = nombre.capitalize()
+
+            if es_shiny:
+                texto_nombre += " ✨"
+
+            draw.text(
+                (420, 430),
+                texto_nombre,
+                fill="black",
+                font=font_nombre
+            )
+
+            draw.text(
+                (420, 470),
+                f"Captura #{id_pokemon}",
+                fill="black",
+                font=font_info
+            )
+
+            draw.text(
+                (420, 510),
+                f"Dex #{dex_id}",
+                fill="black",
+                font=font_info
+            )
+
+            # =====================
+            # EXPORTAR
+            # =====================
 
             buffer = io.BytesIO()
 
