@@ -13,15 +13,22 @@ from rarezas import (
     generar_ids_safari_region
 )
 EVENTOS_COMUNES = [
-    "lago",
+    "migracion",
     "volcan",
+    "lago",
+    "bosque",
+    "tormenta",
     "ventisca",
+    "duelo",
+    "pantano",
+    "espejismo",
     "rafaga",
-    "bruma",
-    "abismo",
-    "nido",
-    "enjambre",
-    "manada"
+    "distorsion",
+    "yacimiento",
+    "cementerio",
+    "noche",
+    "ruinas",
+    "arcoiris"
 ]
 class SafariManager:
 
@@ -186,14 +193,24 @@ class SafariManager:
 
     async def ejecutar_encuentro(self):
         EVENTOS_TIPO = {
-        "lago": "water",
-        "volcan": "fire",
-        "ventisca": "ice",
-        "rafaga": "flying",
-        "bruma": "fairy",
-        "abismo": "dark",
-        "guarida": "dragon"
-            }       
+            "migracion": "normal",
+            "volcan": "fire",
+            "lago": "water",
+            "bosque": "grass",
+            "tormenta": "electric",
+            "ventisca": "ice",
+            "duelo": "fighting",
+            "pantano": "poison",
+            "espejismo": "ground",
+            "rafaga": "flying",
+            "distorsion": "psychic",
+            "yacimiento": "rock",
+            "cementerio": "ghost",
+            "noche": "dark",
+            "ruinas": "steel",
+            "arcoiris": "fairy",
+            "guarida": "dragon"
+        }
         print(
             f"ENCUENTRO ACTUAL: "
             f"{self.encuentro_numero}"
@@ -304,10 +321,10 @@ class SafariManager:
         self.crear_encuentro(
             pokemons
         )
-        if evento == "lago":
+        if evento == "migracion":
 
             await self.canal.send(
-                "🌊 **La camioneta se desvía hacia un lago cercano.**"
+                "🐾 **Una migración Pokémon atraviesa la zona.**"
             )
 
         elif evento == "volcan":
@@ -316,10 +333,46 @@ class SafariManager:
                 "🌋 **La ruta atraviesa una zona volcánica.**"
             )
 
+        elif evento == "lago":
+
+            await self.canal.send(
+                "🌊 **La camioneta se desvía hacia un lago cercano.**"
+            )
+
+        elif evento == "bosque":
+
+            await self.canal.send(
+                "🍂 **El sendero se adentra en un bosque frondoso.**"
+            )
+
+        elif evento == "tormenta":
+
+            await self.canal.send(
+                "⚡ **Una tormenta eléctrica se aproxima.**"
+            )
+
         elif evento == "ventisca":
 
             await self.canal.send(
                 "❄️ **Una ventisca cubre el camino.**"
+            )
+
+        elif evento == "duelo":
+
+            await self.canal.send(
+                "⚔️ **Dos Pokémon parecen estar enfrentándose.**"
+            )
+
+        elif evento == "pantano":
+
+            await self.canal.send(
+                "☠️ **El terreno se vuelve fangoso y tóxico.**"
+            )
+
+        elif evento == "espejismo":
+
+            await self.canal.send(
+                "🏜️ **Un extraño espejismo aparece en el horizonte.**"
             )
 
         elif evento == "rafaga":
@@ -328,16 +381,40 @@ class SafariManager:
                 "🌬️ **Fuertes ráfagas atraen Pokémon voladores.**"
             )
 
-        elif evento == "bruma":
+        elif evento == "distorsion":
 
             await self.canal.send(
-                "🌈 **Una extraña bruma mágica cubre la zona.**"
+                "🔮 **Una extraña energía altera el entorno.**"
             )
 
-        elif evento == "abismo":
+        elif evento == "yacimiento":
 
             await self.canal.send(
-                "🌌 **El sendero se vuelve oscuro y silencioso.**"
+                "💎 **Han descubierto un yacimiento mineral.**"
+            )
+
+        elif evento == "cementerio":
+
+            await self.canal.send(
+                "👻 **Un escalofrío recorre el camino.**"
+            )
+
+        elif evento == "noche":
+
+            await self.canal.send(
+                "🌌 **La noche cae sobre el Safari.**"
+            )
+
+        elif evento == "ruinas":
+
+            await self.canal.send(
+                "🏛️ **Han encontrado unas ruinas antiguas.**"
+            )
+
+        elif evento == "arcoiris":
+
+            await self.canal.send(
+                "🌈 **Un brillante arcoíris ilumina la ruta.**"
             )
 
         elif evento == "guarida":
