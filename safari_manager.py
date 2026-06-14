@@ -164,6 +164,7 @@ class SafariManager:
             f"{self.encuentros_evento}"
         )
         evento = None
+        legendario_evento = False
 
         if self.encuentro_numero in self.encuentros_evento:
 
@@ -171,6 +172,18 @@ class SafariManager:
                 f"EVENTO ENCUENTRO "
                 f"{self.encuentro_numero}"
             )
+
+            evento = "guarida"
+
+            legendario_evento = True
+
+            print(
+                f"EVENTO SAFARI: {evento}"
+            )
+            print(
+                    f"EVENTOS PROGRAMADOS: "
+                    f"{self.encuentros_evento}"
+                )
 
             evento = "guarida"
 
