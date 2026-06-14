@@ -203,7 +203,15 @@ class SafariManager:
             self.region_actual
         )
 
-        if evento in EVENTOS_TIPO:
+        if evento == "guarida":
+
+            ids_safari = generar_pokemons_por_tipo_global(
+                "dragon",
+                self.pokemons_vistos,
+                incluir_legendarios=legendario_evento
+            )
+
+        elif evento in EVENTOS_TIPO:
 
             ids_safari = generar_pokemons_por_tipo(
                 EVENTOS_TIPO[evento],
@@ -709,6 +717,58 @@ def generar_pokemons_por_tipo(
                 f"%{tipo}%",
                 inicio,
                 fin
+            )
+        )
+
+    ids = [
+        fila[0]
+        for fila in cursor.fetchall()
+        if fila[0] not in excluidos
+    ]
+
+    conn.close()
+
+    return random.sample(
+        ids,
+        min(3, len(ids))
+    )
+def generar_pokemons_por_tipo_global(
+    tipo,
+    excluidos=None,
+    incluir_legendarios=False
+):
+
+    if excluidos is None:
+        excluidos = set()
+
+    conn = database.get_connection()
+    cursor = conn.cursor()
+
+    if incluir_legendarios:
+
+        cursor.execute(
+            """
+            SELECT id
+            FROM pokemon_data
+            WHERE tipos ILIKE %s
+            """,
+            (
+                f"%{tipo}%",
+            )
+        )
+
+    else:
+
+        cursor.execute(
+            """
+            SELECT id
+            FROM pokemon_data
+            WHERE tipos ILIKE %s
+            AND es_legendario = false
+            AND es_mitico = false
+            """,
+            (
+                f"%{tipo}%",
             )
         )
 
