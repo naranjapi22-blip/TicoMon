@@ -180,6 +180,8 @@ class SafariManager:
 
             ids_safari = generar_pokemons_por_tipo(
                 "water",
+                rango["inicio"],
+                rango["fin"],
                 self.pokemons_vistos
             )
 
@@ -612,8 +614,11 @@ def eliminar_safari(
     )
 def generar_pokemons_por_tipo(
     tipo,
+    inicio,
+    fin,
     excluidos=None
 ):
+
     if excluidos is None:
         excluidos = set()
 
@@ -625,9 +630,13 @@ def generar_pokemons_por_tipo(
         SELECT id
         FROM pokemon_data
         WHERE tipos ILIKE %s
-        """
-        ,
-        (f"%{tipo}%",)
+        AND id BETWEEN %s AND %s
+        """,
+        (
+            f"%{tipo}%",
+            inicio,
+            fin
+        )
     )
 
     ids = [
@@ -635,6 +644,12 @@ def generar_pokemons_por_tipo(
         for fila in cursor.fetchall()
         if fila[0] not in excluidos
     ]
+
+    print(
+        f"TIPO={tipo} "
+        f"REGION={inicio}-{fin} "
+        f"CANDIDATOS={len(ids)}"
+    )
 
     conn.close()
 
