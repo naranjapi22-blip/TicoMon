@@ -4,7 +4,8 @@ from PIL import Image, ImageDraw, ImageFont
 import io
 
 import database
-
+import aiohttp
+import servicios
 
 class PhotoDex(commands.Cog):
 
@@ -60,17 +61,19 @@ class PhotoDex(commands.Cog):
             draw = ImageDraw.Draw(base)
 
             try:
+
                 font_nombre = ImageFont.truetype(
                     "arial.ttf",
-                    28
+                    24
                 )
 
                 font_info = ImageFont.truetype(
                     "arial.ttf",
-                    22
+                    18
                 )
 
             except:
+
                 font_nombre = ImageFont.load_default()
                 font_info = ImageFont.load_default()
 
@@ -78,30 +81,77 @@ class PhotoDex(commands.Cog):
             # SPRITE
             # =====================
 
-            carpeta = "shiny" if es_shiny else "regular"
+# =====================
+# OFFICIAL ARTWORK
+# =====================
 
-            ruta_sprite = (
-                f"sprites/{carpeta}/{dex_id}.png"
+        data, species = await servicios.obtener_pokemon(
+            self.bot.session,
+            dex_id
+        )
+
+        if not data:
+            await ctx.send(
+                "❌ No se pudo obtener información del Pokémon."
+            )
+            return
+
+        if es_shiny:
+
+            artwork_url = (
+                data["sprites"]["other"]["official-artwork"]
+                .get("front_shiny")
             )
 
-            sprite = Image.open(
-                ruta_sprite
-            ).convert("RGBA")
+            if not artwork_url:
+                artwork_url = (
+                    data["sprites"]["other"]["official-artwork"]
+                    .get("front_default")
+                )
 
-            sprite.thumbnail(
-                (220, 220),
-                Image.Resampling.NEAREST
+        else:
+
+            artwork_url = (
+                data["sprites"]["other"]["official-artwork"]
+                .get("front_default")
             )
 
+        if not artwork_url:
+            await ctx.send(
+                "❌ No se encontró artwork."
+            )
+            return
+
+        async with self.bot.session.get(
+            artwork_url
+        ) as resp:
+
+            if resp.status != 200:
+                await ctx.send(
+                    "❌ Error descargando artwork."
+                )
+                return
+
+            artwork_bytes = await resp.read()
+
+        sprite = Image.open(
+            io.BytesIO(artwork_bytes)
+        ).convert("RGBA")
+
+        sprite.thumbnail(
+            (320, 320),
+            Image.Resampling.LANCZOS
+        )
+
             # =====================
-            # CENTRAR SPRITE
+            # CENTRADO
             # =====================
 
-            pantalla_x = 30
+            pantalla_x = 50
             pantalla_y = 85
 
-            pantalla_w = 320
-            pantalla_h = 265
+            pantalla_w = 260
+            pantalla_h = 220
 
             x = pantalla_x + (
                 (pantalla_w - sprite.width) // 2
@@ -127,21 +177,21 @@ class PhotoDex(commands.Cog):
                 texto_nombre += " ✨"
 
             draw.text(
-                (420, 430),
+                (440, 130),
                 texto_nombre,
                 fill="black",
                 font=font_nombre
             )
 
             draw.text(
-                (420, 470),
+                (440, 170),
                 f"Captura #{id_pokemon}",
                 fill="black",
                 font=font_info
             )
 
             draw.text(
-                (420, 510),
+                (440, 205),
                 f"Dex #{dex_id}",
                 fill="black",
                 font=font_info
