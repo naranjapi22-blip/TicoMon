@@ -174,14 +174,15 @@ class SafariManager:
 
             evento = "guarida"
 
-           # legendario_evento = (
-          #      random.random() <= 0.02
-         #   )
+            # legendario_evento = (
+            #     random.random() <= 0.02
+            # )
+
             legendario_evento = True
+
             print(
                 f"EVENTO SAFARI: {evento}"
             )
-
 
         pokemons = []
 
