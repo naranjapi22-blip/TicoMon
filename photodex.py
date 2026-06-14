@@ -64,12 +64,12 @@ class PhotoDex(commands.Cog):
 
                 font_nombre = ImageFont.truetype(
                     "arial.ttf",
-                    24
+                    32
                 )
 
                 font_info = ImageFont.truetype(
                     "arial.ttf",
-                    18
+                    24
                 )
 
             except:
@@ -135,11 +135,11 @@ class PhotoDex(commands.Cog):
             sprite = Image.open(
                 io.BytesIO(artwork_bytes)
             ).convert("RGBA")
-            MARCO_X = 50
+            MARCO_X = 55
             MARCO_Y = 80
 
-            MARCO_W = 260
-            MARCO_H = 220
+            MARCO_W = 250
+            MARCO_H = 190
             max_w = MARCO_W - 10
             max_h = MARCO_H - 10
             sprite.thumbnail(
@@ -174,26 +174,25 @@ class PhotoDex(commands.Cog):
                 texto_nombre += " ✨"
 
             draw.text(
-                (440, 170),
+                (440, 150),
                 texto_nombre,
                 fill="black",
                 font=font_nombre
             )
 
             draw.text(
-                (440, 210),
+                (440, 195),
                 f"Captura #{id_pokemon}",
                 fill="black",
                 font=font_info
             )
 
             draw.text(
-                (440, 245),
+                (440, 235),
                 f"Dex #{dex_id}",
                 fill="black",
                 font=font_info
             )
-
             # =====================
             # EXPORTAR
             # =====================
