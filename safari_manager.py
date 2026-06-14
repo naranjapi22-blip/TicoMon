@@ -195,7 +195,6 @@ class SafariManager:
             f"TIPO EVENTO: {evento} | "
             f"IDS: {ids_safari}"
         )
-
         for pokemon_id in ids_safari:
             self.pokemons_vistos.add(
                 pokemon_id
@@ -219,9 +218,9 @@ class SafariManager:
 
             if not pokemon_local:
                 continue
-        print(
-            f"{pokemon_local['nombre']} | "
-            f"{pokemon_local['tipos']}"
+            print(
+                f"{pokemon_local['nombre']} | "
+                f"{pokemon_local['tipos']}")
             pokemons.append({
                 "slot": slot,
                 "pokemon_id": pokemon_id_tmp,
