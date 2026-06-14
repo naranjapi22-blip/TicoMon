@@ -137,7 +137,7 @@ class PhotoDex(commands.Cog):
             ).convert("RGBA")
 
             sprite.thumbnail(
-                (320, 320),
+                (360, 360),
                 Image.Resampling.LANCZOS
             )
 
@@ -146,7 +146,7 @@ class PhotoDex(commands.Cog):
             # =====================
 
             pantalla_x = 30
-            pantalla_y = 80
+            pantalla_y = 105
 
             pantalla_w = 300
             pantalla_h = 260
@@ -175,21 +175,21 @@ class PhotoDex(commands.Cog):
                 texto_nombre += " ✨"
 
             draw.text(
-                (440, 130),
+                (440, 170),
                 texto_nombre,
                 fill="black",
                 font=font_nombre
             )
 
             draw.text(
-                (440, 170),
+                (440, 2100),
                 f"Captura #{id_pokemon}",
                 fill="black",
                 font=font_info
             )
 
             draw.text(
-                (440, 205),
+                (440, 245),
                 f"Dex #{dex_id}",
                 fill="black",
                 font=font_info
