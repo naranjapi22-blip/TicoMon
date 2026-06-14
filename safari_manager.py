@@ -145,6 +145,15 @@ class SafariManager:
         self.encuentro_numero = 0
 
     async def ejecutar_encuentro(self):
+        EVENTOS_TIPO = {
+        "lago": "water",
+        "volcan": "fire",
+        "ventisca": "ice",
+        "rafaga": "flying",
+        "bruma": "fairy",
+        "abismo": "dark",
+        "guarida": "dragon"
+            }       
         print(
             f"ENCUENTRO ACTUAL: "
             f"{self.encuentro_numero}"
@@ -163,7 +172,7 @@ class SafariManager:
                 f"{self.encuentro_numero}"
             )
 
-            evento = "lago"
+            evento = "guarida"
 
             print(
                 f"EVENTO SAFARI: {evento}"
@@ -176,10 +185,10 @@ class SafariManager:
             self.region_actual
         )
 
-        if evento == "lago":
+        if evento in EVENTOS_TIPO:
 
             ids_safari = generar_pokemons_por_tipo(
-                "water",
+                EVENTOS_TIPO[evento],
                 rango["inicio"],
                 rango["fin"],
                 self.pokemons_vistos
@@ -244,6 +253,42 @@ class SafariManager:
                 "🌊 **La camioneta se desvía hacia un lago cercano.**"
             )
 
+        elif evento == "volcan":
+
+            await self.canal.send(
+                "🌋 **La ruta atraviesa una zona volcánica.**"
+            )
+
+        elif evento == "ventisca":
+
+            await self.canal.send(
+                "❄️ **Una ventisca cubre el camino.**"
+            )
+
+        elif evento == "rafaga":
+
+            await self.canal.send(
+                "🌬️ **Fuertes ráfagas atraen Pokémon voladores.**"
+            )
+
+        elif evento == "bruma":
+
+            await self.canal.send(
+                "🌈 **Una extraña bruma mágica cubre la zona.**"
+            )
+
+        elif evento == "abismo":
+
+            await self.canal.send(
+                "🌌 **El sendero se vuelve oscuro y silencioso.**"
+            )
+
+        elif evento == "guarida":
+
+            await self.canal.send(
+                "🐲 **¡Han descubierto una Guarida Dragón!**"
+            )
+
         elif evento == "manada":
 
             await self.canal.send(
@@ -260,7 +305,7 @@ class SafariManager:
 
             await self.canal.send(
                 "🥚 **¡Encontraron un nido Pokémon!**"
-            ) 
+            )
         from vistas_safari import VistaSeleccionPokemon
         view = VistaSeleccionPokemon(
             self.guild_id,
@@ -618,6 +663,7 @@ def generar_pokemons_por_tipo(
     fin,
     excluidos=None
 ):
+    
 
     if excluidos is None:
         excluidos = set()
