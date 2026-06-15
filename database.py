@@ -35,20 +35,11 @@ def generar_iv_final():
 
 def get_connection():
     try:
-        if DATABASE_URL:
-            # Se conecta a Neon (PostgreSQL)
-            conn = psycopg2.connect(DATABASE_URL)
-            log.debug("✅ Conexión a PostgreSQL establecida")
-            return conn
-        else:
-            # Se conecta a SQLite (Local)
-            conn = sqlite3.connect('fumo_data.db')
-            log.debug("✅ Conexión a SQLite establecida")
-            return conn
+        conn = psycopg2.connect(DATABASE_URL)
+        return conn
     except Exception as e:
         log.error(f"🚨 Error al conectar a la base de datos: {e}", exc_info=True)
         raise
-
 def init_db():
     try:
         log.info("📍 Inicializando base de datos...")
