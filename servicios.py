@@ -620,9 +620,9 @@ async def generar_imagen_top(top_pokemones):
 
     try:
 
-        ancho = 700
-        alto_fila = 55
-        alto = (len(top_pokemones) * alto_fila) + 120
+        ancho = 750
+        alto_fila = 95
+        alto = (len(top_pokemones) * alto_fila) + 140
 
         imagen = Image.new(
             "RGBA",
@@ -633,32 +633,40 @@ async def generar_imagen_top(top_pokemones):
         draw = ImageDraw.Draw(imagen)
 
         try:
+
             fuente_titulo = ImageFont.truetype(
                 "arial.ttf",
-                30
+                40
             )
 
             fuente = ImageFont.truetype(
                 "arial.ttf",
-                20
+                28
             )
 
             fuente_header = ImageFont.truetype(
                 "arial.ttf",
-                16
+                22
+            )
+
+            fuente_iv = ImageFont.truetype(
+                "arial.ttf",
+                32
             )
 
         except:
+
             fuente_titulo = ImageFont.load_default()
             fuente = ImageFont.load_default()
             fuente_header = ImageFont.load_default()
+            fuente_iv = ImageFont.load_default()
 
         # =========================
         # TÍTULO
         # =========================
 
         draw.text(
-            (20, 15),
+            (20, 20),
             "TOP 10 IVs",
             fill=(255, 215, 0),
             font=fuente_titulo
@@ -669,41 +677,41 @@ async def generar_imagen_top(top_pokemones):
         # =========================
 
         draw.text(
-            (90, 60),
+            (110, 85),
             "POS",
             fill=(180, 180, 180),
             font=fuente_header
         )
 
         draw.text(
-            (150, 60),
+            (180, 85),
             "POKEMON",
             fill=(180, 180, 180),
             font=fuente_header
         )
 
         draw.text(
-            (430, 60),
+            (450, 85),
             "ID",
             fill=(180, 180, 180),
             font=fuente_header
         )
 
         draw.text(
-            (540, 60),
+            (560, 85),
             "IV",
             fill=(180, 180, 180),
             font=fuente_header
         )
 
         draw.line(
-            [(10, 85), (690, 85)],
-            fill=(70, 70, 70),
+            [(10, 115), (740, 115)],
+            fill=(80, 80, 80),
             width=2
         )
 
         # =========================
-        # POKEMONES
+        # POKÉMON
         # =========================
 
         for i, pokemon in enumerate(top_pokemones):
@@ -720,7 +728,7 @@ async def generar_imagen_top(top_pokemones):
                 f"sprites/{carpeta}/{dex_id}.png"
             )
 
-            y = 95 + (i * alto_fila)
+            y = 130 + (i * alto_fila)
 
             try:
 
@@ -728,7 +736,7 @@ async def generar_imagen_top(top_pokemones):
                     Image.open(ruta_sprite)
                     .convert("RGBA")
                     .resize(
-                        (48, 48),
+                        (80, 80),
                         Image.Resampling.NEAREST
                     )
                 )
@@ -739,25 +747,32 @@ async def generar_imagen_top(top_pokemones):
                     sprite
                 )
 
-            except Exception:
-                pass
+            except Exception as e:
+
+                log.warning(
+                    f"No se encontró sprite: {ruta_sprite}"
+                )
 
             # =========================
-            # POSICIÓN
+            # TOP 3 ESPECIAL
             # =========================
 
             if i == 0:
-                medalla = "#1"
-                color_pos = (255, 215, 0)      # Oro
+                posicion = "#1"
+                color_pos = (255, 215, 0)
             elif i == 1:
-                medalla = "#2"
-                color_pos = (192, 192, 192)    # Plata
+                posicion = "#2"
+                color_pos = (192, 192, 192)
             elif i == 2:
-                medalla = "#3"
-                color_pos = (205, 127, 50)     # Bronce
+                posicion = "#3"
+                color_pos = (205, 127, 50)
             else:
-                medalla = f"#{i+1}"
+                posicion = f"#{i+1}"
                 color_pos = (255, 255, 255)
+
+            # =========================
+            # NOMBRE
+            # =========================
 
             nombre_mostrar = nombre.capitalize()
 
@@ -767,8 +782,8 @@ async def generar_imagen_top(top_pokemones):
             # POSICIÓN
 
             draw.text(
-                (90, y + 12),
-                medalla,
+                (110, y + 20),
+                posicion,
                 fill=color_pos,
                 font=fuente
             )
@@ -776,22 +791,22 @@ async def generar_imagen_top(top_pokemones):
             # NOMBRE
 
             draw.text(
-                (150, y + 12),
+                (180, y + 20),
                 nombre_mostrar,
                 fill=(255, 255, 255),
                 font=fuente
             )
 
-            # ID DE CAPTURA
+            # ID
 
             draw.text(
-                (430, y + 12),
+                (450, y + 20),
                 f"[{id_captura}]",
                 fill=(180, 180, 180),
                 font=fuente
             )
 
-            # IV
+            # COLOR IV
 
             if porcentaje >= 85:
                 color_iv = (0, 255, 127)
@@ -800,19 +815,21 @@ async def generar_imagen_top(top_pokemones):
             else:
                 color_iv = (255, 255, 255)
 
+            # IV GRANDE
+
             draw.text(
-                (540, y + 12),
+                (560, y + 15),
                 f"{porcentaje:.1f}%",
                 fill=color_iv,
-                font=fuente
+                font=fuente_iv
             )
 
             # Separador
 
             draw.line(
                 [
-                    (80, y + 54),
-                    (690, y + 54)
+                    (90, y + 90),
+                    (740, y + 90)
                 ],
                 fill=(55, 55, 55),
                 width=1
