@@ -199,7 +199,7 @@ class Inventario(commands.Cog):
         )
 
         embed = discord.Embed(
-            title="🏆 Tus 10 mejores Pokémon",
+            title="🏆 Tus 5 mejores Pokémon",
             color=discord.Color.gold()
         )
 
