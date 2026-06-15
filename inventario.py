@@ -153,39 +153,63 @@ class Inventario(commands.Cog):
 
     @commands.command(name="top")
     async def ver_top(self, ctx):
+
         conn = database.get_connection()
         cursor = conn.cursor()
-        
-        # Ranking PERSONAL (solo tus Pokémon)
+
         cursor.execute("""
-            SELECT id, pokemon_nombre, es_shiny, 
-                   ((iv_hp + iv_atk + iv_def + iv_spa + iv_spd + iv_spe) * 100 / 186) as porcentaje 
-            FROM capturas 
-            WHERE user_id = %s 
-            ORDER BY porcentaje DESC 
+            SELECT
+                c.id,
+                c.pokemon_nombre,
+                c.es_shiny,
+                p.id AS dex_id,
+                ((c.iv_hp + c.iv_atk + c.iv_def +
+                c.iv_spa + c.iv_spd + c.iv_spe) * 100 / 186) AS porcentaje
+            FROM capturas c
+            LEFT JOIN pokemon_data p
+                ON c.pokemon_nombre = p.nombre
+            WHERE c.user_id = %s
+            ORDER BY porcentaje DESC
             LIMIT 10
         """, (str(ctx.author.id),))
-        
+
         top_pokemones = cursor.fetchall()
         conn.close()
-        
+
         if not top_pokemones:
-            await ctx.send("❌ Aún no tienes Pokémon capturados.")
+            await ctx.send(
+                "❌ Aún no tienes Pokémon capturados."
+            )
             return
 
-        embed = discord.Embed(title=f"🏆 Tus 10 mejores Pokémon", color=discord.Color.gold())
-        
-        lista = ""
-        for i, p in enumerate(top_pokemones, 1):
-            id_p, nombre, shiny, porc = p
-            emoji = "✨" if shiny else "⚪"
-            
-            # Formato simple: Medalla, Emoji, Nombre, ID y porcentaje
-            medalla = "🥇" if i == 1 else "🥈" if i == 2 else "🥉" if i == 3 else f"{i}."
-            lista += f"{medalla} {emoji} **{nombre.capitalize()}** `[{id_p}]` — `{int(porc)}%`\n"
-        
-        embed.description = lista
-        await ctx.send(embed=embed)
+        imagen_top = await servicios.generar_imagen_top(
+            top_pokemones
+            print(top_pokemones[0])
+        )
 
+        if not imagen_top:
+            await ctx.send(
+                "❌ Error generando imagen."
+            )
+            return
+
+        archivo = discord.File(
+            imagen_top,
+            filename="top.png"
+        )
+
+        embed = discord.Embed(
+            title="🏆 Tus 10 mejores Pokémon",
+            color=discord.Color.gold()
+        )
+
+        embed.set_image(
+            url="attachment://top.png"
+        )
+
+        await ctx.send(
+            embed=embed,
+            file=archivo
+        )
 async def setup(bot):
     await bot.add_cog(Inventario(bot))

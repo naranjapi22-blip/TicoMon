@@ -616,3 +616,101 @@ def generar_silueta_simple(imagen):
     silueta.putalpha(alpha)
 
     return silueta
+async def generar_imagen_top(top_pokemones):
+
+    try:
+
+        ancho = 700
+        alto_fila = 70
+        alto = len(top_pokemones) * alto_fila + 20
+
+        imagen = Image.new(
+            "RGBA",
+            (ancho, alto),
+            (35, 39, 42, 255)
+        )
+
+        draw = ImageDraw.Draw(imagen)
+
+        try:
+            fuente = ImageFont.truetype(
+                "arial.ttf",
+                24
+            )
+        except:
+            fuente = ImageFont.load_default()
+
+        for i, pokemon in enumerate(top_pokemones):
+
+            id_captura, nombre, shiny, dex_id, porcentaje = pokemon
+
+            carpeta = "shiny" if shiny else "regular"
+
+            ruta_sprite = (
+                f"sprites/{carpeta}/{dex_id}.png"
+            )
+
+            y = 10 + (i * alto_fila)
+
+            try:
+
+                sprite = (
+                    Image.open(ruta_sprite)
+                    .convert("RGBA")
+                    .resize(
+                        (64, 64),
+                        Image.Resampling.NEAREST
+                    )
+                )
+
+                imagen.paste(
+                    sprite,
+                    (10, y),
+                    sprite
+                )
+
+            except Exception:
+                pass
+
+            medalla = (
+                "🥇" if i == 0 else
+                "🥈" if i == 1 else
+                "🥉" if i == 2 else
+                f"{i+1}."
+            )
+
+            texto = (
+                f"{medalla} "
+                f"{nombre.capitalize()} "
+                f"{porcentaje:.1f}%"
+            )
+
+            if shiny:
+                texto += " ✨"
+
+            draw.text(
+                (90, y + 18),
+                texto,
+                fill=(255, 255, 255),
+                font=fuente
+            )
+
+        buffer = io.BytesIO()
+
+        imagen.save(
+            buffer,
+            format="PNG"
+        )
+
+        buffer.seek(0)
+
+        return buffer
+
+    except Exception as e:
+
+        log.error(
+            f"Error generando TOP: {e}",
+            exc_info=True
+        )
+
+        return None
