@@ -184,7 +184,7 @@ class Inventario(commands.Cog):
 
         imagen_top = await servicios.generar_imagen_top(
             top_pokemones
-            print(top_pokemones[0])
+
         )
 
         if not imagen_top:
