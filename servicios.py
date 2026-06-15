@@ -667,7 +667,7 @@ async def generar_imagen_top(top_pokemones):
 
         draw.text(
             (20, 20),
-            "TOP 10 IVs",
+            "TOP 5 IVs",
             fill=(255, 215, 0),
             font=fuente_titulo
         )

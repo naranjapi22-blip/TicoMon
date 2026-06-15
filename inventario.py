@@ -170,7 +170,7 @@ class Inventario(commands.Cog):
                 ON c.pokemon_nombre = p.nombre
             WHERE c.user_id = %s
             ORDER BY porcentaje DESC
-            LIMIT 10
+            LIMIT 5
         """, (str(ctx.author.id),))
 
         top_pokemones = cursor.fetchall()
