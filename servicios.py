@@ -620,9 +620,9 @@ async def generar_imagen_top(top_pokemones):
 
     try:
 
-        ancho = 900
-        alto_fila = 80
-        alto = (len(top_pokemones) * alto_fila) + 80
+        ancho = 700
+        alto_fila = 70
+        alto = (len(top_pokemones) * alto_fila) + 120
 
         imagen = Image.new(
             "RGBA",
@@ -635,37 +635,93 @@ async def generar_imagen_top(top_pokemones):
         try:
             fuente_titulo = ImageFont.truetype(
                 "arial.ttf",
-                32
+                30
             )
 
             fuente = ImageFont.truetype(
                 "arial.ttf",
-                24
+                22
+            )
+
+            fuente_header = ImageFont.truetype(
+                "arial.ttf",
+                18
             )
 
         except:
             fuente_titulo = ImageFont.load_default()
             fuente = ImageFont.load_default()
+            fuente_header = ImageFont.load_default()
 
-        # Título
+        # =========================
+        # TÍTULO
+        # =========================
+
         draw.text(
             (20, 15),
-            "🏆 TOP 10 IVs",
+            "TOP 10 IVs",
             fill=(255, 215, 0),
             font=fuente_titulo
         )
+
+        # =========================
+        # CABECERAS
+        # =========================
+
+        draw.text(
+            (95, 60),
+            "POS",
+            fill=(180, 180, 180),
+            font=fuente_header
+        )
+
+        draw.text(
+            (160, 60),
+            "POKEMON",
+            fill=(180, 180, 180),
+            font=fuente_header
+        )
+
+        draw.text(
+            (500, 60),
+            "RANK",
+            fill=(180, 180, 180),
+            font=fuente_header
+        )
+
+        draw.text(
+            (590, 60),
+            "IV",
+            fill=(180, 180, 180),
+            font=fuente_header
+        )
+
+        # Línea bajo cabecera
+        draw.line(
+            [(10, 85), (690, 85)],
+            fill=(70, 70, 70),
+            width=2
+        )
+
+        # =========================
+        # POKEMONES
+        # =========================
 
         for i, pokemon in enumerate(top_pokemones):
 
             id_captura, nombre, shiny, dex_id, porcentaje = pokemon
 
-            carpeta = "shiny" if shiny else "regular"
+            carpeta = (
+                "shiny"
+                if shiny
+                else "regular"
+            )
 
             ruta_sprite = (
                 f"sprites/{carpeta}/{dex_id}.png"
             )
 
-            y = 70 + (i * alto_fila)
+            y = 95 + (i * alto_fila)
 
             try:
 
@@ -673,7 +729,7 @@ async def generar_imagen_top(top_pokemones):
                     Image.open(ruta_sprite)
                     .convert("RGBA")
                     .resize(
-                        (72, 72),
+                        (64, 64),
                         Image.Resampling.NEAREST
                     )
                 )
@@ -685,11 +741,13 @@ async def generar_imagen_top(top_pokemones):
                 )
 
             except Exception as e:
+
                 log.warning(
-                    f"No se pudo cargar sprite {ruta_sprite}: {e}"
+                    f"Sprite no encontrado: {ruta_sprite}"
                 )
 
             # Posición
+
             if i == 0:
                 medalla = "#1"
             elif i == 1:
@@ -699,51 +757,67 @@ async def generar_imagen_top(top_pokemones):
             else:
                 medalla = f"#{i+1}"
 
-            # Calidad IV
+            # Calidad
+
             if porcentaje >= 85:
-                calidad = "💎"
+                calidad = "S"
             elif porcentaje >= 70:
-                calidad = "🔥"
+                calidad = "A"
+            elif porcentaje >= 55:
+                calidad = "B"
             else:
-                calidad = "⏺️"
+                calidad = "C"
+
+            nombre_mostrar = nombre.capitalize()
 
             if shiny:
-                nombre_mostrar = (
-                    f"{nombre.capitalize()} ✨"
-                )
-            else:
-                nombre_mostrar = nombre.capitalize()
+                nombre_mostrar += " *"
 
-            # Posición
+            # POSICIÓN
+
             draw.text(
-                (100, y + 20),
+                (95, y + 18),
                 medalla,
                 fill=(255, 255, 255),
                 font=fuente
             )
 
-            # Nombre
+            # NOMBRE
+
             draw.text(
-                (180, y + 20),
+                (160, y + 18),
                 nombre_mostrar,
                 fill=(255, 255, 255),
                 font=fuente
             )
 
-            # Calidad
+            # RANK
+
             draw.text(
-                (650, y + 20),
+                (510, y + 18),
                 calidad,
+                fill=(255, 215, 0),
+                font=fuente
+            )
+
+            # IV
+
+            draw.text(
+                (585, y + 18),
+                f"{porcentaje:.1f}%",
                 fill=(255, 255, 255),
                 font=fuente
             )
 
-            # Porcentaje
-            draw.text(
-                (730, y + 20),
-                f"{porcentaje:.1f}%",
-                fill=(255, 255, 255),
-                font=fuente
+            # Separador
+
+            draw.line(
+                [
+                    (90, y + 68),
+                    (690, y + 68)
+                ],
+                fill=(55, 55, 55),
+                width=1
             )
 
         buffer = io.BytesIO()
