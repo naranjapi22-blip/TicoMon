@@ -620,9 +620,9 @@ async def generar_imagen_top(top_pokemones):
 
     try:
 
-        ancho = 700
-        alto_fila = 70
-        alto = len(top_pokemones) * alto_fila + 20
+        ancho = 900
+        alto_fila = 80
+        alto = (len(top_pokemones) * alto_fila) + 80
 
         imagen = Image.new(
             "RGBA",
@@ -633,12 +633,27 @@ async def generar_imagen_top(top_pokemones):
         draw = ImageDraw.Draw(imagen)
 
         try:
+            fuente_titulo = ImageFont.truetype(
+                "arial.ttf",
+                32
+            )
+
             fuente = ImageFont.truetype(
                 "arial.ttf",
                 24
             )
+
         except:
+            fuente_titulo = ImageFont.load_default()
             fuente = ImageFont.load_default()
+
+        # Título
+        draw.text(
+            (20, 15),
+            "🏆 TOP 10 IVs",
+            fill=(255, 215, 0),
+            font=fuente_titulo
+        )
 
         for i, pokemon in enumerate(top_pokemones):
 
@@ -650,7 +665,7 @@ async def generar_imagen_top(top_pokemones):
                 f"sprites/{carpeta}/{dex_id}.png"
             )
 
-            y = 10 + (i * alto_fila)
+            y = 70 + (i * alto_fila)
 
             try:
 
@@ -658,7 +673,7 @@ async def generar_imagen_top(top_pokemones):
                     Image.open(ruta_sprite)
                     .convert("RGBA")
                     .resize(
-                        (64, 64),
+                        (72, 72),
                         Image.Resampling.NEAREST
                     )
                 )
@@ -669,28 +684,64 @@ async def generar_imagen_top(top_pokemones):
                     sprite
                 )
 
-            except Exception:
-                pass
+            except Exception as e:
+                log.warning(
+                    f"No se pudo cargar sprite {ruta_sprite}: {e}"
+                )
 
-            medalla = (
-                "🥇" if i == 0 else
-                "🥈" if i == 1 else
-                "🥉" if i == 2 else
-                f"{i+1}."
-            )
+            # Posición
+            if i == 0:
+                medalla = "#1"
+            elif i == 1:
+                medalla = "#2"
+            elif i == 2:
+                medalla = "#3"
+            else:
+                medalla = f"#{i+1}"
 
-            texto = (
-                f"{medalla} "
-                f"{nombre.capitalize()} "
-                f"{porcentaje:.1f}%"
-            )
+            # Calidad IV
+            if porcentaje >= 85:
+                calidad = "💎"
+            elif porcentaje >= 70:
+                calidad = "🔥"
+            else:
+                calidad = "⏺️"
 
             if shiny:
-                texto += " ✨"
+                nombre_mostrar = (
+                    f"{nombre.capitalize()} ✨"
+                )
+            else:
+                nombre_mostrar = nombre.capitalize()
 
+            # Posición
             draw.text(
-                (90, y + 18),
-                texto,
+                (100, y + 20),
+                medalla,
+                fill=(255, 255, 255),
+                font=fuente
+            )
+
+            # Nombre
+            draw.text(
+                (180, y + 20),
+                nombre_mostrar,
+                fill=(255, 255, 255),
+                font=fuente
+            )
+
+            # Calidad
+            draw.text(
+                (650, y + 20),
+                calidad,
+                fill=(255, 255, 255),
+                font=fuente
+            )
+
+            # Porcentaje
+            draw.text(
+                (730, y + 20),
+                f"{porcentaje:.1f}%",
                 fill=(255, 255, 255),
                 font=fuente
             )
