@@ -1,5 +1,4 @@
 import os
-os.environ["DATABASE_URL"] = "postgresql://neondb_owner:npg_VWIP5pf7aGlw@ep-withered-brook-aq3njbjm-pooler.c-8.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
 
 from database import get_connection
 
