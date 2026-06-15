@@ -2,7 +2,7 @@ import os
 
 from database import get_connection
 
-
+#test
 
 def calcular_stats_futbol(hp, atk, defense, spa, spd, speed):
 
