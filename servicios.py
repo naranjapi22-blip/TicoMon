@@ -621,7 +621,7 @@ async def generar_imagen_top(top_pokemones):
     try:
 
         ancho = 700
-        alto_fila = 70
+        alto_fila = 55
         alto = (len(top_pokemones) * alto_fila) + 120
 
         imagen = Image.new(
@@ -640,12 +640,12 @@ async def generar_imagen_top(top_pokemones):
 
             fuente = ImageFont.truetype(
                 "arial.ttf",
-                22
+                20
             )
 
             fuente_header = ImageFont.truetype(
                 "arial.ttf",
-                18
+                16
             )
 
         except:
@@ -669,34 +669,33 @@ async def generar_imagen_top(top_pokemones):
         # =========================
 
         draw.text(
-            (95, 60),
+            (90, 60),
             "POS",
             fill=(180, 180, 180),
             font=fuente_header
         )
 
         draw.text(
-            (160, 60),
+            (150, 60),
             "POKEMON",
             fill=(180, 180, 180),
             font=fuente_header
         )
 
         draw.text(
-            (500, 60),
-            "RANK",
+            (430, 60),
+            "ID",
             fill=(180, 180, 180),
             font=fuente_header
         )
 
         draw.text(
-            (590, 60),
+            (540, 60),
             "IV",
             fill=(180, 180, 180),
             font=fuente_header
         )
 
-        # Línea bajo cabecera
         draw.line(
             [(10, 85), (690, 85)],
             fill=(70, 70, 70),
@@ -729,44 +728,36 @@ async def generar_imagen_top(top_pokemones):
                     Image.open(ruta_sprite)
                     .convert("RGBA")
                     .resize(
-                        (64, 64),
+                        (48, 48),
                         Image.Resampling.NEAREST
                     )
                 )
 
                 imagen.paste(
                     sprite,
-                    (10, y),
+                    (15, y),
                     sprite
                 )
 
-            except Exception as e:
+            except Exception:
+                pass
 
-                log.warning(
-                    f"Sprite no encontrado: {ruta_sprite}"
-                )
-
-            # Posición
+            # =========================
+            # POSICIÓN
+            # =========================
 
             if i == 0:
                 medalla = "#1"
+                color_pos = (255, 215, 0)      # Oro
             elif i == 1:
                 medalla = "#2"
+                color_pos = (192, 192, 192)    # Plata
             elif i == 2:
                 medalla = "#3"
+                color_pos = (205, 127, 50)     # Bronce
             else:
                 medalla = f"#{i+1}"
-
-            # Calidad
-
-            if porcentaje >= 85:
-                calidad = "S"
-            elif porcentaje >= 70:
-                calidad = "A"
-            elif porcentaje >= 55:
-                calidad = "B"
-            else:
-                calidad = "C"
+                color_pos = (255, 255, 255)
 
             nombre_mostrar = nombre.capitalize()
 
@@ -776,36 +767,43 @@ async def generar_imagen_top(top_pokemones):
             # POSICIÓN
 
             draw.text(
-                (95, y + 18),
+                (90, y + 12),
                 medalla,
-                fill=(255, 255, 255),
+                fill=color_pos,
                 font=fuente
             )
 
             # NOMBRE
 
             draw.text(
-                (160, y + 18),
+                (150, y + 12),
                 nombre_mostrar,
                 fill=(255, 255, 255),
                 font=fuente
             )
 
-            # RANK
+            # ID DE CAPTURA
 
             draw.text(
-                (510, y + 18),
-                calidad,
-                fill=(255, 215, 0),
+                (430, y + 12),
+                f"[{id_captura}]",
+                fill=(180, 180, 180),
                 font=fuente
             )
 
             # IV
 
+            if porcentaje >= 85:
+                color_iv = (0, 255, 127)
+            elif porcentaje >= 70:
+                color_iv = (255, 215, 0)
+            else:
+                color_iv = (255, 255, 255)
+
             draw.text(
-                (585, y + 18),
+                (540, y + 12),
                 f"{porcentaje:.1f}%",
-                fill=(255, 255, 255),
+                fill=color_iv,
                 font=fuente
             )
 
@@ -813,8 +811,8 @@ async def generar_imagen_top(top_pokemones):
 
             draw.line(
                 [
-                    (90, y + 68),
-                    (690, y + 68)
+                    (80, y + 54),
+                    (690, y + 54)
                 ],
                 fill=(55, 55, 55),
                 width=1
