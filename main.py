@@ -1158,7 +1158,6 @@ async def partido(ctx, rival_id: int):
 
     usuario_a = ctx.author.id
 
-    # 🔥 traer rival por ID
     try:
         rival_user = await bot.fetch_user(rival_id)
     except:
@@ -1166,70 +1165,99 @@ async def partido(ctx, rival_id: int):
 
     usuario_b = rival_user.id
 
-    # ⚽ simular partido
     resultado = simular_partido_usuarios(usuario_a, usuario_b)
 
     if "error" in resultado:
         return await ctx.send("❌ Error al generar el partido")
 
-    # 🎮 EMBED BASE (NO duplicar fields)
+    # 🔥 marcador dinámico real
+    goles_a = 0
+    goles_b = 0
+
+    # 🎮 embed base
     embed = discord.Embed(
         title="⚽ Partido en vivo",
         description=f"{ctx.author.name} vs {rival_user.name}",
         color=0x00ff99
     )
 
-    # 🔴 marcador inicial
     embed.add_field(
         name="🔴 Marcador",
         value="0 - 0",
         inline=False
     )
 
-    # 📺 eventos iniciales
     embed.add_field(
         name="📺 Eventos del partido",
         value="⏳ Sin eventos aún...",
         inline=False
     )
 
-    # enviar mensaje
     msg = await ctx.send(embed=embed)
 
-    timeline = ""
+    # 📊 listas separadas por equipo
+    linea_a = []
+    linea_b = []
 
-    # ⚽ eventos en vivo
+    # ⚽ LOOP DE EVENTOS
     for evento in resultado["eventos"]:
 
         await asyncio.sleep(2)
 
-        # agregar evento al timeline
-        timeline += f"{evento['minuto']}' {formatear_evento(evento)}\n"
+        # 🔥 actualizar marcador si es gol
+        if evento["tipo"] == "gol":
 
-        # actualizar SOLO el campo de eventos (índice 1)
+            if evento["equipo"] == "A":
+                goles_a += 1
+            else:
+                goles_b += 1
+
+        # 🧾 construir línea evento
+        linea = f"{evento['minuto']}' {formatear_evento(evento)}"
+
+        if evento["equipo"] == "A":
+            linea_a.append(linea)
+        else:
+            linea_b.append(linea)
+
+        # 📺 timeline tipo match center
+        max_len = max(len(linea_a), len(linea_b))
+
+        timeline = ""
+
+        for i in range(max_len):
+
+            left = linea_a[i] if i < len(linea_a) else ""
+            right = linea_b[i] if i < len(linea_b) else ""
+
+            timeline += f"{left:<45}{right}\n"
+
+        # 🔴 marcador actualizado
+        marcador = f"{ctx.author.name} {goles_a} - {goles_b} {rival_user.name}"
+
+        embed.set_field_at(
+            0,
+            name="🔴 Marcador",
+            value=marcador,
+            inline=False
+        )
+
         embed.set_field_at(
             1,
             name="📺 Eventos del partido",
-            value=timeline[-1024:],  # evita límite de Discord
+            value=timeline[-1024:],
             inline=False
         )
 
         await msg.edit(embed=embed)
 
-    # 🏁 marcador final
-    embed.set_field_at(
-        0,
-        name="🔴 Marcador",
-        value=f"{ctx.author.name} {resultado['goles_a']} - {resultado['goles_b']} {rival_user.name}",
-        inline=False
-    )
-
-    # 📊 estadísticas finales
+    # 🏁 FINAL
     embed.add_field(
-        name="📊 Estadísticas",
+        name="🏁 FINAL DEL PARTIDO",
         value=(
-            f"Posesión: {resultado['posesion_a']}% - {resultado['posesion_b']}%\n"
-            f"Ocasiones: {resultado['ocasiones_a']} - {resultado['ocasiones_b']}"
+            f"{ctx.author.name} {goles_a} - {goles_b} {rival_user.name}\n\n"
+            f"📊 Posesión: {resultado['posesion_a']}% - {resultado['posesion_b']}%\n"
+            f"📊 Ocasiones: {resultado['ocasiones_a']} - {resultado['ocasiones_b']}"
         ),
         inline=False
     )
