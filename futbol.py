@@ -400,8 +400,9 @@ def safe_promedio(lista):
 
 
 def calcular_fuerza_equipo(usuario_id):
-
+    print(f"CALCULANDO FUERZA {usuario_id}")
     equipo = obtener_equipo_futbol(usuario_id)
+    print("DEBUG equipo:", equipo)
     equipo = ordenar_equipo_por_formacion(equipo)
     if not equipo:
         return None
