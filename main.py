@@ -1152,6 +1152,7 @@ async def stress(ctx, cantidad: int = 100):
         f"✅ {cantidad:,} spawns simulados en {tiempo:.2f}s\n"
         f"❌ Errores: {errores}"
     )
+
 @bot.command()
 @canal_restringido()
 async def partido(ctx, rival_id: int):
@@ -1170,11 +1171,7 @@ async def partido(ctx, rival_id: int):
     if "error" in resultado:
         return await ctx.send("❌ Error al generar el partido")
 
-    # 🔥 marcador dinámico real
-    goles_a = 0
-    goles_b = 0
-
-    # 🎮 embed base
+    # 🔥 embed base
     embed = discord.Embed(
         title="⚽ Partido en vivo",
         description=f"{ctx.author.name} vs {rival_user.name}",
@@ -1195,52 +1192,61 @@ async def partido(ctx, rival_id: int):
 
     msg = await ctx.send(embed=embed)
 
-    linea_a = []
-    linea_b = []
-
+    # 🔥 MARCADOR REAL
     goles_a = 0
     goles_b = 0
 
-    for evento in resultado["eventos"]:
+    # 🔥 COLUMNAS FIJAS
+    linea_a = []
+    linea_b = []
+
+    # ⚽ ORDENAR EVENTOS POR MINUTO (IMPORTANTE)
+    eventos = sorted(resultado["eventos"], key=lambda e: e["minuto"])
+
+    for e in eventos:
 
         await asyncio.sleep(2)
 
-        linea = f"{evento['minuto']}' {formatear_evento(evento)}"
-
-        # 🔥 actualizar marcador REAL
-        if evento["tipo"] == "gol":
-            if evento["equipo"] == "A":
+        # 🔥 actualizar marcador si es gol
+        if e["tipo"] == "gol":
+            if e["equipo"] == "A":
                 goles_a += 1
             else:
                 goles_b += 1
 
-        # 🔥 separar por equipo
-        if evento["equipo"] == "A":
-            linea_a.append(linea)
-        else:
-            linea_b.append(linea)
+        texto = f"{e['minuto']}' {formatear_evento(e)}"
 
-        # 🔥 construir columnas CON CABECERA FIJA
-        max_len = max(len(linea_a), len(linea_b), 1)
+        # 🔥 RESERVAR ESPACIO SIEMPRE (CLAVE)
+        if e["equipo"] == "A":
+            linea_a.append(texto)
+            linea_b.append("")
+        else:
+            linea_a.append("")
+            linea_b.append(texto)
+
+        # 🔥 construir timeline estable
+        max_len = len(linea_a)
 
         timeline = ""
 
-        # 🔥 CABECERA FIJA (esto evita desorientación visual)
+        # 🔥 CABECERA FIJA (evita confusión visual)
         timeline += f"{ctx.author.name} (A){'':<30}{rival_user.name} (B)\n"
         timeline += "─" * 70 + "\n"
 
         for i in range(max_len):
 
-            left = linea_a[i] if i < len(linea_a) else ""
-            right = linea_b[i] if i < len(linea_b) else ""
+            left = linea_a[i]
+            right = linea_b[i]
 
             timeline += f"{left:<35}{right}\n"
 
-        # 🔥 marcador sincronizado REAL
+        # 🔥 marcador actualizado real
+        marcador = f"{ctx.author.name} {goles_a} - {goles_b} {rival_user.name}"
+
         embed.set_field_at(
             0,
             name="🔴 Marcador",
-            value=f"{ctx.author.name} {goles_a} - {goles_b} {rival_user.name}",
+            value=marcador,
             inline=False
         )
 
@@ -1252,6 +1258,8 @@ async def partido(ctx, rival_id: int):
         )
 
         await msg.edit(embed=embed)
+
+    # 🏁 FINAL
     embed.add_field(
         name="🏁 FINAL DEL PARTIDO",
         value=(
@@ -1261,4 +1269,6 @@ async def partido(ctx, rival_id: int):
         ),
         inline=False
     )
+
+    await msg.edit(embed=embed)
 bot.run(TOKEN)
