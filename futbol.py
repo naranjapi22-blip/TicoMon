@@ -615,22 +615,48 @@ def obtener_equipo_futbol(usuario_id):
     except Exception as e:
         print(f"❌ Error: {e}")
         return None
-def obtener_jugadores_equipo(user_id):
+def obtener_jugadores_equipo(usuario_id):
 
     conn = get_connection()
     cursor = conn.cursor()
 
     cursor.execute("""
-        SELECT slot, captura_id
+        SELECT
+            portero,
+            defensa_1,
+            defensa_2,
+            defensa_3,
+            defensa_4,
+            medio_1,
+            medio_2,
+            medio_3,
+            medio_4,
+            delantero_1,
+            delantero_2
         FROM equipos_futbol
-        WHERE user_id = %s
-    """, (user_id,))
+        WHERE usuario_id = %s
+    """, (usuario_id,))
 
-    rows = cursor.fetchall()
+    row = cursor.fetchone()
 
     conn.close()
 
-    return {slot: captura_id for slot, captura_id in rows}
+    if not row:
+        return {}
+
+    return {
+        "portero": row[0],
+        "defensa_1": row[1],
+        "defensa_2": row[2],
+        "defensa_3": row[3],
+        "defensa_4": row[4],
+        "medio_1": row[5],
+        "medio_2": row[6],
+        "medio_3": row[7],
+        "medio_4": row[8],
+        "delantero_1": row[9],
+        "delantero_2": row[10]
+    }
 def nombre_pokemon_captura(captura_id):
 
     captura = obtener_captura(captura_id)
