@@ -11,7 +11,6 @@ import os
 import gestor_spawn
 import servicios
 from logger_config import log
-from ranking_roles import actualizar_roles_competitivos
 from mapeo_pokes import obtener_id_gif # Asegúrate de tener este import al inicio del archivo
 import records  # Importa tu archivo de lógica de récords
 COOLDOWN_LANZAMIENTO = 10.0
@@ -586,9 +585,7 @@ class BotonCaptura(discord.ui.View):
                         es_shiny=self.es_shiny,           # Especificas que este es el shiny
                         pokeball=nombre_bola
                     )
-                    ranking_cog = interaction.client.get_cog(
-                        "RankingRoles"
-                    )
+
                     liberar_canal_completo(interaction.channel.id)
                     
                     # Se eliminó la reconexión y la doble verificación aquí para no sobreescribir 'resultado_record'
@@ -607,13 +604,7 @@ class BotonCaptura(discord.ui.View):
                     self.usuario_capturador = interaction.user.id
                     await interaction.message.edit(content=mensaje, view=None)
                     self.stop()
-                    if ranking_cog:
-                        asyncio.create_task(
-                            actualizar_roles_competitivos(
-                                ranking_cog,
-                                interaction.guild
-                            )
-                        )
+
                 except Exception as db_error:
                     self.alguien_lo_atrapo = False
                     self.usuario_capturador = None
