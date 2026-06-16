@@ -39,3 +39,18 @@ def get_evolutions(pokemon_nombre):
         cursor.close()
         conn.close()
 
+
+def get_evolution_choice(pokemon_nombre, choice_number):
+
+    evoluciones = get_evolutions(
+        pokemon_nombre
+    )
+
+    if choice_number < 1:
+        return None
+
+    if choice_number > len(evoluciones):
+        return None
+
+    return evoluciones[choice_number - 1]
+

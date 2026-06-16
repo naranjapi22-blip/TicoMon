@@ -118,3 +118,61 @@ def remove_candy(user_id, candy_type, amount):
     finally:
         cursor.close()
         conn.close()
+
+def remove_candy(user_id, candy_type, amount):
+
+    conn = database.get_connection()
+    cursor = conn.cursor()
+
+    try:
+
+        cursor.execute(
+            """
+            UPDATE user_candies
+            SET amount = amount - %s
+            WHERE user_id = %s
+            AND candy_type = %s
+            """,
+            (
+                amount,
+                str(user_id),
+                candy_type
+            )
+        )
+
+        conn.commit()
+
+    finally:
+
+        cursor.close()
+        conn.close()
+
+
+def evolve_pokemon(capture_id, new_species):
+
+    conn = database.get_connection()
+    cursor = conn.cursor()
+
+    try:
+
+        cursor.execute(
+            """
+            UPDATE capturas
+            SET pokemon_nombre = %s
+            WHERE id = %s
+            """,
+            (
+                new_species.lower(),
+                capture_id
+            )
+        )
+
+        conn.commit()
+
+    finally:
+
+        cursor.close()
+        conn.close()
+
+
+

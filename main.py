@@ -51,6 +51,8 @@ from futbol import asignar_pokemon_a_equipo
 from futbol import obtener_equipo
 from futbol import nombre_pokemon_captura
 from futbol import crear_equipo
+from evolutions import ( get_evolutions, get_evolution_cost, get_evolution_choice, evolve_pokemon ) 
+from candy import ( get_candies, remove_candy )
 database.init_db()
 # 1. CONFIGURACIÓN
 load_dotenv()
