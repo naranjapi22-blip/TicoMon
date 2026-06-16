@@ -257,7 +257,11 @@ class VistaSeleccionPokemon(discord.ui.View):
             pass
 class VistaDecisionSafari(discord.ui.View):
 
-    def __init__(self):
+    def __init__(
+        self,
+        texto_izquierda,
+        texto_derecha
+    ):
 
         super().__init__(
             timeout=20
@@ -273,16 +277,22 @@ class VistaDecisionSafari(discord.ui.View):
         self.resultado = None
 
         self.add_item(
-            BotonIzquierda()
+            BotonIzquierda(
+                texto_izquierda
+            )
         )
 
         self.add_item(
-            BotonDerecha()
+            BotonDerecha(
+                texto_derecha
+            )
         )
 class BotonIzquierda(discord.ui.Button):
 
-    def __init__(self):
-
+    def __init__(
+        self,
+        texto
+    ):
         super().__init__(
             label="Sendero estrecho",
             emoji="🌲",
@@ -315,12 +325,14 @@ class BotonIzquierda(discord.ui.Button):
         )
 class BotonDerecha(discord.ui.Button):
 
-    def __init__(self):
+    def __init__(
+        self,
+        texto
+    ):
 
         super().__init__(
-            label="Camino principal",
-            emoji="🛣️",
-            style=discord.ButtonStyle.success
+            label=texto,
+            style=discord.ButtonStyle.primary
         )
 
     async def callback(

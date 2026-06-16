@@ -12,6 +12,13 @@ from rarezas import (
     pokemon_por_rareza,
     generar_ids_safari_region
 )
+DECISIONES_SAFARI = [
+    ("🌲 Sendero estrecho", "🛣️ Camino principal"),
+    ("🌉 Cruzar un puente", "🪨 Rodear por las rocas"),
+    ("🌾 Atravesar la pradera", "🌳 Bordear el bosque"),
+    ("⛰️ Tomar el desvío", "🚙 Continuar recto"),
+    ("👣 Seguir unas huellas", "🧭 Mantener la ruta"),
+]
 EVENTOS_COMUNES = [
     "migracion",
     "volcan",
@@ -74,10 +81,7 @@ class SafariManager:
         self.pokemons_vistos.clear()       
         roll = random.random()
 
-        if roll < 0.75:
-            cantidad_eventos = 1
-
-        elif roll < 0.95:
+        if roll < 0.80:
             cantidad_eventos = 2
 
         else:
@@ -683,7 +687,9 @@ class SafariManager:
         lado_correcto = random.choice(
             ["izquierda", "derecha"]
         )
-
+        opcion_izquierda, opcion_derecha = random.choice(
+            DECISIONES_SAFARI
+        )
         embed = discord.Embed(
             title="🚙 Bifurcación en el camino",
             description=(
@@ -693,7 +699,10 @@ class SafariManager:
             color=discord.Color.gold()
         )
 
-        view = VistaDecisionSafari()
+        view = VistaDecisionSafari(
+            opcion_izquierda,
+            opcion_derecha
+        )
 
         mensaje = await self.canal.send(
             embed=embed,
@@ -737,17 +746,22 @@ class SafariManager:
         info["activo"] = (
             lado_elegido == lado_correcto
         )
+        if info["activo"]:
 
+            await self.canal.send(
+                "🚙 La expedición toma la ruta elegida.\n\n"
+                "Algo extraño parece encontrarse más adelante..."
+            )
+
+        else:
+
+            await self.canal.send(
+                "🚙 La expedición continúa el recorrido.\n\n"
+                "👀 A lo lejos parece haber algo interesante,"
+                " pero la camioneta sigue avanzando."
+            )
         print(
             f"DECISION EVENTO {encuentro_numero}"
-        )
-
-        print(
-            f"LADO CORRECTO: {lado_correcto}"
-        )
-
-        print(
-            f"LADO ELEGIDO: {lado_elegido}"
         )
 
         print(
