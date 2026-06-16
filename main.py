@@ -1292,11 +1292,11 @@ async def addequipo(ctx, captura_id: int, posicion: str):
     asignar_pokemon_a_equipo(user_id, captura_id, posicion)
 
     await ctx.send(f"✅ Pokémon añadido a {posicion}")
-bot.run(TOKEN)
 @bot.command()
 @canal_restringido()
 async def team(ctx):
-
+    print("TEAM EJECUTADO")  # <- DEBUG
+    await ctx.send("funciona")
     data = obtener_equipo(ctx.author.id)
 
     if not data:
@@ -1327,3 +1327,4 @@ async def team(ctx):
         texto += f"⚽ {pos}: {nombre}\n"
 
     await ctx.send(texto)
+bot.run(TOKEN)
