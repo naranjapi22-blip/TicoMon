@@ -1389,6 +1389,7 @@ async def caramelos(ctx):
     finally:
         cursor.close()
         conn.close()
+from candy import add_candy
 @bot.command(name="testcandy")
 async def testcandy(ctx):
 
