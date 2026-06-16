@@ -691,17 +691,20 @@ def ordenar_equipo_por_formacion(equipo):
         if pos in equipo
     }
 def asignar_pokemon_a_equipo(user_id, captura_id, posicion):
-    """
-    Guarda un Pokémon en una posición del equipo del usuario
-    """
 
-    query = """
-    UPDATE equipo_futbol
-    SET {}
-    WHERE user_id = %s
-    """.format(posicion)
+    conn = get_connection()
+    cursor = conn.cursor()  # 🔥 AQUÍ ESTABA EL ERROR
+
+    query = f"""
+        UPDATE equipo
+        SET {posicion} = %s
+        WHERE user_id = %s
+    """
 
     cursor.execute(query, (captura_id, user_id))
-    conexion.commit()
+
+    conn.commit()
+    cursor.close()
+    conn.close()
 
     return True
