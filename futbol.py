@@ -693,7 +693,7 @@ def ordenar_equipo_por_formacion(equipo):
 def asignar_pokemon_a_equipo(user_id, captura_id, posicion):
 
     conn = get_connection()
-    cursor = conn.cursor()  # 🔥 AQUÍ ESTABA EL ERROR
+    cursor = conn.cursor()
 
     query = f"""
         UPDATE equipo
@@ -706,5 +706,3 @@ def asignar_pokemon_a_equipo(user_id, captura_id, posicion):
     conn.commit()
     cursor.close()
     conn.close()
-
-    return True
