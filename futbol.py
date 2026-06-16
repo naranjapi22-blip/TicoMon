@@ -608,35 +608,22 @@ def obtener_equipo_futbol(usuario_id):
     except Exception as e:
         print(f"❌ Error: {e}")
         return None
-def obtener_jugadores_equipo(usuario_id):
+def obtener_jugadores_equipo(user_id):
 
-    equipo = obtener_equipo_futbol(usuario_id)
+    conn = get_connection()
+    cursor = conn.cursor()
 
-    if not equipo:
-        return None
+    cursor.execute("""
+        SELECT slot, captura_id
+        FROM equipo
+        WHERE user_id = %s
+    """, (user_id,))
 
-    return {
-        "portero": equipo[1],
+    rows = cursor.fetchall()
 
-        "defensas": [
-            equipo[2],
-            equipo[3],
-            equipo[4],
-            equipo[5]
-        ],
+    conn.close()
 
-        "medios": [
-            equipo[6],
-            equipo[7],
-            equipo[8],
-            equipo[9]
-        ],
-
-        "delanteros": [
-            equipo[10],
-            equipo[11]
-        ]
-    }
+    return {slot: captura_id for slot, captura_id in rows}
 def nombre_pokemon_captura(captura_id):
 
     captura = obtener_captura(captura_id)
@@ -690,19 +677,22 @@ def ordenar_equipo_por_formacion(equipo):
         for pos in orden
         if pos in equipo
     }
-def asignar_pokemon_a_equipo(user_id, captura_id, posicion):
+def asignar_pokemon_a_equipo(user_id, captura_id, slot):
 
     conn = get_connection()
     cursor = conn.cursor()
 
-    query = f"""
-        UPDATE equipo
-        SET {posicion} = %s
-        WHERE user_id = %s
+    query = """
+    INSERT INTO equipo (user_id, slot, captura_id)
+    VALUES (%s, %s, %s)
+    ON CONFLICT (user_id, slot)
+    DO UPDATE SET captura_id = EXCLUDED.captura_id
     """
 
-    cursor.execute(query, (captura_id, user_id))
+    cursor.execute(query, (user_id, slot, captura_id))
 
     conn.commit()
     cursor.close()
     conn.close()
+
+    return True
