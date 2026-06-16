@@ -1,28 +1,18 @@
 import random
 def formatear_timeline(resultado, nombre_a, nombre_b):
 
-    lineas_a = []
-    lineas_b = []
+    eventos = sorted(resultado["eventos"], key=lambda e: e["minuto"])
 
-    for evento in resultado["eventos"]:
+    texto = f"{nombre_a} vs {nombre_b}\n\n"
 
-        texto = formatear_evento(evento)
+    for e in eventos:
 
-        if evento["equipo"] == "A":
-            lineas_a.append(f"{evento['minuto']}' {texto}")
+        linea = formatear_evento(e)
+
+        if e["equipo"] == "A":
+            texto += f"{linea:<45}\n"
         else:
-            lineas_b.append(f"{evento['minuto']}' {texto}")
-
-    max_len = max(len(lineas_a), len(lineas_b))
-
-    texto = f"{nombre_a:<15} vs {nombre_b}\n\n"
-
-    for i in range(max_len):
-
-        izquierda = lineas_a[i] if i < len(lineas_a) else ""
-        derecha = lineas_b[i] if i < len(lineas_b) else ""
-
-        texto += f"{izquierda:<35} {derecha}\n"
+            texto += f"{' ' * 45}{linea}\n"
 
     return texto
 def calcular_posesion(med_a, med_b):
