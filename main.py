@@ -1272,35 +1272,6 @@ async def partido(ctx, rival_id: int):
 
     await msg.edit(embed=embed)
 @bot.command()
-@canal_restringido()
-async def addequipo(ctx, captura_id: int, posicion: int):
-
-    usuario_id = ctx.author.id
-
-    # 🔥 validar equipo existe
-    if not tiene_equipo_futbol(usuario_id):
-        return await ctx.send("❌ No tienes equipo creado")
-
-    # 🔥 validar captura pertenece al usuario
-    if not captura_pertenece_usuario(usuario_id, captura_id):
-        return await ctx.send("❌ Ese Pokémon no te pertenece")
-
-    # 🔥 validar posición
-    if posicion not in POSICIONES_FUTBOL:
-        return await ctx.send("❌ Posición inválida")
-
-    # 🔥 actualizar equipo
-    ok = actualizar_posicion_futbol(
-        usuario_id,
-        posicion,
-        captura_id
-    )
-
-    if not ok:
-        return await ctx.send("❌ No se pudo actualizar el equipo")
-
-    await ctx.send(f"✅ Pokémon añadido a la posición {posicion}")
-@bot.command()
 async def addequipo(ctx, captura_id: int, posicion: str):
 
     user_id = ctx.author.id
