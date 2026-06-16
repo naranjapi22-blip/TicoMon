@@ -171,11 +171,6 @@ def simular_partido_usuarios(usuario_a, usuario_b):
     jugadores_a = obtener_jugadores_equipo(usuario_a)
     jugadores_b = obtener_jugadores_equipo(usuario_b)
 
-    # 🔥 convertir estructura
-    jugadores_a = equipo_a_dict(jugadores_a)
-    jugadores_b = equipo_a_dict(jugadores_b)
-
-    # 🔥 asegurar que no haya None
     jugadores_a = asegurar_equipo(jugadores_a)
     jugadores_b = asegurar_equipo(jugadores_b)
 
