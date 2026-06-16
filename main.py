@@ -1438,13 +1438,16 @@ async def evolucionar(ctx, id_pokemon: int):
         ]
 
 
-        for i, (destino, metodo, tier) in enumerate(evoluciones, start=1):
+        for i, (destino, metodo, tier, tipo_caramelo) in enumerate(
+            evoluciones,
+            start=1
+        ):
 
             costo = get_evolution_cost(tier)
 
             mensaje.append(
                 f"{i}️⃣ **{destino.capitalize()}**\n"
-                f"💰 {costo} caramelos"
+                f"🍬 {costo} {tipo_caramelo.capitalize()}"
             )
 
 

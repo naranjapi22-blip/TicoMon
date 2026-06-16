@@ -23,7 +23,8 @@ def get_evolutions(pokemon_nombre):
             SELECT
                 evoluciona_a,
                 metodo,
-                tier
+                tier,
+                tipo_caramelo
             FROM pokemon_evolutions
             WHERE pokemon_nombre = %s
             ORDER BY evoluciona_a
