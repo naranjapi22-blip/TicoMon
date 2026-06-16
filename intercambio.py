@@ -9,8 +9,16 @@ import os
 usuarios_ocupados = set()
 
 # --- 2. LÓGICA DE TRANSFERENCIA SEGURA ---
-async def transferir_pokemon_seguro(user_de, user_para, nombre, es_shiny):
-    """Busca un único Pokémon en el inventario y le cambia el dueño."""
+async def intercambio_atomico(
+    user1,
+    user2,
+    pokemon_id_1,
+    pokemon_id_2
+):
+    """
+    Intercambio seguro y atómico.
+    O se completan ambos movimientos o no se hace ninguno.
+    """
 
     async with database.db_lock:
 
@@ -18,44 +26,106 @@ async def transferir_pokemon_seguro(user_de, user_para, nombre, es_shiny):
         cursor = conn.cursor()
 
         try:
+
+            # Protección extra
+            if user1 == user2:
+                conn.rollback()
+                return False
+
+            # Protección extra
+            if pokemon_id_1 == pokemon_id_2:
+                conn.rollback()
+                return False
+
+            # Bloquear Pokémon del jugador 1
             cursor.execute(
-                '''
+                """
                 SELECT id
                 FROM capturas
-                WHERE user_id = %s
-                AND pokemon_nombre = %s
-                AND es_shiny = %s
-                LIMIT 1
-                ''',
+                WHERE id = %s
+                AND user_id = %s
+                FOR UPDATE
+                """,
                 (
-                    str(user_de),
-                    nombre.lower(),
-                    1 if es_shiny else 0
+                    pokemon_id_1,
+                    str(user1)
                 )
             )
 
-            resultado = cursor.fetchone()
+            poke1 = cursor.fetchone()
 
-            if not resultado:
+            # Bloquear Pokémon del jugador 2
+            cursor.execute(
+                """
+                SELECT id
+                FROM capturas
+                WHERE id = %s
+                AND user_id = %s
+                FOR UPDATE
+                """,
+                (
+                    pokemon_id_2,
+                    str(user2)
+                )
+            )
+
+            poke2 = cursor.fetchone()
+
+            if not poke1 or not poke2:
+                conn.rollback()
                 return False
 
-            id_captura = resultado[0]
+            id_poke1 = poke1[0]
+            id_poke2 = poke2[0]
 
+            # Transferencia cruzada
             cursor.execute(
-                '''
+                """
                 UPDATE capturas
                 SET user_id = %s
                 WHERE id = %s
-                ''',
+                """,
                 (
-                    str(user_para),
-                    id_captura
+                    str(user2),
+                    id_poke1
                 )
             )
 
+            cursor.execute(
+                """
+                UPDATE capturas
+                SET user_id = %s
+                WHERE id = %s
+                """,
+                (
+                    str(user1),
+                    id_poke2
+                )
+            )
+            cursor.execute(
+                """
+                INSERT INTO historial_trades (
+                    usuario_1,
+                    usuario_2,
+                    pokemon_1,
+                    pokemon_2
+                )
+                VALUES (%s, %s, %s, %s)
+                """,
+                (
+                    str(user1),
+                    str(user2),
+                    pokemon_id_1,
+                    pokemon_id_2
+                )
+            )
             conn.commit()
-
             return True
+
+        except Exception as e:
+            conn.rollback()
+            print(f"[TRADE ERROR] {e}")
+            return False
 
         finally:
             cursor.close()
@@ -64,8 +134,8 @@ async def transferir_pokemon_seguro(user_de, user_para, nombre, es_shiny):
 # --- 3. MODAL (Pop-up para escribir la oferta) ---
 class ModalOferta(discord.ui.Modal, title='Elige tu Pokémon para ofrecer'):
     oferta = discord.ui.TextInput(
-        label='Nombre del Pokémon (Añade "shiny" si lo es)',
-        placeholder='Ejemplo: charizard o charizard shiny',
+        label='ID del Pokémon',
+        placeholder='Ejemplo: 1542',
         required=True
     )
 
@@ -75,30 +145,109 @@ class ModalOferta(discord.ui.Modal, title='Elige tu Pokémon para ofrecer'):
         self.jugador_id = jugador_id
 
     async def on_submit(self, interaction: discord.Interaction):
-        texto = self.oferta.value.lower().strip()
-        quiere_shiny = False
-        
-        if texto.endswith(" shiny"):
-            quiere_shiny = True
-            nombre = texto[:-6].strip()
-        else:
-            nombre = texto
 
-        # Validamos si el jugador realmente tiene el Pokémon usando tu DB actual
-        versiones = database.obtener_versiones_pokemon(self.jugador_id, nombre)
-        
-        if not versiones:
-            return await interaction.response.send_message(f"❌ No tienes a {nombre.capitalize()}.", ephemeral=True)
-            
-        if quiere_shiny and 1 not in versiones:
-            return await interaction.response.send_message(f"❌ No tienes la versión ✨ Shiny de {nombre.capitalize()}.", ephemeral=True)
-            
-        if not quiere_shiny and 0 not in versiones:
-            return await interaction.response.send_message(f"❌ Solo tienes la versión Shiny. Especifica '{nombre} shiny'.", ephemeral=True)
+        try:
+            pokemon_id = int(self.oferta.value.strip())
+        except ValueError:
+            return await interaction.response.send_message(
+                "❌ Debes ingresar un ID válido.",
+                ephemeral=True
+            )
 
-        # Actualizamos la mesa de intercambio
-        await self.vista_trade.registrar_oferta(interaction, self.jugador_id, nombre, quiere_shiny)
+        conn = database.get_connection()
+        cursor = conn.cursor()
 
+        try:
+
+            cursor.execute(
+                """
+                SELECT
+                    id,
+                    pokemon_nombre,
+                    es_shiny,
+                    iv_hp,
+                    iv_atk,
+                    iv_def,
+                    iv_spa,
+                    iv_spd,
+                    iv_spe,
+                    naturaleza,
+                    tamano_factor
+                FROM capturas
+                WHERE id = %s
+                AND user_id = %s
+                """,
+                (
+                    pokemon_id,
+                    str(self.jugador_id)
+                )
+            )
+
+            pokemon = cursor.fetchone()
+
+            if not pokemon:
+                return await interaction.response.send_message(
+                    "❌ Ese Pokémon no te pertenece o no existe.",
+                    ephemeral=True
+                )
+
+            (
+                _,
+                nombre,
+                shiny,
+                iv_hp,
+                iv_atk,
+                iv_def,
+                iv_spa,
+                iv_spd,
+                iv_spe,
+                naturaleza,
+                tamano_factor
+            ) = pokemon
+
+            iv_total = (
+                iv_hp +
+                iv_atk +
+                iv_def +
+                iv_spa +
+                iv_spd +
+                iv_spe
+            )
+
+            iv_pct = round((iv_total / 186) * 100, 1)
+
+            if (
+                self.vista_trade.oferta_j1
+                and self.vista_trade.oferta_j1["id"] == pokemon_id
+            ):
+                return await interaction.response.send_message(
+                    "❌ Ese Pokémon ya está en la mesa de intercambio.",
+                    ephemeral=True
+                )
+
+            if (
+                self.vista_trade.oferta_j2
+                and self.vista_trade.oferta_j2["id"] == pokemon_id
+            ):
+                return await interaction.response.send_message(
+                    "❌ Ese Pokémon ya está en la mesa de intercambio.",
+                    ephemeral=True
+                )
+
+            await self.vista_trade.registrar_oferta(
+                interaction,
+                self.jugador_id,
+                pokemon_id,
+                nombre,
+                bool(shiny),
+                iv_pct,
+                naturaleza,
+                float(tamano_factor)
+            )
+
+        finally:
+            cursor.close()
+            conn.close()
 # --- 4. LA MESA DE INTERCAMBIO (View) ---
 class SalaIntercambio(discord.ui.View):
     def __init__(self, jugador1, jugador2):
@@ -111,33 +260,60 @@ class SalaIntercambio(discord.ui.View):
         self.oferta_j2 = None
 
     async def on_timeout(self):
-        # Si se acaba el tiempo, liberamos a los jugadores
+        # Liberar jugadores
         usuarios_ocupados.discard(self.j1.id)
         usuarios_ocupados.discard(self.j2.id)
-        
+
+        # Limpiar ofertas
+        self.oferta_j1 = None
+        self.oferta_j2 = None
+
+        # Desactivar botones
         for child in self.children:
             child.disabled = True
-            
-        if hasattr(self, 'message'):
+
+        if hasattr(self, "message"):
             embed = self.message.embeds[0]
             embed.color = discord.Color.red()
             embed.title = "⌛ El tiempo de intercambio expiró."
-            await self.message.edit(embed=embed, view=self)
+
+            await self.message.edit(
+                embed=embed,
+                view=self
+            )
+
+        self.stop()
 
     def generar_embed(self):
         embed = discord.Embed(title="🤝 Sala de Intercambio", color=discord.Color.blue())
         
         # Texto Oferta Jugador 1
         if self.oferta_j1:
-            texto_j1 = f"**{self.oferta_j1['nombre'].capitalize()}** {'✨' if self.oferta_j1['shiny'] else ''}"
+            texto_j1 = (
+                f"ID: `{self.oferta_j1['id']}`\n"
+                f"**{self.oferta_j1['nombre'].capitalize()}** "
+                f"{'✨' if self.oferta_j1['shiny'] else ''}\n"
+                f"IVs: **{self.oferta_j1['iv_pct']}%**\n"
+                f"Naturaleza: **{self.oferta_j1['naturaleza']}**\n"
+                f"Tamaño: **{self.oferta_j1['tamano']}x**"
+            )
             if self.oferta_j1.get('listo'): texto_j1 += " ✅ (Listo)"
         else:
             texto_j1 = "Esperando oferta..."
             
         # Texto Oferta Jugador 2
         if self.oferta_j2:
-            texto_j2 = f"**{self.oferta_j2['nombre'].capitalize()}** {'✨' if self.oferta_j2['shiny'] else ''}"
-            if self.oferta_j2.get('listo'): texto_j2 += " ✅ (Listo)"
+            texto_j2 = (
+                f"ID: `{self.oferta_j2['id']}`\n"
+                f"**{self.oferta_j2['nombre'].capitalize()}** "
+                f"{'✨' if self.oferta_j2['shiny'] else ''}\n"
+                f"IVs: **{self.oferta_j2['iv_pct']}%**\n"
+                f"Naturaleza: **{self.oferta_j2['naturaleza']}**\n"
+                f"Tamaño: **{self.oferta_j2['tamano']}x**"
+            )
+
+            if self.oferta_j2.get('listo'):
+                texto_j2 += " ✅ (Listo)"
         else:
             texto_j2 = "Esperando oferta..."
 
@@ -147,74 +323,295 @@ class SalaIntercambio(discord.ui.View):
         
         return embed
 
-    async def registrar_oferta(self, interaction, jugador_id, nombre, shiny):
-        if jugador_id == self.j1.id:
-            self.oferta_j1 = {"nombre": nombre, "shiny": shiny, "listo": False}
-        else:
-            self.oferta_j2 = {"nombre": nombre, "shiny": shiny, "listo": False}
-            
-        await interaction.response.edit_message(embed=self.generar_embed(), view=self)
+    async def registrar_oferta(
+        self,
+        interaction,
+        jugador_id,
+        pokemon_id,
+        nombre,
+        shiny,
+        iv_pct,
+        naturaleza,
+        tamano_factor
+    ):
 
+        # No permitir usar el mismo Pokémon que está ofreciendo el otro jugador
+        if (
+            jugador_id == self.j1.id
+            and self.oferta_j2
+            and self.oferta_j2["id"] == pokemon_id
+        ):
+            return await interaction.response.send_message(
+                "❌ Ese Pokémon ya está siendo ofrecido en el otro lado del intercambio.",
+                ephemeral=True
+            )
+
+        if (
+            jugador_id == self.j2.id
+            and self.oferta_j1
+            and self.oferta_j1["id"] == pokemon_id
+        ):
+            return await interaction.response.send_message(
+                "❌ Ese Pokémon ya está siendo ofrecido en el otro lado del intercambio.",
+                ephemeral=True
+            )
+
+        # No permitir seleccionar nuevamente el mismo Pokémon propio
+        if (
+            jugador_id == self.j1.id
+            and self.oferta_j1
+            and self.oferta_j1["id"] == pokemon_id
+        ):
+            return await interaction.response.send_message(
+                "❌ Ya estás ofreciendo ese mismo Pokémon.",
+                ephemeral=True
+            )
+
+        if (
+            jugador_id == self.j2.id
+            and self.oferta_j2
+            and self.oferta_j2["id"] == pokemon_id
+        ):
+            return await interaction.response.send_message(
+                "❌ Ya estás ofreciendo ese mismo Pokémon.",
+                ephemeral=True
+            )
+
+        if jugador_id == self.j1.id:
+
+            self.oferta_j1 = {
+                "id": pokemon_id,
+                "nombre": nombre,
+                "shiny": shiny,
+                "iv_pct": iv_pct,
+                "naturaleza": naturaleza,
+                "tamano": tamano_factor,
+                "listo": False
+            }
+
+            if self.oferta_j2:
+                self.oferta_j2["listo"] = False
+
+        else:
+
+            self.oferta_j2 = {
+                "id": pokemon_id,
+                "nombre": nombre,
+                "shiny": shiny,
+                "iv_pct": iv_pct,
+                "naturaleza": naturaleza,
+                "tamano": tamano_factor,
+                "listo": False
+            }
+
+            if self.oferta_j1:
+                self.oferta_j1["listo"] = False
+
+        await interaction.response.edit_message(
+            embed=self.generar_embed(),
+            view=self
+        )
     @discord.ui.button(label="Hacer/Cambiar Oferta", style=discord.ButtonStyle.primary, custom_id="btn_oferta")
     async def btn_ofertar(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user.id not in [self.j1.id, self.j2.id]:
             return await interaction.response.send_message("❌ Esta mesa no es tuya.", ephemeral=True)
             
         # Desmarcamos el "listo" si deciden cambiar la oferta a la mitad
-        if interaction.user.id == self.j1.id and self.oferta_j1: self.oferta_j1['listo'] = False
-        if interaction.user.id == self.j2.id and self.oferta_j2: self.oferta_j2['listo'] = False
+        if self.oferta_j1:
+            self.oferta_j1["listo"] = False
+
+        if self.oferta_j2:
+            self.oferta_j2["listo"] = False
             
         await interaction.response.send_modal(ModalOferta(self, interaction.user.id))
 
-    @discord.ui.button(label="Confirmar Trato ✅", style=discord.ButtonStyle.success, custom_id="btn_confirmar")
-    async def btn_confirmar(self, interaction: discord.Interaction, button: discord.ui.Button):
+    @discord.ui.button(
+        label="Confirmar Trato ✅",
+        style=discord.ButtonStyle.success,
+        custom_id="btn_confirmar"
+    )
+    async def btn_confirmar(
+        self,
+        interaction: discord.Interaction,
+        button: discord.ui.Button
+    ):
+
         if interaction.user.id not in [self.j1.id, self.j2.id]:
-            return await interaction.response.send_message("❌ Esta mesa no es tuya.", ephemeral=True)
+            return await interaction.response.send_message(
+                "❌ Esta mesa no es tuya.",
+                ephemeral=True
+            )
 
+        # -------------------------
+        # VALIDACIÓN JUGADOR 1
+        # -------------------------
         if interaction.user.id == self.j1.id:
-            if not self.oferta_j1: return await interaction.response.send_message("Debes hacer una oferta primero.", ephemeral=True)
-            self.oferta_j1['listo'] = True
-            
-        if interaction.user.id == self.j2.id:
-            if not self.oferta_j2: return await interaction.response.send_message("Debes hacer una oferta primero.", ephemeral=True)
-            self.oferta_j2['listo'] = True
 
-        await interaction.response.edit_message(embed=self.generar_embed(), view=self)
+            if not self.oferta_j1:
+                return await interaction.response.send_message(
+                    "Debes hacer una oferta primero.",
+                    ephemeral=True
+                )
 
-        # --- FASE JIT: SI AMBOS ESTÁN LISTOS, EJECUTAMOS EL TRATO ---
-        if self.oferta_j1 and self.oferta_j1.get('listo') and self.oferta_j2 and self.oferta_j2.get('listo'):
-            for child in self.children: child.disabled = True # Desactivar botones
-            
-            # Validación Final (JIT) e Intercambio cruzado en DB
-            exito_j1 = await transferir_pokemon_seguro(self.j1.id, self.j2.id, self.oferta_j1['nombre'], 1 if self.oferta_j1['shiny'] else 0)
-            exito_j2 = await transferir_pokemon_seguro(self.j2.id, self.j1.id, self.oferta_j2['nombre'], 1 if self.oferta_j2['shiny'] else 0)
+            conn = database.get_connection()
+            cursor = conn.cursor()
+
+            try:
+                cursor.execute(
+                    """
+                    SELECT id
+                    FROM capturas
+                    WHERE id = %s
+                    AND user_id = %s
+                    """,
+                    (
+                        self.oferta_j1["id"],
+                        str(self.j1.id)
+                    )
+                )
+
+                if not cursor.fetchone():
+                    return await interaction.response.send_message(
+                        "❌ Ya no posees ese Pokémon.",
+                        ephemeral=True
+                    )
+
+            finally:
+                cursor.close()
+                conn.close()
+
+            self.oferta_j1["listo"] = True
+
+        # -------------------------
+        # VALIDACIÓN JUGADOR 2
+        # -------------------------
+        elif interaction.user.id == self.j2.id:
+
+            if not self.oferta_j2:
+                return await interaction.response.send_message(
+                    "Debes hacer una oferta primero.",
+                    ephemeral=True
+                )
+
+            conn = database.get_connection()
+            cursor = conn.cursor()
+
+            try:
+                cursor.execute(
+                    """
+                    SELECT id
+                    FROM capturas
+                    WHERE id = %s
+                    AND user_id = %s
+                    """,
+                    (
+                        self.oferta_j2["id"],
+                        str(self.j2.id)
+                    )
+                )
+
+                if not cursor.fetchone():
+                    return await interaction.response.send_message(
+                        "❌ Ya no posees ese Pokémon.",
+                        ephemeral=True
+                    )
+
+            finally:
+                cursor.close()
+                conn.close()
+
+            self.oferta_j2["listo"] = True
+
+        await interaction.response.edit_message(
+            embed=self.generar_embed(),
+            view=self
+        )
+
+        # -------------------------
+        # EJECUTAR INTERCAMBIO
+        # -------------------------
+        if (
+            self.oferta_j1
+            and self.oferta_j1.get("listo")
+            and self.oferta_j2
+            and self.oferta_j2.get("listo")
+        ):
+
+            for child in self.children:
+                child.disabled = True
+
+            exito = await intercambio_atomico(
+                self.j1.id,
+                self.j2.id,
+                self.oferta_j1["id"],
+                self.oferta_j2["id"]
+            )
 
             usuarios_ocupados.discard(self.j1.id)
             usuarios_ocupados.discard(self.j2.id)
 
-            if exito_j1 and exito_j2:
-                embed_final = discord.Embed(title="🎉 ¡Intercambio Exitoso!", description=f"{self.j1.mention} y {self.j2.mention} han intercambiado Pokémon.", color=discord.Color.green())
-                await interaction.message.edit(embed=embed_final, view=self)
-            else:
-                # Si falló, es porque alguien liberó al Pokémon en el último segundo (trampa)
-                embed_fallo = discord.Embed(title="❌ Error Crítico", description="Uno de los Pokémon desapareció del inventario. El trato se ha cancelado por seguridad.", color=discord.Color.red())
-                await interaction.message.edit(embed=embed_fallo, view=self)
-            self.stop()
+            if exito:
 
+                embed_final = discord.Embed(
+                    title="🎉 ¡Intercambio Exitoso!",
+                    description=(
+                        f"**{self.j1.display_name}** entregó:\n"
+                        f"• {self.oferta_j1['nombre'].capitalize()} "
+                        f"(ID: {self.oferta_j1['id']})\n\n"
+                        f"**{self.j2.display_name}** entregó:\n"
+                        f"• {self.oferta_j2['nombre'].capitalize()} "
+                        f"(ID: {self.oferta_j2['id']})"
+                    ),
+                    color=discord.Color.green()
+                )
+
+            else:
+
+                embed_final = discord.Embed(
+                    title="❌ Intercambio Cancelado",
+                    description=(
+                        "Uno de los Pokémon ya no estaba disponible "
+                        "o ocurrió un error durante el intercambio."
+                    ),
+                    color=discord.Color.red()
+                )
+
+            await interaction.message.edit(
+                embed=embed_final,
+                view=self
+            )
+
+            # Limpiar memoria
+            self.oferta_j1 = None
+            self.oferta_j2 = None
+
+            self.stop()
     @discord.ui.button(label="Cancelar ❌", style=discord.ButtonStyle.danger, custom_id="btn_cancelar")
     async def btn_cancelar(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user.id not in [self.j1.id, self.j2.id]:
             return await interaction.response.send_message("❌ Esta mesa no es tuya.", ephemeral=True)
-            
+                
         usuarios_ocupados.discard(self.j1.id)
         usuarios_ocupados.discard(self.j2.id)
-        
-        for child in self.children: child.disabled = True
+
+            # Limpiar memoria
+        self.oferta_j1 = None
+        self.oferta_j2 = None
+
+        for child in self.children:
+                child.disabled = True
+
         embed = self.message.embeds[0]
         embed.color = discord.Color.red()
         embed.title = "🚫 Intercambio cancelado"
-        await interaction.response.edit_message(embed=embed, view=self)
+
+        await interaction.response.edit_message(
+            embed=embed,
+             view=self
+        )
+
         self.stop()
+
 
 # --- 5. COMANDO PRINCIPAL A ENLAZAR EN MAIN ---
 def iniciar_modulo_intercambio(bot):
