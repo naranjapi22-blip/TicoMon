@@ -1,6 +1,17 @@
 
 import database
 
+TIER_COSTS = {
+    "basic": 10,
+    "standard": 20,
+    "advanced": 40,
+    "exceptional": 100
+}
+
+def get_evolution_cost(tier):
+    return TIER_COSTS.get(tier, 20)
+
+
 def get_evolutions(pokemon_nombre):
 
     conn = database.get_connection()

@@ -1390,9 +1390,7 @@ async def caramelos(ctx):
         cursor.close()
         conn.close()
 
-from evolutions import get_evolutions
-
-
+from evolutions import ( get_evolutions, get_evolution_cost )
 @bot.command(name="evolucionar")
 @canal_restringido()
 async def evolucionar(ctx, id_pokemon: int):
@@ -1439,12 +1437,17 @@ async def evolucionar(ctx, id_pokemon: int):
             ""
         ]
 
+
         for i, (destino, metodo, tier) in enumerate(evoluciones, start=1):
 
+            costo = get_evolution_cost(tier)
+
             mensaje.append(
-                f"{i}️⃣ **{destino.capitalize()}** "
-                f"({metodo} | {tier})"
+                f"{i}️⃣ **{destino.capitalize()}**\n"
+                f"💰 {costo} caramelos"
             )
+
+
 
         await ctx.send(
             "\n".join(mensaje)
