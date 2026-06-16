@@ -106,12 +106,16 @@ class SafariManager:
 
             self.eventos_safari[posicion] = "guarida"
 
-        self.mapa_eventos = dict(
-            zip(
+        self.mapa_eventos = {
+            encuentro: {
+                "evento": evento,
+                "activo": None
+            }
+            for encuentro, evento in zip(
                 sorted(self.encuentros_evento),
                 self.eventos_safari
             )
-        )
+        }
 
         print(
             f"EVENTOS SAFARI: "
@@ -230,9 +234,15 @@ class SafariManager:
                 f"{self.encuentro_numero}"
             )
 
-            evento = self.mapa_eventos[
-                self.encuentro_numero
-            ]
+            if self.encuentro_numero in self.encuentros_evento:
+
+                evento = self.mapa_eventos[
+                    self.encuentro_numero
+                ]
+
+                legendario_evento = (
+                    random.random() <= 0.02
+                )
 
             legendario_evento = (
                 random.random() <= 0.02
