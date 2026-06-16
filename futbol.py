@@ -2,6 +2,7 @@ from database import get_connection
 import database
 CACHE_RATING = {}
 CACHE_CAPTURAS = {}
+CACHE_EQUIPOS = {}
 from futbol_stats import (
     calcular_stats_futbol,
     calcular_rating_posiciones
@@ -50,41 +51,25 @@ def crear_equipo_futbol(usuario_id):
         conn.commit()
         conn.close()
 
-        print("✅ Equipo creado")
+
 
     except Exception as e:
         print(f"❌ Error: {e}")
-from database import get_connection
 
 
-def obtener_equipo_futbol(usuario_id):
-    try:
-        conn = get_connection()
-        cursor = conn.cursor()
 
-        cursor.execute("""
-            SELECT *
-            FROM equipos_futbol
-            WHERE usuario_id = %s
-        """, (usuario_id,))
 
-        equipo = cursor.fetchone()
-
-        conn.close()
-
-        return equipo
-
-    except Exception as e:
-        print(f"❌ Error: {e}")
-        return None
 def tiene_equipo_futbol(usuario_id):
     equipo = obtener_equipo_futbol(usuario_id)
     return equipo is not None
 def actualizar_posicion_futbol(usuario_id, posicion, pokemon_id):
-    try:
 
-        if posicion not in POSICIONES_FUTBOL:
-            raise ValueError(f"Posición inválida: {posicion}")
+    if posicion not in POSICIONES_FUTBOL:
+        raise ValueError(f"Posición inválida: {posicion}")
+
+    conn = None
+
+    try:
 
         conn = get_connection()
         cursor = conn.cursor()
@@ -95,16 +80,30 @@ def actualizar_posicion_futbol(usuario_id, posicion, pokemon_id):
             WHERE usuario_id = %s
         """
 
-        cursor.execute(query, (pokemon_id, usuario_id))
+        cursor.execute(
+            query,
+            (pokemon_id, usuario_id)
+        )
 
         conn.commit()
-        conn.close()
 
-        print("✅ Posición actualizada")
+        CACHE_EQUIPOS.pop(usuario_id, None)
+
+        return True
 
     except Exception as e:
+
         print(f"❌ Error: {e}")
+        return False
+
+    finally:
+
+        if conn:
+            conn.close()
 def quitar_posicion_futbol(usuario_id, posicion):
+
+    conn = None
+
     try:
 
         if posicion not in POSICIONES_FUTBOL:
@@ -119,15 +118,28 @@ def quitar_posicion_futbol(usuario_id, posicion):
             WHERE usuario_id = %s
         """
 
-        cursor.execute(query, (usuario_id,))
+        cursor.execute(
+            query,
+            (usuario_id,)
+        )
 
         conn.commit()
-        conn.close()
+
+        CACHE_EQUIPOS.pop(
+            usuario_id,
+            None
+        )
 
         print("✅ Posición eliminada")
 
     except Exception as e:
+
         print(f"❌ Error: {e}")
+
+    finally:
+
+        if conn:
+            conn.close()
 def pokemon_ya_en_equipo(usuario_id, pokemon_id):
 
     equipo = obtener_equipo_futbol(usuario_id)
@@ -211,30 +223,35 @@ def nombre_captura(captura_id):
 
     return nombre.capitalize()
 def captura_pertenece_usuario(usuario_id, captura_id):
+
+    conn = None
+
     try:
 
         conn = get_connection()
         cursor = conn.cursor()
 
         cursor.execute("""
-            SELECT id,
-                pokemon_id,
-                pokemon_nombre,
-                es_shiny
+            SELECT 1
             FROM capturas
             WHERE id = %s
-        """, (captura_id,))
+            AND user_id = %s
+        """, (
+            captura_id,
+            str(usuario_id)
+        ))
 
-
-        resultado = cursor.fetchone()
-
-        conn.close()
-
-        return resultado is not None
+        return cursor.fetchone() is not None
 
     except Exception as e:
+
         print(f"❌ Error: {e}")
         return False
+
+    finally:
+
+        if conn:
+            conn.close()
 def colocar_pokemon_equipo(usuario_id, captura_id, posicion):
 
     if not tiene_equipo_futbol(usuario_id):
@@ -254,13 +271,14 @@ def colocar_pokemon_equipo(usuario_id, captura_id, posicion):
     if pokemon_ya_en_equipo(usuario_id, captura_id):
         return False, "Ese Pokémon ya está en tu alineación."
 
-    actualizar_posicion_futbol(
+    if not actualizar_posicion_futbol(
         usuario_id,
         posicion,
         captura_id
-    )
+    ):
+        return False, "No se pudo actualizar el equipo."
 
-    return True, "Pokémon agregado correctamente."
+    return True, "Pokémon colocado correctamente."
 def obtener_posicion_pokemon(usuario_id, captura_id):
 
     equipo = obtener_equipo_futbol(usuario_id)
@@ -268,25 +286,23 @@ def obtener_posicion_pokemon(usuario_id, captura_id):
     if not equipo:
         return None
 
-    mapa = {
+    posiciones = {
         "portero": equipo[1],
-
         "defensa_1": equipo[2],
         "defensa_2": equipo[3],
         "defensa_3": equipo[4],
         "defensa_4": equipo[5],
-
         "medio_1": equipo[6],
         "medio_2": equipo[7],
         "medio_3": equipo[8],
         "medio_4": equipo[9],
-
         "delantero_1": equipo[10],
         "delantero_2": equipo[11]
     }
 
-    for posicion, pokemon in mapa.items():
-        if pokemon == captura_id:
+    for posicion, pokemon_id in posiciones.items():
+
+        if pokemon_id == captura_id:
             return posicion
 
     return None
@@ -303,10 +319,30 @@ def mover_pokemon_equipo(usuario_id, captura_id, nueva_posicion):
     if not posicion_actual:
         return False, "Ese Pokémon no está en tu equipo."
 
-    quitar_posicion_futbol(
+    pokemon_destino = obtener_pokemon_posicion(
         usuario_id,
-        posicion_actual
+        nueva_posicion
     )
+
+    if pokemon_destino == captura_id:
+        return True, "Ese Pokémon ya está en esa posición."
+
+    # Intercambio
+    if pokemon_destino:
+
+        actualizar_posicion_futbol(
+            usuario_id,
+            posicion_actual,
+            pokemon_destino
+        )
+
+    # Movimiento a espacio vacío
+    else:
+
+        quitar_posicion_futbol(
+            usuario_id,
+            posicion_actual
+        )
 
     actualizar_posicion_futbol(
         usuario_id,
@@ -466,33 +502,51 @@ MAPA_FORMAS = {
     "giratina origin": "giratina",
     "shaymin sky": "shaymin"
 }
+import time
+
+from database import obtener_pokemon_local_nombre
+
+FORMAS_BASE = {
+    "darmanitan-standard": "darmanitan",
+    "deoxys-normal": "deoxys",
+    "frillish-male": "frillish",
+    "gourgeist-average": "gourgeist",
+    "indeedee-male": "indeedee",
+    "jellicent-male": "jellicent",
+    "lycanroc-midday": "lycanroc",
+    "mimikyu-disguised": "mimikyu",
+    "minior-red-meteor": "minior",
+    "morpeko-full-belly": "morpeko",
+    "oricorio-baile": "oricorio",
+    "pumpkaboo-average": "pumpkaboo",
+    "pyroar-male": "pyroar",
+    "shaymin-land": "shaymin",
+    "squawkabilly-green-plumage": "squawkabilly",
+    "tatsugiri-curly": "tatsugiri",
+    "tatsugiri-droopy-mega": "tatsugiri",
+    "toxtricity-amped": "toxtricity",
+    "urshifu-rapid-strike": "urshifu",
+    "urshifu-single-strike": "urshifu",
+    "wormadam-plant": "wormadam",
+    "zygarde-50": "zygarde"
+}
 def obtener_datos_pokemon(nombre):
 
-    nombre = MAPA_FORMAS.get(nombre, nombre)
+    nombre = FORMAS_BASE.get(nombre, nombre)
 
-    conn = get_connection()
-    cursor = conn.cursor()
+    pokemon = obtener_pokemon_local_nombre(nombre)
 
-    cursor.execute("""
-        SELECT hp, attack, defense,
-               special_attack, special_defense, speed
-        FROM pokemon_data
-        WHERE LOWER(nombre) = %s
-    """, (nombre,))
-
-    row = cursor.fetchone()
-    conn.close()
-
-    if not row:
+    if not pokemon:
+        print(f"❌ No existe en cache: {nombre}")
         return None
 
     return {
-        "hp": row[0],
-        "attack": row[1],
-        "defense": row[2],
-        "spa": row[3],
-        "spd": row[4],
-        "speed": row[5]
+        "hp": pokemon["hp"],
+        "attack": pokemon["attack"],
+        "defense": pokemon["defense"],
+        "spa": pokemon["special_attack"],
+        "spd": pokemon["special_defense"],
+        "speed": pokemon["speed"]
     }
 def contar_jugadores_equipo(usuario_id):
 
@@ -511,8 +565,7 @@ def contar_jugadores_equipo(usuario_id):
 
 
 def mostrar_fuerza_equipo(usuario_id):
-    print("\n===== DEBUG EQUIPO =====")
-    print(equipo)
+
     fuerza = calcular_fuerza_equipo(usuario_id)
 
     if not fuerza:
@@ -529,6 +582,32 @@ def mostrar_fuerza_equipo(usuario_id):
         f"⚔ Ataque: {fuerza['DEL']}\n\n"
         f"⭐ Global: {fuerza['GLOBAL']}"
     )
+def obtener_equipo_futbol(usuario_id):
+
+    if usuario_id in CACHE_EQUIPOS:
+        return CACHE_EQUIPOS[usuario_id]
+
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT *
+            FROM equipos_futbol
+            WHERE usuario_id = %s
+        """, (usuario_id,))
+
+        equipo = cursor.fetchone()
+
+        conn.close()
+
+        CACHE_EQUIPOS[usuario_id] = equipo
+
+        return equipo
+
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        return None
 def obtener_jugadores_equipo(usuario_id):
 
     equipo = obtener_equipo_futbol(usuario_id)
@@ -565,4 +644,35 @@ def nombre_pokemon_captura(captura_id):
     if not captura:
         return "Desconocido"
 
-    return captura[1].capitalize()
+    nombre = captura[1].lower().strip()
+
+    base = FORMAS_BASE.get(nombre, nombre)
+
+    return base.split("-")[0].capitalize()
+def obtener_pokemon_posicion(usuario_id, posicion):
+
+    equipo = obtener_equipo_futbol(usuario_id)
+
+    if not equipo:
+        return None
+
+    mapa = {
+        "portero": equipo[1],
+        "defensa_1": equipo[2],
+        "defensa_2": equipo[3],
+        "defensa_3": equipo[4],
+        "defensa_4": equipo[5],
+        "medio_1": equipo[6],
+        "medio_2": equipo[7],
+        "medio_3": equipo[8],
+        "medio_4": equipo[9],
+        "delantero_1": equipo[10],
+        "delantero_2": equipo[11]
+    }
+
+    return mapa.get(posicion)
+def limpiar_nombre(nombre):
+
+    nombre = nombre.lower()
+
+    return FORMAS_BASE.get(nombre, nombre).capitalize()

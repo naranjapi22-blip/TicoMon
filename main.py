@@ -5,6 +5,7 @@ import asyncpg
 from datetime import datetime, timezone
 import discord
 import aiohttp
+from discord import Member
 import psycopg2
 from discord.ext import commands
 from dotenv import load_dotenv
@@ -40,6 +41,11 @@ from database import guardar_captura
 from regiones import obtener_siguiente_region
 # Variables globales
 from rarezas import pokemon_por_rareza
+import asyncio
+from simulador_futbol import (
+    simular_partido_usuarios,
+    formatear_evento
+)
 database.init_db()
 # 1. CONFIGURACIÓN
 load_dotenv()
@@ -1146,5 +1152,26 @@ async def stress(ctx, cantidad: int = 100):
         f"✅ {cantidad:,} spawns simulados en {tiempo:.2f}s\n"
         f"❌ Errores: {errores}"
     )
+@bot.command()
+@canal_restringido()
+async def partido(ctx, rival: discord.Member):
 
+    usuario_a = ctx.author.id
+    usuario_b = rival.id
+
+    resultado = simular_partido_usuarios(usuario_a, usuario_b)
+
+    await ctx.send(f"⚽ {ctx.author.name} vs {rival.name}")
+
+    for evento in resultado["eventos"]:
+        await asyncio.sleep(2)
+        await ctx.send(formatear_evento(evento))
+
+    await ctx.send(
+        f"""
+🏁 FINAL
+
+{ctx.author.name} {resultado['goles_a']} - {resultado['goles_b']} {rival.name}
+"""
+    )
 bot.run(TOKEN)
