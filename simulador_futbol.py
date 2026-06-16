@@ -490,17 +490,17 @@ def formatear_evento(evento):
     if evento["tipo"] == "gol":
         return f"⚽ {evento['minuto']}' {evento['jugador']} ({evento['equipo']})"
 
-    if evento["tipo"] == "amarilla":
+    elif evento["tipo"] == "amarilla":
         return f"🟨 {evento['minuto']}' {evento['jugador']} recibe amarilla."
 
-    if evento["tipo"] == "roja":
+    elif evento["tipo"] == "roja":
         return f"🟥 {evento['minuto']}' {evento['jugador']} es expulsado."
 
-    if evento["tipo"] == "falta":
-        return f"🦶 {evento['minuto']}' {evento['jugador']} comete falta."
+    elif evento["tipo"] == "falta":
+        return f"🦶 {evento['minuto']}' {evento['jugador']} comete una falta."
 
-    if evento["tipo"] == "poste":
+    elif evento["tipo"] == "poste":
         return f"🥅 {evento['minuto']}' {evento['jugador']} estrella el balón en el poste."
 
-    if evento["tipo"] == "parada":
+    elif evento["tipo"] == "parada":
         return f"🧤 {evento['minuto']}' Gran parada de {evento['jugador']}."
