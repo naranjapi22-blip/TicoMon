@@ -1160,8 +1160,7 @@ async def partido(ctx, rival_id: int):
 
     try:
         rival_user = await bot.fetch_user(rival_id)
-
-    except Exception:
+    except:
         return await ctx.send("❌ Usuario no encontrado")
 
     usuario_b = rival_user.id
@@ -1171,59 +1170,58 @@ async def partido(ctx, rival_id: int):
     if "error" in resultado:
         return await ctx.send("❌ Error al generar el partido")
 
-    mensaje = await ctx.send(
-        f"⚽ {ctx.author.name} vs {rival_user.name}\n\n⏳ Iniciando partido..."
+    # 🎯 EMBED BASE (tipo FIFA / match center)
+    embed = discord.Embed(
+        title="⚽ Partido en vivo",
+        description=f"{ctx.author.name} vs {rival_user.name}",
+        color=0x00ff99
     )
 
-    # 🔥 listas separadas por equipo
-    linea_a = []
-    linea_b = []
+    # 🔴 MARCADOR
+    marcador = f"{ctx.author.name} {resultado['goles_a']} - {resultado['goles_b']} {rival_user.name}"
+
+    embed.add_field(
+        name="🔴 Marcador",
+        value=marcador,
+        inline=False
+    )
+
+    # 📺 TIMELINE
+    timeline_msg = await ctx.send(embed=embed)
+
+    timeline = ""
 
     for evento in resultado["eventos"]:
 
         await asyncio.sleep(2)
 
-        linea = formatear_evento(evento)
+        timeline += f"{evento['minuto']}' {formatear_evento(evento)}\n"
 
-        if evento["equipo"] == "A":
-            linea_a.append(linea)
-        else:
-            linea_b.append(linea)
-
-        # construir timeline tipo 2 columnas
-        max_len = max(len(linea_a), len(linea_b))
-
-        timeline = ""
-
-        for i in range(max_len):
-
-            izquierda = linea_a[i] if i < len(linea_a) else ""
-            derecha = linea_b[i] if i < len(linea_b) else ""
-
-            timeline += f"{izquierda:<40} {derecha}\n"
-
-        await mensaje.edit(
-            content=
-            f"⚽ {ctx.author.name} vs {rival_user.name}\n\n"
-            f"{timeline}\n"
-            f"🏁 En juego..."
+        embed.set_field_at(
+            0,
+            name="🔴 Marcador",
+            value=marcador,
+            inline=False
         )
 
+        embed.add_field(
+            name="📺 Eventos del partido",
+            value=timeline[-1024:],  # evita límite de Discord
+            inline=False
+        )
+
+        await timeline_msg.edit(embed=embed)
+
     # 🏁 FINAL
-    await mensaje.edit(
-        content=
-        f"""🏁 FINAL DEL PARTIDO
-
-{ctx.author.name} {resultado['goles_a']} - {resultado['goles_b']} {rival_user.name}
-
-📊 Estadísticas
-
-Posesión: {resultado['posesion_a']}% - {resultado['posesion_b']}%
-Ocasiones: {resultado['ocasiones_a']} - {resultado['ocasiones_b']}
-
-────────────────────────
-
-{timeline}
-"""
+    embed.add_field(
+        name="🏁 FINAL DEL PARTIDO",
+        value=(
+            f"{marcador}\n\n"
+            f"📊 Posesión: {resultado['posesion_a']}% - {resultado['posesion_b']}%\n"
+            f"📊 Ocasiones: {resultado['ocasiones_a']} - {resultado['ocasiones_b']}"
+        ),
+        inline=False
     )
+
+    await timeline_msg.edit(embed=embed)
 bot.run(TOKEN)
