@@ -1304,19 +1304,26 @@ async def team(ctx):
 
     texto = "⚽ TU EQUIPO\n\n"
 
-    for pos in [
+    posiciones = [
         "portero",
         "defensa_1", "defensa_2", "defensa_3", "defensa_4",
         "medio_1", "medio_2", "medio_3", "medio_4",
         "delantero_1", "delantero_2"
-    ]:
+    ]
+
+    for pos in posiciones:
 
         pokemon = data.get(pos)
 
-        if pokemon:
+        if pokemon is None:
+            texto += f"⚪ {pos}: vacío\n"
+            continue
+
+        try:
             nombre = nombre_pokemon_captura(pokemon)
-            texto += f"{pos}: {nombre}\n"
-        else:
-            texto += f"{pos}: vacío\n"
+        except:
+            nombre = "Desconocido"
+
+        texto += f"⚽ {pos}: {nombre}\n"
 
     await ctx.send(texto)
