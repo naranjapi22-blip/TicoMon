@@ -1100,6 +1100,10 @@ from database import get_connection
 @canal_restringido()
 async def safari(ctx):
 
+    # ==========================
+    # VALIDAR COOLDOWN SERVIDOR
+    # ==========================
+
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -1125,7 +1129,9 @@ async def safari(ctx):
 
                 restante = disponible_en - ahora
 
-                total_segundos = int(restante.total_seconds())
+                total_segundos = int(
+                    restante.total_seconds()
+                )
 
                 horas = total_segundos // 3600
                 minutos = (total_segundos % 3600) // 60
@@ -1135,19 +1141,48 @@ async def safari(ctx):
                     f"⏳ Disponible nuevamente en **{horas}h {minutos}m**."
                 )
 
+        # ==========================
+        # VALIDAR ÚLTIMO ORGANIZADOR
+        # ==========================
+
+        cursor.execute("""
+            SELECT user_id
+            FROM safari_usuarios
+            WHERE guild_id = %s
+            ORDER BY ultimo_safari DESC
+            LIMIT 1
+        """, (ctx.guild.id,))
+
+        ultimo = cursor.fetchone()
+
+        if ultimo and ultimo[0] == ctx.author.id:
+
+            return await ctx.send(
+                "🚙 Otro entrenador debe organizar el próximo Safari."
+            )
+
     finally:
 
         cursor.close()
         conn.close()
+
+    # ==========================
+    # VALIDAR SAFARI ACTIVO
+    # ==========================
 
     safari = obtener_safari(
         ctx.guild.id
     )
 
     if safari and safari.activo:
+
         return await ctx.send(
             "🚙 Ya hay un Safari activo."
         )
+
+    # ==========================
+    # CREAR SAFARI
+    # ==========================
 
     safari = crear_safari(
         ctx.guild.id,
@@ -1182,6 +1217,10 @@ async def safari(ctx):
 
     view.message = mensaje
 
+    # ==========================
+    # ESPERA INSCRIPCIONES
+    # ==========================
+
     await asyncio.sleep(60)
 
     participantes = safari.cantidad_participantes()
@@ -1202,7 +1241,7 @@ async def safari(ctx):
         return
 
     # ==========================
-    # GUARDAR COOLDOWN AQUÍ
+    # GUARDAR COOLDOWN
     # ==========================
 
     conn = get_connection()
@@ -1219,12 +1258,28 @@ async def safari(ctx):
             SET ultimo_safari = NOW()
         """, (ctx.guild.id,))
 
+        cursor.execute("""
+            INSERT INTO safari_usuarios
+            (guild_id, user_id, ultimo_safari)
+            VALUES (%s, %s, NOW())
+            ON CONFLICT (guild_id, user_id)
+            DO UPDATE
+            SET ultimo_safari = NOW()
+        """, (
+            ctx.guild.id,
+            ctx.author.id
+        ))
+
         conn.commit()
 
     finally:
 
         cursor.close()
         conn.close()
+
+    # ==========================
+    # INICIAR SAFARI
+    # ==========================
 
     await ctx.send(
         f"🚙 El Safari ha comenzado.\n\n"
