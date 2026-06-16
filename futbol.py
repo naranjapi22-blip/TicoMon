@@ -615,7 +615,7 @@ def obtener_jugadores_equipo(user_id):
 
     cursor.execute("""
         SELECT slot, captura_id
-        FROM equipo
+        FROM equipos_futbol
         WHERE user_id = %s
     """, (user_id,))
 
@@ -683,7 +683,7 @@ def asignar_pokemon_a_equipo(user_id, captura_id, slot):
     cursor = conn.cursor()
 
     query = """
-    INSERT INTO equipo (user_id, slot, captura_id)
+    INSERT INTO equipos_futbol (user_id, slot, captura_id)
     VALUES (%s, %s, %s)
     ON CONFLICT (user_id, slot)
     DO UPDATE SET captura_id = EXCLUDED.captura_id
@@ -694,5 +694,3 @@ def asignar_pokemon_a_equipo(user_id, captura_id, slot):
     conn.commit()
     cursor.close()
     conn.close()
-
-    return True
