@@ -128,10 +128,11 @@ def remove_candy(user_id, candy_type, amount):
 
         cursor.execute(
             """
-            UPDATE user_candies
-            SET amount = amount - %s
-            WHERE user_id = %s
-            AND candy_type = %s
+        UPDATE user_candies
+        SET amount = amount - %s
+        WHERE user_id = %s
+        AND candy_type = %s
+        AND amount >= %s
             """,
             (
                 amount,
