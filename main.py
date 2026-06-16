@@ -1329,4 +1329,12 @@ async def team(ctx):
         texto += f"⚽ {pos}: {nombre}\n"
 
     await ctx.send(texto)
+@bot.command(name="crearteam")
+async def crearteam(ctx):
+
+    crear_equipo_futbol(ctx.author.id)
+
+    await ctx.send(
+        f"⚽ {ctx.author.mention}, tu equipo de fútbol ha sido creado."
+    )
 bot.run(TOKEN)
