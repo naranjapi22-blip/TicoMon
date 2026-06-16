@@ -1390,4 +1390,68 @@ async def caramelos(ctx):
         cursor.close()
         conn.close()
 
+from evolutions import get_evolutions
+
+@commands.command(name="evolucionar")
+async def evolucionar(self, ctx, id_pokemon: int):
+
+    conn = database.get_connection()
+    cursor = conn.cursor()
+
+    try:
+
+        cursor.execute("""
+            SELECT pokemon_nombre
+            FROM capturas
+            WHERE id = %s
+            AND user_id = %s
+        """, (
+            str(id_pokemon),
+            str(ctx.author.id)
+        ))
+
+        resultado = cursor.fetchone()
+
+        if not resultado:
+
+            await ctx.send(
+                "❌ No tienes ningún Pokémon con ese ID."
+            )
+            return
+
+        pokemon_nombre = resultado[0]
+
+        evoluciones = get_evolutions(
+            pokemon_nombre
+        )
+
+        if not evoluciones:
+
+            await ctx.send(
+                f"❌ {pokemon_nombre.capitalize()} no puede evolucionar."
+            )
+            return
+
+        mensaje = [
+            f"✨ **{pokemon_nombre.capitalize()} puede evolucionar a:**",
+            ""
+        ]
+
+        for i, (destino, metodo, tier) in enumerate(evoluciones, start=1):
+
+            mensaje.append(
+                f"{i}️⃣ **{destino.capitalize()}** "
+                f"({metodo} | {tier})"
+            )
+
+        await ctx.send(
+            "\n".join(mensaje)
+        )
+
+    finally:
+
+        cursor.close()
+        conn.close()
+
+
 bot.run(TOKEN)
