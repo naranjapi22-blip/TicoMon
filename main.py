@@ -1294,7 +1294,7 @@ async def addequipo(ctx, captura_id: int, posicion: str):
 bot.run(TOKEN)
 @bot.command()
 @canal_restringido()
-async def equipo(ctx):
+async def team(ctx):
 
     data = obtener_equipo(ctx.author.id)
 
