@@ -1300,4 +1300,21 @@ async def addequipo(ctx, captura_id: int, posicion: int):
         return await ctx.send("❌ No se pudo actualizar el equipo")
 
     await ctx.send(f"✅ Pokémon añadido a la posición {posicion}")
+@bot.command()
+async def addequipo(ctx, captura_id: int, posicion: str):
+
+    user_id = ctx.author.id
+
+    # 1. validar que el Pokémon es del usuario
+    if not captura_pertenece_usuario(user_id, captura_id):
+        return await ctx.send("❌ Ese Pokémon no es tuyo")
+
+    # 2. validar posición
+    if posicion not in POSICIONES_FUTBOL:
+        return await ctx.send("❌ Posición inválida")
+
+    # 3. guardar en equipo
+    asignar_pokemon_a_equipo(user_id, captura_id, posicion)
+
+    await ctx.send(f"✅ Pokémon añadido a {posicion}")
 bot.run(TOKEN)

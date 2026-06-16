@@ -690,3 +690,18 @@ def ordenar_equipo_por_formacion(equipo):
         for pos in orden
         if pos in equipo
     }
+def asignar_pokemon_a_equipo(user_id, captura_id, posicion):
+    """
+    Guarda un Pokémon en una posición del equipo del usuario
+    """
+
+    query = """
+    UPDATE equipo_futbol
+    SET {}
+    WHERE user_id = %s
+    """.format(posicion)
+
+    cursor.execute(query, (captura_id, user_id))
+    conexion.commit()
+
+    return True
