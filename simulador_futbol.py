@@ -153,7 +153,9 @@ def elegir_goleador(delanteros, medios):
     return random.choice(candidatos)
 
 def simular_partido_usuarios(usuario_a, usuario_b):
-    
+
+    import random
+
     fuerza_a = calcular_fuerza_equipo(usuario_a)
     fuerza_b = calcular_fuerza_equipo(usuario_b)
 
@@ -162,45 +164,53 @@ def simular_partido_usuarios(usuario_a, usuario_b):
 
     jugadores_a = obtener_jugadores_equipo(usuario_a)
     jugadores_b = obtener_jugadores_equipo(usuario_b)
-# 🔥 convertir a dict si viene de SQL
+
+    # 🔥 convertir estructura
     jugadores_a = equipo_a_dict(jugadores_a)
     jugadores_b = equipo_a_dict(jugadores_b)
 
-    # 🔥 ordenar formación 4-4-2
-    jugadores_a = ordenar_equipo_por_formacion(jugadores_a)
-    jugadores_b = ordenar_equipo_por_formacion(jugadores_b)
-    resultado = simular_partido(
-        fuerza_a,
-        fuerza_b
-    )
+    # 🔥 asegurar que no haya None
+    jugadores_a = asegurar_equipo(jugadores_a)
+    jugadores_b = asegurar_equipo(jugadores_b)
+
+    resultado = simular_partido(fuerza_a, fuerza_b)
 
     eventos = []
 
-    # GOLES
+    # =========================
+    # 🔥 FUNCIÓN SEGURA PLAYER
+    # =========================
+    def safe_player(equipo):
+        valores = [v for v in equipo.values() if v]
+        if not valores:
+            return None
+        return random.choice(valores)
+
+    def safe_nombre(captura):
+        if not captura:
+            return "Desconocido"
+        return nombre_pokemon_captura(captura)
+
+    # =========================
+    # ⚽ GOLES
+    # =========================
     for minuto, equipo in resultado["eventos"]:
 
         if equipo == "A":
-
-            goleador = elegir_goleador(
-                jugadores_a["delanteros"],
-                jugadores_a["medios"]
-            )
-
+            goleador = safe_player(jugadores_a)
         else:
-
-            goleador = elegir_goleador(
-                jugadores_b["delanteros"],
-                jugadores_b["medios"]
-            )
+            goleador = safe_player(jugadores_b)
 
         eventos.append({
             "tipo": "gol",
             "minuto": minuto,
             "equipo": equipo,
-            "jugador": nombre_pokemon_captura(goleador)
+            "jugador": safe_nombre(goleador)
         })
 
-    # TARJETAS
+    # =========================
+    # 🟨 AMARILLAS
+    # =========================
     cantidad_amarillas = random.randint(0, 3)
 
     for _ in range(cantidad_amarillas):
@@ -208,12 +218,12 @@ def simular_partido_usuarios(usuario_a, usuario_b):
         equipo = random.choice(["A", "B"])
 
         if equipo == "A":
-            captura = elegir_jugador_evento(jugadores_a)
+            captura = safe_player(jugadores_a)
         else:
-            captura = elegir_jugador_evento(jugadores_b)
+            captura = safe_player(jugadores_b)
 
-        jugador = nombre_pokemon_captura(captura)
         minuto = minuto_libre(eventos)
+        jugador = safe_nombre(captura)
 
         if not evitar_repeticion(eventos, jugador, minuto):
 
@@ -223,6 +233,10 @@ def simular_partido_usuarios(usuario_a, usuario_b):
                 "equipo": equipo,
                 "jugador": jugador
             })
+
+    # =========================
+    # 🔴 ROJAS
+    # =========================
     cantidad_rojas = random.randint(0, 1)
 
     for _ in range(cantidad_rojas):
@@ -233,18 +247,23 @@ def simular_partido_usuarios(usuario_a, usuario_b):
         equipo = random.choice(["A", "B"])
 
         if equipo == "A":
-            captura = elegir_jugador_evento(jugadores_a)
+            captura = safe_player(jugadores_a)
         else:
-            captura = elegir_jugador_evento(jugadores_b)
+            captura = safe_player(jugadores_b)
+
+        minuto = minuto_libre(eventos)
+        jugador = safe_nombre(captura)
 
         eventos.append({
             "tipo": "roja",
-            "minuto": minuto_libre(eventos),
+            "minuto": minuto,
             "equipo": equipo,
-            "jugador": nombre_pokemon_captura(captura)
+            "jugador": jugador
         })
-    # FALTAS
-    
+
+    # =========================
+    # 🦶 FALTAS
+    # =========================
     cantidad_faltas = random.randint(1, 4)
 
     for _ in range(cantidad_faltas):
@@ -252,12 +271,12 @@ def simular_partido_usuarios(usuario_a, usuario_b):
         equipo = random.choice(["A", "B"])
 
         if equipo == "A":
-            captura = elegir_jugador_evento(jugadores_a)
+            captura = safe_player(jugadores_a)
         else:
-            captura = elegir_jugador_evento(jugadores_b)
+            captura = safe_player(jugadores_b)
 
-        jugador = nombre_pokemon_captura(captura)
         minuto = minuto_libre(eventos)
+        jugador = safe_nombre(captura)
 
         if not evitar_repeticion(eventos, jugador, minuto):
 
@@ -267,6 +286,10 @@ def simular_partido_usuarios(usuario_a, usuario_b):
                 "equipo": equipo,
                 "jugador": jugador
             })
+
+    # =========================
+    # 🥅 POSTES
+    # =========================
     cantidad_postes = random.randint(0, 2)
 
     for _ in range(cantidad_postes):
@@ -274,12 +297,12 @@ def simular_partido_usuarios(usuario_a, usuario_b):
         equipo = random.choice(["A", "B"])
 
         if equipo == "A":
-            captura = elegir_jugador_evento(jugadores_a)
+            captura = safe_player(jugadores_a)
         else:
-            captura = elegir_jugador_evento(jugadores_b)
+            captura = safe_player(jugadores_b)
 
-        jugador = nombre_pokemon_captura(captura)
         minuto = minuto_libre(eventos)
+        jugador = safe_nombre(captura)
 
         if not evitar_repeticion(eventos, jugador, minuto):
 
@@ -289,6 +312,10 @@ def simular_partido_usuarios(usuario_a, usuario_b):
                 "equipo": equipo,
                 "jugador": jugador
             })
+
+    # =========================
+    # 🧤 PARADAS
+    # =========================
     cantidad_paradas = random.randint(0, 3)
 
     for _ in range(cantidad_paradas):
@@ -296,20 +323,21 @@ def simular_partido_usuarios(usuario_a, usuario_b):
         equipo = random.choice(["A", "B"])
 
         if equipo == "A":
-            portero = jugadores_a["portero"]
+            portero = jugadores_a.get("portero")
         else:
-            portero = jugadores_b["portero"]
+            portero = jugadores_b.get("portero")
 
         eventos.append({
             "tipo": "parada",
             "minuto": minuto_libre(eventos),
             "equipo": equipo,
-            "jugador": nombre_pokemon_captura(portero)
-        })        
-    eventos.sort(
-        key=lambda e: e["minuto"]
-    )
+            "jugador": safe_nombre(portero)
+        })
 
+    # =========================
+    # 📊 FINAL
+    # =========================
+    eventos.sort(key=lambda e: e["minuto"])
     resultado["eventos"] = eventos
 
     return resultado
@@ -555,3 +583,18 @@ def formatear_evento(evento):
 
     elif evento["tipo"] == "parada":
         return f"🧤 {evento['minuto']}' Gran parada de {evento['jugador']}."
+def asegurar_equipo(equipo):
+
+    posiciones = [
+        "portero",
+        "defensa_1", "defensa_2", "defensa_3", "defensa_4",
+        "medio_1", "medio_2", "medio_3", "medio_4",
+        "delantero_1", "delantero_2"
+    ]
+
+    limpio = {}
+
+    for pos in posiciones:
+        limpio[pos] = equipo.get(pos) if equipo else None
+
+    return limpio
