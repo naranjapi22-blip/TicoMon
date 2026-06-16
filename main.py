@@ -1338,4 +1338,55 @@ async def crearteam(ctx):
     await ctx.send(
         f"⚽ {ctx.author.mention}, tu equipo de fútbol ha sido creado."
     )
+@bot.command(name="caramelos")
+@canal_restringido()
+async def caramelos(ctx):
+
+    conn = database.get_connection()
+    cursor = conn.cursor()
+
+    try:
+
+        cursor.execute(
+            """
+            SELECT candy_type, amount
+            FROM user_candies
+            WHERE user_id = %s
+            ORDER BY amount DESC, candy_type
+            """,
+            (str(ctx.author.id),)
+        )
+
+        rows = cursor.fetchall()
+
+        if not rows:
+            await ctx.send(
+                "🍬 No tienes caramelos todavía."
+            )
+            return
+
+        total = sum(row[1] for row in rows)
+
+        mensaje = [
+            f"🍬 **Caramelos de {ctx.author.display_name}**",
+            ""
+        ]
+
+        for candy_type, amount in rows:
+            mensaje.append(
+                f"• {candy_type.title()}: **{amount}**"
+            )
+
+        mensaje.append("")
+        mensaje.append(
+            f"Total: **{total}** caramelos"
+        )
+
+        await ctx.send(
+            "\n".join(mensaje)
+        )
+
+    finally:
+        cursor.close()
+        conn.close()
 bot.run(TOKEN)
