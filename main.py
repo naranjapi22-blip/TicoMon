@@ -1162,6 +1162,9 @@ async def stress(ctx, cantidad: int = 100):
 async def partido(ctx, rival):
 
     import discord
+    import asyncio
+    import random
+    from discord.ext import commands
 
     usuario_a = ctx.author.id
 
@@ -1176,15 +1179,21 @@ async def partido(ctx, rival):
         else:
             rival_user = await commands.UserConverter().convert(ctx, rival)
 
-    except Exception:
-        return await ctx.send("❌ Usuario no encontrado")
+    except Exception as e:
+        return await ctx.send(f"❌ Usuario no encontrado: {e}")
 
     usuario_b = rival_user.id
 
-    resultado = simular_partido_usuarios(usuario_a, usuario_b)
+    # 🔥 DEBUG REAL (IMPORTANTE)
+    try:
+        resultado = simular_partido_usuarios(usuario_a, usuario_b)
 
-    if "error" in resultado:
-        return await ctx.send("❌ Error al generar el partido")
+    except Exception as e:
+        return await ctx.send(f"❌ ERROR EN SIMULADOR: {e}")
+
+    # 🔥 mostrar error real si viene del dict
+    if isinstance(resultado, dict) and "error" in resultado:
+        return await ctx.send(f"❌ Error simulación: {resultado['error']}")
 
     embed = discord.Embed(
         title="⚽ Partido en vivo",
@@ -1238,9 +1247,7 @@ async def partido(ctx, rival):
         timeline += "─" * 70 + "\n"
 
         for i in range(len(linea_a)):
-            left = linea_a[i]
-            right = linea_b[i]
-            timeline += f"{left:<35}{right}\n"
+            timeline += f"{linea_a[i]:<35}{linea_b[i]}\n"
 
         marcador = f"{ctx.author.name} {goles_a} - {goles_b} {rival_user.name}"
 
