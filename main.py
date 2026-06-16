@@ -1161,17 +1161,20 @@ async def stress(ctx, cantidad: int = 100):
 @canal_restringido()
 async def partido(ctx, rival):
 
-    import random
-    import asyncio
+    import discord
 
     usuario_a = ctx.author.id
 
-    # 🔥 CONVERTIR RIVAL CORRECTAMENTE
+    # 🔥 convertir rival SIEMPRE a User real
     try:
-        if isinstance(rival, int) or str(rival).isdigit():
+        if isinstance(rival, discord.User):
+            rival_user = rival
+
+        elif str(rival).isdigit():
             rival_user = await bot.fetch_user(int(rival))
+
         else:
-            rival_user = rival  # ya es discord.User
+            rival_user = await commands.UserConverter().convert(ctx, rival)
 
     except Exception:
         return await ctx.send("❌ Usuario no encontrado")
