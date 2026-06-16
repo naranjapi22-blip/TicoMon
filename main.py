@@ -1391,6 +1391,7 @@ async def caramelos(ctx):
         conn.close()
 
 from evolutions import ( get_evolutions, get_evolution_cost )
+from candy import get_candies
 @bot.command(name="evolucionar")
 @canal_restringido()
 async def evolucionar(ctx, id_pokemon: int):
@@ -1420,7 +1421,9 @@ async def evolucionar(ctx, id_pokemon: int):
             return
 
         pokemon_nombre = resultado[0]
-
+        candies = get_candies(
+            ctx.author.id
+        )
         evoluciones = get_evolutions(
             pokemon_nombre
         )
@@ -1445,9 +1448,17 @@ async def evolucionar(ctx, id_pokemon: int):
 
             costo = get_evolution_cost(tier)
 
+            tiene = candies.get(
+                tipo_caramelo,
+                0
+            )
+
+            estado = "✅" if tiene >= costo else "❌"
+
             mensaje.append(
                 f"{i}️⃣ **{destino.capitalize()}**\n"
-                f"🍬 {costo} {tipo_caramelo.capitalize()}"
+                f"🍬 {tipo_caramelo.capitalize()}: "
+                f"{tiene}/{costo} {estado}\n"
             )
 
 
