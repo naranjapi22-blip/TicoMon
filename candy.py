@@ -1,5 +1,5 @@
 
-
+#prueba
 def add_candy(user_id, candy_type, amount=1):
 
     conn = database.get_connection()
