@@ -666,45 +666,45 @@ class SafariManager:
             await self.ejecutar_encuentro()
             self.encuentro_numero += 1
         await self.finalizar_safari()
-async def resolver_decision_evento(
-    self,
-    encuentro_numero
-):
-
-    info = self.mapa_eventos.get(
+    async def resolver_decision_evento(
+        self,
         encuentro_numero
-    )
+    ):
 
-    if not info:
-        return
+        info = self.mapa_eventos.get(
+            encuentro_numero
+        )
 
-    lado_correcto = random.choice(
-        ["izquierda", "derecha"]
-    )
+        if not info:
+            return
 
-    lado_elegido = random.choice(
-        ["izquierda", "derecha"]
-    )
+        lado_correcto = random.choice(
+            ["izquierda", "derecha"]
+        )
 
-    info["activo"] = (
-        lado_elegido == lado_correcto
-    )
+        lado_elegido = random.choice(
+            ["izquierda", "derecha"]
+        )
 
-    print(
-        f"DECISION EVENTO {encuentro_numero}"
-    )
+        info["activo"] = (
+            lado_elegido == lado_correcto
+        )
 
-    print(
-        f"LADO CORRECTO: {lado_correcto}"
-    )
+        print(
+            f"DECISION EVENTO {encuentro_numero}"
+        )
 
-    print(
-        f"LADO ELEGIDO: {lado_elegido}"
-    )
+        print(
+            f"LADO CORRECTO: {lado_correcto}"
+        )
 
-    print(
-        f"EVENTO ACTIVO: {info['activo']}"
-    )
+        print(
+            f"LADO ELEGIDO: {lado_elegido}"
+        )
+
+        print(
+            f"EVENTO ACTIVO: {info['activo']}"
+        )
     def agregar_participante(
         self,
         user_id
