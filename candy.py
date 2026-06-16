@@ -68,3 +68,53 @@ def add_candy_for_pokemon(user_id, pokemon_nombre, amount=1):
     finally:
         cursor.close()
         conn.close()
+def get_candies(user_id):
+
+    conn = database.get_connection()
+    cursor = conn.cursor()
+
+    try:
+
+        cursor.execute(
+            """
+            SELECT candy_type, amount
+            FROM user_candies
+            WHERE user_id = %s
+            """,
+            (str(user_id),)
+        )
+
+        return {
+            candy_type: amount
+            for candy_type, amount in cursor.fetchall()
+        }
+
+    finally:
+        cursor.close()
+        conn.close()
+def remove_candy(user_id, candy_type, amount):
+
+    conn = database.get_connection()
+    cursor = conn.cursor()
+
+    try:
+
+        cursor.execute(
+            """
+            UPDATE user_candies
+            SET amount = amount - %s
+            WHERE user_id = %s
+            AND candy_type = %s
+            """,
+            (
+                amount,
+                str(user_id),
+                candy_type
+            )
+        )
+
+        conn.commit()
+
+    finally:
+        cursor.close()
+        conn.close()

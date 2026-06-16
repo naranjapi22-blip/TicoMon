@@ -1389,17 +1389,5 @@ async def caramelos(ctx):
     finally:
         cursor.close()
         conn.close()
-from candy import add_candy
-@bot.command(name="testcandy")
-async def testcandy(ctx):
 
-    add_candy(
-        ctx.author.id,
-        "water",
-        5
-    )
-
-    await ctx.send(
-        "💧 +5 Water Candy"
-    )
 bot.run(TOKEN)

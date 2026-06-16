@@ -10,6 +10,7 @@ from datetime import datetime, timezone # Asegúrate de tener este también
 from discord.ui import Button, View
 import records
 from mapeo_pokes import obtener_id_gif
+from candy import add_candy_for_pokemon
 # Fórmulas oficiales de Pokémon
 def calcular_stat_lvl50(base, iv):
     return math.floor(((2 * base + iv) * 50 / 100) + 5)
@@ -321,20 +322,49 @@ class IvsCommands(commands.Cog):
 
             nombre, shiny, hp, atk, de, spa, spd, spe = resultado
 
-            total = hp + atk + de + spa + spd + spe
-            porcentaje = round((total / 186) * 100, 2)
+            # Eliminar Pokémon
+            cursor.execute("""
+                DELETE FROM capturas
+                WHERE id = %s
+                AND user_id = %s
+            """, (
+                str(id_pokemon),
+                str(ctx.author.id)
+            ))
+
+            conn.commit()
+
+            # Dar caramelo
+            add_candy_for_pokemon(
+                ctx.author.id,
+                nombre,
+                1
+            )
 
             emoji = "✨" if shiny else ""
 
             await ctx.send(
-                f"⚠️ Vas a liberar:\n"
-                f"{emoji} **{nombre.capitalize()}**\n"
-                f"🆔 ID: `{id_pokemon}`\n"
-                f"📈 IV: `{porcentaje}%`"
+                f"🗑️ Liberaste a {emoji} **{nombre.capitalize()}** "
+                f"(ID `{id_pokemon}`)\n"
+                f"🍬 Recibiste 1 caramelo."
             )
 
+        except Exception as e:
+
+            conn.rollback()
+
+            await ctx.send(
+                "❌ Ocurrió un error al liberar el Pokémon."
+            )
+
+            print(f"[LIBERAR ERROR] {e}")
+
         finally:
+
+            cursor.close()
             conn.close()
+
+
 async def setup(bot):
     await bot.add_cog(IvsCommands(bot))
     
