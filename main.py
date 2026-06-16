@@ -49,6 +49,7 @@ from simulador_futbol import (
 from futbol import captura_pertenece_usuario
 from futbol import asignar_pokemon_a_equipo
 from futbol import obtener_equipo
+from futbol import nombre_pokemon_captura
 database.init_db()
 # 1. CONFIGURACIÓN
 load_dotenv()
