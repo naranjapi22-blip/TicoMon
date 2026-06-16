@@ -1153,25 +1153,42 @@ async def stress(ctx, cantidad: int = 100):
         f"❌ Errores: {errores}"
     )
 @bot.command()
-@canal_restringido()
-async def partido(ctx, rival: discord.Member):
+async def partido(ctx, rival_id: int):
+
+    try:
+        rival_user = await bot.fetch_user(rival_id)
+    except:
+        return await ctx.send("❌ No se pudo encontrar ese usuario")
 
     usuario_a = ctx.author.id
-    usuario_b = rival.id
+    usuario_b = rival_user.id
 
     resultado = simular_partido_usuarios(usuario_a, usuario_b)
 
-    await ctx.send(f"⚽ {ctx.author.name} vs {rival.name}")
+    if "error" in resultado:
+        await ctx.send("❌ Error al generar el partido")
+        return
+
+    await ctx.send(f"⚽ {ctx.author.name} vs {rival_user.name}")
 
     for evento in resultado["eventos"]:
+
         await asyncio.sleep(2)
-        await ctx.send(formatear_evento(evento))
+
+        await ctx.send(
+            formatear_evento(evento)
+        )
 
     await ctx.send(
         f"""
-🏁 FINAL
+🏁 FINAL DEL PARTIDO
 
-{ctx.author.name} {resultado['goles_a']} - {resultado['goles_b']} {rival.name}
-"""
+{ctx.author.name} {resultado['goles_a']} - {resultado['goles_b']} {rival_user.name}
+
+📊 Estadísticas
+
+Posesión: {resultado['posesion_a']}% - {resultado['posesion_b']}%
+Ocasiones: {resultado['ocasiones_a']} - {resultado['ocasiones_b']}
+        """
     )
 bot.run(TOKEN)
