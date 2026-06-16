@@ -249,9 +249,17 @@ class SafariManager:
 
             if self.encuentro_numero in self.encuentros_evento:
 
-                evento = self.mapa_eventos[
+                info_evento = self.mapa_eventos[
                     self.encuentro_numero
                 ]
+
+                if info_evento["activo"] is False:
+
+                    evento = None
+
+                else:
+
+                    evento = info_evento["evento"]
 
                 legendario_evento = (
                     random.random() <= 0.02
@@ -658,45 +666,45 @@ class SafariManager:
             await self.ejecutar_encuentro()
             self.encuentro_numero += 1
         await self.finalizar_safari()
-    async def resolver_decision_evento(
-        self,
+async def resolver_decision_evento(
+    self,
+    encuentro_numero
+):
+
+    info = self.mapa_eventos.get(
         encuentro_numero
-    ):
+    )
 
-        info = self.mapa_eventos.get(
-            encuentro_numero
-        )
+    if not info:
+        return
 
-        if not info:
-            return
+    lado_correcto = random.choice(
+        ["izquierda", "derecha"]
+    )
 
-        lado_correcto = random.choice(
-            ["izquierda", "derecha"]
-        )
+    lado_elegido = random.choice(
+        ["izquierda", "derecha"]
+    )
 
-        lado_elegido = random.choice(
-            ["izquierda", "derecha"]
-        )
+    info["activo"] = (
+        lado_elegido == lado_correcto
+    )
 
-        info["activo"] = (
-            lado_elegido == lado_correcto
-        )
+    print(
+        f"DECISION EVENTO {encuentro_numero}"
+    )
 
-        print(
-            f"DECISION EVENTO {encuentro_numero}"
-        )
+    print(
+        f"LADO CORRECTO: {lado_correcto}"
+    )
 
-        print(
-            f"LADO CORRECTO: {lado_correcto}"
-        )
+    print(
+        f"LADO ELEGIDO: {lado_elegido}"
+    )
 
-        print(
-            f"LADO ELEGIDO: {lado_elegido}"
-        )
-
-        print(
-            f"EVENTO ACTIVO: {info['activo']}"
-        )
+    print(
+        f"EVENTO ACTIVO: {info['activo']}"
+    )
     def agregar_participante(
         self,
         user_id
