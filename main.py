@@ -1299,7 +1299,6 @@ async def addequipo(ctx, captura_id: int, posicion: str):
 @bot.command()
 @canal_restringido()
 async def team(ctx):
-    await ctx.send("funciona")
     data = obtener_equipo(ctx.author.id)
 
     if not data:
