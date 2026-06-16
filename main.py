@@ -51,8 +51,17 @@ from futbol import asignar_pokemon_a_equipo
 from futbol import obtener_equipo
 from futbol import nombre_pokemon_captura
 from futbol import crear_equipo
-from evolutions import ( get_evolutions, get_evolution_cost, get_evolution_choice, evolve_pokemon ) 
-from candy import ( get_candies, remove_candy )
+from evolutions import (
+    get_evolutions,
+    get_evolution_cost,
+    get_evolution_choice
+)
+
+from candy import (
+    get_candies,
+    remove_candy,
+    evolve_pokemon
+)
 database.init_db()
 # 1. CONFIGURACIÓN
 load_dotenv()
@@ -1473,6 +1482,95 @@ async def evolucionar(ctx, id_pokemon: int):
 
         cursor.close()
         conn.close()
+
+@bot.command(name="elegir")
+@canal_restringido()
+async def elegir(ctx, id_pokemon: int, opcion: int):
+
+    conn = database.get_connection()
+    cursor = conn.cursor()
+
+    try:
+
+        cursor.execute("""
+            SELECT pokemon_nombre
+            FROM capturas
+            WHERE id = %s
+            AND user_id = %s
+        """, (
+            str(id_pokemon),
+            str(ctx.author.id)
+        ))
+
+        resultado = cursor.fetchone()
+
+        if not resultado:
+
+            await ctx.send(
+                "❌ No tienes ningún Pokémon con ese ID."
+            )
+            return
+
+        pokemon_nombre = resultado[0]
+
+        evo = get_evolution_choice(
+            pokemon_nombre,
+            opcion
+        )
+
+        if not evo:
+
+            await ctx.send(
+                "❌ Opción inválida."
+            )
+            return
+
+        destino, metodo, tier, tipo_caramelo = evo
+
+        costo = get_evolution_cost(
+            tier
+        )
+
+        candies = get_candies(
+            ctx.author.id
+        )
+
+        tiene = candies.get(
+            tipo_caramelo,
+            0
+        )
+
+        if tiene < costo:
+
+            await ctx.send(
+                f"❌ Necesitas {costo} "
+                f"{tipo_caramelo.capitalize()} Candy.\n"
+                f"Tienes {tiene}."
+            )
+            return
+
+        remove_candy(
+            ctx.author.id,
+            tipo_caramelo,
+            costo
+        )
+
+        evolve_pokemon(
+            id_pokemon,
+            destino
+        )
+
+        await ctx.send(
+            f"✨ **{pokemon_nombre.capitalize()}** "
+            f"evolucionó a "
+            f"**{destino.capitalize()}**!"
+        )
+
+    finally:
+
+        cursor.close()
+        conn.close()
+
 
 
 bot.run(TOKEN)
