@@ -658,7 +658,45 @@ class SafariManager:
             await self.ejecutar_encuentro()
             self.encuentro_numero += 1
         await self.finalizar_safari()
+    async def resolver_decision_evento(
+        self,
+        encuentro_numero
+    ):
 
+        info = self.mapa_eventos.get(
+            encuentro_numero
+        )
+
+        if not info:
+            return
+
+        lado_correcto = random.choice(
+            ["izquierda", "derecha"]
+        )
+
+        lado_elegido = random.choice(
+            ["izquierda", "derecha"]
+        )
+
+        info["activo"] = (
+            lado_elegido == lado_correcto
+        )
+
+        print(
+            f"DECISION EVENTO {encuentro_numero}"
+        )
+
+        print(
+            f"LADO CORRECTO: {lado_correcto}"
+        )
+
+        print(
+            f"LADO ELEGIDO: {lado_elegido}"
+        )
+
+        print(
+            f"EVENTO ACTIVO: {info['activo']}"
+        )
     def agregar_participante(
         self,
         user_id
@@ -913,43 +951,4 @@ def generar_pokemons_por_tipo_global(
     return random.sample(
         ids,
         min(3, len(ids))
-    )
-async def resolver_decision_evento(
-    self,
-    encuentro_numero
-):
-
-    info = self.mapa_eventos.get(
-        encuentro_numero
-    )
-
-    if not info:
-        return
-
-    lado_correcto = random.choice(
-        ["izquierda", "derecha"]
-    )
-
-    lado_elegido = random.choice(
-        ["izquierda", "derecha"]
-    )
-
-    info["activo"] = (
-        lado_elegido == lado_correcto
-    )
-
-    print(
-        f"DECISION EVENTO {encuentro_numero}"
-    )
-
-    print(
-        f"LADO CORRECTO: {lado_correcto}"
-    )
-
-    print(
-        f"LADO ELEGIDO: {lado_elegido}"
-    )
-
-    print(
-        f"EVENTO ACTIVO: {info['activo']}"
     )
