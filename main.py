@@ -46,6 +46,7 @@ from simulador_futbol import (
     simular_partido_usuarios,
     formatear_evento
 )
+import futbol 
 database.init_db()
 # 1. CONFIGURACIÓN
 load_dotenv()
