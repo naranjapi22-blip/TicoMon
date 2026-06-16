@@ -4,8 +4,15 @@ import random
 from cachetools import TTLCache
 import asyncio
 from logger_config import log
-from PIL import Image, ImageFilter, ImageEnhance, ImageDraw, ImageChops, ImageOps
-from PIL import Image, ImageDraw, ImageFilter, ImageFont
+from PIL import (
+    Image,
+    ImageFilter,
+    ImageEnhance,
+    ImageDraw,
+    ImageChops,
+    ImageOps,
+    ImageFont
+)
 import time
 import aiohttp
 
@@ -16,87 +23,8 @@ _cache_imagenes = TTLCache(maxsize=600, ttl=3600)
 
 
 # --- NUEVA FUNCIÓN AUXILIAR PARA LA HIERBA VERDE ---
-def generar_capa_hierba(width, height):
-    """Genera una capa transparente con hojas de hierba verde en la parte inferior."""
-    try:
-        # Creamos un lienzo totalmente transparente
-        capa_hierba = Image.new('RGBA', (width, height), (0, 0, 0, 0))
-        draw = ImageDraw.Draw(capa_hierba)
-        
-        ancho_hoja = width // 15 # Hojas un poco más anchas
-        if ancho_hoja < 5: ancho_hoja = 5
-        num_hojas = (width // ancho_hoja) + 2
-        
-        # Tres tonos de verde para que se vea más realista y con profundidad
-        colores_verde = [
-            (56, 142, 60, 255),   # Verde oscuro
-            (76, 175, 80, 255),   # Verde clásico de Pokémon
-            (102, 187, 106, 255)  # Verde un poco más claro
-        ]
-        
-        # Dibujamos los triángulos (hojas) de abajo hacia arriba
-        for i in range(num_hojas):
-            x_start = (i * ancho_hoja) - (ancho_hoja // 2)
-            
-            point1 = (x_start, height) # Base izquierda
-            
-            # Altura aleatoria del pasto (cubre entre el 30% y el 70% del recuadro)
-            altura_pico = random.randint(int(height * 0.3), int(height * 0.7))
-            point2 = (x_start + ancho_hoja // 2, height - altura_pico) # Pico
-            
-            point3 = (x_start + ancho_hoja, height) # Base derecha
-            
-            # Elegimos un verde al azar para esta hoja
-            color_hoja = random.choice(colores_verde)
-            
-            # Dibujamos la hoja verde en nuestro lienzo transparente
-            draw.polygon([point1, point2, point3], fill=color_hoja)
-        
-        log.debug(f"✅ Capa de hierba generada: {width}x{height}")
-        return capa_hierba
-    except Exception as e:
-        log.error(f"🚨 Error al generar capa de hierba: {e}", exc_info=True)
-        return None
 
 # --- FUNCIÓN AUXILIAR PARA GENERAR HIERBA ALTA ---
-def generar_mascara_hierba(width, height):
-    """Genera una textura procedimental de puntas de hierba sobre fondo transparente."""
-    try:
-        # Creamos una imagen transparente en modo 'L' (Grayscale para máscaras)
-        mask = Image.new('L', (width, height), 0) # 0 = Negro (transparente/oculto)
-        draw = ImageDraw.Draw(mask)
-        
-        # Parámetros de la hierba
-        ancho_hoja = width // 20 # Definimos el ancho de cada 'triángulo' de hierba
-        if ancho_hoja < 5: ancho_hoja = 5 # Mínimo para que se note
-        num_hojas = (width // ancho_hoja) + 2
-        
-        # Dibujamos triángulos (puntas de hierba) desde el fondo de la imagen hacia arriba
-        for i in range(num_hojas):
-            x_start = (i * ancho_hoja) - (ancho_hoja // 2)
-            
-            # Geometría del triángulo de hierba
-            point1 = (x_start, height) # Base izquierda
-            
-            # El pico de la hierba (altura aleatoria para variedad, cubre del 40% al 80% de la altura)
-            altura_pico = random.randint(int(height * 0.4), int(height * 0.8))
-            point2 = (x_start + ancho_hoja // 2, height - altura_pico) # Pico
-            
-            point3 = (x_start + ancho_hoja, height) # Base derecha
-            
-            # Dibujamos el triángulo en BLANCO (255 = Opaco/Visible en la máscara)
-            draw.polygon([point1, point2, point3], fill=255)
-        
-        # Invertimos la máscara. Queremos que la HIERBA sea transparente, 
-        # y el resto (arriba de la hierba) sea opaco para mostrar al Pokémon.
-        mask = ImageOps.invert(mask)
-        
-        log.debug(f"✅ Máscara de hierba generada: {width}x{height}")
-        return mask
-    except Exception as e:
-        log.error(f"🚨 Error al generar máscara de hierba: {e}", exc_info=True)
-        return None
-pokemon_cache = {}
 
 async def obtener_pokemon(session, nombre_o_id):
     print(f"🌐 POKEAPI -> {nombre_o_id}")
@@ -203,9 +131,6 @@ def aplicar_filtro_silueta(img):
     except Exception as e:
         log.error(f"🚨 Error al aplicar filtro de silueta: {e}", exc_info=True)
         return img
-
-# 1. Definimos una caché global simple fuera de la función
-_cache_imagenes = {}
 
 async def generar_collage(session, data_pokes, tenidos=None, es_shiny=False):
     # 1. Protección contra NoneType
@@ -314,78 +239,6 @@ async def filtrar_capturas_por_tipo(session, tipo, tenidos):
     
     return []
 
-async def procesar_imagen_fragmento(session, url):
-    """Descarga, recorta y aplica el efecto de 'Silueta Automática' y 'Hierba Alta'."""
-    try:
-        log.debug(f"📥 Procesando fragmento de imagen: {url}")
-        
-        async with session.get(url) as r:
-            if r.status != 200:
-                log.warning(f"⚠️ Error descargando imagen: {url} (Status: {r.status})")
-                return None
-            data = await r.read()
-            
-        img = Image.open(io.BytesIO(data)).convert("RGBA")
-        log.debug(f"✅ Imagen descargada: {img.size}")
-        
-        # Recortamos el espacio vacío alrededor del Pokémon
-        alpha = img.getchannel('A')
-        bbox = alpha.getbbox()
-        if not bbox:
-            log.warning(f"⚠️ No se encontró contenido en imagen: {url}")
-            return None 
-        
-        img_conteudo = img.crop(bbox)
-        width, height = img_conteudo.size
-        
-        # --- AJUSTE DE TAMAÑO ---
-        crop_w = int(width * 0.60)
-        crop_h = int(height * 0.60)
-        
-        # Búsqueda de fragmento válido
-        fragmento = None
-        for intento in range(15):
-            x = random.randint(0, max(0, width - crop_w))
-            y = random.randint(0, max(0, int((height - crop_h) * 0.7))) 
-            
-            fragmento = img_conteudo.crop((x, y, x + crop_w, y + crop_h))
-            
-            # Verificamos que el recorte tenga contenido significativo
-            alpha_frag = fragmento.getchannel('A')
-            total_píxeles = crop_w * crop_h
-            transparentes = alpha_frag.getcolors(total_píxeles)
-            
-            # Si más del 10% no es transparente, aceptamos el recorte
-            if not transparentes or (transparentes[0][1] == 0 and (transparentes[0][0] < total_píxeles * 0.90)):
-                break
-                
-        if fragmento is None:
-            return None
-
-        # --- SISTEMA DE SILUETA AUTOMÁTICO (USANDO CANAL ALFA) ---
-        # 1. Obtenemos solo la máscara de transparencia del fragmento
-        _, _, _, alpha_fragmento = fragmento.split()
-        
-        # 2. Creamos una imagen negra sólida del mismo tamaño
-        silueta_negra = Image.new('RGBA', fragmento.size, (0, 0, 0, 255))
-        
-        # 3. Aplicamos la transparencia original como máscara a la silueta negra
-        silueta_negra.putalpha(alpha_fragmento)
-        silueta_completa = silueta_negra
-        
-        # --- EFECTO DE HIERBA ALTA ---
-        capa_verde = generar_capa_hierba(fragmento.width, fragmento.height)
-        
-        if capa_verde:
-            # Pegamos la hierba usando la hierba como máscara para que solo afecte al Pokémon
-            silueta_completa.paste(capa_verde, (0, 0), mask=capa_verde)
-        
-        log.info(f"✅ Silueta procesada exitosamente: {silueta_completa.size}")
-        return silueta_completa
-
-    except Exception as e:
-        log.error(f"🚨 Error procesando fragmento de imagen: {e}", exc_info=True)
-        return None
 
 async def generar_collage_siluetas(session, data_pokes, tenidos=None, es_shiny=False):
     """Genera el collage para el SPAWN (3 fragmentos)."""
