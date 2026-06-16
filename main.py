@@ -1153,15 +1153,11 @@ async def stress(ctx, cantidad: int = 100):
         f"❌ Errores: {errores}"
     )
 @bot.command()
-async def partido(ctx, rival_id: int):
-
-    try:
-        rival_user = await bot.fetch_user(rival_id)
-    except:
-        return await ctx.send("❌ No se pudo encontrar ese usuario")
+@canal_restringido()
+async def partido(ctx, rival: discord.Member):
 
     usuario_a = ctx.author.id
-    usuario_b = rival_user.id
+    usuario_b = rival.id
 
     resultado = simular_partido_usuarios(usuario_a, usuario_b)
 
@@ -1169,26 +1165,41 @@ async def partido(ctx, rival_id: int):
         await ctx.send("❌ Error al generar el partido")
         return
 
-    await ctx.send(f"⚽ {ctx.author.name} vs {rival_user.name}")
+    # mensaje único que vamos a editar
+    mensaje = await ctx.send(
+        f"⚽ {ctx.author.name} vs {rival.name}\n\n"
+        f"⏳ Iniciando partido..."
+    )
+
+    texto_eventos = ""
 
     for evento in resultado["eventos"]:
 
         await asyncio.sleep(2)
 
-        await ctx.send(
-            formatear_evento(evento)
+        texto_eventos += formatear_evento(evento) + "\n"
+
+        await mensaje.edit(
+            content=
+            f"⚽ {ctx.author.name} vs {rival.name}\n\n"
+            f"{texto_eventos}\n"
+            f"🏁 En juego..."
         )
 
-    await ctx.send(
-        f"""
+    await mensaje.edit(
+        content=
+        f"""⚽ {ctx.author.name} vs {rival.name}
+
+{texto_eventos}
+
 🏁 FINAL DEL PARTIDO
 
-{ctx.author.name} {resultado['goles_a']} - {resultado['goles_b']} {rival_user.name}
+{ctx.author.name} {resultado['goles_a']} - {resultado['goles_b']} {rival.name}
 
 📊 Estadísticas
 
 Posesión: {resultado['posesion_a']}% - {resultado['posesion_b']}%
 Ocasiones: {resultado['ocasiones_a']} - {resultado['ocasiones_b']}
-        """
+"""
     )
 bot.run(TOKEN)
