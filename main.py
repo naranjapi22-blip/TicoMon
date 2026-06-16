@@ -1392,7 +1392,8 @@ async def caramelos(ctx):
 
 from evolutions import get_evolutions
 
-@commands.command(name="evolucionar")
+@bot.command(name="evolucinar")
+@canal_restringido()
 async def evolucionar(self, ctx, id_pokemon: int):
 
     conn = database.get_connection()
