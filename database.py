@@ -7,7 +7,7 @@ import logging
 import random
 import records
 from datetime import datetime, timezone
-
+from candy import add_candy_for_pokemon
 
 # 1. Asegúrate de tener esto arriba en tu archivo
 NATURALEZAS = [
@@ -126,6 +126,11 @@ async def guardar_captura(user_id, pokemon_nombre, tamano_factor, es_shiny=False
             
             # 6. Confirmación
             conn.commit()
+            add_candy_for_pokemon(
+                        user_id,
+                        pokemon_nombre,
+                        1
+                    )
             log.info(f"✅ Captura guardada: {pokemon_nombre.capitalize()} con ID: {id_pokemon}")
             
             # ¡IMPORTANTE! Retornamos ambos valores
