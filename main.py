@@ -1158,6 +1158,7 @@ async def partido(ctx, rival_id: int):
 
     usuario_a = ctx.author.id
 
+    # 🔥 traer rival por ID
     try:
         rival_user = await bot.fetch_user(rival_id)
     except:
@@ -1165,63 +1166,73 @@ async def partido(ctx, rival_id: int):
 
     usuario_b = rival_user.id
 
+    # ⚽ simular partido
     resultado = simular_partido_usuarios(usuario_a, usuario_b)
 
     if "error" in resultado:
         return await ctx.send("❌ Error al generar el partido")
 
-    # 🎯 EMBED BASE (tipo FIFA / match center)
+    # 🎮 EMBED BASE (NO duplicar fields)
     embed = discord.Embed(
         title="⚽ Partido en vivo",
         description=f"{ctx.author.name} vs {rival_user.name}",
         color=0x00ff99
     )
 
-    # 🔴 MARCADOR
-    marcador = f"{ctx.author.name} {resultado['goles_a']} - {resultado['goles_b']} {rival_user.name}"
-
+    # 🔴 marcador inicial
     embed.add_field(
         name="🔴 Marcador",
-        value=marcador,
+        value="0 - 0",
         inline=False
     )
 
-    # 📺 TIMELINE
-    timeline_msg = await ctx.send(embed=embed)
+    # 📺 eventos iniciales
+    embed.add_field(
+        name="📺 Eventos del partido",
+        value="⏳ Sin eventos aún...",
+        inline=False
+    )
+
+    # enviar mensaje
+    msg = await ctx.send(embed=embed)
 
     timeline = ""
 
+    # ⚽ eventos en vivo
     for evento in resultado["eventos"]:
 
         await asyncio.sleep(2)
 
+        # agregar evento al timeline
         timeline += f"{evento['minuto']}' {formatear_evento(evento)}\n"
 
+        # actualizar SOLO el campo de eventos (índice 1)
         embed.set_field_at(
-            0,
-            name="🔴 Marcador",
-            value=marcador,
-            inline=False
-        )
-
-        embed.add_field(
+            1,
             name="📺 Eventos del partido",
             value=timeline[-1024:],  # evita límite de Discord
             inline=False
         )
 
-        await timeline_msg.edit(embed=embed)
+        await msg.edit(embed=embed)
 
-    # 🏁 FINAL
+    # 🏁 marcador final
+    embed.set_field_at(
+        0,
+        name="🔴 Marcador",
+        value=f"{ctx.author.name} {resultado['goles_a']} - {resultado['goles_b']} {rival_user.name}",
+        inline=False
+    )
+
+    # 📊 estadísticas finales
     embed.add_field(
-        name="🏁 FINAL DEL PARTIDO",
+        name="📊 Estadísticas",
         value=(
-            f"{marcador}\n\n"
-            f"📊 Posesión: {resultado['posesion_a']}% - {resultado['posesion_b']}%\n"
-            f"📊 Ocasiones: {resultado['ocasiones_a']} - {resultado['ocasiones_b']}"
+            f"Posesión: {resultado['posesion_a']}% - {resultado['posesion_b']}%\n"
+            f"Ocasiones: {resultado['ocasiones_a']} - {resultado['ocasiones_b']}"
         ),
         inline=False
     )
 
-    await timeline_msg.edit(embed=embed)
+    await msg.edit(embed=embed)
 bot.run(TOKEN)
