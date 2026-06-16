@@ -592,23 +592,137 @@ async def cooldowns(ctx):
         # Esto capturará si hubo un error en la base de datos o en el cálculo
         log.error(f"🚨 [ERROR Comando] !cooldowns falló para el usuario {ctx.author.id}. Error: {e}", exc_info=True)
         await ctx.send("❌ Hubo un error al consultar tus datos. Por favor, intenta de nuevo más tarde.")
+class ComandosView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=120)
+        self.pagina = 1
+
+    def embed_pagina_1(self):
+        embed = discord.Embed(
+            title="📜 Guía de Comandos TicoMon (1/2)",
+            color=discord.Color.blue()
+        )
+
+        embed.add_field(
+            name="🎯 Captura",
+            value=(
+                "`!spawn`\n"
+                "`!cooldowns`\n"
+                "`!inicial`"
+            ),
+            inline=False
+        )
+
+        embed.add_field(
+            name="📖 Pokédex",
+            value=(
+                "`!newpokedex`"
+            ),
+            inline=False
+        )
+
+        embed.add_field(
+            name="🎒 Colección",
+            value=(
+                "`!perfil`\n"
+                "`!inventario`\n"
+                "`!caramelos`\n"
+                "`!info <id>`\n"
+                "`!destacar <id>`"
+            ),
+            inline=False
+        )
+
+        embed.add_field(
+            name="🧬 Evolución y Records",
+            value=(
+                "`!evolucionar <id>`\n"
+                "`!elegir <id> <opción>`\n"
+                "`!liberar <id>`\n"
+                "`!ivs`\n"
+                "`!top`\n"
+                "`!records`\n"
+                "`!misrecords`"
+            ),
+            inline=False
+        )
+
+        return embed
+
+    def embed_pagina_2(self):
+        embed = discord.Embed(
+            title="📜 Guía de Comandos TicoMon (2/2)",
+            color=discord.Color.green()
+        )
+
+        embed.add_field(
+            name="⚔️ Combate",
+            value=(
+                "`!batalla @usuario`\n"
+                "`!comparar`"
+            ),
+            inline=False
+        )
+
+        embed.add_field(
+            name="👥 Equipo",
+            value=(
+                "`!equipo`"
+            ),
+            inline=False
+        )
+
+        embed.add_field(
+            name="🤝 Interacción",
+            value=(
+                "`!trade @usuario`"
+            ),
+            inline=False
+        )
+
+        embed.add_field(
+            name="🏆 Rankings",
+            value=(
+                "`!rankingdex`\n"
+                "`!rankingshiny`\n"
+                "`!rankinglegend`"
+            ),
+            inline=False
+        )
+
+        return embed
+
+    @discord.ui.button(label="⬅️", style=discord.ButtonStyle.secondary)
+    async def anterior(self, interaction: discord.Interaction, button: discord.ui.Button):
+
+        self.pagina = 1
+
+        await interaction.response.edit_message(
+            embed=self.embed_pagina_1(),
+            view=self
+        )
+
+    @discord.ui.button(label="➡️", style=discord.ButtonStyle.primary)
+    async def siguiente(self, interaction: discord.Interaction, button: discord.ui.Button):
+
+        self.pagina = 2
+
+        await interaction.response.edit_message(
+            embed=self.embed_pagina_2(),
+            view=self
+        )
+
+
 @bot.command(name="comandos")
 @canal_restringido()
 async def comandos(ctx):
-    """Muestra la lista de comandos disponibles."""
-    embed = discord.Embed(title="📜 Guía de Comandos", color=discord.Color.blue())
-    embed.add_field(name="!spawn", value="Inicia un encuentro salvaje.", inline=False)
-    embed.add_field(name="!pokedex", value="Muestra tu colección de Pokémon.", inline=False)
-    embed.add_field(name="!perfil", value="Muestra tu tarjeta de entrenador.", inline=False)
-    embed.add_field(name="!trade @usuario", value="Inicia un intercambio.", inline=False)
-    embed.add_field(name="!cooldowns", value="Revisa tu energía de captura.", inline=False)
-    embed.add_field(name="!info pokemon", value="Te da información del pokemon que tengas", inline=False)
-    embed.add_field(name="!destacar", value="Pones tu pokemon en tu perfil(poner shiny si lo tienes)", inline=False)
-    embed.add_field(name="!equipo", value="Gestiona tu equipo de hasta 9 Pokémon.", inline=False)
-    embed.add_field(name="!combate @usuario", value="Duelo (selector clásico).", inline=False)
-    embed.add_field(name="!batalla @usuario", value="Duelo con tu equipo guardado (selector privado).", inline=False)
 
-    await ctx.send(embed=embed)
+    view = ComandosView()
+
+    await ctx.send(
+        embed=view.embed_pagina_1(),
+        view=view
+    )
 @bot.command(name="resetintentos")
 @canal_restringido()
 @commands.has_permissions(administrator=True)
