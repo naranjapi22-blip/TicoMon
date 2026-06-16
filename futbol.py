@@ -560,7 +560,15 @@ def contar_jugadores_equipo(usuario_id):
 
 
 def mostrar_fuerza_equipo(usuario_id):
+    print(f"DEBUG calcular_fuerza_equipo({usuario_id})")
 
+    equipo = obtener_equipo_futbol(usuario_id)
+
+    print("DEBUG equipo =", equipo)
+
+    if not equipo:
+        print("DEBUG: no existe fila")
+        return None
     fuerza = calcular_fuerza_equipo(usuario_id)
 
     if not fuerza:
