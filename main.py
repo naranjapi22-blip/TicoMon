@@ -51,6 +51,7 @@ from futbol import asignar_pokemon_a_equipo
 from futbol import obtener_equipo
 from futbol import nombre_pokemon_captura
 from futbol import crear_equipo
+from datetime import datetime, timedelta
 from evolutions import (
     get_evolutions,
     get_evolution_cost,
@@ -1093,9 +1094,51 @@ from vistas_safari import (
     VistaParticiparSafari,
     VistaApuestasSafari
 )
+from datetime import datetime, timedelta
+from database import get_connection
 @bot.command()
 @canal_restringido()
 async def safari(ctx):
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+
+        cursor.execute("""
+            SELECT ultimo_safari
+            FROM safari_cooldowns
+            WHERE guild_id = %s
+        """, (ctx.guild.id,))
+
+        resultado = cursor.fetchone()
+
+        if resultado:
+
+            ultimo_safari = resultado[0]
+
+            disponible_en = ultimo_safari + timedelta(hours=2)
+
+            ahora = datetime.utcnow()
+
+            if ahora < disponible_en:
+
+                restante = disponible_en - ahora
+
+                total_segundos = int(restante.total_seconds())
+
+                horas = total_segundos // 3600
+                minutos = (total_segundos % 3600) // 60
+
+                return await ctx.send(
+                    f"🚙 El Safari está descansando.\n"
+                    f"⏳ Disponible nuevamente en **{horas}h {minutos}m**."
+                )
+
+    finally:
+
+        cursor.close()
+        conn.close()
 
     safari = obtener_safari(
         ctx.guild.id
@@ -1139,19 +1182,15 @@ async def safari(ctx):
 
     view.message = mensaje
 
-    # -------------------------
-    # ESPERA INSCRIPCIONES
-    # -------------------------
-
     await asyncio.sleep(60)
 
     participantes = safari.cantidad_participantes()
 
-    if participantes == 0:
+    if participantes < 2:
 
         await ctx.send(
-            "🚙 Nadie abordó la camioneta.\n"
-            "El Safari fue cancelado."
+            "🚙 No se reunieron suficientes entrenadores.\n"
+            "Se necesitan al menos **2 participantes** para iniciar el Safari."
         )
 
         await safari.finalizar_safari()
@@ -1162,12 +1201,38 @@ async def safari(ctx):
 
         return
 
+    # ==========================
+    # GUARDAR COOLDOWN AQUÍ
+    # ==========================
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+
+        cursor.execute("""
+            INSERT INTO safari_cooldowns
+            (guild_id, ultimo_safari)
+            VALUES (%s, NOW())
+            ON CONFLICT (guild_id)
+            DO UPDATE
+            SET ultimo_safari = NOW()
+        """, (ctx.guild.id,))
+
+        conn.commit()
+
+    finally:
+
+        cursor.close()
+        conn.close()
+
     await ctx.send(
         f"🚙 El Safari ha comenzado.\n\n"
+        f"👥 Participantes: {participantes}\n"
         f"🌎 Región: {safari.region_actual}"
     )
+
     await safari.ejecutar_safari()
-    return
 @bot.command()
 @commands.is_owner()
 async def stress(ctx, cantidad: int = 100):
