@@ -48,6 +48,7 @@ from simulador_futbol import (
 )
 from futbol import captura_pertenece_usuario
 from futbol import asignar_pokemon_a_equipo
+from futbol import obtener_equipo
 database.init_db()
 # 1. CONFIGURACIÓN
 load_dotenv()
@@ -1291,3 +1292,30 @@ async def addequipo(ctx, captura_id: int, posicion: str):
 
     await ctx.send(f"✅ Pokémon añadido a {posicion}")
 bot.run(TOKEN)
+@bot.command()
+@canal_restringido()
+async def equipo(ctx):
+
+    data = obtener_equipo(ctx.author.id)
+
+    if not data:
+        return await ctx.send("❌ No tienes equipo creado")
+
+    texto = "⚽ TU EQUIPO\n\n"
+
+    for pos in [
+        "portero",
+        "defensa_1", "defensa_2", "defensa_3", "defensa_4",
+        "medio_1", "medio_2", "medio_3", "medio_4",
+        "delantero_1", "delantero_2"
+    ]:
+
+        pokemon = data.get(pos)
+
+        if pokemon:
+            nombre = nombre_pokemon_captura(pokemon)
+            texto += f"{pos}: {nombre}\n"
+        else:
+            texto += f"{pos}: vacío\n"
+
+    await ctx.send(texto)

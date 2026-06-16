@@ -688,3 +688,31 @@ def asignar_pokemon_a_equipo(usuario_id, captura_id, posicion):
     conn.commit()
     cursor.close()
     conn.close()
+def obtener_equipo(usuario_id):
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT *
+        FROM equipos_futbol
+        WHERE usuario_id = %s
+    """, (usuario_id,))
+
+    row = cursor.fetchone()
+
+    conn.close()
+
+    if not row:
+        return None
+
+    columnas = [
+        "usuario_id",
+        "portero",
+        "defensa_1", "defensa_2", "defensa_3", "defensa_4",
+        "medio_1", "medio_2", "medio_3", "medio_4",
+        "delantero_1", "delantero_2",
+        "fecha_creacion"
+    ]
+
+    return dict(zip(columnas, row))
