@@ -37,25 +37,20 @@ def precargar_capturas():
 
     global CACHE_CAPTURAS
     CACHE_CAPTURAS = {r[0]: r for r in rows}
-def crear_equipo_futbol(usuario_id):
-    try:
-        conn = get_connection()
-        cursor = conn.cursor()
+def crear_equipo(usuario_id):
 
-        cursor.execute("""
-            INSERT INTO equipos_futbol (usuario_id)
-            VALUES (%s)
-            ON CONFLICT (usuario_id) DO NOTHING
-        """, (usuario_id,))
+    conn = get_connection()
+    cursor = conn.cursor()
 
-        conn.commit()
-        conn.close()
+    cursor.execute("""
+        INSERT INTO equipos_futbol (usuario_id)
+        VALUES (%s)
+        ON CONFLICT (usuario_id) DO NOTHING
+    """, (usuario_id,))
 
-
-
-    except Exception as e:
-        print(f"❌ Error: {e}")
-
+    conn.commit()
+    cursor.close()
+    conn.close()
 
 
 
@@ -677,19 +672,18 @@ def ordenar_equipo_por_formacion(equipo):
         for pos in orden
         if pos in equipo
     }
-def asignar_pokemon_a_equipo(user_id, captura_id, slot):
+def asignar_pokemon_a_equipo(usuario_id, captura_id, posicion):
 
     conn = get_connection()
     cursor = conn.cursor()
 
-    query = """
-    INSERT INTO equipos_futbol (user_id, slot, captura_id)
-    VALUES (%s, %s, %s)
-    ON CONFLICT (user_id, slot)
-    DO UPDATE SET captura_id = EXCLUDED.captura_id
+    query = f"""
+        UPDATE equipos_futbol
+        SET {posicion} = %s
+        WHERE usuario_id = %s
     """
 
-    cursor.execute(query, (user_id, slot, captura_id))
+    cursor.execute(query, (captura_id, usuario_id))
 
     conn.commit()
     cursor.close()
