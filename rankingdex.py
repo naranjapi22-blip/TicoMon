@@ -29,6 +29,17 @@ def iniciar_modulo_ranking(bot):
 
             ranking = cursor.fetchall()
 
+            usuarios_servidor = {
+                str(m.id)
+                for m in ctx.guild.members
+                if not m.bot
+            }
+
+            ranking = [
+                fila
+                for fila in ranking
+                if str(fila[0]) in usuarios_servidor
+            ]
             if not ranking:
                 await ctx.send(
                     "❌ No hay datos suficientes para generar el ranking."
