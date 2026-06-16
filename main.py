@@ -1160,7 +1160,8 @@ async def partido(ctx, rival_id: int):
 
     try:
         rival_user = await bot.fetch_user(rival_id)
-    except:
+
+    except Exception:
         return await ctx.send("❌ Usuario no encontrado")
 
     usuario_b = rival_user.id
@@ -1171,29 +1172,58 @@ async def partido(ctx, rival_id: int):
         return await ctx.send("❌ Error al generar el partido")
 
     mensaje = await ctx.send(
-        f"⚽ {ctx.author.name} vs {rival_user.name}\n\n⏳ Iniciando..."
+        f"⚽ {ctx.author.name} vs {rival_user.name}\n\n⏳ Iniciando partido..."
     )
 
-    texto = ""
+    # 🔥 listas separadas por equipo
+    linea_a = []
+    linea_b = []
 
     for evento in resultado["eventos"]:
 
         await asyncio.sleep(2)
 
-        texto += formatear_evento(evento) + "\n"
+        linea = formatear_evento(evento)
+
+        if evento["equipo"] == "A":
+            linea_a.append(linea)
+        else:
+            linea_b.append(linea)
+
+        # construir timeline tipo 2 columnas
+        max_len = max(len(linea_a), len(linea_b))
+
+        timeline = ""
+
+        for i in range(max_len):
+
+            izquierda = linea_a[i] if i < len(linea_a) else ""
+            derecha = linea_b[i] if i < len(linea_b) else ""
+
+            timeline += f"{izquierda:<40} {derecha}\n"
 
         await mensaje.edit(
-            content=f"⚽ {ctx.author.name} vs {rival_user.name}\n\n{texto}\n🏁 En juego..."
+            content=
+            f"⚽ {ctx.author.name} vs {rival_user.name}\n\n"
+            f"{timeline}\n"
+            f"🏁 En juego..."
         )
 
+    # 🏁 FINAL
     await mensaje.edit(
-        content=f"""
-🏁 FINAL
+        content=
+        f"""🏁 FINAL DEL PARTIDO
 
 {ctx.author.name} {resultado['goles_a']} - {resultado['goles_b']} {rival_user.name}
 
-📊 Posesión: {resultado['posesion_a']}% - {resultado['posesion_b']}%
-📊 Ocasiones: {resultado['ocasiones_a']} - {resultado['ocasiones_b']}
+📊 Estadísticas
+
+Posesión: {resultado['posesion_a']}% - {resultado['posesion_b']}%
+Ocasiones: {resultado['ocasiones_a']} - {resultado['ocasiones_b']}
+
+────────────────────────
+
+{timeline}
 """
     )
 bot.run(TOKEN)

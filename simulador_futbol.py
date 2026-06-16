@@ -1,5 +1,30 @@
 import random
+def formatear_timeline(resultado, nombre_a, nombre_b):
 
+    lineas_a = []
+    lineas_b = []
+
+    for evento in resultado["eventos"]:
+
+        texto = formatear_evento(evento)
+
+        if evento["equipo"] == "A":
+            lineas_a.append(f"{evento['minuto']}' {texto}")
+        else:
+            lineas_b.append(f"{evento['minuto']}' {texto}")
+
+    max_len = max(len(lineas_a), len(lineas_b))
+
+    texto = f"{nombre_a:<15} vs {nombre_b}\n\n"
+
+    for i in range(max_len):
+
+        izquierda = lineas_a[i] if i < len(lineas_a) else ""
+        derecha = lineas_b[i] if i < len(lineas_b) else ""
+
+        texto += f"{izquierda:<35} {derecha}\n"
+
+    return texto
 def calcular_posesion(med_a, med_b):
 
     total = med_a + med_b
@@ -122,7 +147,7 @@ def elegir_goleador(delanteros, medios):
     return random.choice(candidatos)
 
 def simular_partido_usuarios(usuario_a, usuario_b):
-
+    
     fuerza_a = calcular_fuerza_equipo(usuario_a)
     fuerza_b = calcular_fuerza_equipo(usuario_b)
 
