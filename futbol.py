@@ -153,7 +153,7 @@ def pokemon_ya_en_equipo(usuario_id, pokemon_id):
 def mostrar_equipo_futbol(usuario_id):
 
     equipo = obtener_equipo_futbol(usuario_id)
-
+    equipo = ordenar_equipo_por_formacion(equipo)
     if not equipo:
         return "No tiene equipo."
 
@@ -407,7 +407,7 @@ def safe_promedio(lista):
 def calcular_fuerza_equipo(usuario_id):
 
     equipo = obtener_equipo_futbol(usuario_id)
-
+    equipo = ordenar_equipo_por_formacion(equipo)
     if not equipo:
         return None
 
@@ -676,3 +676,17 @@ def limpiar_nombre(nombre):
     nombre = nombre.lower()
 
     return FORMAS_BASE.get(nombre, nombre).capitalize()
+def ordenar_equipo_por_formacion(equipo):
+
+    orden = [
+        "portero",
+        "defensa_1", "defensa_2", "defensa_3", "defensa_4",
+        "medio_1", "medio_2", "medio_3", "medio_4",
+        "delantero_1", "delantero_2"
+    ]
+
+    return {
+        pos: equipo[pos]
+        for pos in orden
+        if pos in equipo
+    }
