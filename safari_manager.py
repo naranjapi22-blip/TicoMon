@@ -671,6 +671,8 @@ class SafariManager:
         encuentro_numero
     ):
 
+        from vistas_safari import VistaDecisionSafari
+
         info = self.mapa_eventos.get(
             encuentro_numero
         )
@@ -682,9 +684,52 @@ class SafariManager:
             ["izquierda", "derecha"]
         )
 
-        lado_elegido = random.choice(
-            ["izquierda", "derecha"]
+        embed = discord.Embed(
+            title="🚙 Bifurcación en el camino",
+            description=(
+                "La expedición encuentra dos rutas.\n\n"
+                "⏳ Tienen 20 segundos para votar."
+            ),
+            color=discord.Color.gold()
         )
+
+        view = VistaDecisionSafari()
+
+        mensaje = await self.canal.send(
+            embed=embed,
+            view=view
+        )
+
+        await asyncio.sleep(20)
+
+        try:
+            await mensaje.edit(
+                view=None
+            )
+        except:
+            pass
+
+        votos_izquierda = view.votos[
+            "izquierda"
+        ]
+
+        votos_derecha = view.votos[
+            "derecha"
+        ]
+
+        if votos_izquierda == votos_derecha:
+
+            lado_elegido = random.choice(
+                ["izquierda", "derecha"]
+            )
+
+        elif votos_izquierda > votos_derecha:
+
+            lado_elegido = "izquierda"
+
+        else:
+
+            lado_elegido = "derecha"
 
         info["activo"] = (
             lado_elegido == lado_correcto

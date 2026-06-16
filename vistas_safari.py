@@ -255,3 +255,93 @@ class VistaSeleccionPokemon(discord.ui.View):
                 )
         except Exception:
             pass
+class VistaDecisionSafari(discord.ui.View):
+
+    def __init__(self):
+        self.add_item(
+            BotonIzquierda()
+        )
+
+        self.add_item(
+            BotonDerecha()
+        )
+        super().__init__(
+            timeout=20
+        )
+
+        self.votos = {
+            "izquierda": 0,
+            "derecha": 0
+        }
+
+        self.votantes = set()
+
+        self.resultado = None
+class BotonIzquierda(discord.ui.Button):
+
+    def __init__(self):
+
+        super().__init__(
+            label="Sendero estrecho",
+            emoji="🌲",
+            style=discord.ButtonStyle.primary
+        )
+
+    async def callback(
+        self,
+        interaction
+    ):
+
+        view = self.view
+
+        if interaction.user.id in view.votantes:
+
+            return await interaction.response.send_message(
+                "Ya votaste.",
+                ephemeral=True
+            )
+
+        view.votantes.add(
+            interaction.user.id
+        )
+
+        view.votos["izquierda"] += 1
+
+        await interaction.response.send_message(
+            "Votaste por el sendero estrecho.",
+            ephemeral=True
+        )
+class BotonDerecha(discord.ui.Button):
+
+    def __init__(self):
+
+        super().__init__(
+            label="Camino principal",
+            emoji="🛣️",
+            style=discord.ButtonStyle.success
+        )
+
+    async def callback(
+        self,
+        interaction
+    ):
+
+        view = self.view
+
+        if interaction.user.id in view.votantes:
+
+            return await interaction.response.send_message(
+                "Ya votaste.",
+                ephemeral=True
+            )
+
+        view.votantes.add(
+            interaction.user.id
+        )
+
+        view.votos["derecha"] += 1
+
+        await interaction.response.send_message(
+            "Votaste por el camino principal.",
+            ephemeral=True
+        )
