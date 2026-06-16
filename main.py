@@ -47,6 +47,7 @@ from simulador_futbol import (
     formatear_evento
 )
 from futbol import captura_pertenece_usuario
+from futbol import asignar_pokemon_a_equipo
 database.init_db()
 # 1. CONFIGURACIÓN
 load_dotenv()
