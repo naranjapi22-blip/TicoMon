@@ -716,7 +716,10 @@ class SafariManager:
         votos_derecha = view.votos[
             "derecha"
         ]
-
+        print(
+            f"VOTOS IZQ={votos_izquierda} "
+            f"DER={votos_derecha}"
+        )
         if votos_izquierda == votos_derecha:
 
             lado_elegido = random.choice(
