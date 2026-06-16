@@ -628,7 +628,7 @@ class ComandosView(discord.ui.View):
                 "`!inventario`\n"
                 "`!caramelos`\n"
                 "`!info <id>`\n"
-                "`!destacar <id>`"
+                "`!destacar <id>``\n"
                 "`!ivs <id>`"
             ),
             inline=False
