@@ -26,6 +26,15 @@ _cache_imagenes = TTLCache(maxsize=600, ttl=3600)
 
 # --- FUNCIÓN AUXILIAR PARA GENERAR HIERBA ALTA ---
 
+_cache_imagenes = TTLCache(
+    maxsize=600,
+    ttl=3600
+)
+
+pokemon_cache = TTLCache(
+    maxsize=2000,
+    ttl=86400
+)
 async def obtener_pokemon(session, nombre_o_id):
     print(f"🌐 POKEAPI -> {nombre_o_id}")
     try:
