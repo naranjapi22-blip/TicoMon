@@ -1159,13 +1159,21 @@ async def stress(ctx, cantidad: int = 100):
 
 @bot.command()
 @canal_restringido()
-async def partido(ctx, rival_id: int):
+async def partido(ctx, rival):
+
+    import random
+    import asyncio
 
     usuario_a = ctx.author.id
 
+    # 🔥 CONVERTIR RIVAL CORRECTAMENTE
     try:
-        rival_user = await bot.fetch_user(rival_id)
-    except:
+        if isinstance(rival, int) or str(rival).isdigit():
+            rival_user = await bot.fetch_user(int(rival))
+        else:
+            rival_user = rival  # ya es discord.User
+
+    except Exception:
         return await ctx.send("❌ Usuario no encontrado")
 
     usuario_b = rival_user.id
@@ -1175,7 +1183,6 @@ async def partido(ctx, rival_id: int):
     if "error" in resultado:
         return await ctx.send("❌ Error al generar el partido")
 
-    # 🔥 embed base
     embed = discord.Embed(
         title="⚽ Partido en vivo",
         description=f"{ctx.author.name} vs {rival_user.name}",
@@ -1196,22 +1203,18 @@ async def partido(ctx, rival_id: int):
 
     msg = await ctx.send(embed=embed)
 
-    # 🔥 MARCADOR REAL
     goles_a = 0
     goles_b = 0
 
-    # 🔥 COLUMNAS FIJAS
     linea_a = []
     linea_b = []
 
-    # ⚽ ORDENAR EVENTOS POR MINUTO (IMPORTANTE)
     eventos = sorted(resultado["eventos"], key=lambda e: e["minuto"])
 
     for e in eventos:
 
         await asyncio.sleep(random.uniform(2.5, 5.0))
 
-        # 🔥 actualizar marcador si es gol
         if e["tipo"] == "gol":
             if e["equipo"] == "A":
                 goles_a += 1
@@ -1220,7 +1223,6 @@ async def partido(ctx, rival_id: int):
 
         texto = f"{e['minuto']}' {formatear_evento(e)}"
 
-        # 🔥 RESERVAR ESPACIO SIEMPRE (CLAVE)
         if e["equipo"] == "A":
             linea_a.append(texto)
             linea_b.append("")
@@ -1228,23 +1230,15 @@ async def partido(ctx, rival_id: int):
             linea_a.append("")
             linea_b.append(texto)
 
-        # 🔥 construir timeline estable
-        max_len = len(linea_a)
-
         timeline = ""
-
-        # 🔥 CABECERA FIJA (evita confusión visual)
         timeline += f"{ctx.author.name} (A){'':<30}{rival_user.name} (B)\n"
         timeline += "─" * 70 + "\n"
 
-        for i in range(max_len):
-
+        for i in range(len(linea_a)):
             left = linea_a[i]
             right = linea_b[i]
-
             timeline += f"{left:<35}{right}\n"
 
-        # 🔥 marcador actualizado real
         marcador = f"{ctx.author.name} {goles_a} - {goles_b} {rival_user.name}"
 
         embed.set_field_at(
@@ -1263,7 +1257,6 @@ async def partido(ctx, rival_id: int):
 
         await msg.edit(embed=embed)
 
-    # 🏁 FINAL
     embed.add_field(
         name="🏁 FINAL DEL PARTIDO",
         value=(
