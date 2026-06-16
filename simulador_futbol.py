@@ -174,13 +174,18 @@ def simular_partido_usuarios(usuario_a, usuario_b):
             captura = elegir_jugador_evento(jugadores_a)
         else:
             captura = elegir_jugador_evento(jugadores_b)
-    if not evitar_repeticion(eventos, jugador, minuto):
-        eventos.append({
-            "tipo": "amarilla",
-            "minuto": minuto_libre(eventos),
-            "equipo": equipo,
-            "jugador": nombre_pokemon_captura(captura)
-        })
+
+        jugador = nombre_pokemon_captura(captura)
+        minuto = minuto_libre(eventos)
+
+        if not evitar_repeticion(eventos, jugador, minuto):
+
+            eventos.append({
+                "tipo": "amarilla",
+                "minuto": minuto,
+                "equipo": equipo,
+                "jugador": jugador
+            })
     cantidad_rojas = random.randint(0, 1)
 
     for _ in range(cantidad_rojas):
@@ -213,14 +218,18 @@ def simular_partido_usuarios(usuario_a, usuario_b):
             captura = elegir_jugador_evento(jugadores_a)
         else:
             captura = elegir_jugador_evento(jugadores_b)
-    if not evitar_repeticion(eventos, jugador, minuto):
 
-        eventos.append({
-            "tipo": "falta",
-            "minuto": minuto_libre(eventos),
-            "equipo": equipo,
-            "jugador": nombre_pokemon_captura(captura)
-        })
+        jugador = nombre_pokemon_captura(captura)
+        minuto = minuto_libre(eventos)
+
+        if not evitar_repeticion(eventos, jugador, minuto):
+
+            eventos.append({
+                "tipo": "falta",
+                "minuto": minuto,
+                "equipo": equipo,
+                "jugador": jugador
+            })
     cantidad_postes = random.randint(0, 2)
 
     for _ in range(cantidad_postes):
@@ -231,13 +240,18 @@ def simular_partido_usuarios(usuario_a, usuario_b):
             captura = elegir_jugador_evento(jugadores_a)
         else:
             captura = elegir_jugador_evento(jugadores_b)
-    if not evitar_repeticion(eventos, jugador, minuto):
-        eventos.append({
-            "tipo": "poste",
-            "minuto": minuto_libre(eventos),
-            "equipo": equipo,
-            "jugador": nombre_pokemon_captura(captura)
-        })
+
+        jugador = nombre_pokemon_captura(captura)
+        minuto = minuto_libre(eventos)
+
+        if not evitar_repeticion(eventos, jugador, minuto):
+
+            eventos.append({
+                "tipo": "poste",
+                "minuto": minuto,
+                "equipo": equipo,
+                "jugador": jugador
+            })
     cantidad_paradas = random.randint(0, 3)
 
     for _ in range(cantidad_paradas):
