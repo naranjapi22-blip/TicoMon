@@ -1183,7 +1183,8 @@ async def partido(ctx, rival):
         return await ctx.send(f"❌ Usuario no encontrado: {e}")
 
     usuario_b = rival_user.id
-
+    print(type(usuario_a), usuario_a)
+    print(type(usuario_b), usuario_b)
     # 🔥 DEBUG REAL (IMPORTANTE)
     try:
         resultado = simular_partido_usuarios(usuario_a, usuario_b)
