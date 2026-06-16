@@ -629,6 +629,7 @@ class ComandosView(discord.ui.View):
                 "`!caramelos`\n"
                 "`!info <id>`\n"
                 "`!destacar <id>`"
+                "`!ivs <id>`"
             ),
             inline=False
         )
@@ -639,7 +640,6 @@ class ComandosView(discord.ui.View):
                 "`!evolucionar <id>`\n"
                 "`!elegir <id> <opción>`\n"
                 "`!liberar <id>`\n"
-                "`!ivs`\n"
                 "`!top`\n"
                 "`!records`\n"
                 "`!misrecords`"
