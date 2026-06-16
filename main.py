@@ -1200,28 +1200,24 @@ async def partido(ctx, rival_id: int):
     linea_b = []
 
     # ⚽ LOOP DE EVENTOS
+    linea_a = []
+    linea_b = []
+
     for evento in resultado["eventos"]:
 
         await asyncio.sleep(2)
 
-        # 🔥 actualizar marcador si es gol
-        if evento["tipo"] == "gol":
-
-            if evento["equipo"] == "A":
-                goles_a += 1
-            else:
-                goles_b += 1
-
-        # 🧾 construir línea evento
         linea = f"{evento['minuto']}' {formatear_evento(evento)}"
 
         if evento["equipo"] == "A":
             linea_a.append(linea)
+            linea_b.append("")  # 🔥 reserva espacio
         else:
             linea_b.append(linea)
+            linea_a.append("")  # 🔥 reserva espacio
 
-        # 📺 timeline tipo match center
-        max_len = max(len(linea_a), len(linea_b))
+        # 🔥 mantener mismo tamaño SIEMPRE
+        max_len = max(len(linea_a), 1)
 
         timeline = ""
 
@@ -1231,16 +1227,6 @@ async def partido(ctx, rival_id: int):
             right = linea_b[i] if i < len(linea_b) else ""
 
             timeline += f"{left:<45}{right}\n"
-
-        # 🔴 marcador actualizado
-        marcador = f"{ctx.author.name} {goles_a} - {goles_b} {rival_user.name}"
-
-        embed.set_field_at(
-            0,
-            name="🔴 Marcador",
-            value=marcador,
-            inline=False
-        )
 
         embed.set_field_at(
             1,
