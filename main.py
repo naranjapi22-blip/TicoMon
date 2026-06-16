@@ -628,12 +628,11 @@ class ComandosView(discord.ui.View):
                 "`!inventario`\n"
                 "`!caramelos`\n"
                 "`!info <id>`\n"
-                "`!destacar <id>``\n"
+                "`!destacar <id>`\n"
                 "`!ivs <id>`"
             ),
             inline=False
         )
-
         embed.add_field(
             name="🧬 Evolución y Records",
             value=(
