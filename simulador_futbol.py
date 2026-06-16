@@ -160,6 +160,7 @@ def simular_partido_usuarios(usuario_a, usuario_b):
     fuerza_b = calcular_fuerza_equipo(usuario_b)
 
     if fuerza_a is None or fuerza_b is None:
+        print("DEBUG EQUIPO:", equipo)
         return {"error": "Equipo inválido"}
 
     jugadores_a = obtener_jugadores_equipo(usuario_a)
