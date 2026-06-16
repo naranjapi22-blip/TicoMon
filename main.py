@@ -1195,13 +1195,11 @@ async def partido(ctx, rival_id: int):
 
     msg = await ctx.send(embed=embed)
 
-    # 📊 listas separadas por equipo
     linea_a = []
     linea_b = []
 
-    # ⚽ LOOP DE EVENTOS
-    linea_a = []
-    linea_b = []
+    goles_a = 0
+    goles_b = 0
 
     for evento in resultado["eventos"]:
 
@@ -1209,24 +1207,42 @@ async def partido(ctx, rival_id: int):
 
         linea = f"{evento['minuto']}' {formatear_evento(evento)}"
 
+        # 🔥 actualizar marcador REAL
+        if evento["tipo"] == "gol":
+            if evento["equipo"] == "A":
+                goles_a += 1
+            else:
+                goles_b += 1
+
+        # 🔥 separar por equipo
         if evento["equipo"] == "A":
             linea_a.append(linea)
-            linea_b.append("")  # 🔥 reserva espacio
         else:
             linea_b.append(linea)
-            linea_a.append("")  # 🔥 reserva espacio
 
-        # 🔥 mantener mismo tamaño SIEMPRE
-        max_len = max(len(linea_a), 1)
+        # 🔥 construir columnas CON CABECERA FIJA
+        max_len = max(len(linea_a), len(linea_b), 1)
 
         timeline = ""
+
+        # 🔥 CABECERA FIJA (esto evita desorientación visual)
+        timeline += f"{ctx.author.name} (A){'':<30}{rival_user.name} (B)\n"
+        timeline += "─" * 70 + "\n"
 
         for i in range(max_len):
 
             left = linea_a[i] if i < len(linea_a) else ""
             right = linea_b[i] if i < len(linea_b) else ""
 
-            timeline += f"{left:<45}{right}\n"
+            timeline += f"{left:<35}{right}\n"
+
+        # 🔥 marcador sincronizado REAL
+        embed.set_field_at(
+            0,
+            name="🔴 Marcador",
+            value=f"{ctx.author.name} {goles_a} - {goles_b} {rival_user.name}",
+            inline=False
+        )
 
         embed.set_field_at(
             1,
@@ -1236,8 +1252,6 @@ async def partido(ctx, rival_id: int):
         )
 
         await msg.edit(embed=embed)
-
-    # 🏁 FINAL
     embed.add_field(
         name="🏁 FINAL DEL PARTIDO",
         value=(
@@ -1247,6 +1261,4 @@ async def partido(ctx, rival_id: int):
         ),
         inline=False
     )
-
-    await msg.edit(embed=embed)
 bot.run(TOKEN)
