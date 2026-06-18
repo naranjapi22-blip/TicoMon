@@ -288,7 +288,7 @@ class SelectorPokemonTrade(discord.ui.View):
             )
 
             self.pokemones = cursor.fetchall()
-
+            print(f"[TRADE] Pokemon encontrados: {len(self.pokemones)}")
         finally:
             cursor.close()
             conn.close()
@@ -330,6 +330,19 @@ class SelectorPokemonTrade(discord.ui.View):
                     value=str(pokemon_id)
                 )
             )
+
+        print(f"[TRADE] Pokemon encontrados: {len(self.pokemones)}")
+        print(f"[TRADE] Opciones creadas: {len(opciones)}")
+
+        if not opciones:
+
+            opciones.append(
+                discord.SelectOption(
+                    label="No se encontraron Pokémon",
+                    value="0"
+                )
+            )
+
         self.select = discord.ui.Select(
             placeholder="📦 Selecciona un Pokémon",
             min_values=1,
