@@ -1102,3 +1102,26 @@ def actualizar_stats_pokemon(
 
         cursor.close()
         conn.close()
+def obtener_duplicados(user_id, limite=10):
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT
+            pokemon_nombre,
+            COUNT(*) as cantidad
+        FROM capturas
+        WHERE user_id = %s
+        GROUP BY pokemon_nombre
+        HAVING COUNT(*) > 1
+        ORDER BY cantidad DESC
+        LIMIT %s
+    """, (str(user_id), limite))
+
+    resultado = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    return resultado        
