@@ -959,10 +959,15 @@ def obtener_id_pokemon(nombre):
         return None
 
     return pokemon["id"]
+pokemon_por_id = {}
+id_por_nombre = {}
+
 def cargar_cache_pokemon():
 
     global POKEMON_CACHE
     global POKEMON_CACHE_NOMBRE
+    global pokemon_por_id
+    global id_por_nombre
 
     conn = get_connection()
     cursor = conn.cursor()
@@ -992,6 +997,10 @@ def cargar_cache_pokemon():
 
         POKEMON_CACHE.clear()
         POKEMON_CACHE_NOMBRE.clear()
+
+        pokemon_por_id.clear()
+        id_por_nombre.clear()
+
         for fila in filas:
 
             pokemon = {
@@ -1001,7 +1010,6 @@ def cargar_cache_pokemon():
                 "capture_rate": fila[3],
                 "es_legendario": fila[4],
                 "es_mitico": fila[5],
-
                 "hp": fila[6],
                 "attack": fila[7],
                 "defense": fila[8],
@@ -1012,11 +1020,19 @@ def cargar_cache_pokemon():
                 "weight": fila[13]
             }
 
+            # Caché completa
             POKEMON_CACHE[fila[0]] = pokemon
 
             POKEMON_CACHE_NOMBRE[
                 fila[1].lower()
             ] = pokemon
+
+            # Caché rápida nombre <-> id
+            pokemon_por_id[fila[0]] = fila[1]
+
+            id_por_nombre[
+                fila[1].lower()
+            ] = fila[0]
 
         log.info(
             f"✅ Cache Pokémon cargada: "
@@ -1127,36 +1143,7 @@ def obtener_duplicados(user_id, limite=25):
     conn.close()
 
     return resultado        
-def cargar_cache_pokemon():
 
-    global pokemon_por_id
-    global id_por_nombre
-
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    cursor.execute("""
-        SELECT id, nombre
-        FROM pokemon_data
-    """)
-
-    filas = cursor.fetchall()
-
-    pokemon_por_id.clear()
-    id_por_nombre.clear()
-
-    for pokemon_id, nombre in filas:
-
-        pokemon_por_id[pokemon_id] = nombre
-        id_por_nombre[nombre.lower()] = pokemon_id
-
-    cursor.close()
-    conn.close()
-
-    print(
-        f"✅ Cache nombres cargada: "
-        f"{len(pokemon_por_id)} Pokémon"
-    )
 
 def obtener_nombre_local(id_pokemon):
 
@@ -1164,6 +1151,8 @@ def obtener_nombre_local(id_pokemon):
         id_pokemon,
         "???"
     )
+
+
 def obtener_id_local(nombre):
 
     return id_por_nombre.get(

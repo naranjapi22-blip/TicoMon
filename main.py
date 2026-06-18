@@ -132,6 +132,7 @@ async def on_ready():
     print("Entrando en on_ready")
     await inicializar_rarezas_spawn()
     print("Terminó inicializar_rarezas_spawn")
+    database.init_db()
     database.cargar_cache_pokemon()
     print("✅ Cache Pokémon cargada")
     #print("✅ Pokémon clasificados por rareza.")
@@ -142,7 +143,7 @@ async def on_ready():
     iniciar_modulo_ranking(bot)
     iniciar_modulo_ranking_legend(bot)
     iniciar_modulo_ranking_shiny(bot)
-    await database.crear_tablas()
+    
     try:
         synced = await bot.tree.sync()
         log.info(f"✅ {len(synced)} slash command(s) sincronizados.")
@@ -1804,54 +1805,7 @@ async def elegir(ctx, id_pokemon: int, opcion: int):
 
         cursor.close()
         conn.close()
-@bot.command()
-async def duplicados(ctx):
 
-    duplicados = database.obtener_duplicados(
-        ctx.author.id
-    )
-
-    if not duplicados:
-
-        return await ctx.send(
-            "🎉 No tienes Pokémon duplicados."
-        )
-
-    descripcion = ""
-
-    medallas = [
-        "🥇",
-        "🥈",
-        "🥉"
-    ]
-
-    for i, (nombre, cantidad) in enumerate(
-        duplicados,
-        start=1
-    ):
-
-        if i <= 3:
-            puesto = medallas[i - 1]
-        else:
-            puesto = f"{i}."
-
-        descripcion += (
-            f"{puesto} "
-            f"**{nombre.capitalize()}** "
-            f"x{cantidad}\n"
-        )
-
-    embed = discord.Embed(
-        title="📦 Pokémon más repetidos",
-        description=descripcion,
-        color=discord.Color.orange()
-    )
-
-    embed.set_footer(
-        text="Tus Pokémon con más copias."
-    )
-
-    await ctx.send(embed=embed)
 
 
 bot.run(TOKEN)
