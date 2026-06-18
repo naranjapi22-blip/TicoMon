@@ -343,6 +343,7 @@ class VistaSituacionSafari(discord.ui.View):
         self.situacion = situacion
         self.votos_a = 0
         self.votos_b = 0
+        self.votos_c = 0
         self.votantes = set()
         self.modificador_ganador = {}
 
@@ -355,13 +356,16 @@ class VistaSituacionSafari(discord.ui.View):
             label=situacion["opcion_b"],
             style=discord.ButtonStyle.secondary
         )
-
+        btn_c = discord.ui.Button(
+            label=situacion["opcion_c"],
+            style=discord.ButtonStyle.primary
+        )
         btn_a.callback = self.votar_a
         btn_b.callback = self.votar_b
-
+        btn_c.callback = self.votar_c
         self.add_item(btn_a)
         self.add_item(btn_b)
-
+        self.add_item(btn_c)
     async def votar_a(
         self,
         interaction: discord.Interaction
@@ -407,37 +411,67 @@ class VistaSituacionSafari(discord.ui.View):
             f"✅ Votaste por: {self.situacion['opcion_b']}",
             ephemeral=True
         )
+        async def votar_c(
+            self,
+            interaction: discord.Interaction
+        ):
 
+            if interaction.user.id in self.votantes:
+
+                return await interaction.response.send_message(
+                    "❌ Ya votaste.",
+                    ephemeral=True
+                )
+
+            self.votantes.add(
+                interaction.user.id
+            )
+
+            self.votos_c += 1
+
+            await interaction.response.send_message(
+                f"✅ Votaste por: {self.situacion['opcion_c']}",
+                ephemeral=True
+            )
     def resolver_resultado(self):
 
-        if self.votos_a > self.votos_b:
+        votos = {
+            "A": self.votos_a,
+            "B": self.votos_b,
+            "C": self.votos_c
+        }
+
+        max_votos = max(
+            votos.values()
+        )
+
+        ganadores = [
+            opcion
+            for opcion, cantidad
+            in votos.items()
+            if cantidad == max_votos
+        ]
+
+        resultado = random.choice(
+            ganadores
+        )
+
+        if resultado == "A":
 
             self.modificador_ganador = (
                 self.situacion["modificador_a"]
             )
 
-            return "A"
-
-        elif self.votos_b > self.votos_a:
+        elif resultado == "B":
 
             self.modificador_ganador = (
                 self.situacion["modificador_b"]
             )
-
-            return "B"
 
         else:
 
-            if random.choice([True, False]):
-
-                self.modificador_ganador = (
-                    self.situacion["modificador_a"]
-                )
-
-                return "A"
-
             self.modificador_ganador = (
-                self.situacion["modificador_b"]
+                self.situacion["modificador_c"]
             )
 
-            return "B"
+        return resultado

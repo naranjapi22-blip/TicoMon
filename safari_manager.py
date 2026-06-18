@@ -76,121 +76,181 @@ SITUACIONES_SAFARI = [
     {
         "id": "huellas",
         "texto": "🐾 Se observan huellas recientes.",
+
         "opcion_a": "🔍 Investigar",
-        "opcion_b": "🚙 Ignorar",
         "modificador_a": {
-            "guarida": 3,
-            "ruinas": 2
+            "guarida": 5,
+            "ruinas": 3
         },
+
+        "opcion_b": "📸 Documentar",
         "modificador_b": {
-            "migracion": 1
+            "ruinas": 5,
+            "yacimiento": 3
+        },
+
+        "opcion_c": "🚙 Continuar",
+        "modificador_c": {
+            "migracion": 2
         }
     },
 
     {
         "id": "bayas",
         "texto": "🍓 Un arbusto lleno de bayas.",
+
         "opcion_a": "🧺 Recoger",
-        "opcion_b": "🚙 Rodear",
         "modificador_a": {
-            "bosque": 3,
-            "migracion": 2
+            "bosque": 5,
+            "migracion": 3
         },
+
+        "opcion_b": "🍽️ Dejar comida cerca",
         "modificador_b": {
-            "rafaga": 1
+            "migracion": 5,
+            "arcoiris": 3
+        },
+
+        "opcion_c": "🚙 Continuar",
+        "modificador_c": {
+            "rafaga": 2
         }
     },
 
     {
         "id": "arbustos",
         "texto": "🌿 Crujidos extraños en el follaje.",
-        "opcion_a": "💥 Piedra",
-        "opcion_b": "🤫 Sigilo",
+
+        "opcion_a": "💥 Lanzar piedra",
         "modificador_a": {
-            "duelo": 3,
-            "pantano": 2
+            "duelo": 5,
+            "pantano": 3
         },
+
+        "opcion_b": "🤫 Acercarse con sigilo",
         "modificador_b": {
-            "noche": 2,
-            "distorsion": 1
+            "noche": 5,
+            "distorsion": 3
+        },
+
+        "opcion_c": "🚙 Continuar",
+        "modificador_c": {
+            "migracion": 2
         }
     },
 
     {
         "id": "rio",
         "texto": "🌊 Un río atraviesa la ruta.",
+
         "opcion_a": "🎣 Pescar",
-        "opcion_b": "🛶 Cruzar",
         "modificador_a": {
-            "lago": 3,
-            "migracion": 1
+            "lago": 5,
+            "migracion": 3
         },
+
+        "opcion_b": "🛶 Cruzar",
         "modificador_b": {
-            "rafaga": 2,
-            "lago": 1
+            "rafaga": 5,
+            "lago": 3
+        },
+
+        "opcion_c": "🚙 Buscar otro paso",
+        "modificador_c": {
+            "migracion": 2
         }
     },
 
     {
         "id": "cueva",
         "texto": "🕳️ La cueva emite un aire gélido.",
+
         "opcion_a": "🔦 Entrar",
-        "opcion_b": "🚶 Seguir",
         "modificador_a": {
-            "ventisca": 3,
-            "guarida": 2
+            "ventisca": 5,
+            "guarida": 3
         },
+
+        "opcion_b": "🪨 Examinar entrada",
         "modificador_b": {
-            "espejismo": 1
+            "yacimiento": 5,
+            "ruinas": 3
+        },
+
+        "opcion_c": "🚙 Continuar",
+        "modificador_c": {
+            "espejismo": 2
         }
     },
 
     {
         "id": "niebla",
         "texto": "🌫️ Una densa niebla cubre todo.",
-        "opcion_a": "💡 Bengalas",
-        "opcion_b": "🧭 A ciegas",
+
+        "opcion_a": "💡 Usar bengalas",
         "modificador_a": {
-            "distorsion": 3,
-            "noche": 2
+            "distorsion": 5,
+            "noche": 3
         },
+
+        "opcion_b": "🧭 Seguir rastros",
         "modificador_b": {
-            "espejismo": 2
+            "cementerio": 5,
+            "espejismo": 3
+        },
+
+        "opcion_c": "🚙 Esperar y continuar",
+        "modificador_c": {
+            "migracion": 2
         }
     },
 
     {
         "id": "rugido",
         "texto": "🔊 Un rugido sacude el área.",
-        "opcion_a": "⚔️ Preparar",
-        "opcion_b": "🏃 Refugio",
+
+        "opcion_a": "⚔️ Preparar combate",
         "modificador_a": {
-            "duelo": 3,
-            "guarida": 2
+            "duelo": 5,
+            "guarida": 3
         },
+
+        "opcion_b": "🏃 Buscar refugio",
         "modificador_b": {
-            "noche": 2,
-            "espejismo": 1,
-            "cementerio": 1
+            "cementerio": 5,
+            "noche": 3
+        },
+
+        "opcion_c": "🚙 Alejarse",
+        "modificador_c": {
+            "migracion": 2
         }
     },
 
     {
         "id": "campamento",
         "texto": "⛺ Restos de un campamento.",
+
         "opcion_a": "🍵 Descansar",
-        "opcion_b": "🎒 Registrar",
         "modificador_a": {
-            "arcoiris": 3,
-            "migracion": 2
+            "arcoiris": 5,
+            "migracion": 3
         },
+
+        "opcion_b": "🎒 Registrar suministros",
         "modificador_b": {
-            "ruinas": 3,
-            "yacimiento": 2
+            "ruinas": 5,
+            "yacimiento": 3
+        },
+
+        "opcion_c": "🚙 Continuar",
+        "modificador_c": {
+            "migracion": 2
         }
     }
-
 ]
+
+
 GUIAS_SAFARI = {
     "papel": {
         "nombre": "Papel",
@@ -593,107 +653,6 @@ class SafariManager:
         self.crear_encuentro(
             pokemons
         )
-        if evento == "migracion":
-
-            await self.canal.send(
-                "🐾 **Una migración Pokémon atraviesa la zona.**"
-            )
-
-        elif evento == "volcan":
-
-            await self.canal.send(
-                "🌋 **La ruta atraviesa una zona volcánica.**"
-            )
-
-        elif evento == "lago":
-
-            await self.canal.send(
-                "🌊 **La camioneta se desvía hacia un lago cercano.**"
-            )
-
-        elif evento == "bosque":
-
-            await self.canal.send(
-                "🍂 **El sendero se adentra en un bosque frondoso.**"
-            )
-
-        elif evento == "tormenta":
-
-            await self.canal.send(
-                "⚡ **Una tormenta eléctrica se aproxima.**"
-            )
-
-        elif evento == "ventisca":
-
-            await self.canal.send(
-                "❄️ **Una ventisca cubre el camino.**"
-            )
-
-        elif evento == "duelo":
-
-            await self.canal.send(
-                "⚔️ **Dos Pokémon parecen estar enfrentándose.**"
-            )
-
-        elif evento == "pantano":
-
-            await self.canal.send(
-                "☠️ **El terreno se vuelve fangoso y tóxico.**"
-            )
-
-        elif evento == "espejismo":
-
-            await self.canal.send(
-                "🏜️ **Un extraño espejismo aparece en el horizonte.**"
-            )
-
-        elif evento == "rafaga":
-
-            await self.canal.send(
-                "🌬️ **Fuertes ráfagas atraen Pokémon voladores.**"
-            )
-
-        elif evento == "distorsion":
-
-            await self.canal.send(
-                "🔮 **Una extraña energía altera el entorno.**"
-            )
-
-        elif evento == "yacimiento":
-
-            await self.canal.send(
-                "💎 **Han descubierto un yacimiento mineral.**"
-            )
-
-        elif evento == "cementerio":
-
-            await self.canal.send(
-                "👻 **Un escalofrío recorre el camino.**"
-            )
-
-        elif evento == "noche":
-
-            await self.canal.send(
-                "🌌 **La noche cae sobre el Safari.**"
-            )
-
-        elif evento == "ruinas":
-
-            await self.canal.send(
-                "🏛️ **Han encontrado unas ruinas antiguas.**"
-            )
-
-        elif evento == "arcoiris":
-
-            await self.canal.send(
-                "🌈 **Un brillante arcoíris ilumina la ruta.**"
-            )
-
-        elif evento == "guarida":
-
-            await self.canal.send(
-                "🐲 **¡Han descubierto una Guarida Dragón!**"
-            )
 
         if legendario_evento:
 
@@ -1060,14 +1019,23 @@ class SafariManager:
                 situacion["opcion_a"]
             )
 
-        else:
+        elif resultado == "B":
 
             opcion_ganadora = (
                 situacion["opcion_b"]
             )
 
+        else:
+
+            opcion_ganadora = (
+                situacion["opcion_c"]
+            )
+
         await self.canal.send(
             "🗳️ **Decisión tomada**\n\n"
+            f"{situacion['opcion_a']}: **{view.votos_a}** votos\n"
+            f"{situacion['opcion_b']}: **{view.votos_b}** votos\n"
+            f"{situacion['opcion_c']}: **{view.votos_c}** votos\n\n"
             f"➡️ {opcion_ganadora}"
         )
     def generar_evento_safari(self):
