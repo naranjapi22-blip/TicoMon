@@ -171,16 +171,7 @@ class SafariManager:
             f"{self.mapa_eventos}"
         )
         self.region_actual = obtener_siguiente_region()
-        frase = obtener_frase(
-            self.guia_id,
-            "inicio"
-        )
 
-        await self.canal.send(
-            f"{self.guia_actual['emoji']} "
-            f"**{self.guia_actual['nombre']}**\n\n"
-            f"💬 {frase}"
-        )
         self.encuentro_actual = {
             "pokemon_id": None,
             "nombre": None,
