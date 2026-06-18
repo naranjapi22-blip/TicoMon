@@ -518,7 +518,9 @@ class SalaIntercambio(discord.ui.View):
             if self.oferta_j1:
                 self.oferta_j1["listo"] = False
 
-        await interaction.response.edit_message(
+        await interaction.response.defer()
+
+        await self.message.edit(
             embed=self.generar_embed(),
             view=self
         )
