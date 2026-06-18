@@ -295,7 +295,16 @@ class SelectorPokemonTrade(discord.ui.View):
                     value=str(pokemon_id)
                 )
             )
+        self.select = discord.ui.Select(
+            placeholder="📦 Selecciona un Pokémon",
+            min_values=1,
+            max_values=1,
+            options=opciones
+        )
 
+        self.select.callback = self.seleccionar
+
+        self.add_item(self.select)
     async def seleccionar(self, interaction: discord.Interaction):
 
         pokemon_id = int(self.select.values[0])
