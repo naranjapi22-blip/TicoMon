@@ -310,9 +310,16 @@ class SpawnSelectionView(discord.ui.View):
         dex_id = data['id']
         id_final = obtener_id_gif(dex_id)
 
-        path_folder = "shiny" if es_shiny else "regular"
-        url_gif = f"https://www.shinyhunters.com/images/{path_folder}/{id_final}.gif"
+        R2_PUBLIC_URL = "https://pub-23cb564f6c174627926c1ac0409563d4.r2.dev"
 
+        R2_PUBLIC_URL = "https://pub-xxxxxxxxxxxxxxxx.r2.dev"
+
+        path_folder = "shiny" if es_shiny else "regular"
+
+        url_gif = (
+            f"{R2_PUBLIC_URL}/"
+            f"{path_folder}/{id_final}.gif"
+        )
         # Variables para captura
         es_legendario = species.get('is_legendary', False)
         capture_rate = species.get('capture_rate', 45)
