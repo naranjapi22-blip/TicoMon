@@ -272,7 +272,68 @@ FRASES_GUIA = {
     }
 
 }
+FRASES_RUTA = {
 
+    "papel": {
+        "izquierda": [
+            "Las huellas continúan hacia la izquierda.",
+            "Veo señales recientes por ese sendero.",
+            "La vegetación está aplastada hacia la izquierda, sigamos por ahí.",
+            "Hay un rastro claro que se desvía a la izquierda."
+        ],
+        "derecha": [
+            "Hay marcas interesantes hacia la derecha.",
+            "Algo pasó por ese camino.",
+            "El terreno hacia la derecha parece menos transitado, es buena señal.",
+            "Las pistas se inclinan hacia la derecha, no los pierdan de vista."
+        ]
+    },
+
+    "gin": {
+        "izquierda": [
+            "Los datos favorecen la ruta izquierda.",
+            "La actividad parece concentrarse hacia la izquierda.",
+            "Basándome en las condiciones del suelo, la izquierda es la ruta lógica.",
+            "La densidad de especies es mayor siguiendo hacia la izquierda."    
+        ],
+        "derecha": [
+            "Mis observaciones apuntan a la derecha.",
+            "La ruta derecha parece más prometedora.",
+            "He detectado un patrón de movimiento interesante hacia la derecha.",
+            "Los registros sugieren que el espécimen prefiere el sector derecho."
+        ]
+    },
+
+    "yogy": {
+        "izquierda": [
+            "¡Izquierda! Tiene pinta de aventura.",
+            "¡Yo iría por la izquierda sin pensarlo!",
+            "¡La izquierda se ve genial, vamos a ver qué hay!",
+            "¡A la izquierda, que ahí es donde está la diversión!"
+        ],
+        "derecha": [
+            "¡La derecha se ve mucho más emocionante!",
+            "¡Si buscan acción, vayamos por la derecha!",
+            "¡Por la derecha, que ahí huele a descubrimiento épico!",
+            "¡Vamos por la derecha! No tengo tiempo para aburrirme."
+        ]
+    },
+
+    "jorroco": {
+        "izquierda": [
+            "No sé... pero preferiría la izquierda.",
+            "La izquierda parece menos peligrosa.",
+            "¿Podemos intentar por la izquierda? Parece más tranquilo.",
+            "Si tenemos que elegir, prefiero el camino de la izquierda."
+        ],
+        "derecha": [
+            "Tengo el presentimiento de que la derecha es mejor.",
+            "No me pregunten por qué, pero diría derecha.",
+            "Me da menos escalofríos ir hacia la derecha, vamos por ahí.",
+            "Espero que no se arrepientan, pero yo elijo la derecha."
+        ]
+    }
+}
 def obtener_guia_aleatorio():
 
     guia_id = random.choice(
@@ -299,3 +360,53 @@ def obtener_frase(
         return ""
 
     return random.choice(frases)
+PRECISION_GUIAS = {
+    "papel": 0.45,
+    "gin": 0.65,
+    "yogy": 0.50,
+    "jorroco": 0.40
+}
+
+
+def obtener_recomendacion_ruta(
+    guia_id,
+    lado
+):
+
+    frases = FRASES_RUTA.get(
+        guia_id,
+        {}
+    ).get(
+        lado,
+        []
+    )
+
+    if not frases:
+        return ""
+
+    return random.choice(frases)
+
+
+def obtener_lado_recomendado(
+    guia_id,
+    lado_correcto
+):
+
+    precision = PRECISION_GUIAS.get(
+        guia_id,
+        0.50
+    )
+
+    acierta = (
+        random.random()
+        <= precision
+    )
+
+    if acierta:
+        return lado_correcto
+
+    return (
+        "derecha"
+        if lado_correcto == "izquierda"
+        else "izquierda"
+    )

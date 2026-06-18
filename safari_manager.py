@@ -8,7 +8,9 @@ from database import guardar_captura
 import discord
 from safari_personajes import (
     obtener_guia_aleatorio,
-    obtener_frase
+    obtener_frase,
+    obtener_recomendacion_ruta,
+    obtener_lado_recomendado
 )
 from utils_imagenes import crear_imagen_encuentro
 from regiones import obtener_siguiente_region, obtener_rango_region
@@ -752,9 +754,35 @@ class SafariManager:
         lado_correcto = random.choice(
             ["izquierda", "derecha"]
         )
+
+        # ==========================
+        # OPINIÓN DEL GUÍA
+        # ==========================
+
+        lado_recomendado = (
+            obtener_lado_recomendado(
+                self.guia_id,
+                lado_correcto
+            )
+        )
+
+        frase_guia = (
+            obtener_recomendacion_ruta(
+                self.guia_id,
+                lado_recomendado
+            )
+        )
+
+        await self.canal.send(
+            f"{self.guia_actual['emoji']} "
+            f"**Guía {self.guia_actual['nombre']}**\n\n"
+            f"💬 {frase_guia}"
+        )
+
         opcion_izquierda, opcion_derecha = random.choice(
             DECISIONES_SAFARI
         )
+
         embed = discord.Embed(
             title="🚙 Bifurcación en el camino",
             description=(
