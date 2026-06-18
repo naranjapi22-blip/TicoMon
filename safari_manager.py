@@ -751,27 +751,12 @@ class SafariManager:
         if not info:
             return
 
-        lado_correcto = random.choice(
-            ["izquierda", "derecha"]
-        )
-
-        # ==========================
-        # OPINIÓN DEL GUÍA
-        # ==========================
-
-        lado_recomendado = (
-            obtener_lado_recomendado(
-                self.guia_id,
-                lado_correcto
-            )
-        )
-
-        frase_guia = (
-            obtener_recomendacion_ruta(
-                self.guia_id,
-                lado_recomendado
-            )
-        )
+        frase_guia = random.choice([
+            "He encontrado rastros recientes en la zona.",
+            "Las lecturas del escáner muestran actividad Pokémon.",
+            "Algo interesante parece estar ocurriendo cerca.",
+            "Recomiendo actuar con cuidado."
+        ])
 
         await self.canal.send(
             f"{self.guia_actual['emoji']} "
@@ -779,23 +764,20 @@ class SafariManager:
             f"💬 {frase_guia}"
         )
 
-        opcion_izquierda, opcion_derecha = random.choice(
-            DECISIONES_SAFARI
-        )
-
         embed = discord.Embed(
-            title="🚙 Bifurcación en el camino",
+            title="🚙 Decisión de la expedición",
             description=(
-                "La expedición encuentra dos rutas.\n\n"
+                "La expedición detecta actividad Pokémon.\n\n"
+                "🍓 Tirar Cebo\n"
+                "🔍 Seguir Huellas\n"
+                "🔥 Hacer Ruido\n"
+                "🚙 Continuar\n\n"
                 "⏳ Tienen 20 segundos para votar."
             ),
             color=discord.Color.gold()
         )
 
-        view = VistaDecisionSafari(
-            opcion_izquierda,
-            opcion_derecha
-        )
+        view = VistaDecisionSafari()
 
         mensaje = await self.canal.send(
             embed=embed,
@@ -811,59 +793,78 @@ class SafariManager:
         except:
             pass
 
-        votos_izquierda = view.votos[
-            "izquierda"
+        votos_cebo = view.votos["cebo"]
+        votos_huellas = view.votos["huellas"]
+        votos_ruido = view.votos["ruido"]
+        votos_continuar = view.votos["continuar"]
+
+        votos = {
+            "cebo": votos_cebo,
+            "huellas": votos_huellas,
+            "ruido": votos_ruido,
+            "continuar": votos_continuar
+        }
+
+        max_votos = max(votos.values())
+
+        acciones_ganadoras = [
+            accion
+            for accion, cantidad in votos.items()
+            if cantidad == max_votos
         ]
 
-        votos_derecha = view.votos[
-            "derecha"
-        ]
-
-        print(
-            f"VOTOS IZQ={votos_izquierda} "
-            f"DER={votos_derecha}"
+        accion_elegida = random.choice(
+            acciones_ganadoras
         )
 
-        if votos_izquierda == votos_derecha:
-
-            lado_elegido = random.choice(
-                ["izquierda", "derecha"]
-            )
-
-        elif votos_izquierda > votos_derecha:
-
-            lado_elegido = "izquierda"
-
-        else:
-
-            lado_elegido = "derecha"
+        nombres = {
+            "cebo": "🍓 Tirar Cebo",
+            "huellas": "🔍 Seguir Huellas",
+            "ruido": "🔥 Hacer Ruido",
+            "continuar": "🚙 Continuar"
+        }
 
         await self.canal.send(
             "🗳️ **Resultado de la votación**\n\n"
-            f"⬅️ Izquierda: **{votos_izquierda}** votos\n"
-            f"➡️ Derecha: **{votos_derecha}** votos\n\n"
-            f"🚙 La expedición decide ir por la "
-            f"**{lado_elegido}**."
+            f"🍓 Tirar Cebo: **{votos_cebo}** votos\n"
+            f"🔍 Seguir Huellas: **{votos_huellas}** votos\n"
+            f"🔥 Hacer Ruido: **{votos_ruido}** votos\n"
+            f"🚙 Continuar: **{votos_continuar}** votos\n\n"
+            f"✅ Acción elegida: **{nombres[accion_elegida]}**"
         )
 
-        info["activo"] = (
-            lado_elegido == lado_correcto
-        )
+        # TEMPORAL
+        # Después conectaremos probabilidades reales
 
-        if info["activo"]:
+        if accion_elegida == "cebo":
 
             await self.canal.send(
-                "🚙 La expedición toma la ruta elegida.\n\n"
-                "Algo extraño parece encontrarse más adelante..."
+                "🍓 La expedición esparce cebo por la zona..."
+            )
+
+        elif accion_elegida == "huellas":
+
+            await self.canal.send(
+                "🔍 La expedición sigue unas huellas recientes..."
+            )
+
+        elif accion_elegida == "ruido":
+
+            await self.canal.send(
+                "🔥 El grupo hace ruido para llamar la atención de los Pokémon..."
             )
 
         else:
 
             await self.canal.send(
-                "🚙 La expedición continúa el recorrido.\n\n"
-                "👀 A lo lejos parece haber algo interesante,"
-                " pero la camioneta sigue avanzando."
+                "🚙 La expedición decide continuar avanzando."
             )
+
+        info["activo"] = True
+
+        print(
+            f"DECISION EVENTO {encuentro_numero}"
+        )
     def agregar_participante(
         self,
         user_id
