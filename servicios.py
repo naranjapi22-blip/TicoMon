@@ -129,90 +129,155 @@ def aplicar_filtro_silueta(img):
         return img
 
 async def generar_collage(session, data_pokes, tenidos=None, es_shiny=False):
-    # 1. Protección contra NoneType
+
     if tenidos is None:
         tenidos = []
 
     try:
-        log.info(f"🎨 Generando collage para {len(data_pokes)} pokémon (Shiny={es_shiny})")
-        celda_ancho = 120
-        celda_alto = 145
+
+        log.info(
+            f"🎨 Generando collage para "
+            f"{len(data_pokes)} pokémon "
+            f"(Shiny={es_shiny})"
+        )
+
+        celda_ancho = 140
+        celda_alto = 150
+
         cols = 5
         filas = (len(data_pokes) + cols - 1) // cols
-        
-        # Función interna para procesar una sola celda (con caché)
-        async def obtener_y_procesar(id_poke, url):
-            try:
-                # 2. LA MAGIA: Clave de caché única para no mezclar normales y shinys
-                cache_key = f"{id_poke}_shiny" if es_shiny else str(id_poke)
 
-                # Si no está en caché, descargamos
+        async def obtener_y_procesar(
+            id_poke,
+            url
+        ):
+
+            try:
+
+                cache_key = (
+                    f"{id_poke}_shiny"
+                    if es_shiny
+                    else str(id_poke)
+                )
+
                 if cache_key not in _cache_imagenes:
+
                     async with session.get(url) as resp:
+
                         if resp.status == 200:
-                            _cache_imagenes[cache_key] = await resp.read()
-                            log.debug(f"📥 Imagen descargada y cacheada: Key {cache_key}")
-                
-                # Si logramos tener los bytes (ya sea desde caché o recién descargado)
+
+                            _cache_imagenes[
+                                cache_key
+                            ] = await resp.read()
+
                 if cache_key in _cache_imagenes:
-                    img = Image.open(io.BytesIO(_cache_imagenes[cache_key])).convert('RGBA')
-                    img = img.resize((96, 96))
-                    
-                    # Filtro de silueta
+
+                    img = Image.open(
+                        io.BytesIO(
+                            _cache_imagenes[cache_key]
+                        )
+                    ).convert("RGBA")
+
+                    # Sprite más grande
+                    img = img.resize(
+                        (105, 105),
+                        Image.Resampling.NEAREST
+                    )
+
                     if id_poke not in tenidos:
                         img = aplicar_filtro_silueta(img)
-                    
+
                     nombre = obtener_nombre_local(
                         id_poke
                     )
-                    return img, nombre.capitalize()
+
+                    return (
+                        img,
+                        nombre.capitalize()
+                    )
+
             except Exception as e:
-                log.error(f"🚨 Error procesando pokémon {id_poke}: {e}", exc_info=True)
+
+                log.error(
+                    f"🚨 Error procesando pokémon "
+                    f"{id_poke}: {e}",
+                    exc_info=True
+                )
+
             return None
 
-        # Ejecutar todas las tareas en paralelo
-        tareas = [obtener_y_procesar(id_poke, url) for id_poke, url in data_pokes]
+        tareas = [
+            obtener_y_procesar(id_poke, url)
+            for id_poke, url in data_pokes
+        ]
 
-        resultados = await asyncio.gather(*tareas)
+        resultados = await asyncio.gather(
+            *tareas
+        )
 
-        # Dibujar el collage final
-        collage = Image.new('RGBA', (celda_ancho * cols, celda_alto * filas), (0, 0, 0, 0))
+        collage = Image.new(
+            "RGBA",
+            (
+                celda_ancho * cols,
+                celda_alto * filas
+            ),
+            (0, 0, 0, 0)
+        )
+
         draw = ImageDraw.Draw(collage)
-        
+
         try:
 
             font = ImageFont.truetype(
                 "fonts/DejaVuSans-Bold.ttf",
-                20
+                18
             )
 
         except Exception as e:
 
-            print("ERROR FUENTE:", e)
+            print(
+                "ERROR FUENTE:",
+                e
+            )
 
             font = ImageFont.load_default()
 
-        # Filtramos nulos por si alguna descarga falló
-        resultados = [r for r in resultados if r is not None]
+        resultados = [
+            r
+            for r in resultados
+            if r is not None
+        ]
 
         log.info(
-            f"✅ {len(resultados)}/{len(data_pokes)} "
+            f"✅ {len(resultados)}/"
+            f"{len(data_pokes)} "
             f"pokémon procesados exitosamente"
         )
 
-        for idx, (img, nombre) in enumerate(resultados):
+        for idx, (img, nombre) in enumerate(
+            resultados
+        ):
 
-            x = (idx % cols) * celda_ancho
-            y = (idx // cols) * celda_alto
+            x = (
+                idx % cols
+            ) * celda_ancho
+
+            y = (
+                idx // cols
+            ) * celda_alto
 
             # Sprite centrado
+            sprite_x = (
+                x
+                + (celda_ancho - 105) // 2
+            )
+
             collage.paste(
                 img,
-                (x + 12, y),
+                (sprite_x, y),
                 img
             )
 
-            # Nombre
             text_bbox = draw.textbbox(
                 (0, 0),
                 nombre,
@@ -224,14 +289,23 @@ async def generar_collage(session, data_pokes, tenidos=None, es_shiny=False):
                 - text_bbox[0]
             )
 
+            text_x = (
+                x
+                + (celda_ancho - text_width) // 2
+            )
+
+            text_y = y + 112
+
             draw.text(
                 (
-                    x + (celda_ancho - text_width) // 2,
-                    y + 104
+                    text_x,
+                    text_y
                 ),
                 nombre,
                 fill=(255, 255, 255),
-                font=font
+                font=font,
+                stroke_width=2,
+                stroke_fill=(0, 0, 0)
             )
 
         buffer = io.BytesIO()
@@ -245,12 +319,19 @@ async def generar_collage(session, data_pokes, tenidos=None, es_shiny=False):
 
         log.info(
             f"✅ Collage generado exitosamente: "
-            f"{celda_ancho * cols}x{celda_alto * filas}"
+            f"{celda_ancho * cols}x"
+            f"{celda_alto * filas}"
         )
 
         return buffer
+
     except Exception as e:
-        log.error(f"🚨 Error al generar collage: {e}", exc_info=True)
+
+        log.error(
+            f"🚨 Error al generar collage: {e}",
+            exc_info=True
+        )
+
         return None
 
 # 6 Función para filtrar los IDs de un tipo específico que el usuario YA tiene
