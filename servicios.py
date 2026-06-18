@@ -135,8 +135,8 @@ async def generar_collage(session, data_pokes, tenidos=None, es_shiny=False):
 
     try:
         log.info(f"🎨 Generando collage para {len(data_pokes)} pokémon (Shiny={es_shiny})")
-        celda_ancho = 110
-        celda_alto = 130 
+        celda_ancho = 120
+        celda_alto = 145
         cols = 5
         filas = (len(data_pokes) + cols - 1) // cols
         
@@ -180,28 +180,69 @@ async def generar_collage(session, data_pokes, tenidos=None, es_shiny=False):
         draw = ImageDraw.Draw(collage)
         
         try:
-            font = ImageFont.truetype("arial.ttf", 14)
+            font = ImageFont.truetype(
+                "arial.ttf",
+                20
+            )
         except:
             font = ImageFont.load_default()
 
         # Filtramos nulos por si alguna descarga falló
         resultados = [r for r in resultados if r is not None]
-        log.info(f"✅ {len(resultados)}/{len(data_pokes)} pokémon procesados exitosamente")
+
+        log.info(
+            f"✅ {len(resultados)}/{len(data_pokes)} "
+            f"pokémon procesados exitosamente"
+        )
 
         for idx, (img, nombre) in enumerate(resultados):
+
             x = (idx % cols) * celda_ancho
             y = (idx // cols) * celda_alto
-            
-            collage.paste(img, (x + 7, y), img)
-            
-            text_bbox = draw.textbbox((0, 0), nombre, font=font)
-            text_width = text_bbox[2] - text_bbox[0]
-            draw.text((x + (celda_ancho - text_width) // 2, y + 100), nombre, fill="white", font=font)
-                
+
+            # Sprite centrado
+            collage.paste(
+                img,
+                (x + 12, y),
+                img
+            )
+
+            # Nombre
+            text_bbox = draw.textbbox(
+                (0, 0),
+                nombre,
+                font=font
+            )
+
+            text_width = (
+                text_bbox[2]
+                - text_bbox[0]
+            )
+
+            draw.text(
+                (
+                    x + (celda_ancho - text_width) // 2,
+                    y + 104
+                ),
+                nombre,
+                fill=(255, 255, 255),
+                font=font
+            )
+
         buffer = io.BytesIO()
-        collage.save(buffer, format="PNG")
+
+        collage.save(
+            buffer,
+            format="PNG"
+        )
+
         buffer.seek(0)
-        log.info(f"✅ Collage generado exitosamente: {celda_ancho * cols}x{celda_alto * filas}")
+
+        log.info(
+            f"✅ Collage generado exitosamente: "
+            f"{celda_ancho * cols}x{celda_alto * filas}"
+        )
+
         return buffer
     except Exception as e:
         log.error(f"🚨 Error al generar collage: {e}", exc_info=True)
