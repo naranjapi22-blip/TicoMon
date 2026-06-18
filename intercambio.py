@@ -248,7 +248,69 @@ class ModalOferta(discord.ui.Modal, title='Elige tu Pokémon para ofrecer'):
         finally:
             cursor.close()
             conn.close()
+class SelectorPokemonTrade(discord.ui.View):
+
+    def __init__(self, vista_trade, jugador_id):
+        super().__init__(timeout=180)
+
+        self.vista_trade = vista_trade
+        self.jugador_id = jugador_id
+
+        conn = database.get_connection()
+        cursor = conn.cursor()
+
+        try:
+
+            cursor.execute(
+                """
+                SELECT
+                    id,
+                    pokemon_nombre,
+                    es_shiny
+                FROM capturas
+                WHERE user_id = %s
+                ORDER BY id DESC
+                LIMIT 25
+                """,
+                (str(jugador_id),)
+            )
+
+            self.pokemones = cursor.fetchall()
+
+        finally:
+            cursor.close()
+            conn.close()
+
+        opciones = []
+
+        for pokemon_id, nombre, shiny in self.pokemones:
+
+            opciones.append(
+                discord.SelectOption(
+                    label=f"{'✨ ' if shiny else ''}{nombre.capitalize()} #{pokemon_id}",
+                    value=str(pokemon_id)
+                )
+            )
+
+        self.select = discord.ui.Select(
+            placeholder="📦 Selecciona un Pokémon",
+            min_values=1,
+            max_values=1,
+            options=opciones
+        )
+
+        self.select.callback = self.seleccionar
+
+        self.add_item(self.select)
 # --- 4. LA MESA DE INTERCAMBIO (View) ---
+    async def seleccionar(self, interaction: discord.Interaction):
+
+        pokemon_id = int(self.select.values[0])
+
+        await interaction.response.send_message(
+            f"Seleccionaste el Pokémon #{pokemon_id}",
+            ephemeral=True
+        )
 class SalaIntercambio(discord.ui.View):
     def __init__(self, jugador1, jugador2):
         super().__init__(timeout=120) # 2 minutos para hacer el trato
@@ -423,8 +485,15 @@ class SalaIntercambio(discord.ui.View):
         if self.oferta_j2:
             self.oferta_j2["listo"] = False
             
-        await interaction.response.send_modal(ModalOferta(self, interaction.user.id))
-
+       # await interaction.response.send_modal(ModalOferta(self, interaction.user.id))
+        await interaction.response.send_message(
+            "📦 Selecciona un Pokémon",
+            view=SelectorPokemonTrade(
+                self,
+                interaction.user.id
+            ),
+            ephemeral=True
+        )
     @discord.ui.button(
         label="Confirmar Trato ✅",
         style=discord.ButtonStyle.success,
