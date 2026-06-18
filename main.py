@@ -142,6 +142,7 @@ async def on_ready():
     iniciar_modulo_ranking(bot)
     iniciar_modulo_ranking_legend(bot)
     iniciar_modulo_ranking_shiny(bot)
+    await database.crear_tablas()
     try:
         synced = await bot.tree.sync()
         log.info(f"✅ {len(synced)} slash command(s) sincronizados.")

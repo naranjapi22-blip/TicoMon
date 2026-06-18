@@ -15,7 +15,7 @@ from PIL import (
 )
 import time
 import aiohttp
-
+from database import obtener_nombre_local
 # 1. Creamos una caché que:
 # - Guarda máximo 600 imágenes (maxsize)
 # - Las mantiene solo por 1 hora (ttl=3600 segundos) para liberar espacio
@@ -175,7 +175,9 @@ async def generar_collage(session, data_pokes, tenidos=None, es_shiny=False):
                     if id_poke not in tenidos:
                         img = aplicar_filtro_silueta(img)
                     
-                    nombre = await obtener_nombre_por_id(session, id_poke)
+                    nombre = database.obtener_nombre_local(
+                        id_poke
+                    )
                     return img, nombre.capitalize()
             except Exception as e:
                 log.error(f"🚨 Error procesando pokémon {id_poke}: {e}", exc_info=True)

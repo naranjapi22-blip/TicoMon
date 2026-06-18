@@ -8,6 +8,8 @@ import random
 import records
 from datetime import datetime, timezone
 from candy import add_candy_for_pokemon
+pokemon_por_id = {}
+id_por_nombre = {}
 
 # 1. Asegúrate de tener esto arriba en tu archivo
 NATURALEZAS = [
@@ -1125,3 +1127,45 @@ def obtener_duplicados(user_id, limite=25):
     conn.close()
 
     return resultado        
+def cargar_cache_pokemon():
+
+    global pokemon_por_id
+    global id_por_nombre
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT id, nombre
+        FROM pokemon_data
+    """)
+
+    filas = cursor.fetchall()
+
+    pokemon_por_id.clear()
+    id_por_nombre.clear()
+
+    for pokemon_id, nombre in filas:
+
+        pokemon_por_id[pokemon_id] = nombre
+        id_por_nombre[nombre.lower()] = pokemon_id
+
+    cursor.close()
+    conn.close()
+
+    print(
+        f"✅ Cache nombres cargada: "
+        f"{len(pokemon_por_id)} Pokémon"
+    )
+
+def obtener_nombre_local(id_pokemon):
+
+    return pokemon_por_id.get(
+        id_pokemon,
+        "???"
+    )
+def obtener_id_local(nombre):
+
+    return id_por_nombre.get(
+        nombre.lower()
+    )
