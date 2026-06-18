@@ -6,12 +6,38 @@ import database
 log = logging.getLogger(__name__)
 from database import guardar_captura
 import discord
+from safari_personajes import (
+    obtener_guia_aleatorio,
+    obtener_frase
+)
 from utils_imagenes import crear_imagen_encuentro
 from regiones import obtener_siguiente_region, obtener_rango_region
 from rarezas import (
     pokemon_por_rareza,
     generar_ids_safari_region
 )
+GUIAS_SAFARI = {
+    "papel": {
+        "nombre": "Papel",
+        "emoji": "🧭",
+        "rol": "explorador"
+    },
+    "gin": {
+        "nombre": "Gin",
+        "emoji": "📚",
+        "rol": "experto"
+    },
+    "yogy": {
+        "nombre": "Yogy",
+        "emoji": "😎",
+        "rol": "aventurero"
+    },
+    "jorroco": {
+        "nombre": "Jorroco",
+        "emoji": "😅",
+        "rol": "nervioso"
+    }
+}
 DECISIONES_SAFARI = [
     ("🌲 Sendero estrecho", "🛣️ Camino principal"),
     ("🌉 Cruzar un puente", "🪨 Rodear por las rocas"),
@@ -49,7 +75,10 @@ class SafariManager:
         self.participantes = {}
         self.canal = None
         self.session = None
+        self.guia_id = None
+        self.guia_actual = None
         self.creador_vistas = None
+        self.frases_viaje_usadas = 0
         self.encuentro_actual = {
             "pokemon_id": None,
             "nombre": None,
@@ -78,7 +107,13 @@ class SafariManager:
         self.creador_vistas = creador_vistas
         self.activo = True
         self.participantes.clear()
-        self.pokemons_vistos.clear()       
+        self.pokemons_vistos.clear()    
+        self.frases_viaje_usadas = 0   
+        self.guia_id, self.guia_actual = (
+        obtener_guia_aleatorio()
+        )
+
+        roll = random.random()
         roll = random.random()
 
         if roll < 0.80:
@@ -136,6 +171,16 @@ class SafariManager:
             f"{self.mapa_eventos}"
         )
         self.region_actual = obtener_siguiente_region()
+        frase = obtener_frase(
+            self.guia_id,
+            "inicio"
+        )
+
+        await self.canal.send(
+            f"{self.guia_actual['emoji']} "
+            f"**{self.guia_actual['nombre']}**\n\n"
+            f"💬 {frase}"
+        )
         self.encuentro_actual = {
             "pokemon_id": None,
             "nombre": None,
@@ -228,6 +273,30 @@ class SafariManager:
             f"EVENTOS PROGRAMADOS: "
             f"{self.encuentros_evento}"
         )
+        # ==========================
+        # FRASE DE VIAJE
+        # ==========================
+
+        if (
+            self.encuentro_numero > 1
+            and self.frases_viaje_usadas < 2
+            and random.random() <= 0.35
+        ):
+
+            frase = obtener_frase(
+                self.guia_id,
+                "viaje"
+            )
+
+            if frase:
+
+                self.frases_viaje_usadas += 1
+
+                await self.canal.send(
+                    f"{self.guia_actual['emoji']} "
+                    f"**{self.guia_actual['nombre']}**\n\n"
+                    f"💬 {frase}"
+                )
         evento = None
         legendario_evento = False
         if (
