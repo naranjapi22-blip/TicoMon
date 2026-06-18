@@ -1,5 +1,6 @@
 import discord
 import servicios
+import database
 from database import obtener_id_pokemon
 SPRITE_URL = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/{poke_id}.png"
 POR_PAGINA = 25
