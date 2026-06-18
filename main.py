@@ -39,10 +39,7 @@ from rankingshiny import iniciar_modulo_ranking_shiny
 from vistas import liberar_canal_completo
 from database import guardar_captura
 from regiones import obtener_siguiente_region
-from safari_personajes import (
-    obtener_guia_aleatorio,
-    obtener_frase
-)
+from safari_personajes import obtener_frase
 # Variables globales
 from rarezas import pokemon_por_rareza
 import asyncio
@@ -1321,21 +1318,20 @@ async def safari(ctx):
     # INICIAR SAFARI
     # ==========================
 
-    await ctx.send(
-        f"🚙 El Safari ha comenzado.\n\n"
-        f"👥 Participantes: {participantes}\n"
-        f"🌎 Región: {safari.region_actual}"
-    )
     frase = obtener_frase(
         safari.guia_id,
         "inicio"
     )
 
     await ctx.send(
+        f"🚙 **El Safari ha comenzado**\n\n"
+        f"👥 Participantes: {participantes}\n"
+        f"🌎 Región: {safari.region_actual}\n\n"
         f"{safari.guia_actual['emoji']} "
-        f"**Guía {safari.guia_actual['nombre']}**\n\n"
+        f"**Guía {safari.guia_actual['nombre']}**\n"
         f"💬 {frase}"
     )
+    await asyncio.sleep(3)
     await safari.ejecutar_safari()
 @bot.command()
 @commands.is_owner()

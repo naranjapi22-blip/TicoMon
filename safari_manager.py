@@ -189,13 +189,18 @@ class SafariManager:
     async def finalizar_safari(self):
 
         if self.canal:
-            await self.canal.send(
-                "🏁 Safari finalizado."
+
+            frase = obtener_frase(
+                self.guia_id,
+                "final"
             )
 
-        log.info(
-            f"🏁 Safari finalizado en guild {self.guild_id}"
-        )
+            await self.canal.send(
+                f"🏁 **Safari finalizado**\n\n"
+                f"{self.guia_actual['emoji']} "
+                f"**Guía {self.guia_actual['nombre']}**\n"
+                f"💬 {frase}"
+            )
 
         self.activo = False
 
