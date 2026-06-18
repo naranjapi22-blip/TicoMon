@@ -1848,5 +1848,58 @@ async def duplicados(ctx, tipo=None):
         tipo=tipo
     )
 
+    if not duplicados:
+
+        if tipo:
+            return await ctx.send(
+                f"🎉 No tienes duplicados de tipo **{tipo.capitalize()}**."
+            )
+
+        return await ctx.send(
+            "🎉 No tienes Pokémon duplicados."
+        )
+
+    descripcion = ""
+
+    medallas = [
+        "🥇",
+        "🥈",
+        "🥉"
+    ]
+
+    for i, (nombre, cantidad) in enumerate(
+        duplicados,
+        start=1
+    ):
+
+        puesto = (
+            medallas[i - 1]
+            if i <= 3
+            else f"{i}."
+        )
+
+        descripcion += (
+            f"{puesto} "
+            f"**{nombre.capitalize()}** "
+            f"x{cantidad}\n"
+        )
+
+    titulo = "📦 Pokémon más repetidos"
+
+    if tipo:
+        titulo += f" ({tipo.capitalize()})"
+
+    embed = discord.Embed(
+        title=titulo,
+        description=descripcion,
+        color=discord.Color.orange()
+    )
+
+    embed.set_footer(
+        text="Tus Pokémon con más copias."
+    )
+
+    await ctx.send(embed=embed)
+
 
 bot.run(TOKEN)
