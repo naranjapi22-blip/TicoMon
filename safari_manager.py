@@ -1099,7 +1099,56 @@ class SafariManager:
             f"🎾 Lanzarás {cantidad} Safari Balls a {nombre_pokemon}.\n\n"
             f"🎒 Safari Balls restantes: {balls_restantes}"
         )
+    async def resolver_situacion_safari(self):
 
+        situacion = random.choice(
+            SITUACIONES_SAFARI
+        )
+
+        view = VistaSituacionSafari(
+            situacion
+        )
+
+        embed = discord.Embed(
+            title="🤔 Decisión de la Expedición",
+            description=situacion["texto"],
+            color=discord.Color.orange()
+        )
+
+        mensaje = await self.canal.send(
+            embed=embed,
+            view=view
+        )
+
+        await asyncio.sleep(20)
+
+        try:
+            await mensaje.edit(view=None)
+        except:
+            pass
+
+        resultado = view.resolver_resultado()
+
+        self.modificador_evento = (
+            view.modificador_ganador
+        )
+
+        if resultado == "A":
+
+            opcion_ganadora = (
+                situacion["opcion_a"]
+            )
+
+        else:
+
+            opcion_ganadora = (
+                situacion["opcion_b"]
+            )
+
+        await self.canal.send(
+            "🗳️ **Decisión tomada**\n\n"
+            f"➡️ {opcion_ganadora}"
+        )
 
 # ==========================
 # Registro global
@@ -1253,53 +1302,3 @@ ACCIONES_EXPEDICION = [
     ("ruido", "🔥 Hacer Ruido"),
     ("continuar", "🚙 Continuar")
 ]
-async def resolver_situacion_safari(self):
-
-    situacion = random.choice(
-        SITUACIONES_SAFARI
-    )
-
-    view = VistaSituacionSafari(
-        situacion
-    )
-
-    embed = discord.Embed(
-        title="🤔 Decisión de la Expedición",
-        description=situacion["texto"],
-        color=discord.Color.orange()
-    )
-
-    mensaje = await self.canal.send(
-        embed=embed,
-        view=view
-    )
-
-    await asyncio.sleep(20)
-
-    try:
-        await mensaje.edit(view=None)
-    except:
-        pass
-
-    resultado = view.resolver_resultado()
-
-    self.modificador_evento = (
-        view.modificador_ganador
-    )
-
-    if resultado == "A":
-
-        opcion_ganadora = (
-            situacion["opcion_a"]
-        )
-
-    else:
-
-        opcion_ganadora = (
-            situacion["opcion_b"]
-        )
-
-    await self.canal.send(
-        "🗳️ **Decisión tomada**\n\n"
-        f"➡️ {opcion_ganadora}"
-    )
