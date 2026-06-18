@@ -1790,12 +1790,14 @@ async def elegir(ctx, id_pokemon: int, opcion: int):
             return
 
         pokemon_nombre = resultado[0]
-
+        print("POKEMON:", pokemon_nombre)
+        print("ID:", id_pokemon)
+        print("OPCION:", opcion)
         evo = get_evolution_choice(
             pokemon_nombre,
             opcion
         )
-
+        print("EVO:", evo)
         if not evo:
 
             await ctx.send(
