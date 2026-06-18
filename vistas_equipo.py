@@ -702,7 +702,7 @@ class VistaEquipo(discord.ui.View):
             await sel_inter.response.send_modal(BuscarCapturaModal(self, slot=slot))
 
         select.callback = callback
-        view = discord.ui.View(timeout=60)
+        view = discord.ui.View(timeout=300)
         view.add_item(select)
         await interaction.followup.send(
             "Elige el slot que quieres reemplazar:",
@@ -744,7 +744,7 @@ class VistaEquipo(discord.ui.View):
             await self._refrescar_mensaje_principal()
 
         select.callback = callback
-        view = discord.ui.View(timeout=60)
+        view = discord.ui.View(timeout=300)
         view.add_item(select)
         await interaction.followup.send("Elige el Pokémon a quitar:", view=view, ephemeral=True)
 
@@ -772,7 +772,20 @@ class VistaEquipo(discord.ui.View):
             ephemeral=True,
         )
 
-    async def on_timeout(self):
-        for item in self.children:
-            if hasattr(item, "disabled"):
-                item.disabled = True
+async def on_timeout(self):
+
+    for item in self.children:
+
+        if hasattr(item, "disabled"):
+            item.disabled = True
+
+    if self.message:
+
+        try:
+
+            await self.message.edit(
+                view=self
+            )
+
+        except:
+            pass
