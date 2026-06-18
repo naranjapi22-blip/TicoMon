@@ -818,10 +818,12 @@ class SafariManager:
         votos_derecha = view.votos[
             "derecha"
         ]
+
         print(
             f"VOTOS IZQ={votos_izquierda} "
             f"DER={votos_derecha}"
         )
+
         if votos_izquierda == votos_derecha:
 
             lado_elegido = random.choice(
@@ -836,9 +838,18 @@ class SafariManager:
 
             lado_elegido = "derecha"
 
+        await self.canal.send(
+            "🗳️ **Resultado de la votación**\n\n"
+            f"⬅️ Izquierda: **{votos_izquierda}** votos\n"
+            f"➡️ Derecha: **{votos_derecha}** votos\n\n"
+            f"🚙 La expedición decide ir por la "
+            f"**{lado_elegido}**."
+        )
+
         info["activo"] = (
             lado_elegido == lado_correcto
         )
+
         if info["activo"]:
 
             await self.canal.send(
@@ -853,13 +864,6 @@ class SafariManager:
                 "👀 A lo lejos parece haber algo interesante,"
                 " pero la camioneta sigue avanzando."
             )
-        print(
-            f"DECISION EVENTO {encuentro_numero}"
-        )
-
-        print(
-            f"EVENTO ACTIVO: {info['activo']}"
-        )
     def agregar_participante(
         self,
         user_id
