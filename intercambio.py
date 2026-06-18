@@ -447,11 +447,11 @@ class SelectorPokemonTrade(discord.ui.View):
         except:
             pass
 
-        async def buscar(self, interaction: discord.Interaction):
+    async def buscar(self, interaction: discord.Interaction):
 
-            await interaction.response.send_modal(
-                BuscarPokemonModal(self)
-            )
+        await interaction.response.send_modal(
+            BuscarPokemonModal(self)
+        )
 # --- 4. LA MESA DE INTERCAMBIO (View) ---
 class SalaIntercambio(discord.ui.View):
     def __init__(self, jugador1, jugador2):
