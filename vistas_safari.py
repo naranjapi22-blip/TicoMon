@@ -257,36 +257,25 @@ class VistaSeleccionPokemon(discord.ui.View):
             pass
 class VistaDecisionSafari(discord.ui.View):
 
-    def __init__(
-        self,
-        texto_izquierda,
-        texto_derecha
-    ):
+    def __init__(self):
 
-        super().__init__(
-            timeout=20
-        )
+        super().__init__(timeout=20)
 
         self.votos = {
-            "izquierda": 0,
-            "derecha": 0
+            "cebo": 0,
+            "huellas": 0,
+            "ruido": 0,
+            "continuar": 0
         }
 
         self.votantes = set()
 
         self.resultado = None
 
-        self.add_item(
-            BotonIzquierda(
-                texto_izquierda
-            )
-        )
-
-        self.add_item(
-            BotonDerecha(
-                texto_derecha
-            )
-        )
+        self.add_item(BotonCebo())
+        self.add_item(BotonHuellas())
+        self.add_item(BotonRuido())
+        self.add_item(BotonContinuar())
 class BotonIzquierda(discord.ui.Button):
 
     def __init__(

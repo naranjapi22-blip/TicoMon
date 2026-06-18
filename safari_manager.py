@@ -1119,3 +1119,9 @@ def generar_pokemons_por_tipo_global(
         ids,
         min(3, len(ids))
     )
+ACCIONES_EXPEDICION = [
+    ("cebo", "🍓 Tirar Cebo"),
+    ("huellas", "🔍 Seguir Huellas"),
+    ("ruido", "🔥 Hacer Ruido"),
+    ("continuar", "🚙 Continuar")
+]
