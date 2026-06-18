@@ -304,22 +304,7 @@ async def generar_collage_siluetas(session, data_pokes, tenidos=None, es_shiny=F
         log.error(f"🚨 Error al generar collage de siluetas: {e}", exc_info=True)
         return None
 
-async def obtener_url_arte_oficial(session, poke_id):
-    """Retorna solo la URL del arte oficial para mostrarlo sin procesar."""
-    try:
-        log.debug(f"🔍 Obteniendo URL de arte oficial para pokémon: {poke_id}")
-        url = f"https://pokeapi.co/api/v2/pokemon/{poke_id}"
-        async with session.get(url) as response:
-            if response.status == 200:
-                data = await response.json()
-                url_arte = data['sprites']['other']['official-artwork']['front_default']
-                log.info(f"✅ URL de arte oficial obtenida para pokémon {poke_id}")
-                return url_arte
-            else:
-                log.warning(f"⚠️ Pokémon no encontrado: {poke_id}")
-    except Exception as e:
-        log.error(f"🚨 Error al obtener URL de arte: {e}", exc_info=True)
-    return None
+
 async def obtener_especie_desde_data(session, data):
     """Obtiene el JSON de la especie dado el objeto data del Pokémon."""
     try:
