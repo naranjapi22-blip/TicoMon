@@ -161,13 +161,7 @@ GUIAS_SAFARI = {
         "rol": "nervioso"
     }
 }
-DECISIONES_SAFARI = [
-    ("🌲 Sendero estrecho", "🛣️ Camino principal"),
-    ("🌉 Cruzar un puente", "🪨 Rodear por las rocas"),
-    ("🌾 Atravesar la pradera", "🌳 Bordear el bosque"),
-    ("⛰️ Tomar el desvío", "🚙 Continuar recto"),
-    ("👣 Seguir unas huellas", "🧭 Mantener la ruta"),
-]
+
 EVENTOS_COMUNES = [
     "migracion",
     "volcan",
@@ -409,11 +403,7 @@ class SafariManager:
                 self.encuentro_numero
             ]
 
-            if info["activo"] is None:
-
-                await self.resolver_decision_evento(
-                    self.encuentro_numero
-                )
+            await self.resolver_situacion_safari()
         if self.encuentro_numero in self.encuentros_evento:
 
             print(
@@ -864,134 +854,6 @@ class SafariManager:
             self.encuentro_numero += 1
 
         await self.finalizar_safari()
-    async def resolver_decision_evento(
-        self,
-        encuentro_numero
-    ):
-
-        from vistas_safari import VistaDecisionSafari
-
-        info = self.mapa_eventos.get(
-            encuentro_numero
-        )
-
-        if not info:
-            return
-
-        frase_guia = random.choice([
-            "He encontrado rastros recientes en la zona.",
-            "Las lecturas del escáner muestran actividad Pokémon.",
-            "Algo interesante parece estar ocurriendo cerca.",
-            "Recomiendo actuar con cuidado."
-        ])
-
-        await self.canal.send(
-            f"{self.guia_actual['emoji']} "
-            f"**Guía {self.guia_actual['nombre']}**\n\n"
-            f"💬 {frase_guia}"
-        )
-
-        embed = discord.Embed(
-            title="🚙 Decisión de la expedición",
-            description=(
-                "La expedición detecta actividad Pokémon.\n\n"
-                "🍓 Tirar Cebo\n"
-                "🔍 Seguir Huellas\n"
-                "🔥 Hacer Ruido\n"
-                "🚙 Continuar\n\n"
-                "⏳ Tienen 20 segundos para votar."
-            ),
-            color=discord.Color.gold()
-        )
-
-        view = VistaDecisionSafari()
-
-        mensaje = await self.canal.send(
-            embed=embed,
-            view=view
-        )
-
-        await asyncio.sleep(20)
-
-        try:
-            await mensaje.edit(
-                view=None
-            )
-        except:
-            pass
-
-        votos_cebo = view.votos["cebo"]
-        votos_huellas = view.votos["huellas"]
-        votos_ruido = view.votos["ruido"]
-        votos_continuar = view.votos["continuar"]
-
-        votos = {
-            "cebo": votos_cebo,
-            "huellas": votos_huellas,
-            "ruido": votos_ruido,
-            "continuar": votos_continuar
-        }
-
-        max_votos = max(votos.values())
-
-        acciones_ganadoras = [
-            accion
-            for accion, cantidad in votos.items()
-            if cantidad == max_votos
-        ]
-
-        accion_elegida = random.choice(
-            acciones_ganadoras
-        )
-
-        nombres = {
-            "cebo": "🍓 Tirar Cebo",
-            "huellas": "🔍 Seguir Huellas",
-            "ruido": "🔥 Hacer Ruido",
-            "continuar": "🚙 Continuar"
-        }
-
-        await self.canal.send(
-            "🗳️ **Resultado de la votación**\n\n"
-            f"🍓 Tirar Cebo: **{votos_cebo}** votos\n"
-            f"🔍 Seguir Huellas: **{votos_huellas}** votos\n"
-            f"🔥 Hacer Ruido: **{votos_ruido}** votos\n"
-            f"🚙 Continuar: **{votos_continuar}** votos\n\n"
-            f"✅ Acción elegida: **{nombres[accion_elegida]}**"
-        )
-
-        # TEMPORAL
-        # Después conectaremos probabilidades reales
-
-        if accion_elegida == "cebo":
-
-            await self.canal.send(
-                "🍓 La expedición esparce cebo por la zona..."
-            )
-
-        elif accion_elegida == "huellas":
-
-            await self.canal.send(
-                "🔍 La expedición sigue unas huellas recientes..."
-            )
-
-        elif accion_elegida == "ruido":
-
-            await self.canal.send(
-                "🔥 El grupo hace ruido para llamar la atención de los Pokémon..."
-            )
-
-        else:
-
-            await self.canal.send(
-                "🚙 La expedición decide continuar avanzando."
-            )
-
-        info["activo"] = True
-
-        print(
-            f"DECISION EVENTO {encuentro_numero}"
-        )
     def agregar_participante(
         self,
         user_id

@@ -260,27 +260,7 @@ class VistaSeleccionPokemon(discord.ui.View):
                 )
         except Exception:
             pass
-class VistaDecisionSafari(discord.ui.View):
 
-    def __init__(self):
-
-        super().__init__(timeout=20)
-
-        self.votos = {
-            "cebo": 0,
-            "huellas": 0,
-            "ruido": 0,
-            "continuar": 0
-        }
-
-        self.votantes = set()
-
-        self.resultado = None
-
-        self.add_item(BotonCebo())
-        self.add_item(BotonHuellas())
-        self.add_item(BotonRuido())
-        self.add_item(BotonContinuar())
 class BotonIzquierda(discord.ui.Button):
 
     def __init__(
@@ -353,122 +333,7 @@ class BotonDerecha(discord.ui.Button):
             "Votaste por el camino principal.",
             ephemeral=True
         )
-class BotonCebo(discord.ui.Button):
 
-    def __init__(self):
-
-        super().__init__(
-            label="Tirar Cebo",
-            emoji="🍓",
-            style=discord.ButtonStyle.success
-        )
-
-    async def callback(self, interaction):
-
-        view = self.view
-
-        if interaction.user.id in view.votantes:
-
-            return await interaction.response.send_message(
-                "Ya votaste.",
-                ephemeral=True
-            )
-
-        view.votantes.add(interaction.user.id)
-
-        view.votos["cebo"] += 1
-
-        await interaction.response.send_message(
-            "Votaste por tirar cebo.",
-            ephemeral=True
-        )
-class BotonHuellas(discord.ui.Button):
-
-    def __init__(self):
-
-        super().__init__(
-            label="Seguir Huellas",
-            emoji="🔍",
-            style=discord.ButtonStyle.primary
-        )
-
-    async def callback(self, interaction):
-
-        view = self.view
-
-        if interaction.user.id in view.votantes:
-
-            return await interaction.response.send_message(
-                "Ya votaste.",
-                ephemeral=True
-            )
-
-        view.votantes.add(interaction.user.id)
-
-        view.votos["huellas"] += 1
-
-        await interaction.response.send_message(
-            "Votaste por seguir huellas.",
-            ephemeral=True
-        )
-class BotonRuido(discord.ui.Button):
-
-    def __init__(self):
-
-        super().__init__(
-            label="Hacer Ruido",
-            emoji="🔥",
-            style=discord.ButtonStyle.danger
-        )
-
-    async def callback(self, interaction):
-
-        view = self.view
-
-        if interaction.user.id in view.votantes:
-
-            return await interaction.response.send_message(
-                "Ya votaste.",
-                ephemeral=True
-            )
-
-        view.votantes.add(interaction.user.id)
-
-        view.votos["ruido"] += 1
-
-        await interaction.response.send_message(
-            "Votaste por hacer ruido.",
-            ephemeral=True
-        )
-class BotonContinuar(discord.ui.Button):
-
-    def __init__(self):
-
-        super().__init__(
-            label="Continuar",
-            emoji="🚙",
-            style=discord.ButtonStyle.secondary
-        )
-
-    async def callback(self, interaction):
-
-        view = self.view
-
-        if interaction.user.id in view.votantes:
-
-            return await interaction.response.send_message(
-                "Ya votaste.",
-                ephemeral=True
-            )
-
-        view.votantes.add(interaction.user.id)
-
-        view.votos["continuar"] += 1
-
-        await interaction.response.send_message(
-            "Votaste por continuar avanzando.",
-            ephemeral=True
-        )
 class VistaSituacionSafari(discord.ui.View):
 
     def __init__(self, situacion):
