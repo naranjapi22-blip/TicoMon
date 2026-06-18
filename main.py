@@ -266,41 +266,71 @@ async def pokedex(ctx, *, filtro: str = None):
 
 
 
-def generar_pista(data, species, pistas_usadas):
+def generar_pista(data, pistas_usadas):
     pistas = []
-    
-    # Pista 1: Por tipo principal
-    if data.get('types'):
-        tipo_principal = data['types'][0]['type']['name'].capitalize()
-        pistas.append(f"Se percibe una fuerte energía de tipo **{tipo_principal}**...")
-    
-    # Pista 2: Por región de origen
-    gen = species.get('generation', {}).get('name', '')
-    regiones = {
-        'generation-i': 'Kanto', 'generation-ii': 'Johto', 'generation-iii': 'Hoenn',
-        'generation-iv': 'Sinnoh', 'generation-v': 'Unova/Teselia', 'generation-vi': 'Kalos',
-        'generation-vii': 'Alola', 'generation-viii': 'Galar', 'generation-ix': 'Paldea'
-    }
-    if gen in regiones:
-        pistas.append(f"Los registros indican que es originario de **{regiones[gen]}**.")
-        
-    # Pista 3: Por características físicas
-    peso_kg = data.get('weight', 0) / 10
+
+    # Pista 1: Tipo principal
+    tipos = data.get("tipos", "")
+
+    if tipos:
+        tipo_principal = tipos.split(",")[0].capitalize()
+
+        pistas.append(
+            f"Se percibe una fuerte energía de tipo **{tipo_principal}**..."
+        )
+
+    # Pista 2: Peso
+    peso_kg = data.get("weight", 0) / 10
+
     if peso_kg > 100:
-        pistas.append("Debe ser enorme, se nota que es una criatura **muy pesada**.")
-    elif peso_kg > 0 and peso_kg < 5:
-        pistas.append("Es tan escurridizo que parece ser **muy ligero y pequeño**.")
-    
-    # --- EL FILTRO ANTI-REPETICIÓN CORREGIDO ---
-    # Python solo entiende "for", no "para" 😅
-    pistas_disponibles = [p for p in pistas if p not in pistas_usadas]
-    
+        pistas.append(
+            "Debe ser enorme, se nota que es una criatura **muy pesada**."
+        )
+
+    elif 0 < peso_kg < 5:
+        pistas.append(
+            "Es tan escurridizo que parece ser **muy ligero y pequeño**."
+        )
+
+    # Pista 3: Ataque
+    ataque = data.get("attack", 0)
+
+    if ataque >= 120:
+        pistas.append(
+            "Su presencia transmite una fuerza ofensiva aterradora."
+        )
+
+    elif ataque <= 40:
+        pistas.append(
+            "No parece destacar precisamente por su fuerza física."
+        )
+
+    # Pista 4: Velocidad
+    velocidad = data.get("speed", 0)
+
+    if velocidad >= 120:
+        pistas.append(
+            "Apenas puede seguirse con la vista de lo rápido que se mueve."
+        )
+
+    elif velocidad <= 30:
+        pistas.append(
+            "Sus movimientos parecen sorprendentemente lentos."
+        )
+
+    # Evitar repetir pistas
+    pistas_disponibles = [
+        p for p in pistas
+        if p not in pistas_usadas
+    ]
+
     if pistas_disponibles:
         return random.choice(pistas_disponibles)
+
     elif pistas:
         return random.choice(pistas)
-    else:
-        return "Una criatura sumamente misteriosa..."
+
+    return "Una criatura sumamente misteriosa..."
 # NOTA: Agrega este método auxiliar en tu clase o como función fuera:
 async def auto_liberar_canal(channel_id, segundos):
     try:
@@ -460,7 +490,10 @@ async def spawn(ctx):
         texto_pistas = ""
         pistas_usadas = []
         for i, (data, species, es_shiny, rareza) in enumerate(data_pokes):
-            pista_texto = generar_pista(data, species, pistas_usadas) 
+            pista_texto = generar_pista(
+                data,
+                pistas_usadas
+            )
             pistas_usadas.append(pista_texto) 
             texto_pistas += f"**Opción [{i+1}]:** 🔎 {pista_texto}\n\n"
 
