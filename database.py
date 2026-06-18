@@ -1102,7 +1102,7 @@ def actualizar_stats_pokemon(
 
         cursor.close()
         conn.close()
-def obtener_duplicados(user_id, limite=10):
+def obtener_duplicados(user_id, limite=25):
 
     conn = get_connection()
     cursor = conn.cursor()
