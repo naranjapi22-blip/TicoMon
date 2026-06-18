@@ -285,13 +285,12 @@ class SelectorPokemonTrade(discord.ui.View):
                 ON e.captura_id = c.id
             WHERE c.user_id = %s
             ORDER BY c.id DESC
-            LIMIT 25
                 """,
                 (str(jugador_id),)
             )
 
-            self.pokemones = cursor.fetchall()
-            print(f"[TRADE] Pokemon encontrados: {len(self.pokemones)}")
+            self.todos_pokemones = cursor.fetchall()
+            self.pokemones = self.todos_pokemones
         finally:
             cursor.close()
             conn.close()
@@ -301,11 +300,11 @@ class SelectorPokemonTrade(discord.ui.View):
     def lista_visible(self):
 
         if not self.filtro:
-            return self.pokemones
+            return self.todos_pokemones
 
         return [
             p
-            for p in self.pokemones
+            for p in self.todos_pokemones
             if self.filtro in p[1].lower()
         ]
     def _reconstruir_componentes(self):
