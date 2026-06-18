@@ -1,6 +1,5 @@
 import discord
 import random
-from safari_manager import obtener_safari
 from PIL import Image
 from io import BytesIO
 import aiohttp
@@ -25,7 +24,7 @@ class BotonParticipar(discord.ui.Button):
         self,
         interaction: discord.Interaction
     ):
-
+        from safari_manager import obtener_safari
         safari = obtener_safari(
             self.guild_id
         )
