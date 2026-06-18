@@ -263,22 +263,26 @@ class SelectorPokemonTrade(discord.ui.View):
 
             cursor.execute(
                 """
-                SELECT
-                    id,
-                    pokemon_nombre,
-                    es_shiny,
-                    iv_hp,
-                    iv_atk,
-                    iv_def,
-                    iv_spa,
-                    iv_spd,
-                    iv_spe,
-                    naturaleza,
-                    tamano_factor
-                FROM capturas
-                WHERE user_id = %s
-                ORDER BY id DESC
-                LIMIT 25
+            SELECT
+                c.id,
+                c.pokemon_nombre,
+                c.es_shiny,
+                c.iv_hp,
+                c.iv_atk,
+                c.iv_def,
+                c.iv_spa,
+                c.iv_spd,
+                c.iv_spe,
+                c.naturaleza,
+                c.tamano_factor,
+                CASE
+                    WHEN e.captura_id IS NOT NULL THEN TRUE
+                    ELSE FALSE
+                END AS en_equipo
+            FROM capturas c
+            LEFT JOIN equipo e
+                ON e.captura_id = c.id
+            WHERE c.user_id = %s
                 """,
                 (str(jugador_id),)
             )
