@@ -283,6 +283,8 @@ class SelectorPokemonTrade(discord.ui.View):
             LEFT JOIN equipo e
                 ON e.captura_id = c.id
             WHERE c.user_id = %s
+            ORDER BY c.id DESC
+            LIMIT 25
                 """,
                 (str(jugador_id),)
             )
