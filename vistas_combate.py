@@ -6,6 +6,7 @@ import imagencomb
 import servicios  
 from combate import CombateSim
 import combate_servicios
+from database import obtener_id_pokemon
 
 class VistaCombate(discord.ui.View):
     def __init__(self, p1, p2, equipo1_nombres, equipo2_nombres, session):
@@ -46,8 +47,13 @@ class VistaCombate(discord.ui.View):
             
             turno_atacante = 1 if resumen_ronda.startswith(p1_actual['nombre']) else 2
             
-            id1 = p1_actual.get('id') or await servicios.obtener_id_por_nombre(self.session, p1_actual['nombre'])
-            id2 = p2_actual.get('id') or await servicios.obtener_id_por_nombre(self.session, p2_actual['nombre'])
+            id1 = p1_actual.get('id') or database.obtener_id_pokemon(
+                p1_actual['nombre']
+            )
+
+            id2 = p2_actual.get('id') or database.obtener_id_pokemon(
+                p2_actual['nombre']
+            )
             
             # --- LLAMADA ACTUALIZADA CON EL FONDO ---
             buffer = await imagencomb.generar_escena_combate(

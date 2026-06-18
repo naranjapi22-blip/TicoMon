@@ -110,20 +110,7 @@ async def obtener_nombre_por_id(session, id_p):
     return "???"
 
 # 3. Obtener ID por nombre
-async def obtener_id_por_nombre(session, nombre):
-    try:
-        url = f"https://pokeapi.co/api/v2/pokemon/{nombre.lower()}"
-        async with session.get(url) as response:
-            if response.status == 200:
-                data = await response.json()
-                id_poke = data['id']
-                log.debug(f"✅ ID obtenido para {nombre}: {id_poke}")
-                return id_poke
-            else:
-                log.warning(f"⚠️ No se encontró ID para {nombre}")
-    except Exception as e:
-        log.error(f"🚨 Error al obtener ID para {nombre}: {e}", exc_info=True)
-    return None
+
 
 # 4. Filtro de silueta (si no tienes el poke, se vuelve negro)
 def aplicar_filtro_silueta(img):

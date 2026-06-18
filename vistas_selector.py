@@ -1,6 +1,6 @@
 import discord
 import servicios
-
+from database import obtener_id_pokemon
 SPRITE_URL = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/{poke_id}.png"
 POR_PAGINA = 25
 
@@ -106,7 +106,9 @@ class SelectorPokemon(discord.ui.View):
     async def id_de(self, nombre: str) -> int | None:
         clave = nombre.lower()
         if clave not in self.nombre_a_id:
-            poke_id = await servicios.obtener_id_por_nombre(self.session, nombre)
+            poke_id = database.obtener_id_pokemon(
+                nombre
+            )
             if poke_id:
                 self.nombre_a_id[clave] = poke_id
         return self.nombre_a_id.get(clave)

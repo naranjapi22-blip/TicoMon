@@ -208,7 +208,9 @@ async def pokedex(ctx, *, filtro: str = None):
     
     ids_tenidos = set()
     for nombre in nombres_tenidos:
-        id_p = await servicios.obtener_id_por_nombre(bot.session, nombre)
+        id_p = database.obtener_id_pokemon(
+            nombre
+        )
         if id_p: ids_tenidos.add(id_p)
 
     # 2. Determinar el contexto del filtro
