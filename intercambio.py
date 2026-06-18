@@ -300,6 +300,7 @@ class SelectorPokemonTrade(discord.ui.View):
             pokemon_id = pokemon[0]
             nombre = pokemon[1]
             shiny = pokemon[2]
+            en_equipo = pokemon[11]
 
             iv_total = (
                 pokemon[3] +
@@ -314,10 +315,18 @@ class SelectorPokemonTrade(discord.ui.View):
 
             naturaleza = pokemon[9]
 
+            iconos = ""
+
+            if shiny:
+                iconos += "✨"
+
+            if en_equipo:
+                iconos += "⭐"
+
             opciones.append(
                 discord.SelectOption(
-                    label=f"{'✨ ' if shiny else ''}{nombre.capitalize()} #{pokemon_id}"[:100],
-                    description=f"{iv_pct}% • {naturaleza}"[:100],
+                    label=f"{iconos} {nombre.capitalize()} #{pokemon_id}"[:100],
+                    description=f"📊 {iv_pct}% • {naturaleza}"[:100],
                     value=str(pokemon_id)
                 )
             )
@@ -331,6 +340,14 @@ class SelectorPokemonTrade(discord.ui.View):
         self.select.callback = self.seleccionar
 
         self.add_item(self.select)
+        btn_buscar = discord.ui.Button(
+            label="🔍 Buscar",
+            style=discord.ButtonStyle.primary
+        )
+
+        btn_buscar.callback = self.buscar
+
+        self.add_item(btn_buscar)
     async def seleccionar(self, interaction: discord.Interaction):
 
         pokemon_id = int(self.select.values[0])
@@ -376,6 +393,15 @@ class SelectorPokemonTrade(discord.ui.View):
             float(tamano_factor)
         )
 
+        self.stop()
+
+        try:
+            await interaction.edit_original_response(
+                content="✅ Oferta realizada.",
+                view=None
+            )
+        except:
+            pass
 
 # --- 4. LA MESA DE INTERCAMBIO (View) ---
 class SalaIntercambio(discord.ui.View):
