@@ -452,7 +452,10 @@ def generar_silueta_simple(imagen):
     silueta.putalpha(alpha)
 
     return silueta
-async def generar_imagen_top(top_pokemones):
+async def generar_imagen_top(
+    top_pokemones,
+    tipo=None
+):
 
     try:
 
@@ -501,13 +504,17 @@ async def generar_imagen_top(top_pokemones):
         # TÍTULO
         # =========================
 
+        titulo = "TOP 5 IVs"
+
+        if tipo:
+            titulo = f"TOP 5 IVs • {tipo.upper()}"
+
         draw.text(
             (20, 20),
-            "TOP 5 IVs",
+            titulo,
             fill=(255, 215, 0),
             font=fuente_titulo
         )
-
         # =========================
         # CABECERAS
         # =========================
