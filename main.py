@@ -1844,7 +1844,7 @@ async def duplicados(ctx, tipo=None):
 
     duplicados = database.obtener_duplicados(
         ctx.author.id,
-        limite=25,
+        limite=15,
         tipo=tipo
     )
 
