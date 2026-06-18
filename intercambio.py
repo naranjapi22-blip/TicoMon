@@ -266,7 +266,15 @@ class SelectorPokemonTrade(discord.ui.View):
                 SELECT
                     id,
                     pokemon_nombre,
-                    es_shiny
+                    es_shiny,
+                    iv_hp,
+                    iv_atk,
+                    iv_def,
+                    iv_spa,
+                    iv_spd,
+                    iv_spe,
+                    naturaleza,
+                    tamano_factor
                 FROM capturas
                 WHERE user_id = %s
                 ORDER BY id DESC
@@ -317,12 +325,37 @@ class SelectorPokemonTrade(discord.ui.View):
         (
             pokemon_id,
             nombre,
-            shiny
+            shiny,
+            iv_hp,
+            iv_atk,
+            iv_def,
+            iv_spa,
+            iv_spd,
+            iv_spe,
+            naturaleza,
+            tamano_factor
         ) = pokemon
 
-        await interaction.response.send_message(
-            f"Elegiste {nombre} #{pokemon_id}",
-            ephemeral=True
+        iv_total = (
+            iv_hp +
+            iv_atk +
+            iv_def +
+            iv_spa +
+            iv_spd +
+            iv_spe
+        )
+
+        iv_pct = round((iv_total / 186) * 100, 1)
+
+        await self.vista_trade.registrar_oferta(
+            interaction,
+            self.jugador_id,
+            pokemon_id,
+            nombre,
+            bool(shiny),
+            iv_pct,
+            naturaleza,
+            float(tamano_factor)
         )
 
 
