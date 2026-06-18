@@ -132,7 +132,6 @@ async def on_ready():
     print("Entrando en on_ready")
     await inicializar_rarezas_spawn()
     print("Terminó inicializar_rarezas_spawn")
-    database.init_db()
     database.cargar_cache_pokemon()
     print("✅ Cache Pokémon cargada")
     #print("✅ Pokémon clasificados por rareza.")

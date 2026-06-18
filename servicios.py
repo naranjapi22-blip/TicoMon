@@ -175,7 +175,7 @@ async def generar_collage(session, data_pokes, tenidos=None, es_shiny=False):
                     if id_poke not in tenidos:
                         img = aplicar_filtro_silueta(img)
                     
-                    nombre = database.obtener_nombre_local(
+                    nombre = obtener_nombre_local(
                         id_poke
                     )
                     return img, nombre.capitalize()
