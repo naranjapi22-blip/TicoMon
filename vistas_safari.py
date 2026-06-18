@@ -121,10 +121,11 @@ class BotonApuesta(discord.ui.Button):
         interaction: discord.Interaction
     ):
 
-        safari = obtener_safari(
-            self.guild_id
-        )
+        from safari_manager import obtener_safari
 
+        safari = obtener_safari(
+            interaction.guild.id
+        )
         if not safari:
 
             return await interaction.response.send_message(
