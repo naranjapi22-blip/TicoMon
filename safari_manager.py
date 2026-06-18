@@ -19,6 +19,58 @@ from rarezas import (
     pokemon_por_rareza,
     generar_ids_safari_region
 )
+DESCRIPCION_EVENTO = {
+    "yacimiento":
+        "💎 Se ha descubierto un yacimiento mineral. Pokémon de tipo Roca comienzan a emerger de las grietas.",
+
+    "guarida":
+        "🐉 Los rastros conducen a una enorme guarida. Algo poderoso parece habitar aquí...",
+
+    "ruinas":
+        "🏛️ Han dado con unas ruinas antiguas. Una extraña energía metálica resuena entre las estructuras.",
+
+    "bosque":
+        "🌲 El camino se interna en un bosque frondoso. Pokémon de tipo Planta observan desde la espesura.",
+
+    "lago":
+        "🌊 Un lago cristalino aparece ante ustedes. Pokémon de Agua emergen desde la profundidad.",
+
+    "migracion":
+        "🐾 Se escucha un estruendo colectivo. Una migración Pokémon atraviesa la zona.",
+
+    "duelo":
+        "🥊 Dos siluetas chocan con fuerza. Un intenso duelo Pokémon ocurre frente a la expedición.",
+
+    "ventisca":
+        "❄️ Una corriente helada congela el aire. Una ventisca dificulta el avance.",
+
+    "distorsion":
+        "🌀 La realidad parece ondularse. Una distorsión psíquica altera el entorno.",
+
+    "noche":
+        "🌙 La luz desaparece antes de tiempo. Pokémon de tipo Siniestro acechan desde las sombras.",
+
+    "cementerio":
+        "👻 Un aire fúnebre invade el lugar. Presencias espectrales recorren las tumbas cercanas.",
+
+    "arcoiris":
+        "✨ Un brillo multicolor ilumina el cielo. Una energía feérica envuelve la zona.",
+
+    "espejismo":
+        "🏜️ La visión se distorsiona. Un extraño espejismo aparece en el horizonte.",
+
+    "pantano":
+        "☣️ El terreno se vuelve viscoso e inestable. Un pantano tóxico se extiende frente a ustedes.",
+
+    "tormenta":
+        "⚡ Rayos caen a la distancia. Una tormenta eléctrica sacude la región.",
+
+    "rafaga":
+        "🌪️ Un viento huracanado golpea la expedición. Los cielos pertenecen a los Pokémon Voladores.",
+
+    "volcan":
+        "🔥 El suelo comienza a vibrar y calentarse. Un volcán activo despierta en las cercanías."
+}
 SITUACIONES_SAFARI = [
 
     {
@@ -436,11 +488,18 @@ class SafariManager:
                             f"{info_evento['evento']}"
                         )
 
-                    evento = info_evento["evento"]
-                    print(
-                        f"EVENTO FINAL: "
-                        f"{evento}"
-                    )
+                        evento = info_evento["evento"]
+
+                        print(
+                            f"EVENTO FINAL: "
+                            f"{evento}"
+                        )
+
+                        if evento in DESCRIPCION_EVENTO:
+
+                            await self.canal.send(
+                                DESCRIPCION_EVENTO[evento]
+                            )
                     self.modificador_evento = {}
 
                 legendario_evento = (
@@ -847,11 +906,11 @@ class SafariManager:
 
         while self.encuentro_numero <= self.max_encuentros:
 
-            await self.resolver_situacion_safari()
-
             await self.ejecutar_encuentro()
 
             self.encuentro_numero += 1
+
+        await self.finalizar_safari()
 
         await self.finalizar_safari()
     def agregar_participante(
