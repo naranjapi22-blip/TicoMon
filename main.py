@@ -20,7 +20,7 @@ import gestor_spawn
 import setup_cache
 import perfil
 import intercambio
-from equipo_config import POSICIONES_FUTBOL
+
 # Configuración específica
 from configuracion import canal_restringido
 from logger_config import log
@@ -43,15 +43,6 @@ from safari_personajes import obtener_frase
 # Variables globales
 from rarezas import pokemon_por_rareza
 import asyncio
-from simulador_futbol import (
-    simular_partido_usuarios,
-    formatear_evento
-)
-from futbol import captura_pertenece_usuario
-from futbol import asignar_pokemon_a_equipo
-from futbol import obtener_equipo
-from futbol import nombre_pokemon_captura
-from futbol import crear_equipo
 from datetime import datetime, timedelta
 from evolutions import (
     get_evolutions,
@@ -1447,186 +1438,6 @@ async def stress(ctx, cantidad: int = 100):
         f"❌ Errores: {errores}"
     )
 
-@bot.command()
-@canal_restringido()
-async def partido(ctx, rival):
-
-    import discord
-    import asyncio
-    import random
-    from discord.ext import commands
-
-    usuario_a = ctx.author.id
-
-    # 🔥 convertir rival SIEMPRE a User real
-    try:
-        if isinstance(rival, discord.User):
-            rival_user = rival
-
-        elif str(rival).isdigit():
-            rival_user = await bot.fetch_user(int(rival))
-
-        else:
-            rival_user = await commands.UserConverter().convert(ctx, rival)
-
-    except Exception as e:
-        return await ctx.send(f"❌ Usuario no encontrado: {e}")
-
-    usuario_b = rival_user.id
-    print(type(usuario_a), usuario_a)
-    print(type(usuario_b), usuario_b)
-    # 🔥 DEBUG REAL (IMPORTANTE)
-    try:
-        resultado = simular_partido_usuarios(usuario_a, usuario_b)
-
-    except Exception as e:
-        return await ctx.send(f"❌ ERROR EN SIMULADOR: {e}")
-
-    # 🔥 mostrar error real si viene del dict
-    if isinstance(resultado, dict) and "error" in resultado:
-        return await ctx.send(f"❌ Error simulación: {resultado['error']}")
-
-    embed = discord.Embed(
-        title="⚽ Partido en vivo",
-        description=f"{ctx.author.name} vs {rival_user.name}",
-        color=0x00ff99
-    )
-
-    embed.add_field(
-        name="🔴 Marcador",
-        value="0 - 0",
-        inline=False
-    )
-
-    embed.add_field(
-        name="📺 Eventos del partido",
-        value="⏳ Sin eventos aún...",
-        inline=False
-    )
-
-    msg = await ctx.send(embed=embed)
-
-    goles_a = 0
-    goles_b = 0
-
-    linea_a = []
-    linea_b = []
-
-    eventos = sorted(resultado["eventos"], key=lambda e: e["minuto"])
-
-    for e in eventos:
-
-        await asyncio.sleep(random.uniform(2.5, 5.0))
-
-        if e["tipo"] == "gol":
-            if e["equipo"] == "A":
-                goles_a += 1
-            else:
-                goles_b += 1
-
-        texto = f"{e['minuto']}' {formatear_evento(e)}"
-
-        if e["equipo"] == "A":
-            linea_a.append(texto)
-            linea_b.append("")
-        else:
-            linea_a.append("")
-            linea_b.append(texto)
-
-        timeline = ""
-        timeline += f"{ctx.author.name} (A){'':<30}{rival_user.name} (B)\n"
-        timeline += "─" * 70 + "\n"
-
-        for i in range(len(linea_a)):
-            timeline += f"{linea_a[i]:<35}{linea_b[i]}\n"
-
-        marcador = f"{ctx.author.name} {goles_a} - {goles_b} {rival_user.name}"
-
-        embed.set_field_at(
-            0,
-            name="🔴 Marcador",
-            value=marcador,
-            inline=False
-        )
-
-        embed.set_field_at(
-            1,
-            name="📺 Eventos del partido",
-            value=timeline[-1024:],
-            inline=False
-        )
-
-        await msg.edit(embed=embed)
-
-    embed.add_field(
-        name="🏁 FINAL DEL PARTIDO",
-        value=(
-            f"{ctx.author.name} {goles_a} - {goles_b} {rival_user.name}\n\n"
-            f"📊 Posesión: {resultado['posesion_a']}% - {resultado['posesion_b']}%\n"
-            f"📊 Ocasiones: {resultado['ocasiones_a']} - {resultado['ocasiones_b']}"
-        ),
-        inline=False
-    )
-
-    await msg.edit(embed=embed)
-@bot.command()
-async def addequipo(ctx, captura_id: int, posicion: str):
-
-    user_id = ctx.author.id
-
-    # 1. validar que el Pokémon es del usuario
-    if not captura_pertenece_usuario(user_id, captura_id):
-        return await ctx.send("❌ Ese Pokémon no es tuyo")
-
-    # 2. validar posición
-    if posicion not in POSICIONES_FUTBOL:
-        return await ctx.send("❌ Posición inválida")
-
-    # 3. guardar en equipo
-    asignar_pokemon_a_equipo(user_id, captura_id, posicion)
-
-    await ctx.send(f"✅ Pokémon añadido a {posicion}")
-@bot.command()
-@canal_restringido()
-async def team(ctx):
-    data = obtener_equipo(ctx.author.id)
-
-    if not data:
-        return await ctx.send("❌ No tienes equipo creado")
-
-    texto = "⚽ TU EQUIPO\n\n"
-
-    posiciones = [
-        "portero",
-        "defensa_1", "defensa_2", "defensa_3", "defensa_4",
-        "medio_1", "medio_2", "medio_3", "medio_4",
-        "delantero_1", "delantero_2"
-    ]
-
-    for pos in posiciones:
-
-        pokemon = data.get(pos)
-
-        if pokemon is None:
-            texto += f"⚪ {pos}: vacío\n"
-            continue
-
-        try:
-            nombre = nombre_pokemon_captura(pokemon)
-        except:
-            nombre = "Desconocido"
-
-        texto += f"⚽ {pos}: {nombre}\n"
-
-    await ctx.send(texto)
-@bot.command(name="crearteam")
-async def crearteam(ctx):
-
-    crear_equipo(ctx.author.id)
-
-    await ctx.send(
-        f"⚽ {ctx.author.mention}, tu equipo de fútbol ha sido creado."
-    )
 @bot.command(name="caramelos")
 @canal_restringido()
 async def caramelos(ctx):
