@@ -412,7 +412,8 @@ class SelectorPokemonTrade(discord.ui.View):
             iv_spd,
             iv_spe,
             naturaleza,
-            tamano_factor
+            tamano_factor,
+            _
         ) = pokemon
 
         iv_total = (
