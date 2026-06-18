@@ -326,7 +326,6 @@ class SelectorPokemonTrade(discord.ui.View):
 
 # --- 4. LA MESA DE INTERCAMBIO (View) ---
 class SalaIntercambio(discord.ui.View):
-class SalaIntercambio(discord.ui.View):
     def __init__(self, jugador1, jugador2):
         super().__init__(timeout=120) # 2 minutos para hacer el trato
         self.j1 = jugador1
