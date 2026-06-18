@@ -92,6 +92,8 @@ def get_candies(user_id):
     finally:
         cursor.close()
         conn.close()
+
+
 def remove_candy(user_id, candy_type, amount):
 
     conn = database.get_connection()
@@ -105,39 +107,13 @@ def remove_candy(user_id, candy_type, amount):
             SET amount = amount - %s
             WHERE user_id = %s
             AND candy_type = %s
+            AND amount >= %s
             """,
             (
                 amount,
                 str(user_id),
-                candy_type
-            )
-        )
-
-        conn.commit()
-
-    finally:
-        cursor.close()
-        conn.close()
-
-def remove_candy(user_id, candy_type, amount):
-
-    conn = database.get_connection()
-    cursor = conn.cursor()
-
-    try:
-
-        cursor.execute(
-            """
-        UPDATE user_candies
-        SET amount = amount - %s
-        WHERE user_id = %s
-        AND candy_type = %s
-        AND amount >= %s
-            """,
-            (
-                amount,
-                str(user_id),
-                candy_type
+                candy_type,
+                amount
             )
         )
 
