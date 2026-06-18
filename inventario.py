@@ -152,138 +152,138 @@ class Inventario(commands.Cog):
 
         view.message = mensaje
 
-@commands.command(name="top")
-async def ver_top(self, ctx, tipo=None):
+    @commands.command(name="top")
+    async def ver_top(self, ctx, tipo=None):
 
-    TIPOS_VALIDOS = {
-        "normal",
-        "fire",
-        "water",
-        "grass",
-        "electric",
-        "ice",
-        "fighting",
-        "poison",
-        "ground",
-        "flying",
-        "psychic",
-        "bug",
-        "rock",
-        "ghost",
-        "dragon",
-        "dark",
-        "steel",
-        "fairy"
-    }
-
-    if tipo:
-
-        tipo = tipo.lower()
-
-        if tipo not in TIPOS_VALIDOS:
-
-            return await ctx.send(
-                f"❌ Tipo inválido: {tipo}"
-            )
-
-    conn = database.get_connection()
-    cursor = conn.cursor()
-
-    if tipo:
-
-        cursor.execute("""
-            SELECT
-                c.id,
-                c.pokemon_nombre,
-                c.es_shiny,
-                p.id AS dex_id,
-                ((c.iv_hp + c.iv_atk + c.iv_def +
-                c.iv_spa + c.iv_spd + c.iv_spe) * 100 / 186) AS porcentaje
-            FROM capturas c
-            LEFT JOIN pokemon_data p
-                ON c.pokemon_nombre = p.nombre
-            WHERE c.user_id = %s
-            AND LOWER(p.tipos) LIKE %s
-            ORDER BY porcentaje DESC
-            LIMIT 5
-        """, (
-            str(ctx.author.id),
-            f"%{tipo}%"
-        ))
-
-    else:
-
-        cursor.execute("""
-            SELECT
-                c.id,
-                c.pokemon_nombre,
-                c.es_shiny,
-                p.id AS dex_id,
-                ((c.iv_hp + c.iv_atk + c.iv_def +
-                c.iv_spa + c.iv_spd + c.iv_spe) * 100 / 186) AS porcentaje
-            FROM capturas c
-            LEFT JOIN pokemon_data p
-                ON c.pokemon_nombre = p.nombre
-            WHERE c.user_id = %s
-            ORDER BY porcentaje DESC
-            LIMIT 5
-        """, (str(ctx.author.id),))
-
-    top_pokemones = cursor.fetchall()
-    conn.close()
-
-    if not top_pokemones:
+        TIPOS_VALIDOS = {
+            "normal",
+            "fire",
+            "water",
+            "grass",
+            "electric",
+            "ice",
+            "fighting",
+            "poison",
+            "ground",
+            "flying",
+            "psychic",
+            "bug",
+            "rock",
+            "ghost",
+            "dragon",
+            "dark",
+            "steel",
+            "fairy"
+        }
 
         if tipo:
 
-            await ctx.send(
-                f"❌ No tienes Pokémon tipo **{tipo}**."
-            )
+            tipo = tipo.lower()
+
+            if tipo not in TIPOS_VALIDOS:
+
+                return await ctx.send(
+                    f"❌ Tipo inválido: {tipo}"
+                )
+
+        conn = database.get_connection()
+        cursor = conn.cursor()
+
+        if tipo:
+
+            cursor.execute("""
+                SELECT
+                    c.id,
+                    c.pokemon_nombre,
+                    c.es_shiny,
+                    p.id AS dex_id,
+                    ((c.iv_hp + c.iv_atk + c.iv_def +
+                    c.iv_spa + c.iv_spd + c.iv_spe) * 100 / 186) AS porcentaje
+                FROM capturas c
+                LEFT JOIN pokemon_data p
+                    ON c.pokemon_nombre = p.nombre
+                WHERE c.user_id = %s
+                AND LOWER(p.tipos) LIKE %s
+                ORDER BY porcentaje DESC
+                LIMIT 5
+            """, (
+                str(ctx.author.id),
+                f"%{tipo}%"
+            ))
 
         else:
 
-            await ctx.send(
-                "❌ Aún no tienes Pokémon capturados."
-            )
+            cursor.execute("""
+                SELECT
+                    c.id,
+                    c.pokemon_nombre,
+                    c.es_shiny,
+                    p.id AS dex_id,
+                    ((c.iv_hp + c.iv_atk + c.iv_def +
+                    c.iv_spa + c.iv_spd + c.iv_spe) * 100 / 186) AS porcentaje
+                FROM capturas c
+                LEFT JOIN pokemon_data p
+                    ON c.pokemon_nombre = p.nombre
+                WHERE c.user_id = %s
+                ORDER BY porcentaje DESC
+                LIMIT 5
+            """, (str(ctx.author.id),))
 
-        return
+        top_pokemones = cursor.fetchall()
+        conn.close()
 
-    imagen_top = await servicios.generar_imagen_top(
-        top_pokemones,
-        tipo=tipo
-    )
+        if not top_pokemones:
 
-    if not imagen_top:
+            if tipo:
 
-        await ctx.send(
-            "❌ Error generando imagen."
+                await ctx.send(
+                    f"❌ No tienes Pokémon tipo **{tipo}**."
+                )
+
+            else:
+
+                await ctx.send(
+                    "❌ Aún no tienes Pokémon capturados."
+                )
+
+            return
+
+        imagen_top = await servicios.generar_imagen_top(
+            top_pokemones,
+            tipo=tipo
         )
 
-        return
+        if not imagen_top:
 
-    archivo = discord.File(
-        imagen_top,
-        filename="top.png"
-    )
+            await ctx.send(
+                "❌ Error generando imagen."
+            )
 
-    titulo = (
-        f"🏆 Tus 5 mejores Pokémon tipo {tipo.capitalize()}"
-        if tipo
-        else "🏆 Tus 5 mejores Pokémon"
-    )
+            return
 
-    embed = discord.Embed(
-        title=titulo,
-        color=discord.Color.gold()
-    )
+        archivo = discord.File(
+            imagen_top,
+            filename="top.png"
+        )
 
-    embed.set_image(
-        url="attachment://top.png"
-    )
+        titulo = (
+            f"🏆 Tus 5 mejores Pokémon tipo {tipo.capitalize()}"
+            if tipo
+            else "🏆 Tus 5 mejores Pokémon"
+        )
 
-    await ctx.send(
-        embed=embed,
-        file=archivo
-    )
+        embed = discord.Embed(
+            title=titulo,
+            color=discord.Color.gold()
+        )
+
+        embed.set_image(
+            url="attachment://top.png"
+        )
+
+        await ctx.send(
+            embed=embed,
+            file=archivo
+        )
 async def setup(bot):
     await bot.add_cog(Inventario(bot))
