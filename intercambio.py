@@ -4,7 +4,7 @@ import database
 import servicios
 import psycopg2
 import os
-
+from vistas_selector import BuscarPokemonModal
 # --- 1. MEMORIA DE SEGURIDAD (Evita la clonación) ---
 usuarios_ocupados = set()
 
@@ -296,9 +296,25 @@ class SelectorPokemonTrade(discord.ui.View):
             cursor.close()
             conn.close()
 
+        self._reconstruir_componentes()
+    @property
+    def lista_visible(self):
+
+        if not self.filtro:
+            return self.pokemones
+
+        return [
+            p
+            for p in self.pokemones
+            if self.filtro in p[1].lower()
+        ]
+    def _reconstruir_componentes(self):
+
+        self.clear_items()
+
         opciones = []
 
-        for pokemon in self.lista_visible:  
+        for pokemon in self.lista_visible[:25]:
 
             pokemon_id = pokemon[0]
             nombre = pokemon[1]
@@ -334,9 +350,6 @@ class SelectorPokemonTrade(discord.ui.View):
                 )
             )
 
-        print(f"[TRADE] Pokemon encontrados: {len(self.pokemones)}")
-        print(f"[TRADE] Opciones creadas: {len(opciones)}")
-
         if not opciones:
 
             opciones.append(
@@ -356,6 +369,7 @@ class SelectorPokemonTrade(discord.ui.View):
         self.select.callback = self.seleccionar
 
         self.add_item(self.select)
+
         btn_buscar = discord.ui.Button(
             label="🔍 Buscar",
             style=discord.ButtonStyle.primary
@@ -364,17 +378,20 @@ class SelectorPokemonTrade(discord.ui.View):
         btn_buscar.callback = self.buscar
 
         self.add_item(btn_buscar)
-    @property
-    def lista_visible(self):
+    async def crear_embed(self):
 
-        if not self.filtro:
-            return self.pokemones
+        total = len(self.lista_visible)
 
-        return [
-            p
-            for p in self.pokemones
-            if self.filtro in p[1].lower()
-        ]
+        embed = discord.Embed(
+            title="📦 Selecciona un Pokémon",
+            description=(
+                f"Pokémon encontrados: **{total}**\n"
+                f"Filtro: `{self.filtro or 'ninguno'}'"
+            ),
+            color=discord.Color.blue()
+        )
+
+        return embed
     async def seleccionar(self, interaction: discord.Interaction):
 
         pokemon_id = int(self.select.values[0])
@@ -430,12 +447,11 @@ class SelectorPokemonTrade(discord.ui.View):
         except:
             pass
 
-    async def buscar(self, interaction: discord.Interaction):
+        async def buscar(self, interaction: discord.Interaction):
 
-        await interaction.response.send_message(
-            f"🔍 Filtro actual: {self.filtro}",
-            ephemeral=True
-        )
+            await interaction.response.send_modal(
+                BuscarPokemonModal(self)
+            )
 # --- 4. LA MESA DE INTERCAMBIO (View) ---
 class SalaIntercambio(discord.ui.View):
     def __init__(self, jugador1, jugador2):
