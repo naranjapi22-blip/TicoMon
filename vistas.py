@@ -312,8 +312,6 @@ class SpawnSelectionView(discord.ui.View):
 
         R2_PUBLIC_URL = "https://pub-23cb564f6c174627926c1ac0409563d4.r2.dev"
 
-        R2_PUBLIC_URL = "https://pub-xxxxxxxxxxxxxxxx.r2.dev"
-
         path_folder = "shiny" if es_shiny else "regular"
 
         url_gif = (
