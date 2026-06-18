@@ -255,7 +255,8 @@ class SelectorPokemonTrade(discord.ui.View):
 
         self.vista_trade = vista_trade
         self.jugador_id = jugador_id
-
+        self.filtro = None
+        self.pagina_actual = 0
         conn = database.get_connection()
         cursor = conn.cursor()
 
@@ -297,7 +298,7 @@ class SelectorPokemonTrade(discord.ui.View):
 
         opciones = []
 
-        for pokemon in self.pokemones:
+        for pokemon in self.lista_visible:  
 
             pokemon_id = pokemon[0]
             nombre = pokemon[1]
@@ -363,6 +364,17 @@ class SelectorPokemonTrade(discord.ui.View):
         btn_buscar.callback = self.buscar
 
         self.add_item(btn_buscar)
+    @property
+    def lista_visible(self):
+
+        if not self.filtro:
+            return self.pokemones
+
+        return [
+            p
+            for p in self.pokemones
+            if self.filtro in p[1].lower()
+        ]
     async def seleccionar(self, interaction: discord.Interaction):
 
         pokemon_id = int(self.select.values[0])
@@ -421,7 +433,7 @@ class SelectorPokemonTrade(discord.ui.View):
     async def buscar(self, interaction: discord.Interaction):
 
         await interaction.response.send_message(
-            "🔍 Búsqueda próximamente.",
+            f"🔍 Filtro actual: {self.filtro}",
             ephemeral=True
         )
 # --- 4. LA MESA DE INTERCAMBIO (View) ---
