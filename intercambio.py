@@ -283,7 +283,11 @@ class SelectorPokemonTrade(discord.ui.View):
 
         opciones = []
 
-        for pokemon_id, nombre, shiny in self.pokemones:
+        for pokemon in self.pokemones:
+
+            pokemon_id = pokemon[0]
+            nombre = pokemon[1]
+            shiny = pokemon[2]
 
             opciones.append(
                 discord.SelectOption(
@@ -291,17 +295,6 @@ class SelectorPokemonTrade(discord.ui.View):
                     value=str(pokemon_id)
                 )
             )
-
-        self.select = discord.ui.Select(
-            placeholder="📦 Selecciona un Pokémon",
-            min_values=1,
-            max_values=1,
-            options=opciones
-        )
-
-        self.select.callback = self.seleccionar
-
-        self.add_item(self.select)
 
     async def seleccionar(self, interaction: discord.Interaction):
 
