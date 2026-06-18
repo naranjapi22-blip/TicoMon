@@ -182,19 +182,15 @@ async def generar_collage(session, data_pokes, tenidos=None, es_shiny=False):
         try:
 
             font = ImageFont.truetype(
-                "arial.ttf",
+                "fonts/DejaVuSans-Bold.ttf",
                 20
             )
-
-            print("FUENTE ARIAL")
 
         except Exception as e:
 
             print("ERROR FUENTE:", e)
 
             font = ImageFont.load_default()
-
-            print("FUENTE DEFAULT")
 
         # Filtramos nulos por si alguna descarga falló
         resultados = [r for r in resultados if r is not None]
