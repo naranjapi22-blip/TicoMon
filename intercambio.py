@@ -302,15 +302,30 @@ class SelectorPokemonTrade(discord.ui.View):
         self.select.callback = self.seleccionar
 
         self.add_item(self.select)
-# --- 4. LA MESA DE INTERCAMBIO (View) ---
+
     async def seleccionar(self, interaction: discord.Interaction):
 
         pokemon_id = int(self.select.values[0])
 
+        pokemon = next(
+            p for p in self.pokemones
+            if p[0] == pokemon_id
+        )
+
+        (
+            pokemon_id,
+            nombre,
+            shiny
+        ) = pokemon
+
         await interaction.response.send_message(
-            f"Seleccionaste el Pokémon #{pokemon_id}",
+            f"Elegiste {nombre} #{pokemon_id}",
             ephemeral=True
         )
+
+
+# --- 4. LA MESA DE INTERCAMBIO (View) ---
+class SalaIntercambio(discord.ui.View):
 class SalaIntercambio(discord.ui.View):
     def __init__(self, jugador1, jugador2):
         super().__init__(timeout=120) # 2 minutos para hacer el trato
