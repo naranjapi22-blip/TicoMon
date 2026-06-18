@@ -1,5 +1,5 @@
 import discord
-
+import random
 from safari_manager import obtener_safari
 from PIL import Image
 from io import BytesIO
@@ -469,3 +469,110 @@ class BotonContinuar(discord.ui.Button):
             "Votaste por continuar avanzando.",
             ephemeral=True
         )
+class VistaSituacionSafari(discord.ui.View):
+
+    def __init__(self, situacion):
+
+        super().__init__(timeout=20)
+
+        self.situacion = situacion
+        self.votos_a = 0
+        self.votos_b = 0
+        self.votantes = set()
+        self.modificador_ganador = {}
+
+        btn_a = discord.ui.Button(
+            label=situacion["opcion_a"],
+            style=discord.ButtonStyle.success
+        )
+
+        btn_b = discord.ui.Button(
+            label=situacion["opcion_b"],
+            style=discord.ButtonStyle.secondary
+        )
+
+        btn_a.callback = self.votar_a
+        btn_b.callback = self.votar_b
+
+        self.add_item(btn_a)
+        self.add_item(btn_b)
+
+    async def votar_a(
+        self,
+        interaction: discord.Interaction
+    ):
+
+        if interaction.user.id in self.votantes:
+
+            return await interaction.response.send_message(
+                "❌ Ya votaste.",
+                ephemeral=True
+            )
+
+        self.votantes.add(
+            interaction.user.id
+        )
+
+        self.votos_a += 1
+
+        await interaction.response.send_message(
+            f"✅ Votaste por: {self.situacion['opcion_a']}",
+            ephemeral=True
+        )
+
+    async def votar_b(
+        self,
+        interaction: discord.Interaction
+    ):
+
+        if interaction.user.id in self.votantes:
+
+            return await interaction.response.send_message(
+                "❌ Ya votaste.",
+                ephemeral=True
+            )
+
+        self.votantes.add(
+            interaction.user.id
+        )
+
+        self.votos_b += 1
+
+        await interaction.response.send_message(
+            f"✅ Votaste por: {self.situacion['opcion_b']}",
+            ephemeral=True
+        )
+
+    def resolver_resultado(self):
+
+        if self.votos_a > self.votos_b:
+
+            self.modificador_ganador = (
+                self.situacion["modificador_a"]
+            )
+
+            return "A"
+
+        elif self.votos_b > self.votos_a:
+
+            self.modificador_ganador = (
+                self.situacion["modificador_b"]
+            )
+
+            return "B"
+
+        else:
+
+            if random.choice([True, False]):
+
+                self.modificador_ganador = (
+                    self.situacion["modificador_a"]
+                )
+
+                return "A"
+
+            self.modificador_ganador = (
+                self.situacion["modificador_b"]
+            )
+
+            return "B"

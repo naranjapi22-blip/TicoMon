@@ -6,6 +6,7 @@ import database
 log = logging.getLogger(__name__)
 from database import guardar_captura
 import discord
+from vistas_safari import VistaSituacionSafari
 from safari_personajes import (
     obtener_guia_aleatorio,
     obtener_frase,
@@ -18,6 +19,126 @@ from rarezas import (
     pokemon_por_rareza,
     generar_ids_safari_region
 )
+SITUACIONES_SAFARI = [
+
+    {
+        "id": "huellas",
+        "texto": "🐾 Se observan huellas recientes.",
+        "opcion_a": "🔍 Investigar",
+        "opcion_b": "🚙 Ignorar",
+        "modificador_a": {
+            "guarida": 3,
+            "ruinas": 2
+        },
+        "modificador_b": {
+            "migracion": 1
+        }
+    },
+
+    {
+        "id": "bayas",
+        "texto": "🍓 Un arbusto lleno de bayas.",
+        "opcion_a": "🧺 Recoger",
+        "opcion_b": "🚙 Rodear",
+        "modificador_a": {
+            "bosque": 3,
+            "migracion": 2
+        },
+        "modificador_b": {
+            "rafaga": 1
+        }
+    },
+
+    {
+        "id": "arbustos",
+        "texto": "🌿 Crujidos extraños en el follaje.",
+        "opcion_a": "💥 Piedra",
+        "opcion_b": "🤫 Sigilo",
+        "modificador_a": {
+            "duelo": 3,
+            "pantano": 2
+        },
+        "modificador_b": {
+            "noche": 2,
+            "distorsion": 1
+        }
+    },
+
+    {
+        "id": "rio",
+        "texto": "🌊 Un río atraviesa la ruta.",
+        "opcion_a": "🎣 Pescar",
+        "opcion_b": "🛶 Cruzar",
+        "modificador_a": {
+            "lago": 3,
+            "migracion": 1
+        },
+        "modificador_b": {
+            "rafaga": 2,
+            "lago": 1
+        }
+    },
+
+    {
+        "id": "cueva",
+        "texto": "🕳️ La cueva emite un aire gélido.",
+        "opcion_a": "🔦 Entrar",
+        "opcion_b": "🚶 Seguir",
+        "modificador_a": {
+            "ventisca": 3,
+            "guarida": 2
+        },
+        "modificador_b": {
+            "espejismo": 1
+        }
+    },
+
+    {
+        "id": "niebla",
+        "texto": "🌫️ Una densa niebla cubre todo.",
+        "opcion_a": "💡 Bengalas",
+        "opcion_b": "🧭 A ciegas",
+        "modificador_a": {
+            "distorsion": 3,
+            "noche": 2
+        },
+        "modificador_b": {
+            "espejismo": 2
+        }
+    },
+
+    {
+        "id": "rugido",
+        "texto": "🔊 Un rugido sacude el área.",
+        "opcion_a": "⚔️ Preparar",
+        "opcion_b": "🏃 Refugio",
+        "modificador_a": {
+            "duelo": 3,
+            "guarida": 2
+        },
+        "modificador_b": {
+            "noche": 2,
+            "espejismo": 1,
+            "cementerio": 1
+        }
+    },
+
+    {
+        "id": "campamento",
+        "texto": "⛺ Restos de un campamento.",
+        "opcion_a": "🍵 Descansar",
+        "opcion_b": "🎒 Registrar",
+        "modificador_a": {
+            "arcoiris": 3,
+            "migracion": 2
+        },
+        "modificador_b": {
+            "ruinas": 3,
+            "yacimiento": 2
+        }
+    }
+
+]
 GUIAS_SAFARI = {
     "papel": {
         "nombre": "Papel",
@@ -80,6 +201,7 @@ class SafariManager:
         self.guia_id = None
         self.guia_actual = None
         self.creador_vistas = None
+        self.modificador_evento = {}
         self.frases_viaje_usadas = 0
         self.encuentro_actual = {
             "pokemon_id": None,
@@ -115,7 +237,6 @@ class SafariManager:
         obtener_guia_aleatorio()
         )
 
-        roll = random.random()
         roll = random.random()
 
         if roll < 0.80:
@@ -731,11 +852,17 @@ class SafariManager:
 
         await self.resolver_apuestas()
     async def ejecutar_safari(self):
+
         self.encuentro_numero = 1
 
         while self.encuentro_numero <= self.max_encuentros:
+
+            await self.resolver_situacion_safari()
+
             await self.ejecutar_encuentro()
+
             self.encuentro_numero += 1
+
         await self.finalizar_safari()
     async def resolver_decision_evento(
         self,
@@ -1126,3 +1253,53 @@ ACCIONES_EXPEDICION = [
     ("ruido", "🔥 Hacer Ruido"),
     ("continuar", "🚙 Continuar")
 ]
+async def resolver_situacion_safari(self):
+
+    situacion = random.choice(
+        SITUACIONES_SAFARI
+    )
+
+    view = VistaSituacionSafari(
+        situacion
+    )
+
+    embed = discord.Embed(
+        title="🤔 Decisión de la Expedición",
+        description=situacion["texto"],
+        color=discord.Color.orange()
+    )
+
+    mensaje = await self.canal.send(
+        embed=embed,
+        view=view
+    )
+
+    await asyncio.sleep(20)
+
+    try:
+        await mensaje.edit(view=None)
+    except:
+        pass
+
+    resultado = view.resolver_resultado()
+
+    self.modificador_evento = (
+        view.modificador_ganador
+    )
+
+    if resultado == "A":
+
+        opcion_ganadora = (
+            situacion["opcion_a"]
+        )
+
+    else:
+
+        opcion_ganadora = (
+            situacion["opcion_b"]
+        )
+
+    await self.canal.send(
+        "🗳️ **Decisión tomada**\n\n"
+        f"➡️ {opcion_ganadora}"
+    )
