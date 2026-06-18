@@ -1120,30 +1120,55 @@ def actualizar_stats_pokemon(
 
         cursor.close()
         conn.close()
-def obtener_duplicados(user_id, limite=25):
+def obtener_duplicados(user_id, limite=15, tipo=None):
 
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute("""
-        SELECT
-            pokemon_nombre,
-            COUNT(*) as cantidad
-        FROM capturas
-        WHERE user_id = %s
-        GROUP BY pokemon_nombre
-        HAVING COUNT(*) > 1
-        ORDER BY cantidad DESC
-        LIMIT %s
-    """, (str(user_id), limite))
+    if tipo:
+
+        cursor.execute("""
+            SELECT
+                c.pokemon_nombre,
+                COUNT(*) as cantidad
+            FROM capturas c
+            JOIN pokemon_data p
+                ON LOWER(c.pokemon_nombre) = LOWER(p.nombre)
+            WHERE c.user_id = %s
+              AND p.tipos ILIKE %s
+            GROUP BY c.pokemon_nombre
+            HAVING COUNT(*) > 1
+            ORDER BY cantidad DESC
+            LIMIT %s
+        """, (
+            str(user_id),
+            f"%{tipo.lower()}%",
+            limite
+        ))
+
+    else:
+
+        cursor.execute("""
+            SELECT
+                pokemon_nombre,
+                COUNT(*) as cantidad
+            FROM capturas
+            WHERE user_id = %s
+            GROUP BY pokemon_nombre
+            HAVING COUNT(*) > 1
+            ORDER BY cantidad DESC
+            LIMIT %s
+        """, (
+            str(user_id),
+            limite
+        ))
 
     resultado = cursor.fetchall()
 
     cursor.close()
     conn.close()
 
-    return resultado        
-
+    return resultado
 
 def obtener_nombre_local(id_pokemon):
 

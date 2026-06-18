@@ -1839,7 +1839,14 @@ async def elegir(ctx, id_pokemon: int, opcion: int):
 
         cursor.close()
         conn.close()
+@bot.command()
+async def duplicados(ctx, tipo=None):
 
+    duplicados = database.obtener_duplicados(
+        ctx.author.id,
+        limite=25,
+        tipo=tipo
+    )
 
 
 bot.run(TOKEN)
