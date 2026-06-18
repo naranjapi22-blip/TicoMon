@@ -297,9 +297,23 @@ class SelectorPokemonTrade(discord.ui.View):
             nombre = pokemon[1]
             shiny = pokemon[2]
 
+            iv_total = (
+                pokemon[3] +
+                pokemon[4] +
+                pokemon[5] +
+                pokemon[6] +
+                pokemon[7] +
+                pokemon[8]
+            )
+
+            iv_pct = round((iv_total / 186) * 100, 1)
+
+            naturaleza = pokemon[9]
+
             opciones.append(
                 discord.SelectOption(
-                    label=f"{'✨ ' if shiny else ''}{nombre.capitalize()} #{pokemon_id}",
+                    label=f"{'✨ ' if shiny else ''}{nombre.capitalize()} #{pokemon_id}"[:100],
+                    description=f"{iv_pct}% • {naturaleza}"[:100],
                     value=str(pokemon_id)
                 )
             )
