@@ -255,38 +255,20 @@ class SafariManager:
             )
         )
 
-        self.eventos_safari = random.sample(
-            EVENTOS_COMUNES,
-            cantidad_eventos
-        )
-        if random.random() <= 0.05:
-
-            posicion = random.randint(
-                0,
-                len(self.eventos_safari) - 1
-            )
-
-            self.eventos_safari[posicion] = "guarida"
-
         self.mapa_eventos = {
             encuentro: {
-                "evento": evento,
-                "activo": None
+                "evento": None,
+                "activo": None,
+                "evento_generado": False
             }
-            for encuentro, evento in zip(
-                sorted(self.encuentros_evento),
-                self.eventos_safari
+            for encuentro in sorted(
+                self.encuentros_evento
             )
         }
 
         print(
             f"EVENTOS SAFARI: "
             f"{self.encuentros_evento}"
-        )
-
-        print(
-            f"TIPOS EVENTO: "
-            f"{self.eventos_safari}"
         )
 
         print(
@@ -451,7 +433,25 @@ class SafariManager:
 
                 else:
 
+                    if not info_evento.get("evento_generado"):
+
+                        info_evento["evento"] = (
+                            self.generar_evento_safari()
+                        )
+
+                        info_evento["evento_generado"] = True
+
+                        print(
+                            f"EVENTO GENERADO: "
+                            f"{info_evento['evento']}"
+                        )
+
                     evento = info_evento["evento"]
+                    print(
+                        f"EVENTO FINAL: "
+                        f"{evento}"
+                    )
+                    self.modificador_evento = {}
 
                 legendario_evento = (
                     random.random() <= 0.02
@@ -1302,3 +1302,34 @@ ACCIONES_EXPEDICION = [
     ("ruido", "🔥 Hacer Ruido"),
     ("continuar", "🚙 Continuar")
 ]
+def generar_evento_safari(self):
+    print(
+        f"MODIFICADOR ACTUAL: "
+        f"{self.modificador_evento}"
+    )
+    pesos = {
+        evento: 1
+        for evento in EVENTOS_COMUNES
+    }
+
+    for evento, bonus in (
+        self.modificador_evento.items()
+    ):
+
+        if evento in pesos:
+
+            pesos[evento] += bonus
+
+    print(
+        f"MODIFICADORES: {self.modificador_evento}"
+    )
+
+    print(
+        f"PESOS EVENTOS: {pesos}"
+    )
+
+    return random.choices(
+        list(pesos.keys()),
+        weights=list(pesos.values()),
+        k=1
+    )[0]
