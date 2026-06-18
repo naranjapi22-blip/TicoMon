@@ -1149,7 +1149,37 @@ class SafariManager:
             "🗳️ **Decisión tomada**\n\n"
             f"➡️ {opcion_ganadora}"
         )
+    def generar_evento_safari(self):
+        print(
+            f"MODIFICADOR ACTUAL: "
+            f"{self.modificador_evento}"
+        )
+        pesos = {
+            evento: 1
+            for evento in EVENTOS_COMUNES
+        }
 
+        for evento, bonus in (
+            self.modificador_evento.items()
+        ):
+
+            if evento in pesos:
+
+                pesos[evento] += bonus
+
+        print(
+            f"MODIFICADORES: {self.modificador_evento}"
+        )
+
+        print(
+            f"PESOS EVENTOS: {pesos}"
+        )
+
+        return random.choices(
+            list(pesos.keys()),
+            weights=list(pesos.values()),
+            k=1
+        )[0]
 # ==========================
 # Registro global
 # ==========================
@@ -1302,34 +1332,3 @@ ACCIONES_EXPEDICION = [
     ("ruido", "🔥 Hacer Ruido"),
     ("continuar", "🚙 Continuar")
 ]
-def generar_evento_safari(self):
-    print(
-        f"MODIFICADOR ACTUAL: "
-        f"{self.modificador_evento}"
-    )
-    pesos = {
-        evento: 1
-        for evento in EVENTOS_COMUNES
-    }
-
-    for evento, bonus in (
-        self.modificador_evento.items()
-    ):
-
-        if evento in pesos:
-
-            pesos[evento] += bonus
-
-    print(
-        f"MODIFICADORES: {self.modificador_evento}"
-    )
-
-    print(
-        f"PESOS EVENTOS: {pesos}"
-    )
-
-    return random.choices(
-        list(pesos.keys()),
-        weights=list(pesos.values()),
-        k=1
-    )[0]
