@@ -1070,6 +1070,12 @@ class SafariManager:
             weights=list(pesos.values()),
             k=1
         )[0]
+    def obtener_balls(self, user_id):
+
+        if user_id not in self.participantes:
+            return 0
+
+        return self.participantes[user_id]["balls"]
 # ==========================
 # Registro global
 # ==========================
@@ -1223,9 +1229,3 @@ ACCIONES_EXPEDICION = [
     ("continuar", "🚙 Continuar")
 ]
 
-def obtener_balls(self, user_id):
-
-    if user_id not in self.participantes:
-        return 0
-
-    return self.participantes[user_id]["balls"]
