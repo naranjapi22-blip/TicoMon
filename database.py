@@ -204,57 +204,128 @@ async def guardar_captura(
 
             if conn:
                 conn.close()
-def ejecutar_consulta(query_pg, query_sql, params):
-    """Auxiliar para ejecutar consultas con diferentes sintaxis"""
+def ejecutar_consulta(query, params):
+    """Auxiliar para ejecutar consultas"""
     conn = None
+
     try:
         conn = get_connection()
         cursor = conn.cursor()
-        cursor.execute(query_pg if DATABASE_URL else query_sql, params)
+
+        cursor.execute(query, params)
+
         res = cursor.fetchall()
-        log.debug(f"✅ Consulta ejecutada: {len(res)} resultados")
+
+        log.debug(
+            f"✅ Consulta ejecutada: {len(res)} resultados"
+        )
+
         return res
+
     except Exception as e:
-        log.error(f"🚨 Error al ejecutar consulta: {e}", exc_info=True)
+
+        log.error(
+            f"🚨 Error al ejecutar consulta: {e}",
+            exc_info=True
+        )
+
         raise
+
     finally:
+
         if conn:
             conn.close()
 
 def obtener_capturas(user_id, solo_shiny=False):
+
     try:
-        log.debug(f"🔍 Obteniendo capturas para user {user_id} (Solo shiny: {solo_shiny})")
-        if DATABASE_URL:
-            q = "SELECT pokemon_nombre FROM capturas WHERE user_id = %s" + (" AND es_shiny = 1" if solo_shiny else "")
-            res = ejecutar_consulta(q, q.replace("%s", "?"), (str(user_id),))
-        else:
-            q = "SELECT pokemon_nombre FROM capturas WHERE user_id = ?" + (" AND es_shiny = 1" if solo_shiny else "")
-            res = ejecutar_consulta(q.replace("%s", "?"), q, (user_id,))
-        
+
+        log.debug(
+            f"🔍 Obteniendo capturas para user {user_id} "
+            f"(Solo shiny: {solo_shiny})"
+        )
+
+        q = (
+            "SELECT pokemon_nombre "
+            "FROM capturas "
+            "WHERE user_id = %s"
+            + (
+                " AND es_shiny = 1"
+                if solo_shiny
+                else ""
+            )
+        )
+
+        res = ejecutar_consulta(
+            q,
+            (str(user_id),)
+        )
+
         capturas = [fila[0] for fila in res]
-        log.info(f"✅ Se obtuvieron {len(capturas)} capturas para user {user_id}")
+
+        log.info(
+            f"✅ Se obtuvieron {len(capturas)} "
+            f"capturas para user {user_id}"
+        )
+
         return capturas
+
     except Exception as e:
-        log.error(f"🚨 Error al obtener capturas: {e}", exc_info=True)
+
+        log.error(
+            f"🚨 Error al obtener capturas: {e}",
+            exc_info=True
+        )
+
         return []
 
-def obtener_versiones_pokemon(user_id, nombre_pokemon):
+def obtener_versiones_pokemon(
+    user_id,
+    nombre_pokemon
+):
+
     try:
-        log.debug(f"🔍 Obteniendo versiones de {nombre_pokemon} para user {user_id}")
-        if DATABASE_URL:
-            res = ejecutar_consulta("SELECT es_shiny FROM capturas WHERE user_id = %s AND pokemon_nombre = %s", 
-                                   "SELECT es_shiny FROM capturas WHERE user_id = ? AND pokemon_nombre = ?", 
-                                   (str(user_id), nombre_pokemon.lower()))
-        else:
-            res = ejecutar_consulta("SELECT es_shiny FROM capturas WHERE user_id = ? AND pokemon_nombre = ?", 
-                                   "SELECT es_shiny FROM capturas WHERE user_id = ? AND pokemon_nombre = ?", 
-                                   (user_id, nombre_pokemon.lower()))
-        
-        versiones = [fila[0] for fila in res]
-        log.info(f"✅ Se obtuvieron {len(versiones)} versiones de {nombre_pokemon} para user {user_id}")
+
+        log.debug(
+            f"🔍 Obteniendo versiones de "
+            f"{nombre_pokemon} "
+            f"para user {user_id}"
+        )
+
+        res = ejecutar_consulta(
+            """
+            SELECT es_shiny
+            FROM capturas
+            WHERE user_id = %s
+            AND pokemon_nombre = %s
+            """,
+            (
+                str(user_id),
+                nombre_pokemon.lower()
+            )
+        )
+
+        versiones = [
+            fila[0]
+            for fila in res
+        ]
+
+        log.info(
+            f"✅ Se obtuvieron "
+            f"{len(versiones)} versiones "
+            f"de {nombre_pokemon}"
+        )
+
         return versiones
+
     except Exception as e:
-        log.error(f"🚨 Error al obtener versiones de {nombre_pokemon}: {e}", exc_info=True)
+
+        log.error(
+            f"🚨 Error al obtener versiones "
+            f"de {nombre_pokemon}: {e}",
+            exc_info=True
+        )
+
         return []
 
 def obtener_info_captura(user_id, nombre_pokemon):
