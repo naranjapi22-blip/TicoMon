@@ -13,6 +13,9 @@ import gestor_spawn
 import servicios
 from logger_config import log
 from pathlib import Path
+from captura_imagen import (
+    generar_imagen_captura
+)
 from mapeo_pokes import obtener_id_gif # Asegúrate de tener este import al inicio del archivo
 import records  # Importa tu archivo de lógica de récords
 COOLDOWN_LANZAMIENTO = 10.0
@@ -630,7 +633,13 @@ class BotonCaptura(discord.ui.View):
                         trainer = await database.obtener_trainer(
                             interaction.user.id
                         )
-
+                        buffer_captura = await generar_imagen_captura(
+                            trainer=trainer,
+                            pokemon_id=self.pokemon_id,
+                            es_shiny=self.es_shiny,
+                            jugador=interaction.user.display_name,
+                            pokemon=self.nombre
+                        )
                         if trainer:
 
                             ruta_trainer = (
@@ -674,8 +683,13 @@ class BotonCaptura(discord.ui.View):
 
                         await interaction.message.edit(
                             content=mensaje,
+                            attachments=[
+                                discord.File(
+                                    buffer_captura,
+                                    filename="captura.png"
+                                )
+                            ],
                             view=None
-                        )
 
                         self.stop()
 
