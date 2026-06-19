@@ -319,6 +319,21 @@ class IvsCommands(commands.Cog):
                 )
                 return
 
+            cursor.execute("""
+                SELECT id_pokemon_grande, id_pokemon_pequeno
+                FROM RECORDS_ESPECIE 
+                WHERE id_pokemon_grande = %s OR id_pokemon_pequeno = %s
+            """, (str(id_pokemon), str(id_pokemon))
+            )
+
+            record = cursor.fetchone()
+
+            if record:
+                await ctx.send(
+                    "❌ No se puede liberar pokémon con record."
+                )
+                return
+
             nombre, shiny, hp, atk, de, spa, spd, spe = resultado
 
             # Eliminar Pokémon
@@ -342,10 +357,27 @@ class IvsCommands(commands.Cog):
 
             emoji = "✨" if shiny else ""
 
+            cursor.execute(
+                """
+                SELECT tipos
+                FROM pokemon_data
+                WHERE nombre = %s
+                """,
+                (nombre.lower(),)
+            )
+
+            row = cursor.fetchone()
+            
+            if not row:
+                return
+
+            tipo_primario = row[0].split(",")[0]
+
+
             await ctx.send(
                 f"🗑️ Liberaste a {emoji} **{nombre.capitalize()}** "
                 f"(ID `{id_pokemon}`)\n"
-                f"🍬 Recibiste 1 caramelo."
+                f"🍬 Recibiste 1 caramelo {tipo_primario}."
             )
 
         except Exception as e:
