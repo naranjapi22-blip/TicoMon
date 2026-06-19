@@ -20,7 +20,7 @@ async def generar_imagen_captura(
         trainer = "ash"
     fondo = Image.new(
         "RGBA",
-        (900, 400),
+        (750, 350),
         (25, 25, 35, 255)
     )
 
@@ -73,6 +73,15 @@ async def generar_imagen_captura(
         pokemon_path
     ).convert("RGBA")
 
+    # Recortar transparencia
+    trainer_img = trainer_img.crop(
+        trainer_img.getbbox()
+    )
+
+    pokemon_img = pokemon_img.crop(
+        pokemon_img.getbbox()
+    )
+
     trainer_img = trainer_img.resize(
         (280, 280),
         Image.NEAREST
@@ -85,13 +94,13 @@ async def generar_imagen_captura(
 
     fondo.paste(
         trainer_img,
-        (80, 70),
+        (50, 40),
         trainer_img
     )
 
     fondo.paste(
         pokemon_img,
-        (540, 80),
+        (430, 60),
         pokemon_img
     )
     bbox = draw.textbbox(
@@ -128,12 +137,11 @@ async def generar_imagen_captura(
         font=texto
     )
     draw.text(
-        (250, 25),
+        (180, 20),
         "CAPTURA EXITOSA",
         fill=(255, 215, 0),
         font=titulo
     )
-
     buffer = BytesIO()
 
     fondo.save(
