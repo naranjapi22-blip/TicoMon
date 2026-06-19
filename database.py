@@ -818,26 +818,18 @@ def listar_capturas_por_especie(user_id, nombre: str) -> list:
         conn = get_connection()
         cursor = conn.cursor()
         iv_sum = "(iv_hp + iv_atk + iv_def + iv_spa + iv_spd + iv_spe)"
-        if DATABASE_URL:
-            cursor.execute(
-                f"""
-                SELECT id, iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe, es_shiny
-                FROM capturas
-                WHERE user_id = %s AND pokemon_nombre = %s
-                ORDER BY {iv_sum} DESC
-                """,
-                (_uid(user_id), nombre.lower()),
-            )
-        else:
-            cursor.execute(
-                f"""
-                SELECT id, iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe, es_shiny
-                FROM capturas
-                WHERE user_id = ? AND pokemon_nombre = ?
-                ORDER BY {iv_sum} DESC
-                """,
-                (user_id, nombre.lower()),
-            )
+        cursor.execute(
+            f"""
+            SELECT id, iv_hp, iv_atk, iv_def,
+                iv_spa, iv_spd, iv_spe,
+                es_shiny
+            FROM capturas
+            WHERE user_id = %s
+            AND pokemon_nombre = %s
+            ORDER BY {iv_sum} DESC
+            """,
+            (_uid(user_id), nombre.lower()),
+        )
         return cursor.fetchall()
     except Exception as e:
         log.error(f"🚨 Error listar_capturas_por_especie: {e}", exc_info=True)
