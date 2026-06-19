@@ -76,65 +76,132 @@ def init_db():
         raise
 
 
-async def guardar_captura(user_id, pokemon_nombre, tamano_factor, es_shiny=False, pokeball='Pokéball'):
+async def guardar_captura(
+    user_id,
+    pokemon_nombre,
+    tamano_factor,
+    es_shiny=False,
+    pokeball='Pokéball'
+):
     async with db_lock:
+
         conn = None
-        resultado = None  # Inicializamos la variable de récord
+        resultado = None
+
         try:
+
             # 1. Cálculos iniciales
-            naturaleza_seleccionada = random.choice(NATURALEZAS)
-            iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe = [random.randint(0, 31) for _ in range(6)]
-            fecha_ahora = datetime.now(timezone.utc)
-            
+            naturaleza_seleccionada = random.choice(
+                NATURALEZAS
+            )
+
+            iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe = [
+                random.randint(0, 31)
+                for _ in range(6)
+            ]
+
+            fecha_ahora = datetime.now(
+                timezone.utc
+            )
+
             # 2. Conexión
             conn = get_connection()
             cursor = conn.cursor()
-            
+
             # 3. Inserción
-            campos = "user_id, pokemon_nombre, es_shiny, pokeball, fecha, iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe, naturaleza, tamano_factor"
+            campos = (
+                "user_id, pokemon_nombre, es_shiny, "
+                "pokeball, fecha, iv_hp, iv_atk, iv_def, "
+                "iv_spa, iv_spd, iv_spe, naturaleza, "
+                "tamano_factor"
+            )
+
             valores = (
-                str(user_id), 
-                pokemon_nombre.lower(), 
-                1 if es_shiny else 0, # es_shiny
-                pokeball, 
-                fecha_ahora,          # fecha
-                iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe, 
-                naturaleza_seleccionada, 
-                tamano_factor         # <--- TIENE QUE SER EL ÚLTIMO
+                str(user_id),
+                pokemon_nombre.lower(),
+                1 if es_shiny else 0,
+                pokeball,
+                fecha_ahora,
+                iv_hp,
+                iv_atk,
+                iv_def,
+                iv_spa,
+                iv_spd,
+                iv_spe,
+                naturaleza_seleccionada,
+                tamano_factor
+            )
+
+            cursor.execute(
+                f"""
+                INSERT INTO capturas ({campos})
+                VALUES (
+                    %s, %s, %s, %s, %s,
+                    %s, %s, %s, %s,
+                    %s, %s, %s, %s
+                )
+                RETURNING id
+                """,
+                valores
+            )
+
+            res = cursor.fetchone()
+            id_pokemon = res[0] if res else None
+
+            # 4. Verificación de récords
+            if id_pokemon:
+
+                resultado = (
+                    records.verificar_y_actualizar_record(
+                        cursor,
+                        pokemon_nombre.lower(),
+                        id_pokemon,
+                        str(user_id),
+                        tamano_factor,
+                        fecha_ahora
+                    )
                 )
 
-            if DATABASE_URL:
-                cursor.execute(f"INSERT INTO capturas ({campos}) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id", valores)
-                res = cursor.fetchone()
-                id_pokemon = res[0] if res else None
-            else:
-                cursor.execute(f"INSERT INTO capturas ({campos}) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", valores)
-                id_pokemon = cursor.lastrowid
-            
-            # 5. VERIFICACIÓN DE RÉCORDS
-            if id_pokemon:
-                resultado = records.verificar_y_actualizar_record(cursor, pokemon_nombre.lower(), id_pokemon, str(user_id), tamano_factor, fecha_ahora)
                 if resultado:
-                    log.info(f"🏆 Récord actualizado ({resultado}) para {pokemon_nombre.capitalize()} (ID: {id_pokemon})")
-            
-            # 6. Confirmación
-            conn.commit()
-            add_candy_for_pokemon(
-                        user_id,
-                        pokemon_nombre,
-                        1
+
+                    log.info(
+                        f"🏆 Récord actualizado "
+                        f"({resultado}) para "
+                        f"{pokemon_nombre.capitalize()} "
+                        f"(ID: {id_pokemon})"
                     )
-            log.info(f"✅ Captura guardada: {pokemon_nombre.capitalize()} con ID: {id_pokemon}")
-            
-            # ¡IMPORTANTE! Retornamos ambos valores
+
+            # 5. Confirmación
+            conn.commit()
+
+            add_candy_for_pokemon(
+                user_id,
+                pokemon_nombre,
+                1
+            )
+
+            log.info(
+                f"✅ Captura guardada: "
+                f"{pokemon_nombre.capitalize()} "
+                f"con ID: {id_pokemon}"
+            )
+
             return id_pokemon, resultado
-            
+
         except Exception as e:
+
             if conn:
                 conn.rollback()
-            log.error(f"🚨 Error al guardar o verificar récord: {e}", exc_info=True)
-            raise # Esto permite que el try/except en vistas.py capture el error
+
+            log.error(
+                f"🚨 Error al guardar o verificar récord: {e}",
+                exc_info=True
+            )
+
+            raise
+
         finally:
+
             if conn:
                 conn.close()
 def ejecutar_consulta(query_pg, query_sql, params):
