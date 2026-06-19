@@ -18,9 +18,12 @@ async def generar_imagen_captura(
 ):
     trainer = trainer or "ash"
 
+    ANCHO = 320
+    ALTO = 180
+
     fondo = Image.new(
         "RGBA",
-        (500, 260),
+        (ANCHO, ALTO),
         (25, 25, 35, 255)
     )
 
@@ -28,12 +31,12 @@ async def generar_imagen_captura(
 
     titulo_font = ImageFont.truetype(
         FONT,
-        24
+        18
     )
 
     texto_font = ImageFont.truetype(
         FONT,
-        24
+        16
     )
 
     trainer_path = (
@@ -42,21 +45,17 @@ async def generar_imagen_captura(
     )
 
     if not trainer_path.exists():
-
         trainer_path = (
             Path("sprites/trainers")
             / "ash.png"
         )
 
     if es_shiny:
-
         pokemon_path = (
             Path("sprites/shiny")
             / f"{pokemon_id}.png"
         )
-
     else:
-
         pokemon_path = (
             Path("sprites/regular")
             / f"{pokemon_id}.png"
@@ -70,45 +69,25 @@ async def generar_imagen_captura(
         pokemon_path
     ).convert("RGBA")
 
-    # Trainer un poco más pequeño
     trainer_img = trainer_img.resize(
-        (140, 140),
+        (90, 90),
         Image.NEAREST
     )
-
-    # Escalar Pokémon según tamaño original
-    if pokemon_img.width < 64 or pokemon_img.height < 64:
-
-        pokemon_size = 180
-
-    else:
-
-        pokemon_size = 160
 
     pokemon_img = pokemon_img.resize(
-        (pokemon_size, pokemon_size),
+        (90, 90),
         Image.NEAREST
     )
-
-    # Posiciones
-    trainer_x = 60
-    trainer_y = 35
-
-    pokemon_x = 280
-    pokemon_y = 35
-
-    if pokemon_size == 180:
-        pokemon_y = 25
 
     fondo.paste(
         trainer_img,
-        (trainer_x, trainer_y),
+        (25, 35),
         trainer_img
     )
 
     fondo.paste(
         pokemon_img,
-        (pokemon_x, pokemon_y),
+        (205, 35),
         pokemon_img
     )
 
@@ -121,8 +100,8 @@ async def generar_imagen_captura(
 
     draw.text(
         (
-            140 - (bbox[2] - bbox[0]) // 2,
-            210
+            70 - (bbox[2] - bbox[0]) // 2,
+            135
         ),
         jugador,
         fill="white",
@@ -140,8 +119,8 @@ async def generar_imagen_captura(
 
     draw.text(
         (
-            390 - (bbox[2] - bbox[0]) // 2,
-            210
+            250 - (bbox[2] - bbox[0]) // 2,
+            135
         ),
         nombre_pokemon,
         fill="white",
@@ -159,8 +138,8 @@ async def generar_imagen_captura(
 
     draw.text(
         (
-            (500 - (bbox[2] - bbox[0])) // 2,
-            10
+            (ANCHO - (bbox[2] - bbox[0])) // 2,
+            8
         ),
         titulo_texto,
         fill=(255, 215, 0),
