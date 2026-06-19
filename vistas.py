@@ -398,6 +398,7 @@ class BotonCaptura(discord.ui.View):
         super().__init__(timeout=300.0)
         self.lock_captura = asyncio.Lock()
         self.message = None # Se asignará desde SpawnSelectionView
+        pokemon_data["id"]
         self.nombre = pokemon_data['name']
         self.rareza = rareza
         self.es_shiny = es_shiny
@@ -611,6 +612,9 @@ class BotonCaptura(discord.ui.View):
                                 es_shiny=self.es_shiny,
                                 pokeball=nombre_bola
                             )
+                        )
+                        print(
+                            f"POKEMON ID: {self.pokemon_id}"
                         )
                         trainer = await database.obtener_trainer(
                             interaction.user.id
