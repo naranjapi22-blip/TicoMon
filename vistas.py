@@ -690,6 +690,7 @@ class BotonCaptura(discord.ui.View):
                                 )
                             ],
                             view=None
+                        )
 
                         self.stop()
 
