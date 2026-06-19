@@ -12,6 +12,7 @@ import os
 import gestor_spawn
 import servicios
 from logger_config import log
+from pathlib import Path
 from mapeo_pokes import obtener_id_gif # Asegúrate de tener este import al inicio del archivo
 import records  # Importa tu archivo de lógica de récords
 COOLDOWN_LANZAMIENTO = 10.0
@@ -611,6 +612,20 @@ class BotonCaptura(discord.ui.View):
                                 pokeball=nombre_bola
                             )
                         )
+                        trainer = await database.obtener_trainer(
+                            interaction.user.id
+                        )
+
+                        if trainer:
+
+                            ruta_trainer = (
+                                Path("sprites/trainers")
+                                / f"{trainer}.png"
+                            )
+
+                            print(
+                                f"SPRITE TRAINER: {ruta_trainer}"
+                            )
 
                         liberar_canal_completo(
                             interaction.channel.id
