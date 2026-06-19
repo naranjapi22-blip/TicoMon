@@ -1722,6 +1722,18 @@ async def duplicados(ctx, tipo=None):
     )
 
     await ctx.send(embed=embed)
+@bot.command()
+async def trainer(ctx):
 
+    buffer = await generar_imagen_trainers(
+        pagina=0
+    )
+
+    await ctx.send(
+        file=discord.File(
+            buffer,
+            filename="trainers.png"
+        )
+    )
 
 bot.run(TOKEN)
