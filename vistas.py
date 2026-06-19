@@ -394,16 +394,27 @@ class SpawnSelectionView(discord.ui.View):
 
 
 class BotonCaptura(discord.ui.View):
-    def __init__(self, pokemon_data, rareza, es_shiny, capture_rate, tamano_factor):
+    def __init__(
+        self,
+        pokemon_data,
+        rareza,
+        es_shiny,
+        capture_rate,
+        tamano_factor
+    ):
         super().__init__(timeout=300.0)
+
         self.lock_captura = asyncio.Lock()
-        self.message = None # Se asignará desde SpawnSelectionView
-        pokemon_data["id"]
-        self.nombre = pokemon_data['name']
+        self.message = None
+
+        self.pokemon_id = pokemon_data["id"]
+
+        self.nombre = pokemon_data["name"]
         self.rareza = rareza
         self.es_shiny = es_shiny
         self.capture_rate = capture_rate
         self.tamano_factor = tamano_factor
+
         self.usuario_capturador = None
         self.tiempo_aparicion = datetime.now(timezone.utc)
         self.intentos_fallidos = 0
