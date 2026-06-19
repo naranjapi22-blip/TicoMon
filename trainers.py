@@ -247,3 +247,62 @@ class VistaTrainers(discord.ui.View):
         await self.actualizar(
             interaction
         )
+class ModalSeleccionTrainer(
+    discord.ui.Modal,
+    title="Seleccionar entrenador"
+):
+
+    numero = discord.ui.TextInput(
+        label="Número del entrenador",
+        placeholder="Ejemplo: 7"
+    )
+
+    def __init__(
+        self,
+        pagina
+    ):
+        super().__init__()
+
+        self.pagina = pagina
+
+    async def on_submit(
+        self,
+        interaction: discord.Interaction
+    ):
+
+        try:
+
+            numero = int(
+                self.numero.value
+            )
+
+        except ValueError:
+
+            return await interaction.response.send_message(
+                "❌ Número inválido.",
+                ephemeral=True
+            )
+
+        inicio = self.pagina * 10
+
+        indice = inicio + numero - 1
+
+        if (
+            indice < inicio
+            or indice >= min(
+                inicio + 10,
+                len(TRAINERS)
+            )
+        ):
+
+            return await interaction.response.send_message(
+                "❌ Ese número no está en esta página.",
+                ephemeral=True
+            )
+
+        trainer = TRAINERS[indice]
+
+        await interaction.response.send_message(
+            f"✅ Seleccionaste **{trainer}**",
+            ephemeral=True
+        )
