@@ -411,28 +411,29 @@ class VistaSituacionSafari(discord.ui.View):
             f"✅ Votaste por: {self.situacion['opcion_b']}",
             ephemeral=True
         )
-        async def votar_c(
-            self,
-            interaction: discord.Interaction
-        ):
+    async def votar_c(
+        self,
+        interaction: discord.Interaction
+    ):
 
-            if interaction.user.id in self.votantes:
+        if interaction.user.id in self.votantes:
 
-                return await interaction.response.send_message(
-                    "❌ Ya votaste.",
-                    ephemeral=True
-                )
-
-            self.votantes.add(
-                interaction.user.id
-            )
-
-            self.votos_c += 1
-
-            await interaction.response.send_message(
-                f"✅ Votaste por: {self.situacion['opcion_c']}",
+            return await interaction.response.send_message(
+                "❌ Ya votaste.",
                 ephemeral=True
             )
+
+        self.votantes.add(
+            interaction.user.id
+        )
+
+        self.votos_c += 1
+
+        await interaction.response.send_message(
+            f"✅ Votaste por: {self.situacion['opcion_c']}",
+            ephemeral=True
+        )
+
     def resolver_resultado(self):
 
         votos = {
