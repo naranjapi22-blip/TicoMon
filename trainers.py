@@ -328,10 +328,9 @@ class ModalSeleccionTrainer(
             trainer
         )
 
-        await interaction.message.edit(
-            content=f"✅ Trainer seleccionado: {trainer.replace('-', ' ').title()}",
-            attachments=[],
-            view=None
+        await interaction.response.send_message(
+            f"✅ Seleccionaste **{trainer.replace('-', ' ').title()}**",
+            ephemeral=True
         )
 
         if interaction.message:
