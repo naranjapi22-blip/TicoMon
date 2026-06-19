@@ -623,9 +623,14 @@ class BotonCaptura(discord.ui.View):
                                 / f"{trainer}.png"
                             )
 
-                            print(
-                                f"SPRITE TRAINER: {ruta_trainer}"
-                            )
+                            if ruta_trainer.exists():
+
+                                await interaction.channel.send(
+                                    file=discord.File(
+                                        ruta_trainer,
+                                        filename="trainer.png"
+                                    )
+                                )
 
                         liberar_canal_completo(
                             interaction.channel.id
