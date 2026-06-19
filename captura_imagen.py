@@ -84,12 +84,17 @@ async def generar_imagen_captura(
         pokemon_img
     )
     draw.text(
-        (145, 320),
-        trainer.replace("-", " ").title(),
+        (110, 320),
+        jugador,
         fill="white",
         font=texto
-        )
-
+    )
+    draw.text(
+        (220, 360),
+        f"capturó a {pokemon.capitalize()}",
+        fill=(220, 220, 220),
+        font=texto
+    )
     draw.text(
         (575, 320),
         pokemon.capitalize(),
