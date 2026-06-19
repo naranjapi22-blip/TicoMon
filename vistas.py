@@ -6,7 +6,6 @@ import random
 import math
 import logging
 import database
-import sqlite3
 from datetime import datetime, timezone
 import os
 import gestor_spawn
