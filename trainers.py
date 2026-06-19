@@ -329,7 +329,7 @@ class ModalSeleccionTrainer(
 
         trainer = TRAINERS[indice]
 
-        await database.actualizar_trainer(
+        await database.guardar_trainer(
             interaction.user.id,
             trainer
         )
