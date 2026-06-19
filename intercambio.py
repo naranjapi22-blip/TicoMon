@@ -1,9 +1,5 @@
 import discord
-import sqlite3
 import database
-import servicios
-import psycopg2
-import os
 from vistas_selector import BuscarPokemonModal
 # --- 1. MEMORIA DE SEGURIDAD (Evita la clonación) ---
 usuarios_ocupados = set()
