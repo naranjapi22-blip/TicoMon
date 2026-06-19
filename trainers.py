@@ -2,7 +2,7 @@ from PIL import Image, ImageDraw, ImageFont
 from pathlib import Path
 from io import BytesIO
 import discord
-
+import database
 CARPETA_TRAINERS = Path(
     "sprites/trainers"
 )
@@ -329,7 +329,17 @@ class ModalSeleccionTrainer(
 
         trainer = TRAINERS[indice]
 
+        await database.actualizar_trainer(
+            interaction.user.id,
+            trainer
+        )
+
+        await database.guardar_trainer(
+            interaction.user.id,
+            trainer
+        )
+
         await interaction.response.send_message(
-            f"✅ Seleccionaste **{trainer}**",
+            f"✅ Seleccionaste **{trainer.replace('-', ' ').title()}**",
             ephemeral=True
         )

@@ -1747,4 +1747,14 @@ async def trainer(ctx):
             ctx.author.id
         )
     )
+@bot.command()
+async def settrainer(ctx):
+
+    trainer = await database.obtener_trainer(
+        ctx.author.id
+    )
+
+    await ctx.send(
+        f"Trainer: {trainer}"
+    )
 bot.run(TOKEN)
