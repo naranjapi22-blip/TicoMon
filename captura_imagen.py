@@ -16,8 +16,8 @@ async def generar_imagen_captura(
     jugador,
     pokemon
 ):
-    if not trainer:
-        trainer = "ash"
+    trainer = trainer or "ash"
+
     fondo = Image.new(
         "RGBA",
         (500, 260),
@@ -26,18 +26,15 @@ async def generar_imagen_captura(
 
     draw = ImageDraw.Draw(fondo)
 
-    titulo = ImageFont.truetype(
+    titulo_font = ImageFont.truetype(
         FONT,
         24
     )
 
-    texto = ImageFont.truetype(
+    texto_font = ImageFont.truetype(
         FONT,
         24
     )
-
-    if not trainer:
-        trainer = "ash"
 
     trainer_path = (
         Path("sprites/trainers")
@@ -73,67 +70,91 @@ async def generar_imagen_captura(
         pokemon_path
     ).convert("RGBA")
 
-
+    # Trainer un poco más pequeño
     trainer_img = trainer_img.resize(
-        (160, 160),
+        (140, 140),
         Image.NEAREST
     )
+
+    # Escalar Pokémon según tamaño original
+    if pokemon_img.width < 64 or pokemon_img.height < 64:
+
+        pokemon_size = 180
+
+    else:
+
+        pokemon_size = 160
 
     pokemon_img = pokemon_img.resize(
-        (160, 160),
+        (pokemon_size, pokemon_size),
         Image.NEAREST
     )
+
+    # Posiciones
+    trainer_x = 60
+    trainer_y = 35
+
+    pokemon_x = 280
+    pokemon_y = 35
+
+    if pokemon_size == 180:
+        pokemon_y = 25
 
     fondo.paste(
         trainer_img,
-        (60, 35),
+        (trainer_x, trainer_y),
         trainer_img
     )
 
     fondo.paste(
         pokemon_img,
-        (280, 35),
+        (pokemon_x, pokemon_y),
         pokemon_img
     )
+
+    # Nombre jugador
     bbox = draw.textbbox(
         (0, 0),
         jugador,
-        font=texto
+        font=texto_font
     )
 
     draw.text(
         (
             140 - (bbox[2] - bbox[0]) // 2,
-            205
+            210
         ),
         jugador,
         fill="white",
-        font=texto
+        font=texto_font
     )
 
+    # Nombre Pokémon
     nombre_pokemon = pokemon.capitalize()
 
     bbox = draw.textbbox(
         (0, 0),
         nombre_pokemon,
-        font=texto
+        font=texto_font
     )
 
     draw.text(
         (
-            460 - (bbox[2] - bbox[0]) // 2,
-            205
+            390 - (bbox[2] - bbox[0]) // 2,
+            210
         ),
         nombre_pokemon,
         fill="white",
-        font=texto
+        font=texto_font
     )
+
+    # Título
     titulo_texto = "CAPTURA EXITOSA"
 
     bbox = draw.textbbox(
         (0, 0),
         titulo_texto,
-        font=titulo
+        font=titulo_font
     )
 
     draw.text(
@@ -143,8 +164,9 @@ async def generar_imagen_captura(
         ),
         titulo_texto,
         fill=(255, 215, 0),
-        font=titulo
+        font=titulo_font
     )
+
     buffer = BytesIO()
 
     fondo.save(
