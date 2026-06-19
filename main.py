@@ -55,6 +55,11 @@ from candy import (
     remove_candy,
     evolve_pokemon
 )
+from trainers import (
+    generar_imagen_trainers,
+    VistaTrainers,
+    ModalSeleccionTrainer
+)
 database.init_db()
 # 1. CONFIGURACIÓN
 load_dotenv()
@@ -1724,4 +1729,32 @@ async def duplicados(ctx, tipo=None):
     await ctx.send(embed=embed)
 
 
+@bot.command()
+async def trainer(ctx):
+
+    buffer = await generar_imagen_trainers(
+        pagina=0
+    )
+
+    archivo = discord.File(
+        buffer,
+        filename="trainers.png"
+    )
+
+    await ctx.send(
+        file=archivo,
+        view=VistaTrainers(
+            ctx.author.id
+        )
+    )
+@bot.command()
+async def settrainer(ctx):
+
+    trainer = await database.obtener_trainer(
+        ctx.author.id
+    )
+
+    await ctx.send(
+        f"Trainer: {trainer}"
+    )
 bot.run(TOKEN)

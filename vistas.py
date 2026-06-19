@@ -12,6 +12,10 @@ import os
 import gestor_spawn
 import servicios
 from logger_config import log
+from pathlib import Path
+from captura_imagen import (
+    generar_imagen_captura
+)
 from mapeo_pokes import obtener_id_gif # Asegúrate de tener este import al inicio del archivo
 import records  # Importa tu archivo de lógica de récords
 COOLDOWN_LANZAMIENTO = 10.0
@@ -393,15 +397,27 @@ class SpawnSelectionView(discord.ui.View):
 
 
 class BotonCaptura(discord.ui.View):
-    def __init__(self, pokemon_data, rareza, es_shiny, capture_rate, tamano_factor):
+    def __init__(
+        self,
+        pokemon_data,
+        rareza,
+        es_shiny,
+        capture_rate,
+        tamano_factor
+    ):
         super().__init__(timeout=300.0)
+
         self.lock_captura = asyncio.Lock()
-        self.message = None # Se asignará desde SpawnSelectionView
-        self.nombre = pokemon_data['name']
+        self.message = None
+
+        self.pokemon_id = pokemon_data["id"]
+
+        self.nombre = pokemon_data["name"]
         self.rareza = rareza
         self.es_shiny = es_shiny
         self.capture_rate = capture_rate
         self.tamano_factor = tamano_factor
+
         self.usuario_capturador = None
         self.tiempo_aparicion = datetime.now(timezone.utc)
         self.intentos_fallidos = 0
@@ -612,6 +628,18 @@ class BotonCaptura(discord.ui.View):
                             )
                         )
 
+
+                        trainer = await database.obtener_trainer(
+                            interaction.user.id
+                        )
+
+                        buffer_captura = await generar_imagen_captura(
+                            trainer=trainer,
+                            pokemon_id=self.pokemon_id,
+                            es_shiny=self.es_shiny,
+                            jugador=interaction.user.display_name,
+                            pokemon=self.nombre
+                        )
                         liberar_canal_completo(
                             interaction.channel.id
                         )
@@ -639,6 +667,12 @@ class BotonCaptura(discord.ui.View):
 
                         await interaction.message.edit(
                             content=mensaje,
+                            attachments=[
+                                discord.File(
+                                    buffer_captura,
+                                    filename="captura.png"
+                                )
+                            ],
                             view=None
                         )
 

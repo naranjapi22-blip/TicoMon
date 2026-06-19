@@ -1183,3 +1183,71 @@ def obtener_id_local(nombre):
     return id_por_nombre.get(
         nombre.lower()
     )
+async def guardar_trainer(
+    user_id,
+    trainer
+):
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+
+        cursor.execute(
+            """
+            INSERT INTO trainers_usuario
+            (
+                user_id,
+                trainer_sprite
+            )
+            VALUES
+            (
+                %s,
+                %s
+            )
+            ON CONFLICT (user_id)
+            DO UPDATE SET
+            trainer_sprite = EXCLUDED.trainer_sprite
+            """,
+            (
+                str(user_id),
+                trainer
+            )
+        )
+
+        conn.commit()
+
+    finally:
+
+        cursor.close()
+        conn.close()
+async def obtener_trainer(
+    user_id
+):
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+
+        cursor.execute(
+            """
+            SELECT trainer_sprite
+            FROM trainers_usuario
+            WHERE user_id = %s
+            """,
+            (str(user_id),)
+        )
+
+        fila = cursor.fetchone()
+
+        if fila:
+
+            return fila[0]
+
+        return None
+
+    finally:
+
+        cursor.close()
+        conn.close()
