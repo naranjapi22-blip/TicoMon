@@ -1,5 +1,6 @@
 import asyncio
-
+import gestor_spawn
+import traceback
 import discord
 import random
 import math
@@ -430,9 +431,19 @@ class BotonCaptura(discord.ui.View):
             return 0.0
         return COOLDOWN_LANZAMIENTO - (ahora - ultimo)
 
-    @discord.ui.button(label="¡Lanzar Pokéball!", style=discord.ButtonStyle.primary, emoji="🔴")
-    async def boton_captura(self, interaction: discord.Interaction, button: discord.ui.Button):
-        
+@discord.ui.button(
+    label="¡Lanzar Pokéball!",
+    style=discord.ButtonStyle.primary,
+    emoji="🔴"
+)
+async def boton_captura(
+    self,
+    interaction: discord.Interaction,
+    button: discord.ui.Button
+):
+
+    async with self.lock_captura:
+
         # 1. EL ESCUDO: Va de primerito
         if interaction.response.is_done():
             return
@@ -441,12 +452,16 @@ class BotonCaptura(discord.ui.View):
         if self.alguien_lo_atrapo:
 
             try:
+
                 if interaction.user.id == self.usuario_capturador:
+
                     await interaction.response.send_message(
                         "✅ Ya capturaste este Pokémon.",
                         ephemeral=True
                     )
+
                 else:
+
                     await interaction.response.send_message(
                         "💨 ¡Llegaste tarde!",
                         ephemeral=True
@@ -460,11 +475,10 @@ class BotonCaptura(discord.ui.View):
         try:
 
             await interaction.response.defer(ephemeral=True)
-        except (discord.NotFound, discord.errors.InteractionResponded):
-
-            self.alguien_lo_atrapo = False
-            self.usuario_capturador = None
-
+        except (
+            discord.NotFound,
+            discord.errors.InteractionResponded
+        ):
             return
             
         try:
@@ -581,40 +595,70 @@ class BotonCaptura(discord.ui.View):
 
             # --- INTENTO DE CAPTURA ---
             if random.random() < prob_final:
+
                 try:
-                    # 1. Guardamos la captura y recibimos el ID y si hubo récord
-                    id_captura, resultado_record = await database.guardar_captura(
-                        user_id=user_id, 
-                        pokemon_nombre=self.nombre, 
-                        tamano_factor=self.tamano_factor, # Especificas que este es el tamaño
-                        es_shiny=self.es_shiny,           # Especificas que este es el shiny
-                        pokeball=nombre_bola
-                    )
 
-                    liberar_canal_completo(interaction.channel.id)
-                    
-                    # Se eliminó la reconexión y la doble verificación aquí para no sobreescribir 'resultado_record'
-
-                    # 2. Construimos el mensaje base
-                    mensaje = f"🎉 {interaction.user.mention} capturó a **{self.nombre.capitalize()}** (ID: {id_captura}) usando una **{nombre_bola}**! ({porcentaje}%)"
-
-                    # 3. Añadimos el aviso de récord si database.guardar_captura devolvió algo
-                    if resultado_record == "NUEVO_RECORD_GRANDE":
-                        mensaje += "\n👑 **¡Nuevo Récord XXL!** Has entrado en el Salón de la Fama."
-                    elif resultado_record == "NUEVO_RECORD_PEQUENO":
-                        mensaje += "\n🤏 **¡Nuevo Récord XXS!** Has entrado en el Salón de la Fama."
-
-                    # 4. Enviamos el mensaje final
+                    # RESERVAR EL POKÉMON ANTES DE GUARDAR
                     self.alguien_lo_atrapo = True
                     self.usuario_capturador = interaction.user.id
-                    await interaction.message.edit(content=mensaje, view=None)
+
+                    id_captura, resultado_record = (
+                        await database.guardar_captura(
+                            user_id=user_id,
+                            pokemon_nombre=self.nombre,
+                            tamano_factor=self.tamano_factor,
+                            es_shiny=self.es_shiny,
+                            pokeball=nombre_bola
+                        )
+                    )
+
+                    liberar_canal_completo(
+                        interaction.channel.id
+                    )
+
+                    mensaje = (
+                        f"🎉 {interaction.user.mention} "
+                        f"capturó a **{self.nombre.capitalize()}** "
+                        f"(ID: {id_captura}) usando una "
+                        f"**{nombre_bola}**! ({porcentaje}%)"
+                    )
+
+                    if resultado_record == "NUEVO_RECORD_GRANDE":
+
+                        mensaje += (
+                            "\n👑 **¡Nuevo Récord XXL!** "
+                            "Has entrado en el Salón de la Fama."
+                        )
+
+                    elif resultado_record == "NUEVO_RECORD_PEQUENO":
+
+                        mensaje += (
+                            "\n🤏 **¡Nuevo Récord XXS!** "
+                            "Has entrado en el Salón de la Fama."
+                        )
+
+                    await interaction.message.edit(
+                        content=mensaje,
+                        view=None
+                    )
+
                     self.stop()
 
                 except Exception as db_error:
+
+                    # SI FALLA LA BD LIBERAMOS LA RESERVA
                     self.alguien_lo_atrapo = False
                     self.usuario_capturador = None
-                    log.error(f"Error BD: {db_error}", exc_info=True)
-                    await interaction.followup.send("⚠️ Error interno de base de datos.", ephemeral=True)
+
+                    log.error(
+                        f"Error BD: {db_error}",
+                        exc_info=True
+                    )
+
+                    await interaction.followup.send(
+                        "⚠️ Error interno de base de datos.",
+                        ephemeral=True
+                    )
             else:
 
                 # Liberar reserva
@@ -636,13 +680,12 @@ class BotonCaptura(discord.ui.View):
                 )
 
         except Exception as e:
-            import gestor_spawn
-            import traceback
 
             liberar_canal_completo(interaction.channel.id)
             gestor_spawn.canales_ocupados.discard(interaction.channel.id)
-            self.alguien_lo_atrapo = True
-            self.usuario_capturador = interaction.user.id
+
+            self.alguien_lo_atrapo = False
+            self.usuario_capturador = None
             log.error(
                 f"🚨 Error crítico en captura: {e}",
                 exc_info=True
@@ -661,7 +704,6 @@ class BotonCaptura(discord.ui.View):
                 pass
 
             self.stop()
-
 class InfoView(discord.ui.View):
     def __init__(self, user_id, data, versiones, mostrar_shiny): # Agregamos user_id
         super().__init__(timeout=60)
