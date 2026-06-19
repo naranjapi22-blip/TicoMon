@@ -1178,11 +1178,6 @@ def obtener_nombre_local(id_pokemon):
     )
 
 
-def obtener_id_local(nombre):
-
-    return id_por_nombre.get(
-        nombre.lower()
-    )
 async def guardar_trainer(
     user_id,
     trainer
