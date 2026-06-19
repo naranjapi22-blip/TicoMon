@@ -1038,6 +1038,7 @@ class SafariManager:
             f"{situacion['opcion_c']}: **{view.votos_c}** votos\n\n"
             f"➡️ {opcion_ganadora}"
         )
+        
     def generar_evento_safari(self):
         print(
             f"MODIFICADOR ACTUAL: "
@@ -1221,3 +1222,10 @@ ACCIONES_EXPEDICION = [
     ("ruido", "🔥 Hacer Ruido"),
     ("continuar", "🚙 Continuar")
 ]
+
+def obtener_balls(self, user_id):
+
+    if user_id not in self.participantes:
+        return 0
+
+    return self.participantes[user_id]["balls"]

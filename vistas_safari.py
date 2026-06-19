@@ -213,9 +213,19 @@ class BotonSeleccionPokemon(discord.ui.Button):
         self,
         interaction: discord.Interaction
     ):
+        from safari_manager import obtener_safari
+
+        safari = obtener_safari(
+            interaction.guild.id
+        )
+
+        balls = safari.obtener_balls(
+            interaction.user.id
+        )
 
         await interaction.response.send_message(
             f"🎯 Elegiste a {self.nombre}.\n\n"
+            f"🎒 Safari Balls disponibles: {balls}\n\n"
             f"¿Cuántas Safari Balls deseas usar?",
             view=VistaApuestasSafari(
                 self.guild_id,
