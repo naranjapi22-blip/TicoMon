@@ -1724,15 +1724,20 @@ async def duplicados(ctx, tipo=None):
     await ctx.send(embed=embed)
 @bot.command()
 async def trainer(ctx):
-    from trainers import generar_imagen_trainers
+
     buffer = await generar_imagen_trainers(
         pagina=0
     )
 
+    archivo = discord.File(
+        buffer,
+        filename="trainers.png"
+    )
+
     await ctx.send(
-        file=discord.File(
-            buffer,
-            filename="trainers.png"
+        file=archivo,
+        view=VistaTrainers(
+            ctx.author.id
         )
     )
 
