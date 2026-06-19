@@ -330,7 +330,7 @@ class IvsCommands(commands.Cog):
 
             if record:
                 await ctx.send(
-                    "❌ No se puede liberar pokémon con record."
+                    "❌ No se puede liberar pokémon con records."
                 )
                 return
 
