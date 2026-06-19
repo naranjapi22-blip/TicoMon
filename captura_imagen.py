@@ -16,7 +16,8 @@ async def generar_imagen_captura(
     jugador,
     pokemon
 ):
-
+    if not trainer:
+        trainer = "ash"
     fondo = Image.new(
         "RGBA",
         (900, 400),
@@ -35,10 +36,20 @@ async def generar_imagen_captura(
         24
     )
 
+    if not trainer:
+        trainer = "ash"
+
     trainer_path = (
         Path("sprites/trainers")
         / f"{trainer}.png"
     )
+
+    if not trainer_path.exists():
+
+        trainer_path = (
+            Path("sprites/trainers")
+            / "ash.png"
+        )
 
     if es_shiny:
 
