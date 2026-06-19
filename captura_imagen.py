@@ -20,7 +20,7 @@ async def generar_imagen_captura(
         trainer = "ash"
     fondo = Image.new(
         "RGBA",
-        (500, 220),
+        (500, 260),
         (25, 25, 35, 255)
     )
 
@@ -86,13 +86,13 @@ async def generar_imagen_captura(
 
     fondo.paste(
         trainer_img,
-        (40, 35),
+        (60, 35),
         trainer_img
     )
 
     fondo.paste(
         pokemon_img,
-        (300, 35),
+        (280, 35),
         pokemon_img
     )
     bbox = draw.textbbox(
@@ -103,8 +103,8 @@ async def generar_imagen_captura(
 
     draw.text(
         (
-            170 - (bbox[2] - bbox[0]) // 2,
-            235
+            140 - (bbox[2] - bbox[0]) // 2,
+            205
         ),
         jugador,
         fill="white",
@@ -121,8 +121,8 @@ async def generar_imagen_captura(
 
     draw.text(
         (
-            480 - (bbox[2] - bbox[0]) // 2,
-            235
+            460 - (bbox[2] - bbox[0]) // 2,
+            205
         ),
         nombre_pokemon,
         fill="white",
@@ -138,7 +138,7 @@ async def generar_imagen_captura(
 
     draw.text(
         (
-            (650 - (bbox[2] - bbox[0])) // 2,
+            (500 - (bbox[2] - bbox[0])) // 2,
             10
         ),
         titulo_texto,
