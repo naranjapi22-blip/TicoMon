@@ -20,7 +20,7 @@ async def generar_imagen_captura(
         trainer = "ash"
     fondo = Image.new(
         "RGBA",
-        (600, 260),
+        (500, 220),
         (25, 25, 35, 255)
     )
 
@@ -28,7 +28,7 @@ async def generar_imagen_captura(
 
     titulo = ImageFont.truetype(
         FONT,
-        28
+        24
     )
 
     texto = ImageFont.truetype(
@@ -86,13 +86,13 @@ async def generar_imagen_captura(
 
     fondo.paste(
         trainer_img,
-        (50, 55),
+        (40, 35),
         trainer_img
     )
 
     fondo.paste(
         pokemon_img,
-        (390, 55),
+        (300, 35),
         pokemon_img
     )
     bbox = draw.textbbox(
