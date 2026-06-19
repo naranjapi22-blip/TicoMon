@@ -74,41 +74,56 @@ async def generar_imagen_captura(
     ).convert("RGBA")
 
     trainer_img = trainer_img.resize(
-        (220, 220),
+        (280, 280),
         Image.NEAREST
     )
 
     pokemon_img = pokemon_img.resize(
-        (220, 220),
+        (260, 260),
         Image.NEAREST
     )
 
     fondo.paste(
         trainer_img,
-        (120, 90),
+        (80, 70),
         trainer_img
     )
 
     fondo.paste(
         pokemon_img,
-        (560, 90),
+        (540, 80),
         pokemon_img
     )
+    bbox = draw.textbbox(
+        (0, 0),
+        jugador,
+        font=texto
+    )
+
     draw.text(
-        (110, 320),
+        (
+            220 - (bbox[2] - bbox[0]) // 2,
+            350
+        ),
         jugador,
         fill="white",
         font=texto
     )
-    draw.text(
-        (220, 360),
-        f"capturó a {pokemon.capitalize()}",
-        fill=(220, 220, 220),
+
+    nombre_pokemon = pokemon.capitalize()
+
+    bbox = draw.textbbox(
+        (0, 0),
+        nombre_pokemon,
         font=texto
     )
+
     draw.text(
-        (575, 320),
-        pokemon.capitalize(),
+        (
+            670 - (bbox[2] - bbox[0]) // 2,
+            350
+        ),
+        nombre_pokemon,
         fill="white",
         font=texto
     )
