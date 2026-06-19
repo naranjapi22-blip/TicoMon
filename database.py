@@ -575,18 +575,6 @@ def contar_equipo(user_id) -> int:
     return sum(1 for c in obtener_equipo(user_id) if c is not None)
 
 
-def obtener_equipo_selector(user_id) -> dict:
-    """Datos para el selector de !batalla: valores (IDs), etiquetas y mapa id→nombre."""
-    detalle = [s for s in obtener_equipo_detalle(user_id) if s]
-    valores = [str(s["id"]) for s in detalle]
-    etiquetas = {}
-    nombres = {}
-    for s in detalle:
-        sid = str(s["id"])
-        shiny = "✨ " if s["es_shiny"] else ""
-        etiquetas[sid] = f"{shiny}{s['nombre'].capitalize()} [#{s['id']}]"
-        nombres[sid] = s["nombre"]
-    return {"valores": valores, "etiquetas": etiquetas, "nombres": nombres}
 
 
 def obtener_equipo_nombres(user_id) -> list[str]:
