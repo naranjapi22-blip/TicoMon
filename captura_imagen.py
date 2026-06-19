@@ -108,13 +108,6 @@ async def generar_imagen_captura(
         font=titulo
     )
 
-    draw.text(
-        (220, 360),
-        f"{jugador} capturó a {pokemon.capitalize()}",
-        fill=(220, 220, 220),
-        font=texto
-    )
-
     buffer = BytesIO()
 
     fondo.save(
