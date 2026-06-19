@@ -336,7 +336,11 @@ class ModalSeleccionTrainer(
         if interaction.message:
 
             try:
-                await interaction.message.delete()
+                await interaction.message.edit(
+                content=f"✅ Trainer seleccionado: {trainer.replace('-', ' ').title()}",
+                attachments=[],
+                view=None
+                )
 
             except:
                 pass
