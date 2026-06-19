@@ -627,12 +627,12 @@ class BotonCaptura(discord.ui.View):
                                 pokeball=nombre_bola
                             )
                         )
-                        print(
-                            f"POKEMON ID: {self.pokemon_id}"
-                        )
+
+
                         trainer = await database.obtener_trainer(
                             interaction.user.id
                         )
+
                         buffer_captura = await generar_imagen_captura(
                             trainer=trainer,
                             pokemon_id=self.pokemon_id,
@@ -640,22 +640,6 @@ class BotonCaptura(discord.ui.View):
                             jugador=interaction.user.display_name,
                             pokemon=self.nombre
                         )
-                        if trainer:
-
-                            ruta_trainer = (
-                                Path("sprites/trainers")
-                                / f"{trainer}.png"
-                            )
-
-                            if ruta_trainer.exists():
-
-                                await interaction.channel.send(
-                                    file=discord.File(
-                                        ruta_trainer,
-                                        filename="trainer.png"
-                                    )
-                                )
-
                         liberar_canal_completo(
                             interaction.channel.id
                         )

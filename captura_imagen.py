@@ -19,8 +19,8 @@ async def generar_imagen_captura(
 
     fondo = Image.new(
         "RGBA",
-        (800, 300),
-        (30, 30, 40, 255)
+        (900, 400),
+        (25, 25, 35, 255)
     )
 
     draw = ImageDraw.Draw(fondo)
@@ -63,38 +63,50 @@ async def generar_imagen_captura(
     ).convert("RGBA")
 
     trainer_img = trainer_img.resize(
-        (160, 160),
+        (220, 220),
         Image.NEAREST
     )
 
     pokemon_img = pokemon_img.resize(
-        (160, 160),
+        (220, 220),
         Image.NEAREST
     )
 
     fondo.paste(
         trainer_img,
-        (120, 70),
+        (120, 90),
         trainer_img
     )
 
     fondo.paste(
         pokemon_img,
-        (520, 70),
+        (560, 90),
         pokemon_img
     )
+    draw.text(
+        (145, 320),
+        trainer.replace("-", " ").title(),
+        fill="white",
+        font=texto
+        )
 
     draw.text(
-        (240, 20),
-        "🎉 CAPTURA EXITOSA",
+        (575, 320),
+        pokemon.capitalize(),
         fill="white",
+        font=texto
+    )
+    draw.text(
+        (250, 25),
+        "CAPTURA EXITOSA",
+        fill=(255, 215, 0),
         font=titulo
     )
 
     draw.text(
-        (190, 245),
-        f"{jugador} capturó {pokemon.capitalize()}",
-        fill="white",
+        (220, 360),
+        f"{jugador} capturó a {pokemon.capitalize()}",
+        fill=(220, 220, 220),
         font=texto
     )
 
