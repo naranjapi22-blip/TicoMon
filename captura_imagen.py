@@ -20,7 +20,7 @@ async def generar_imagen_captura(
         trainer = "ash"
     fondo = Image.new(
         "RGBA",
-        (750, 350),
+        (650, 280),
         (25, 25, 35, 255)
     )
 
@@ -28,7 +28,7 @@ async def generar_imagen_captura(
 
     titulo = ImageFont.truetype(
         FONT,
-        36
+        28
     )
 
     texto = ImageFont.truetype(
@@ -73,34 +73,26 @@ async def generar_imagen_captura(
         pokemon_path
     ).convert("RGBA")
 
-    # Recortar transparencia
-    trainer_img = trainer_img.crop(
-        trainer_img.getbbox()
-    )
-
-    pokemon_img = pokemon_img.crop(
-        pokemon_img.getbbox()
-    )
 
     trainer_img = trainer_img.resize(
-        (280, 280),
+        (220, 220),
         Image.NEAREST
     )
 
     pokemon_img = pokemon_img.resize(
-        (260, 260),
+        (220, 220),
         Image.NEAREST
     )
 
     fondo.paste(
         trainer_img,
-        (50, 40),
+        (60, 40),
         trainer_img
     )
 
     fondo.paste(
         pokemon_img,
-        (430, 60),
+        (370, 40),
         pokemon_img
     )
     bbox = draw.textbbox(
@@ -111,8 +103,8 @@ async def generar_imagen_captura(
 
     draw.text(
         (
-            220 - (bbox[2] - bbox[0]) // 2,
-            350
+            170 - (bbox[2] - bbox[0]) // 2,
+            235
         ),
         jugador,
         fill="white",
@@ -129,16 +121,27 @@ async def generar_imagen_captura(
 
     draw.text(
         (
-            670 - (bbox[2] - bbox[0]) // 2,
-            350
+            480 - (bbox[2] - bbox[0]) // 2,
+            235
         ),
         nombre_pokemon,
         fill="white",
         font=texto
     )
+    titulo_texto = "CAPTURA EXITOSA"
+
+    bbox = draw.textbbox(
+        (0, 0),
+        titulo_texto,
+        font=titulo
+    )
+
     draw.text(
-        (180, 20),
-        "CAPTURA EXITOSA",
+        (
+            (650 - (bbox[2] - bbox[0])) // 2,
+            10
+        ),
+        titulo_texto,
         fill=(255, 215, 0),
         font=titulo
     )
