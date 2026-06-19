@@ -47,42 +47,33 @@ def init_db():
         log.info("📍 Inicializando base de datos...")
         conn = get_connection()
         cursor = conn.cursor()
-        
-        # 1. Creamos la tabla (Usamos SERIAL para Postgres, AUTOINCREMENT para SQLite)
-        if DATABASE_URL:
-            cursor.execute('''
-                CREATE TABLE IF NOT EXISTS capturas (
-                    id SERIAL PRIMARY KEY,
-                    user_id BIGINT,
-                    pokemon_nombre TEXT,
-                    es_shiny INTEGER DEFAULT 0,
-                    pokeball TEXT DEFAULT 'Pokéball',
-                    fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            ''')
-            log.info("✅ Tabla 'capturas' creada/verificada en PostgreSQL")
-        else:
-            cursor.execute('''
-                CREATE TABLE IF NOT EXISTS capturas (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    user_id INTEGER,
-                    pokemon_nombre TEXT,
-                    es_shiny INTEGER DEFAULT 0,
-                    pokeball TEXT DEFAULT 'Pokéball',
-                    fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            ''')
-            log.info("✅ Tabla 'capturas' creada/verificada en SQLite")
-        
+
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS capturas (
+                id SERIAL PRIMARY KEY,
+                user_id BIGINT,
+                pokemon_nombre TEXT,
+                es_shiny INTEGER DEFAULT 0,
+                pokeball TEXT DEFAULT 'Pokéball',
+                fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+
+        log.info("✅ Tabla 'capturas' creada/verificada")
+
         conn.commit()
         conn.close()
-        init_equipo_db()
-        log.info("✅ Base de datos inicializada correctamente")
-        
-    except Exception as e:
-        log.error(f"🚨 Error al inicializar la base de datos: {e}", exc_info=True)
-        raise
 
+        init_equipo_db()
+
+        log.info("✅ Base de datos inicializada correctamente")
+
+    except Exception as e:
+        log.error(
+            f"🚨 Error al inicializar la base de datos: {e}",
+            exc_info=True
+        )
+        raise
 
 
 async def guardar_captura(user_id, pokemon_nombre, tamano_factor, es_shiny=False, pokeball='Pokéball'):
