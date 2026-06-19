@@ -1,6 +1,7 @@
 from PIL import Image, ImageDraw, ImageFont
 from pathlib import Path
 from io import BytesIO
+import discord
 
 CARPETA_TRAINERS = Path(
     "sprites/trainers"
@@ -27,7 +28,7 @@ async def generar_imagen_trainers(
     filas = 2
 
     ancho_celda = 220
-    alto_celda = 220
+    alto_celda = 260
 
     ancho = columnas * ancho_celda
     alto = filas * alto_celda + 80
@@ -43,16 +44,18 @@ async def generar_imagen_trainers(
     try:
 
         fuente_titulo = ImageFont.truetype(
-            "arial.ttf",
+            "fonts/DejaVuSans-Bold.ttf",
             36
         )
 
         fuente_nombre = ImageFont.truetype(
-            "arial.ttf",
-            20
+            "fonts/DejaVuSans-Bold.ttf",
+            24
         )
 
-    except:
+    except Exception as e:
+
+        print(f"Error cargando fuente: {e}")
 
         fuente_titulo = ImageFont.load_default()
         fuente_nombre = ImageFont.load_default()
@@ -141,7 +144,7 @@ async def generar_imagen_trainers(
             (
                 x +
                 (ancho_celda - texto_ancho) // 2,
-                y + 150
+                y + 140
             ),
             texto,
             fill="white",
@@ -158,3 +161,89 @@ async def generar_imagen_trainers(
     buffer.seek(0)
 
     return buffer
+class VistaTrainers(discord.ui.View):
+
+    def __init__(
+        self,
+        autor_id,
+        pagina=0
+    ):
+        super().__init__(
+            timeout=180
+        )
+
+        self.autor_id = autor_id
+        self.pagina = pagina
+
+    async def actualizar(
+        self,
+        interaction
+    ):
+
+        buffer = await generar_imagen_trainers(
+            self.pagina
+        )
+
+        archivo = discord.File(
+            buffer,
+            filename="trainers.png"
+        )
+
+        await interaction.response.edit_message(
+            attachments=[archivo],
+            view=self
+        )
+
+    @discord.ui.button(
+        emoji="⬅️",
+        style=discord.ButtonStyle.secondary
+    )
+    async def anterior(
+        self,
+        interaction: discord.Interaction,
+        button: discord.ui.Button
+    ):
+
+        if interaction.user.id != self.autor_id:
+
+            return await interaction.response.send_message(
+                "❌ Este menú no es tuyo.",
+                ephemeral=True
+            )
+
+        if self.pagina > 0:
+
+            self.pagina -= 1
+
+        await self.actualizar(
+            interaction
+        )
+
+    @discord.ui.button(
+        emoji="➡️",
+        style=discord.ButtonStyle.secondary
+    )
+    async def siguiente(
+        self,
+        interaction: discord.Interaction,
+        button: discord.ui.Button
+    ):
+
+        if interaction.user.id != self.autor_id:
+
+            return await interaction.response.send_message(
+                "❌ Este menú no es tuyo.",
+                ephemeral=True
+            )
+
+        max_paginas = (
+            len(TRAINERS) - 1
+        ) // 10
+
+        if self.pagina < max_paginas:
+
+            self.pagina += 1
+
+        await self.actualizar(
+            interaction
+        )
