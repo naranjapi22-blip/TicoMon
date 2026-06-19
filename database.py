@@ -511,10 +511,9 @@ def _crear_tabla_equipo(cursor):
 
 def _migrar_equipo_nombre_a_captura_id(cursor, conn):
     log.info("📍 Migrando equipo: pokemon_nombre → captura_id...")
-    if DATABASE_URL:
-        cursor.execute("SELECT user_id, slot, pokemon_nombre FROM equipo")
-    else:
-        cursor.execute("SELECT user_id, slot, pokemon_nombre FROM equipo")
+    cursor.execute(
+        "SELECT user_id, slot, pokemon_nombre FROM equipo"
+)
     filas = cursor.fetchall()
 
     cursor.execute("DROP TABLE equipo")
@@ -525,23 +524,14 @@ def _migrar_equipo_nombre_a_captura_id(cursor, conn):
         if not cap:
             continue
         captura_id = cap[0]
-        if DATABASE_URL:
-            cursor.execute(
-                """
-                INSERT INTO equipo (user_id, slot, captura_id)
-                VALUES (%s, %s, %s)
-                ON CONFLICT DO NOTHING
-                """,
-                (_uid(user_id), slot, captura_id),
-            )
-        else:
-            try:
-                cursor.execute(
-                    "INSERT INTO equipo (user_id, slot, captura_id) VALUES (?, ?, ?)",
-                    (user_id, slot, captura_id),
-                )
-            except sqlite3.IntegrityError:
-                pass
+        cursor.execute(
+            """
+            INSERT INTO equipo (user_id, slot, captura_id)
+            VALUES (%s, %s, %s)
+            ON CONFLICT DO NOTHING
+            """,
+            (_uid(user_id), slot, captura_id),
+        )
     conn.commit()
     log.info("✅ Migración de equipo completada")
 
@@ -573,35 +563,40 @@ def _uid(user_id):
 
 def obtener_captura(user_id, captura_id: int):
     """Retorna (id, pokemon_nombre, es_shiny, ivs...) o None si no es del usuario."""
+
     conn = None
+
     try:
+
         conn = get_connection()
         cursor = conn.cursor()
-        if DATABASE_URL:
-            cursor.execute(
-                """
-                SELECT id, pokemon_nombre, es_shiny,
-                       iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe
-                FROM capturas
-                WHERE id = %s AND user_id = %s
-                """,
-                (captura_id, _uid(user_id)),
-            )
-        else:
-            cursor.execute(
-                """
-                SELECT id, pokemon_nombre, es_shiny,
-                       iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe
-                FROM capturas
-                WHERE id = ? AND user_id = ?
-                """,
-                (captura_id, user_id),
-            )
+
+        cursor.execute(
+            """
+            SELECT id, pokemon_nombre, es_shiny,
+                   iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe
+            FROM capturas
+            WHERE id = %s AND user_id = %s
+            """,
+            (
+                captura_id,
+                _uid(user_id),
+            ),
+        )
+
         return cursor.fetchone()
+
     except Exception as e:
-        log.error(f"🚨 Error obtener_captura: {e}", exc_info=True)
+
+        log.error(
+            f"🚨 Error obtener_captura: {e}",
+            exc_info=True
+        )
+
         return None
+
     finally:
+
         if conn:
             conn.close()
 
@@ -614,26 +609,15 @@ def listar_capturas_usuario(user_id, excluir_ids: set | None = None) -> list[dic
         conn = get_connection()
         cursor = conn.cursor()
         iv_pct = "((iv_hp + iv_atk + iv_def + iv_spa + iv_spd + iv_spe) * 100 / 186)"
-        if DATABASE_URL:
-            cursor.execute(
-                f"""
-                SELECT id, pokemon_nombre, es_shiny, {iv_pct}
-                FROM capturas
-                WHERE user_id = %s
-                ORDER BY id DESC
-                """,
-                (_uid(user_id),),
-            )
-        else:
-            cursor.execute(
-                f"""
-                SELECT id, pokemon_nombre, es_shiny, {iv_pct}
-                FROM capturas
-                WHERE user_id = ?
-                ORDER BY id DESC
-                """,
-                (user_id,),
-            )
+        cursor.execute(
+            f"""
+            SELECT id, pokemon_nombre, es_shiny, {iv_pct}
+            FROM capturas
+            WHERE user_id = %s
+            ORDER BY id DESC
+            """,
+            (_uid(user_id),),
+        )
         resultado = []
         for captura_id, nombre, es_shiny, iv_pct_val in cursor.fetchall():
             if captura_id in excluir_ids:
@@ -660,16 +644,15 @@ def obtener_equipo(user_id) -> list:
     try:
         conn = get_connection()
         cursor = conn.cursor()
-        if DATABASE_URL:
-            cursor.execute(
-                "SELECT slot, captura_id FROM equipo WHERE user_id = %s ORDER BY slot",
-                (_uid(user_id),),
-            )
-        else:
-            cursor.execute(
-                "SELECT slot, captura_id FROM equipo WHERE user_id = ? ORDER BY slot",
-                (user_id,),
-            )
+        cursor.execute(
+            """
+            SELECT slot, captura_id
+            FROM equipo
+            WHERE user_id = %s
+            ORDER BY slot
+            """,
+            (_uid(user_id),),
+        )
         for slot, captura_id in cursor.fetchall():
             if 1 <= slot <= 9:
                 slots[slot - 1] = captura_id
