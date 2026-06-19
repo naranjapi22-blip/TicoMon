@@ -196,7 +196,8 @@ class VistaTrainers(discord.ui.View):
 
     @discord.ui.button(
         emoji="⬅️",
-        style=discord.ButtonStyle.secondary
+        style=discord.ButtonStyle.secondary,
+        row=0
     )
     async def anterior(
         self,
@@ -220,8 +221,34 @@ class VistaTrainers(discord.ui.View):
         )
 
     @discord.ui.button(
+        label="Seleccionar",
+        emoji="🎯",
+        style=discord.ButtonStyle.success,
+        row=0
+    )
+    async def seleccionar(
+        self,
+        interaction: discord.Interaction,
+        button: discord.ui.Button
+    ):
+
+        if interaction.user.id != self.autor_id:
+
+            return await interaction.response.send_message(
+                "❌ Este menú no es tuyo.",
+                ephemeral=True
+            )
+
+        await interaction.response.send_modal(
+            ModalSeleccionTrainer(
+                self.pagina
+            )
+        )
+
+    @discord.ui.button(
         emoji="➡️",
-        style=discord.ButtonStyle.secondary
+        style=discord.ButtonStyle.secondary,
+        row=0
     )
     async def siguiente(
         self,

@@ -1724,32 +1724,22 @@ async def duplicados(ctx, tipo=None):
     await ctx.send(embed=embed)
 
 
-@discord.ui.button(
-    label="Seleccionar",
-    emoji="🎯",
-    style=discord.ButtonStyle.success
-)
+@bot.command()
+async def trainer(ctx):
 
-async def seleccionar(
-    self,
-    interaction: discord.Interaction,
-    button: discord.ui.Button
-):
-    from trainers import (
-    generar_imagen_trainers,
-    VistaTrainers,
-    ModalSeleccionTrainer
-    )   
-    if interaction.user.id != self.autor_id:
+    buffer = await generar_imagen_trainers(
+        pagina=0
+    )
 
-        return await interaction.response.send_message(
-            "❌ Este menú no es tuyo.",
-            ephemeral=True
-        )
+    archivo = discord.File(
+        buffer,
+        filename="trainers.png"
+    )
 
-    await interaction.response.send_modal(
-        ModalSeleccionTrainer(
-            self.pagina
+    await ctx.send(
+        file=archivo,
+        view=VistaTrainers(
+            ctx.author.id
         )
     )
 bot.run(TOKEN)
