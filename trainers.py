@@ -310,20 +310,14 @@ class ModalSeleccionTrainer(
                 ephemeral=True
             )
 
-        inicio = self.pagina * 10
-
-        indice = inicio + numero - 1
+        indice = numero - 1
 
         if (
-            indice < inicio
-            or indice >= min(
-                inicio + 10,
-                len(TRAINERS)
-            )
+            indice < 0
+            or indice >= len(TRAINERS)
         ):
-
             return await interaction.response.send_message(
-                "❌ Ese número no está en esta página.",
+                "❌ Número inválido.",
                 ephemeral=True
             )
 
@@ -334,12 +328,16 @@ class ModalSeleccionTrainer(
             trainer
         )
 
-        await database.guardar_trainer(
-            interaction.user.id,
-            trainer
+        await interaction.message.edit(
+            content=f"✅ Trainer seleccionado: {trainer.replace('-', ' ').title()}",
+            attachments=[],
+            view=None
         )
 
-        await interaction.response.send_message(
-            f"✅ Seleccionaste **{trainer.replace('-', ' ').title()}**",
-            ephemeral=True
-        )
+        if interaction.message:
+
+            try:
+                await interaction.message.delete()
+
+            except:
+                pass
