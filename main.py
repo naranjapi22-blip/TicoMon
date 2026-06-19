@@ -55,6 +55,11 @@ from candy import (
     remove_candy,
     evolve_pokemon
 )
+from trainers import (
+    generar_imagen_trainers,
+    VistaTrainers,
+    ModalSeleccionTrainer
+)
 database.init_db()
 # 1. CONFIGURACIÓN
 load_dotenv()
