@@ -17,3 +17,12 @@ def obtener_incursion(canal_id):
 
 def eliminar_incursion(canal_id):
     incursiones_activas.pop(canal_id, None)
+    
+def obtener_por_mensaje(mensaje_id):
+
+    for raid in incursiones_activas.values():
+
+        if raid.mensaje_id == mensaje_id:
+            return raid
+
+    return None

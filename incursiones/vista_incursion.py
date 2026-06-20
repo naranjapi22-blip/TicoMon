@@ -15,7 +15,9 @@ class VistaIncursion(discord.ui.View):
         interaction: discord.Interaction,
         button: discord.ui.Button
     ):
-        await interaction.response.send_message(
-            "Te uniste a la incursión.",
-            ephemeral=True
+        raid = obtener_por_mensaje(
+            interaction.message.id
+        )
+        raid.agregar_jugador(
+            interaction.user.id
         )

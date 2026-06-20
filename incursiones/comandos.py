@@ -27,10 +27,13 @@ class Incursiones(commands.Cog):
             alpha="Dratini"
         )
 
-        mensaje = await ctx.send(
-            "🦖 Alpha Dratini apareció\n\n"
-            "Participantes: 0/3",
-            view=VistaIncursion()
+        cantidad = len(raid.jugadores)
+
+        await interaction.message.edit(
+            content=
+            f"🦖 Alpha {raid.alpha} apareció\n\n"
+            f"Participantes: {cantidad}/3",
+            view=self
         )
 
         raid.mensaje_id = mensaje.id
