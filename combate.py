@@ -31,7 +31,15 @@ class CombateSim:
         spd1 = p1["pokes"][p1["activo"]]["spd"]
         spd2 = p2["pokes"][p2["activo"]]["spd"]
 
-        orden = ["Jugador 1", "Jugador 2"] if spd1 >= spd2 else ["Jugador 2", "Jugador 1"]
+        if spd1 > spd2:
+            orden = ["Jugador 1", "Jugador 2"]
+        elif spd2 > spd1:
+            orden = ["Jugador 2", "Jugador 1"]
+        else:
+            orden = random.sample(
+                ["Jugador 1", "Jugador 2"],
+                2
+            )
         historial = []
         activo_inicial_p1 = p1["activo"]
         activo_inicial_p2 = p2["activo"]
