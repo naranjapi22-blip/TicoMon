@@ -10,7 +10,21 @@ from datetime import datetime, timezone
 from candy import add_candy_for_pokemon
 pokemon_por_id = {}
 id_por_nombre = {}
+"""
+NOTA DE AUDITORÍA (Junio 2026)
 
+La migración SQLite -> PostgreSQL fue completada.
+
+Las funciones auxiliares:
+    _equipo_existe()
+    _equipo_tiene_columna()
+    _migrar_equipo_nombre_a_captura_id()
+
+permanecen únicamente por compatibilidad histórica.
+
+Revisar su eliminación cuando ya no existan bases de datos
+antiguas que requieran migración.
+"""
 # 1. Asegúrate de tener esto arriba en tu archivo
 NATURALEZAS = [
     "Fuerte", "Dócil", "Seria", "Rara", "Agitada", "Huraña", "Firme", "Pícara", "Audaz",
@@ -471,6 +485,17 @@ class EquipoError(Exception):
 
 
 def _equipo_existe(cursor) -> bool:
+    """
+    LEGADO (Junio 2026)
+
+    Utilizado para detectar estructuras antiguas de la tabla
+    'equipo' durante la migración de pokemon_nombre -> captura_id.
+
+    Actualmente solo es llamado por init_equipo_db().
+
+    Si la migración histórica deja de ser necesaria esta función
+    podrá eliminarse junto con _migrar_equipo_nombre_a_captura_id().
+    """
     if DATABASE_URL:
         cursor.execute(
             "SELECT 1 FROM information_schema.tables WHERE table_name = 'equipo'"
@@ -510,6 +535,25 @@ def _crear_tabla_equipo(cursor):
 
 
 def _migrar_equipo_nombre_a_captura_id(cursor, conn):
+    """
+    MIGRACIÓN HISTÓRICA (Junio 2026)
+
+    Convierte equipos antiguos que almacenaban:
+
+        pokemon_nombre
+
+    al formato actual:
+
+        captura_id
+
+    La tabla actual en producción ya utiliza captura_id.
+
+    Mantener únicamente por compatibilidad con bases de datos
+    antiguas que aún no hayan ejecutado esta migración.
+
+    Candidata a eliminación futura.
+    """
+
     log.info("📍 Migrando equipo: pokemon_nombre → captura_id...")
     cursor.execute(
         "SELECT user_id, slot, pokemon_nombre FROM equipo"
@@ -558,6 +602,18 @@ def init_equipo_db():
 
 
 def _uid(user_id):
+    """
+    COMPATIBILIDAD DE DATOS (Junio 2026)
+
+    La tabla capturas almacena user_id como TEXT.
+    La tabla equipo almacena user_id como BIGINT.
+
+    Esta función normaliza el valor para las consultas
+    relacionadas con equipo.
+
+    Debería eliminarse cuando ambas tablas utilicen el
+    mismo tipo de dato para user_id.
+    """
     return str(user_id) if DATABASE_URL else user_id
 
 
