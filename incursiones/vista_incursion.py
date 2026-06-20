@@ -33,6 +33,7 @@ class VistaIncursion(discord.ui.View):
             interaction.user.id,
             interaction.user.display_name
         )
+
         if not agregado:
             await interaction.response.send_message(
                 "Ya estás dentro de esta incursión.",
@@ -42,18 +43,32 @@ class VistaIncursion(discord.ui.View):
 
         cantidad = len(raid.jugadores)
 
-        await interaction.response.defer()
         lista_jugadores = "\n".join(
             f"• {j['nombre']}"
             for j in raid.jugadores
         )
 
-        cantidad = len(raid.jugadores)
-        await interaction.message.edit(
-            content=
+        # Sala llena
+        if cantidad >= 1:
+
+            raid.estado = "llena"
+
+            for child in self.children:
+                child.disabled = True
+
+        texto = (
             f"🦖 Alpha {raid.alpha} apareció\n\n"
             f"Participantes ({cantidad}/3)\n\n"
-            f"{lista_jugadores}",
+            f"{lista_jugadores}"
+        )
+
+        if cantidad >= 3:
+            texto += "\n\n✅ Sala completa"
+
+        await interaction.response.defer()
+
+        await interaction.message.edit(
+            content=texto,
             view=self
         )
 
