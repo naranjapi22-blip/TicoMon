@@ -20,7 +20,6 @@ import gestor_spawn
 import setup_cache
 import perfil
 import intercambio
-from incursiones.comandos import registrar_comandos_incursion
 # Configuración específica
 from configuracion import canal_restringido
 from logger_config import log
