@@ -345,47 +345,46 @@ def obtener_versiones_pokemon(
 def obtener_info_captura(user_id, nombre_pokemon):
     conn = None
     try:
-        log.debug(f"🔍 Obteniendo info de captura: {nombre_pokemon} - User {user_id}")
+        log.debug(
+            f"🔍 Obteniendo info de captura: "
+            f"{nombre_pokemon} - User {user_id}"
+        )
+
         conn = get_connection()
         cursor = conn.cursor()
-        
-        # Agregamos la columna 'id' a la selección y usamos array_agg (Postgres) o group_concat (SQLite)
-        # Si usas Postgres (DATABASE_URL), array_agg es lo ideal:
-        if DATABASE_URL:
-            query = """
-                SELECT MIN(fecha), COUNT(*), ARRAY_AGG(id) 
-                FROM capturas 
-                WHERE user_id = %s AND pokemon_nombre = %s
-            """
-        else:
-            # Si usas SQLite local, usamos group_concat:
-            query = """
-                SELECT MIN(fecha), COUNT(*), GROUP_CONCAT(id) 
-                FROM capturas 
-                WHERE user_id = ? AND pokemon_nombre = ?
-            """
-            
-        cursor.execute(query, (str(user_id), nombre_pokemon.lower()))
-        res = cursor.fetchone() # res será (fecha, cantidad, ids)
-        
-        # Procesamos los IDs para asegurar que siempre sea una lista
-        fecha, cantidad, ids_raw = res if res else (None, 0, "")
-        
-        # Convertimos el string/array de IDs a una lista de números
-        if ids_raw:
-            if isinstance(ids_raw, str): # Caso SQLite
-                lista_ids = [int(i) for i in ids_raw.split(',')]
-            else: # Caso Postgres (ya es lista/array)
-                lista_ids = ids_raw
-        else:
-            lista_ids = []
 
-        log.info(f"✅ Info de captura obtenida: {nombre_pokemon} - Cantidad: {cantidad}")
+        cursor.execute(
+            """
+            SELECT MIN(fecha), COUNT(*), ARRAY_AGG(id)
+            FROM capturas
+            WHERE user_id = %s
+            AND pokemon_nombre = %s
+            """,
+            (str(user_id), nombre_pokemon.lower())
+        )
+
+        res = cursor.fetchone()
+
+        fecha, cantidad, ids_raw = (
+            res if res else (None, 0, None)
+        )
+
+        lista_ids = ids_raw if ids_raw else []
+
+        log.info(
+            f"✅ Info de captura obtenida: "
+            f"{nombre_pokemon} - Cantidad: {cantidad}"
+        )
+
         return fecha, cantidad, lista_ids
 
     except Exception as e:
-        log.error(f"🚨 Error al obtener info de captura: {e}", exc_info=True)
+        log.error(
+            f"🚨 Error al obtener info de captura: {e}",
+            exc_info=True
+        )
         return None, 0, []
+
     finally:
         if conn:
             conn.close()
@@ -415,10 +414,10 @@ def obtener_energia_db(user_id):
         log.debug(f"🔍 Obteniendo energía para user {user_id}")
         conn = get_connection()
         cursor = conn.cursor()
-        if DATABASE_URL:
-            cursor.execute("SELECT intentos, ultima_recarga FROM energia WHERE user_id = %s", (str(user_id),))
-        else:
-            cursor.execute("SELECT intentos, ultima_recarga FROM energia WHERE user_id = ?", (user_id,))
+        cursor.execute(
+            "SELECT intentos, ultima_recarga FROM energia WHERE user_id = %s",
+            (str(user_id),)
+        )
         
         res = cursor.fetchone()
         if res:
@@ -464,10 +463,10 @@ def obtener_lista_capturas(user_id):
         conn = get_connection()
         cursor = conn.cursor()
         
-        if DATABASE_URL:
-            cursor.execute("SELECT DISTINCT pokemon_nombre FROM capturas WHERE user_id = %s", (str(user_id),))
-        else:
-            cursor.execute("SELECT DISTINCT pokemon_nombre FROM capturas WHERE user_id = ?", (user_id,))
+        cursor.execute(
+            "SELECT DISTINCT pokemon_nombre FROM capturas WHERE user_id = %s",
+            (str(user_id),)
+)
             
         res = [row[0] for row in cursor.fetchall()]
         log.info(f"✅ Lista de capturas obtenida: User {user_id} - {len(res)} pokémon únicos")
@@ -627,27 +626,15 @@ def obtener_captura(user_id, captura_id: int):
         conn = get_connection()
         cursor = conn.cursor()
 
-        if DATABASE_URL:
-            cursor.execute(
-                """
-                SELECT id, pokemon_nombre, es_shiny, naturaleza,
-                       iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe
-                FROM capturas
-                WHERE id = %s AND user_id = %s
-                """,
-                (captura_id, _uid(user_id)),
-            )
-        else:
-            cursor.execute(
-                """
-                SELECT id, pokemon_nombre, es_shiny, naturaleza,
-                       iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe
-                FROM capturas
-                WHERE id = ? AND user_id = ?
-                """,
-                (captura_id, user_id),
-            )
-
+        cursor.execute(
+            """
+            SELECT id, pokemon_nombre, es_shiny, naturaleza,
+                iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe
+            FROM capturas
+            WHERE id = %s AND user_id = %s
+            """,
+            (captura_id, _uid(user_id)),
+        )
         return cursor.fetchone()
 
     except Exception as e:
@@ -676,28 +663,18 @@ def obtener_capturas_por_ids(user_id, captura_ids: list) -> dict[int, tuple]:
         conn = get_connection()
         cursor = conn.cursor()
         resultado = {}
-        if DATABASE_URL:
-            placeholders = ",".join(["%s"] * len(ids))
-            cursor.execute(
-                f"""
-                SELECT id, pokemon_nombre, es_shiny, naturaleza,
-                       iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe
-                FROM capturas
-                WHERE user_id = %s AND id IN ({placeholders})
-                """,
-                [_uid(user_id), *ids],
-            )
-        else:
-            placeholders = ",".join(["?"] * len(ids))
-            cursor.execute(
-                f"""
-                SELECT id, pokemon_nombre, es_shiny, naturaleza,
-                       iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe
-                FROM capturas
-                WHERE user_id = ? AND id IN ({placeholders})
-                """,
-                [user_id, *ids],
-            )
+        placeholders = ",".join(["%s"] * len(ids))
+
+        cursor.execute(
+            f"""
+            SELECT id, pokemon_nombre, es_shiny, naturaleza,
+                iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe
+            FROM capturas
+            WHERE user_id = %s
+            AND id IN ({placeholders})
+            """,
+            [_uid(user_id), *ids],
+        )
         for fila in cursor.fetchall():
             resultado[int(fila[0])] = fila
         return resultado
