@@ -14,8 +14,8 @@ class PokedexCog(commands.Cog):
             "7": (722, 809), "8": (810, 905), "9": (906, 1025)
         }
 
-    @commands.command(name="newpokedex")
-    async def newpokedex(self, ctx, *args):
+    @commands.command(name="pokedex")
+    async def pokedex(self, ctx, *args):
         # 1. Preparar sesión
         if not hasattr(self.bot, 'session') or self.bot.session.closed:
             self.bot.session = aiohttp.ClientSession()
