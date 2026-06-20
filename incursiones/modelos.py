@@ -9,7 +9,6 @@ class Incursion:
         self.estado = "esperando"
 
         self.mensaje_id = None
-
     @property
     def llena(self):
         return len(self.jugadores) >= 3
