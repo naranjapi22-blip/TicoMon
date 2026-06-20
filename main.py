@@ -90,7 +90,7 @@ intents.members = True
 async def cargar_extensiones():
     # Agrega 'newpokedex' a tu lista principal. 
     # Si newpokedex.py está en la carpeta principal, no uses 'cogs.'
-    extensiones = ['ivs_commands', 'inventario', 'equipo_slash', 'pokedex','photodex']
+    extensiones = ['ivs_commands', 'inventario', 'equipo_slash', 'newpokedex','photodex']
     
     for ext in extensiones:
         try:
