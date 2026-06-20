@@ -767,16 +767,10 @@ def quitar_de_equipo(user_id, slot: int):
     try:
         conn = get_connection()
         cursor = conn.cursor()
-        if DATABASE_URL:
-            cursor.execute(
-                "DELETE FROM equipo WHERE user_id = %s AND slot = %s",
-                (_uid(user_id), slot),
-            )
-        else:
-            cursor.execute(
-                "DELETE FROM equipo WHERE user_id = ? AND slot = ?",
-                (user_id, slot),
-            )
+        cursor.execute(
+            "DELETE FROM equipo WHERE user_id = %s AND slot = %s",
+            (_uid(user_id), slot),
+        )
         conn.commit()
     finally:
         if conn:
@@ -788,20 +782,15 @@ def _insertar_slot(user_id, slot: int, captura_id: int):
     try:
         conn = get_connection()
         cursor = conn.cursor()
-        if DATABASE_URL:
-            cursor.execute(
-                """
-                INSERT INTO equipo (user_id, slot, captura_id) VALUES (%s, %s, %s)
-                ON CONFLICT (user_id, slot) DO UPDATE SET captura_id = EXCLUDED.captura_id
-                """,
-                (_uid(user_id), slot, captura_id),
-            )
-        else:
-            cursor.execute("DELETE FROM equipo WHERE user_id = ? AND slot = ?", (user_id, slot))
-            cursor.execute(
-                "INSERT INTO equipo (user_id, slot, captura_id) VALUES (?, ?, ?)",
-                (user_id, slot, captura_id),
-            )
+        cursor.execute(
+            """
+            INSERT INTO equipo (user_id, slot, captura_id)
+            VALUES (%s, %s, %s)
+            ON CONFLICT (user_id, slot)
+            DO UPDATE SET captura_id = EXCLUDED.captura_id
+            """,
+            (_uid(user_id), slot, captura_id),
+        )
         conn.commit()
     finally:
         if conn:
