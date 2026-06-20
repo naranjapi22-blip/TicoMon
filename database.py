@@ -618,34 +618,15 @@ def _uid(user_id):
 
 
 def obtener_captura(user_id, captura_id: int):
-<<<<<<< Updated upstream
-    """Retorna (id, pokemon_nombre, es_shiny, ivs...) o None si no es del usuario."""
-
-=======
     """Retorna (id, nombre, shiny, naturaleza, ivs...) o None si no es del usuario."""
->>>>>>> Stashed changes
+
     conn = None
 
     try:
 
         conn = get_connection()
         cursor = conn.cursor()
-<<<<<<< Updated upstream
 
-        cursor.execute(
-            """
-            SELECT id, pokemon_nombre, es_shiny,
-                   iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe
-            FROM capturas
-            WHERE id = %s AND user_id = %s
-            """,
-            (
-                captura_id,
-                _uid(user_id),
-            ),
-        )
-
-=======
         if DATABASE_URL:
             cursor.execute(
                 """
@@ -666,7 +647,7 @@ def obtener_captura(user_id, captura_id: int):
                 """,
                 (captura_id, user_id),
             )
->>>>>>> Stashed changes
+
         return cursor.fetchone()
 
     except Exception as e:
