@@ -1,5 +1,7 @@
 import discord
 
+from incursiones.incursion_manager import obtener_por_mensaje
+
 
 class VistaIncursion(discord.ui.View):
 
@@ -15,9 +17,30 @@ class VistaIncursion(discord.ui.View):
         interaction: discord.Interaction,
         button: discord.ui.Button
     ):
+
         raid = obtener_por_mensaje(
             interaction.message.id
         )
-        raid.agregar_jugador(
+
+        if not raid:
+            await interaction.response.send_message(
+                "Incursión no encontrada.",
+                ephemeral=True
+            )
+            return
+
+        agregado = raid.agregar_jugador(
             interaction.user.id
+        )
+
+        if not agregado:
+            await interaction.response.send_message(
+                "Ya estás dentro de esta incursión.",
+                ephemeral=True
+            )
+            return
+
+        await interaction.response.send_message(
+            "Te uniste a la incursión.",
+            ephemeral=True
         )
