@@ -618,14 +618,19 @@ def _uid(user_id):
 
 
 def obtener_captura(user_id, captura_id: int):
+<<<<<<< Updated upstream
     """Retorna (id, pokemon_nombre, es_shiny, ivs...) o None si no es del usuario."""
 
+=======
+    """Retorna (id, nombre, shiny, naturaleza, ivs...) o None si no es del usuario."""
+>>>>>>> Stashed changes
     conn = None
 
     try:
 
         conn = get_connection()
         cursor = conn.cursor()
+<<<<<<< Updated upstream
 
         cursor.execute(
             """
@@ -640,6 +645,28 @@ def obtener_captura(user_id, captura_id: int):
             ),
         )
 
+=======
+        if DATABASE_URL:
+            cursor.execute(
+                """
+                SELECT id, pokemon_nombre, es_shiny, naturaleza,
+                       iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe
+                FROM capturas
+                WHERE id = %s AND user_id = %s
+                """,
+                (captura_id, _uid(user_id)),
+            )
+        else:
+            cursor.execute(
+                """
+                SELECT id, pokemon_nombre, es_shiny, naturaleza,
+                       iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe
+                FROM capturas
+                WHERE id = ? AND user_id = ?
+                """,
+                (captura_id, user_id),
+            )
+>>>>>>> Stashed changes
         return cursor.fetchone()
 
     except Exception as e:
@@ -653,6 +680,50 @@ def obtener_captura(user_id, captura_id: int):
 
     finally:
 
+        if conn:
+            conn.close()
+
+
+def obtener_capturas_por_ids(user_id, captura_ids: list) -> dict[int, tuple]:
+    """Mapa captura_id -> fila de obtener_captura para un lote de IDs."""
+    ids = [int(i) for i in captura_ids if str(i).isdigit()]
+    if not ids:
+        return {}
+
+    conn = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        resultado = {}
+        if DATABASE_URL:
+            placeholders = ",".join(["%s"] * len(ids))
+            cursor.execute(
+                f"""
+                SELECT id, pokemon_nombre, es_shiny, naturaleza,
+                       iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe
+                FROM capturas
+                WHERE user_id = %s AND id IN ({placeholders})
+                """,
+                [_uid(user_id), *ids],
+            )
+        else:
+            placeholders = ",".join(["?"] * len(ids))
+            cursor.execute(
+                f"""
+                SELECT id, pokemon_nombre, es_shiny, naturaleza,
+                       iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe
+                FROM capturas
+                WHERE user_id = ? AND id IN ({placeholders})
+                """,
+                [user_id, *ids],
+            )
+        for fila in cursor.fetchall():
+            resultado[int(fila[0])] = fila
+        return resultado
+    except Exception as e:
+        log.error(f"🚨 Error obtener_capturas_por_ids: {e}", exc_info=True)
+        return {}
+    finally:
         if conn:
             conn.close()
 

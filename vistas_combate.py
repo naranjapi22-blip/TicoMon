@@ -9,19 +9,45 @@ import combate_servicios
 from database import obtener_id_pokemon
 
 class VistaCombate(discord.ui.View):
-    def __init__(self, p1, p2, equipo1_nombres, equipo2_nombres, session):
+    def __init__(
+        self,
+        p1,
+        p2,
+        equipo1,
+        equipo2,
+        session,
+        *,
+        modo="nombres",
+        owner1_id=None,
+        owner2_id=None,
+    ):
         super().__init__(timeout=300)
         self.p1 = p1
         self.p2 = p2
-        self.equipo1_nombres = equipo1_nombres
-        self.equipo2_nombres = equipo2_nombres
+        self.equipo1 = equipo1
+        self.equipo2 = equipo2
         self.session = session
-        self.combate = None 
-        self.fondo_seleccionado = None # Variable para mantener el fondo
+        self.modo = modo
+        self.owner1_id = owner1_id
+        self.owner2_id = owner2_id
+        self.combate = None
+        self.fondo_seleccionado = None
 
     async def preparar_combate(self):
-        equipo1 = await combate_servicios.preparar_equipos_completos(self.equipo1_nombres)
-        equipo2 = await combate_servicios.preparar_equipos_completos(self.equipo2_nombres)
+        if self.modo == "capturas":
+            equipo1 = await combate_servicios.preparar_equipo_desde_capturas(
+                self.session, self.owner1_id, self.equipo1
+            )
+            equipo2 = await combate_servicios.preparar_equipo_desde_capturas(
+                self.session, self.owner2_id, self.equipo2
+            )
+        else:
+            equipo1 = await combate_servicios.preparar_equipos_completos(
+                self.session, self.equipo1
+            )
+            equipo2 = await combate_servicios.preparar_equipos_completos(
+                self.session, self.equipo2
+            )
         self.combate = CombateSim(equipo1, equipo2)
 
     @discord.ui.button(label="¡Iniciar Combate Épico!", style=discord.ButtonStyle.danger)
