@@ -1108,18 +1108,11 @@ def obtener_ids_sin_stats():
 
     try:
 
-        if DATABASE_URL:
-            cursor.execute("""
-                SELECT id
-                FROM pokemon_data
-                WHERE hp IS NULL
-            """)
-        else:
-            cursor.execute("""
-                SELECT id
-                FROM pokemon_data
-                WHERE hp IS NULL
-            """)
+        cursor.execute("""
+            SELECT id
+            FROM pokemon_data
+            WHERE hp IS NULL
+        """)
 
         return [fila[0] for fila in cursor.fetchall()]
 
@@ -1143,34 +1136,32 @@ def actualizar_stats_pokemon(
 
     try:
 
-        if DATABASE_URL:
-
-            cursor.execute(
-                """
-                UPDATE pokemon_data
-                SET
-                    hp = %s,
-                    attack = %s,
-                    defense = %s,
-                    special_attack = %s,
-                    special_defense = %s,
-                    speed = %s,
-                    height = %s,
-                    weight = %s
-                WHERE id = %s
-                """,
-                (
-                    hp,
-                    attack,
-                    defense,
-                    special_attack,
-                    special_defense,
-                    speed,
-                    height,
-                    weight,
-                    pokemon_id
-                )
+        cursor.execute(
+            """
+            UPDATE pokemon_data
+            SET
+                hp = %s,
+                attack = %s,
+                defense = %s,
+                special_attack = %s,
+                special_defense = %s,
+                speed = %s,
+                height = %s,
+                weight = %s
+            WHERE id = %s
+            """,
+            (
+                hp,
+                attack,
+                defense,
+                special_attack,
+                special_defense,
+                speed,
+                height,
+                weight,
+                pokemon_id
             )
+        )
 
         conn.commit()
 
