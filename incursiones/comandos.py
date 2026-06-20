@@ -12,8 +12,6 @@ class Incursiones(commands.Cog):
     @commands.command()
     async def incursion(self, ctx):
         await ctx.send("Raid creada")
-
-
 async def setup(bot):
     await bot.add_cog(Incursiones(bot))
     @commands.command()
