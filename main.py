@@ -67,14 +67,30 @@ TOKEN = os.getenv('TOKEN')
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
-
+# =====================================================
+# ARRANQUE PRINCIPAL DEL BOT
+#
+# Orden de inicialización:
+# 1. Pool PostgreSQL
+# 2. Configuración del servidor
+# 3. Sesión HTTP
+# 4. Rarezas y cachés Pokémon
+# 5. Gestores de spawn
+# 6. Rankings
+# 7. Slash commands
+# 8. Cache persistente
+#
+# Cualquier módulo que dependa de Pokémon,
+# rankings o configuración debe inicializarse
+# después de este evento.
+# =====================================================
 
 
 
 async def cargar_extensiones():
     # Agrega 'newpokedex' a tu lista principal. 
     # Si newpokedex.py está en la carpeta principal, no uses 'cogs.'
-    extensiones = ['ivs_commands', 'inventario', 'equipo_slash', 'newpokedex','photodex']
+    extensiones = ['ivs_commands', 'inventario', 'equipo_slash', 'pokedex','photodex']
     
     for ext in extensiones:
         try:
@@ -185,7 +201,7 @@ async def on_command_error(ctx, error):
 
 @bot.command()
 @canal_restringido()
-async def pokedex(ctx, *, filtro: str = None):
+async def oldpokedex(ctx, *, filtro: str = None):
     """
     Uso: 
     !pokedex -> Muestra tu colección completa.
@@ -342,7 +358,22 @@ async def auto_liberar_canal(channel_id, segundos):
     except asyncio.CancelledError:
         pass
 
-
+# =====================================================
+# FLUJO DE SPAWN
+#
+# 1. Consumir energía
+# 2. Bloquear canal
+# 3. Generar IDs por rareza
+# 4. Obtener datos Pokémon
+# 5. Crear collage de siluetas
+# 6. Generar pistas
+# 7. Crear vista interactiva
+# 8. Programar liberación automática
+#
+# En cualquier error:
+# - devolver energía
+# - liberar canal
+# =====================================================
 
 # --- COMANDO SPAWN CORREGIDO ---
 @bot.command()
