@@ -681,7 +681,7 @@ class ComandosView(discord.ui.View):
         embed.add_field(
             name="📖 Pokédex",
             value=(
-                "`!newpokedex`"
+                "`!pokedex`"
             ),
             inline=False
         )
