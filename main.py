@@ -29,7 +29,7 @@ from setup_cache import prellenar_cache
 from rarezas import pokemon_por_rareza
 # Vistas e interfaces
 from vistas import PokedexView, BotonCaptura, InfoView, SpawnSelectionView
-from vistas_combate import SelectorPaginado, VistaCombate
+from vistas_combate import VistaCombate
 import vistas_batalla
 from vistas_batalla import SelectorBatalla
 from vistas_equipo import abrir_equipo_en_privado
@@ -875,20 +875,6 @@ async def _iniciar_arena(ctx, oponente: discord.Member, equipo1, equipo2):
         await ctx.send(f"❌ Error al preparar el combate: {e}")
 
 
-@bot.command(name="combate")
-async def iniciar_combate(ctx, oponente: discord.Member):
-    """Selección clásica (compatibilidad)."""
-    if not await _validar_retador(ctx, oponente):
-        return
-
-    equipos = await _obtener_equipos_duelo(
-        ctx,
-        oponente,
-        lambda jugador, lista: SelectorPaginado(jugador, lista),
-    )
-    if not equipos[0]:
-        return
-    await _iniciar_arena(ctx, oponente, equipos[0], equipos[1])
 
 
 @bot.command(name="batalla")
