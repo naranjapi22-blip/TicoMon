@@ -864,9 +864,27 @@ async def _obtener_equipos_duelo(
     return equipo1, equipo2
 
 
-async def _iniciar_arena(ctx, oponente: discord.Member, equipo1, equipo2):
+async def _iniciar_arena(
+    ctx,
+    oponente: discord.Member,
+    equipo1,
+    equipo2,
+    *,
+    modo="nombres",
+    owner1_id=None,
+    owner2_id=None,
+):
     msg_espera = await ctx.send("⏳ Preparando arena de combate...")
-    vista_combate = VistaCombate(ctx.author, oponente, equipo1, equipo2, bot.session)
+    vista_combate = VistaCombate(
+        ctx.author,
+        oponente,
+        equipo1,
+        equipo2,
+        bot.session,
+        modo=modo,
+        owner1_id=owner1_id or ctx.author.id,
+        owner2_id=owner2_id or oponente.id,
+    )
     try:
         await vista_combate.preparar_combate()
         await msg_espera.edit(content="✅ ¡Todo listo! Pulsa el botón para comenzar.", view=vista_combate)
@@ -890,13 +908,18 @@ async def iniciar_batalla(ctx, oponente: discord.Member):
         privado=True,
         fuente_lista=database.obtener_equipo_selector,
         mensaje_minimo="❌ Necesitas al menos 3 Pokémon en tu equipo. Usa `!equipo`.",
-        resolver_seleccion=lambda jugador, ids: database.nombres_desde_captura_ids(
-            jugador.id, ids
-        ),
     )
     if not equipos[0]:
         return
-    await _iniciar_arena(ctx, oponente, equipos[0], equipos[1])
+    await _iniciar_arena(
+        ctx,
+        oponente,
+        equipos[0],
+        equipos[1],
+        modo="capturas",
+        owner1_id=ctx.author.id,
+        owner2_id=oponente.id,
+    )
 
 
 @bot.command(name="equipo")
