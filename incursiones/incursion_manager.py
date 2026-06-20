@@ -1,6 +1,8 @@
 from incursiones.modelos import Incursion
 
 incursiones_activas = {}
+
+
 def crear_incursion(canal_id, alpha):
     raid = Incursion(canal_id, alpha)
 

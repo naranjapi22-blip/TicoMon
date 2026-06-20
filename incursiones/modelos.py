@@ -1,4 +1,5 @@
 class Incursion:
+
     def __init__(self, canal_id, alpha):
         self.canal_id = canal_id
         self.alpha = alpha
