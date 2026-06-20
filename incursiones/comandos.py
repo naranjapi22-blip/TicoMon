@@ -1,5 +1,6 @@
 from discord.ext import commands
 from incursiones.vista_incursion import VistaIncursion
+
 from incursiones.incursion_manager import (
     crear_incursion,
     obtener_incursion
@@ -27,13 +28,10 @@ class Incursiones(commands.Cog):
             alpha="Dratini"
         )
 
-        cantidad = len(raid.jugadores)
-
-        await interaction.message.edit(
-            content=
-            f"🦖 Alpha {raid.alpha} apareció\n\n"
-            f"Participantes: {cantidad}/3",
-            view=self
+        mensaje = await ctx.send(
+            "🦖 Alpha Dratini apareció\n\n"
+            "Participantes: 0/3",
+            view=VistaIncursion()
         )
 
         raid.mensaje_id = mensaje.id
