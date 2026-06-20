@@ -1,56 +1,125 @@
 import aiohttp
 
-async def obtener_datos_combate(nombre_pokemon):
+import combate_calc
+import database
+from mapeo_naturalezas import naturaleza_a_showdown
+from poke_env.data import GenData
+
+_GEN_DATA = GenData.from_gen(9)
+
+_IVS_PERFECTOS = {"hp": 31, "atk": 31, "def": 31, "spa": 31, "spd": 31, "spe": 31}
+
+
+async def obtener_datos_combate(session, nombre_pokemon, *, ivs=None, naturaleza=None, es_shiny=False):
     """
-    Consulta la PokeAPI y devuelve un diccionario con los stats 
-    necesarios para el simulador de combate (con tipos en lista).
+    Consulta PokeAPI y arma el dict de luchador con stats lvl 50 (poke-env).
     """
     url = f"https://pokeapi.co/api/v2/pokemon/{nombre_pokemon.lower()}"
-    
-    # Nota: Es mejor pasar la sesión como argumento, pero mantenemos tu lógica por ahora
-    async with aiohttp.ClientSession() as session:
-        try:
-            async with session.get(url) as response:
-                if response.status != 200:
-                    return None
-                
-                data = await response.json()
-                
-                # Mapeo de stats: attack, defense, speed
-                stats = {s['stat']['name']: s['base_stat'] for s in data['stats']}
-                
-                # REVISIÓN: Extraer TODOS los tipos del Pokémon como una lista
-                tipos = [t['type']['name'] for t in data['types']]
-                
-                return {
-                    'nombre': nombre_pokemon.capitalize(),
-                    'tipo': tipos,  # Ahora es una LISTA (ej: ['fuego', 'volador'])
-                    'atk': stats.get('attack', 50),
-                    'atk_esp': stats.get('special-attack', 50),
-                    'def': stats.get('defense', 50),
-                    'spd': stats.get('speed', 50),
-                    'id': data['id'], # Añadido por si lo necesitas para imagencomb
-                    'hp_base': stats.get('hp', 50)
-                }
-        except Exception as e:
-            print(f"Error al obtener datos de {nombre_pokemon}: {e}")
-            # Fallback seguro: tipo normal como lista
-            return {
-                'nombre': nombre_pokemon.capitalize(), 
-                'tipo': ['normal'], 
-                'atk': 50, 
-                'def': 50, 
-                'spd': 50
-            }
 
-async def preparar_equipos_completos(lista_nombres):
-    """
-    Toma una lista de nombres y devuelve la lista de diccionarios 
-    procesados para pasárselos directamente a CombateSim.
-    """
+    try:
+        async with session.get(url) as response:
+            if response.status != 200:
+                return None
+
+            data = await response.json()
+            stats = {s["stat"]["name"]: s["base_stat"] for s in data["stats"]}
+            tipos = [t["type"]["name"] for t in data["types"]]
+            species_showdown = await combate_calc.resolver_especie_showdown(session, nombre_pokemon)
+
+            iv_dict = ivs or dict(_IVS_PERFECTOS)
+            nature_showdown = naturaleza_a_showdown(naturaleza, _GEN_DATA.natures)
+            computed = combate_calc.stats_desde_teambuilder(species_showdown, iv_dict, naturaleza)
+
+            move_id, move_nombre = combate_calc.elegir_movimiento_automatico(species_showdown, computed)
+
+            return {
+                "nombre": nombre_pokemon.capitalize(),
+                "species_showdown": species_showdown,
+                "nature_showdown": nature_showdown,
+                "tipo": tipos,
+                "ivs": iv_dict,
+                "atk": computed["atk"],
+                "atk_esp": computed["spa"],
+                "def": computed["def"],
+                "def_esp": computed["spd"],
+                "spd": computed["spe"],
+                "hp_max": computed["hp"],
+                "movimiento": move_id,
+                "movimiento_nombre": move_nombre,
+                "id": data["id"],
+                "shiny": es_shiny,
+            }
+    except Exception as e:
+        print(f"Error al obtener datos de {nombre_pokemon}: {e}")
+        return {
+            "nombre": nombre_pokemon.capitalize(),
+            "species_showdown": nombre_pokemon.lower(),
+            "nature_showdown": "hardy",
+            "tipo": ["normal"],
+            "ivs": dict(_IVS_PERFECTOS),
+            "atk": 50,
+            "atk_esp": 50,
+            "def": 50,
+            "def_esp": 50,
+            "spd": 50,
+            "hp_max": 100,
+            "movimiento": "tackle",
+            "movimiento_nombre": "Tackle",
+            "shiny": es_shiny,
+        }
+
+async def _fighter_desde_fila(session, user_id, fila):
+    (
+        captura_id,
+        nombre,
+        es_shiny,
+        naturaleza,
+        iv_hp,
+        iv_atk,
+        iv_def,
+        iv_spa,
+        iv_spd,
+        iv_spe,
+    ) = fila
+    ivs = {
+        "hp": iv_hp,
+        "atk": iv_atk,
+        "def": iv_def,
+        "spa": iv_spa,
+        "spd": iv_spd,
+        "spe": iv_spe,
+    }
+    datos = await obtener_datos_combate(
+        session,
+        nombre,
+        ivs=ivs,
+        naturaleza=naturaleza,
+        es_shiny=bool(es_shiny),
+    )
+    if datos:
+        datos["captura_id"] = captura_id
+    return datos
+
+
+async def preparar_equipo_desde_capturas(session, user_id, captura_ids: list) -> list:
+    """Prepara luchadores con IVs y naturaleza reales desde capturas."""
+    mapa = database.obtener_capturas_por_ids(user_id, captura_ids)
+    equipo = []
+    for cid in captura_ids:
+        fila = mapa.get(int(cid))
+        if not fila:
+            continue
+        fighter = await _fighter_desde_fila(session, user_id, fila)
+        if fighter:
+            equipo.append(fighter)
+    return equipo
+
+
+async def preparar_equipos_completos(session, lista_nombres):
+    """Lista de nombres con IVs perfectos (para !combate)."""
     equipo = []
     for nombre in lista_nombres:
-        datos = await obtener_datos_combate(nombre)
+        datos = await obtener_datos_combate(session, nombre)
         if datos:
             equipo.append(datos)
     return equipo

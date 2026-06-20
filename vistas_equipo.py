@@ -79,7 +79,7 @@ async def crear_embed_captura_stats(session, user_id, captura_id: int) -> discor
     if not cap:
         return discord.Embed(description="❌ Captura no encontrada.", color=discord.Color.red())
 
-    cid, nombre, es_shiny, hp, atk, defs, spa, spd, spe = cap
+    cid, nombre, es_shiny, _naturaleza, hp, atk, defs, spa, spd, spe = cap
     ivs = [hp, atk, defs, spa, spd, spe]
     total = sum(ivs)
     pct = round((total / 186) * 100, 2)
