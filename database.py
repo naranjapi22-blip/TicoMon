@@ -839,16 +839,10 @@ def obtener_tipo_especial(pokemon_id):
     cursor = conn.cursor()
 
     try:
-        if DATABASE_URL:
-            cursor.execute(
-                "SELECT es_legendario, es_mitico FROM pokemon_data WHERE id = %s",
-                (pokemon_id,)
-            )
-        else:
-            cursor.execute(
-                "SELECT es_legendario, es_mitico FROM pokemon_data WHERE id = ?",
-                (pokemon_id,)
-            )
+        cursor.execute(
+            "SELECT es_legendario, es_mitico FROM pokemon_data WHERE id = %s",
+            (pokemon_id,)
+        )
 
         resultado = cursor.fetchone()
 
@@ -871,24 +865,14 @@ def actualizar_capture_rate(pokemon_id, capture_rate):
     try:
         log.info(f"Actualizando Pokémon {pokemon_id} con rate {capture_rate}")
 
-        if DATABASE_URL:
-            cursor.execute(
-                """
-                UPDATE pokemon_data
-                SET capture_rate = %s
-                WHERE id = %s
-                """,
-                (capture_rate, pokemon_id)
-            )
-        else:
-            cursor.execute(
-                """
-                UPDATE pokemon_data
-                SET capture_rate = ?
-                WHERE id = ?
-                """,
-                (capture_rate, pokemon_id)
-            )
+        cursor.execute(
+            """
+            UPDATE pokemon_data
+            SET capture_rate = %s
+            WHERE id = %s
+            """,
+            (capture_rate, pokemon_id)
+        )
 
         log.info(f"Pokémon {pokemon_id} -> Filas afectadas: {cursor.rowcount}")
 
@@ -983,39 +967,20 @@ def obtener_pokemon_local(pokemon_id):
 
     try:
 
-        if DATABASE_URL:
-
-            cursor.execute(
-                """
-                SELECT
-                    id,
-                    nombre,
-                    tipos,
-                    capture_rate,
-                    es_legendario,
-                    es_mitico
-                FROM pokemon_data
-                WHERE id = %s
-                """,
-                (pokemon_id,)
-            )
-
-        else:
-
-            cursor.execute(
-                """
-                SELECT
-                    id,
-                    nombre,
-                    tipos,
-                    capture_rate,
-                    es_legendario,
-                    es_mitico
-                FROM pokemon_data
-                WHERE id = ?
-                """,
-                (pokemon_id,)
-            )
+        cursor.execute(
+            """
+            SELECT
+                id,
+                nombre,
+                tipos,
+                capture_rate,
+                es_legendario,
+                es_mitico
+            FROM pokemon_data
+            WHERE id = %s
+            """,
+            (pokemon_id,)
+        )
 
         fila = cursor.fetchone()
 
