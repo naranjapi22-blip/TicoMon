@@ -20,7 +20,7 @@ import gestor_spawn
 import setup_cache
 import perfil
 import intercambio
-
+from incursiones.comandos import registrar_comandos_incursion
 # Configuración específica
 from configuracion import canal_restringido
 from logger_config import log
@@ -86,11 +86,10 @@ intents.members = True
 # =====================================================
 
 
-
 async def cargar_extensiones():
     # Agrega 'newpokedex' a tu lista principal. 
     # Si newpokedex.py está en la carpeta principal, no uses 'cogs.'
-    extensiones = ['ivs_commands', 'inventario', 'equipo_slash', 'newpokedex','photodex']
+    extensiones = ['ivs_commands', 'inventario', 'equipo_slash', 'newpokedex','photodex','incursiones.comandos']
     
     for ext in extensiones:
         try:
