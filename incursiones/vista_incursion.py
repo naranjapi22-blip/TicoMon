@@ -30,9 +30,9 @@ class VistaIncursion(discord.ui.View):
             return
 
         agregado = raid.agregar_jugador(
-            interaction.user.id
+            interaction.user.id,
+            interaction.user.display_name
         )
-
         if not agregado:
             await interaction.response.send_message(
                 "Ya estás dentro de esta incursión.",
@@ -43,11 +43,17 @@ class VistaIncursion(discord.ui.View):
         cantidad = len(raid.jugadores)
 
         await interaction.response.defer()
+        lista_jugadores = "\n".join(
+            f"• {j['nombre']}"
+            for j in raid.jugadores
+        )
 
+        cantidad = len(raid.jugadores)
         await interaction.message.edit(
             content=
             f"🦖 Alpha {raid.alpha} apareció\n\n"
-            f"Participantes: {cantidad}/3",
+            f"Participantes ({cantidad}/3)\n\n"
+            f"{lista_jugadores}",
             view=self
         )
 

@@ -13,12 +13,18 @@ class Incursion:
     def llena(self):
         return len(self.jugadores) >= 3
 
-    def agregar_jugador(self, user_id):
-        if user_id in self.jugadores:
-            return False
+    def agregar_jugador(self, user_id, nombre):
+
+        for jugador in self.jugadores:
+            if jugador["id"] == user_id:
+                return False
 
         if self.llena:
             return False
 
-        self.jugadores.append(user_id)
+        self.jugadores.append({
+            "id": user_id,
+            "nombre": nombre
+        })
+
         return True
