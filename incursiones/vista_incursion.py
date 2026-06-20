@@ -40,7 +40,18 @@ class VistaIncursion(discord.ui.View):
             )
             return
 
-        await interaction.response.send_message(
+        cantidad = len(raid.jugadores)
+
+        await interaction.response.defer()
+
+        await interaction.message.edit(
+            content=
+            f"🦖 Alpha {raid.alpha} apareció\n\n"
+            f"Participantes: {cantidad}/3",
+            view=self
+        )
+
+        await interaction.followup.send(
             "Te uniste a la incursión.",
             ephemeral=True
         )
