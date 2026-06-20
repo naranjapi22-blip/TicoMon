@@ -10,21 +10,21 @@ from datetime import datetime, timezone
 from candy import add_candy_for_pokemon
 pokemon_por_id = {}
 id_por_nombre = {}
-"""
-NOTA DE AUDITORÍA (Junio 2026)
-
-La migración SQLite -> PostgreSQL fue completada.
-
-Las funciones auxiliares:
-    _equipo_existe()
-    _equipo_tiene_columna()
-    _migrar_equipo_nombre_a_captura_id()
-
-permanecen únicamente por compatibilidad histórica.
-
-Revisar su eliminación cuando ya no existan bases de datos
-antiguas que requieran migración.
-"""
+# =====================================================
+# NOTA DE AUDITORÍA (Junio 2026)
+#
+# La migración SQLite -> PostgreSQL fue completada.
+#
+# Las funciones:
+#   _equipo_existe()
+#   _equipo_tiene_columna()
+#   _migrar_equipo_nombre_a_captura_id()
+#
+# permanecen únicamente por compatibilidad histórica.
+#
+# Revisar su eliminación cuando ya no existan bases de
+# datos antiguas que requieran migración.
+# =====================================================
 # 1. Asegúrate de tener esto arriba en tu archivo
 NATURALEZAS = [
     "Fuerte", "Dócil", "Seria", "Rara", "Agitada", "Huraña", "Firme", "Pícara", "Audaz",
