@@ -2,7 +2,7 @@ import discord
 import asyncio
 import imagencomb
 
-from combate import CombateSim
+from incursiones.combate_raid import CombateRaidSim
 
 
 class VistaCombateIncursion:
@@ -19,7 +19,7 @@ class VistaCombateIncursion:
         self.equipo_jugador = equipo_jugador
         self.alpha = alpha
 
-        self.combate = CombateSim(
+        self.combate = CombateRaidSim(
             equipo_jugador,
             alpha
         )
