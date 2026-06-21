@@ -48,8 +48,9 @@ class VistaIncursion(discord.ui.View):
             for j in raid.jugadores
         )
 
-        # Sala llena
-        if cantidad >= 1:
+        sala_llena = cantidad >= 1   # cambiar luego a >= 3
+
+        if sala_llena:
 
             raid.estado = "llena"
 
@@ -62,7 +63,7 @@ class VistaIncursion(discord.ui.View):
             f"{lista_jugadores}"
         )
 
-        if cantidad >= 3:
+        if sala_llena:
             texto += "\n\n✅ Sala completa"
 
         await interaction.response.defer()
