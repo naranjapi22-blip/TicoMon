@@ -115,15 +115,19 @@ async def generar_escena_raid(
 
     for p in jugadores:
         print(p["nombre"], p["id"])
-    return await generar_escena_combate(
-        session,
-        jugadores[0]["id"],
-        alpha["id"],
-        jugadores[0]["nombre"],
-        alpha["nombre"],
-        hp_jugadores[0],
-        hp_alpha,
-        jugadores[0]["hp_max"],
-        hp_alpha_max,
-        fondo_nombre
+    fondo = Image.new(
+        "RGBA",
+        (800, 400),
+        (50, 50, 50, 255)
     )
+
+    buffer = io.BytesIO()
+
+    fondo.save(
+        buffer,
+        format="PNG"
+    )
+
+    buffer.seek(0)
+
+    return buffer
