@@ -1,7 +1,7 @@
 import discord
 
 from incursiones.incursion_manager import obtener_por_mensaje
-
+from incursiones.selector_incursion import SelectorIncursion
 
 class VistaIncursion(discord.ui.View):
 
@@ -72,6 +72,14 @@ class VistaIncursion(discord.ui.View):
             content=texto,
             view=self
         )
+        if sala_llena:
+
+            selector_msg = await interaction.channel.send(
+                "🎯 Selecciona un Pokémon",
+                view=SelectorIncursion(raid)
+            )
+
+            raid.selector_mensaje_id = selector_msg.id
 
         await interaction.followup.send(
             "Te uniste a la incursión.",
