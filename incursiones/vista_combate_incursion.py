@@ -97,18 +97,14 @@ class VistaCombateIncursion:
 
         ganador = self.combate.es_fin_del_juego()
 
-        if ganador == "Jugador 1":
+        if ganador == "Jugadores":
 
             await mensaje.edit(
-                content=
-                "🏆 ¡Victoria!\n\n"
-                "Alpha derrotado."
+                content="🏆 ¡Victoria!\n\nAlpha derrotado."
             )
 
-        else:
+        elif ganador == "Alpha":
 
             await mensaje.edit(
-                content=
-                "💀 Derrota\n\n"
-                "El Alpha venció al equipo."
+                content="💀 Derrota\n\nEl Alpha venció al equipo."
             )

@@ -4,10 +4,10 @@ from incursiones.vista_combate_incursion import VistaCombateIncursion
 
 
 alpha = [{
-    "nombre": "Alpha Dratini",
-    "species_showdown": "dratini",
+    "nombre": "Alpha Tyranitar",
+    "species_showdown": "tyranitar",
     "nature_showdown": "hardy",
-    "tipo": ["dragon"],
+    "tipo": ["rock", "dark"],
     "ivs": {
         "hp": 31,
         "atk": 31,
@@ -16,15 +16,15 @@ alpha = [{
         "spd": 31,
         "spe": 31
     },
-    "atk": 120,
-    "atk_esp": 120,
-    "def": 120,
-    "def_esp": 120,
-    "spd": 60,
-    "hp_max": 10000,
-    "movimiento": "dragonrush",
-    "movimiento_nombre": "Dragon Rush",
-    "id": 147,
+    "atk": 180,
+    "atk_esp": 140,
+    "def": 180,
+    "def_esp": 180,
+    "spd": 120,
+    "hp_max": 15000,
+    "movimiento": "stoneedge",
+    "movimiento_nombre": "Stone Edge",
+    "id": 248,
     "shiny": False
 }]
 
