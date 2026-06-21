@@ -38,11 +38,6 @@ class SelectorIncursion(discord.ui.View):
         )
 
         cantidad = len(self.raid.selecciones)
-        if self.raid.selecciones_completas:
-
-            await interaction.channel.send(
-                "⚔️ Iniciando incursión..."
-            )
 
         await interaction.response.defer()
 
