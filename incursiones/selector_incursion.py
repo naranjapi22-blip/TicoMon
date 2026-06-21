@@ -20,7 +20,7 @@ class SelectorIncursion(SelectorPokemon):
             user,
             datos_equipo["valores"],
             session,
-            max_seleccion=3,
+            max_seleccion=1,
             titulo="🎯 Selecciona tu Pokémon",
             descripcion_extra=(
                 "Elige el Pokémon que participará "

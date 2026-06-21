@@ -78,30 +78,28 @@ class VistaIncursion(discord.ui.View):
 
         if sala_llena:
 
-            datos_equipo = obtener_equipo_selector(
-                interaction.user.id
-            )
+            for jugador in raid.jugadores:
 
-            if not datos_equipo["valores"]:
-                await interaction.followup.send(
-                    "❌ No tienes Pokémon en tu equipo.",
-                    ephemeral=True
+                miembro = interaction.guild.get_member(
+                    jugador["id"]
                 )
-                return
 
-            selector_msg = await interaction.channel.send(
-                "🎯 Selecciona un Pokémon",
-                view=SelectorIncursion(
-                    interaction.user,
-                    datos_equipo,
-                    interaction.client.session,
-                    raid
+                if not miembro:
+                    continue
+
+                datos_equipo = obtener_equipo_selector(
+                    jugador["id"]
                 )
-            )
 
-            raid.selector_mensaje_id = selector_msg.id
+                if not datos_equipo["valores"]:
+                    continue
 
-        await interaction.followup.send(
-            "Te uniste a la incursión.",
-            ephemeral=True
-        )
+                await interaction.channel.send(
+                    f"🎯 {jugador['nombre']} selecciona tu Pokémon",
+                    view=SelectorIncursion(
+                        miembro,
+                        datos_equipo,
+                        interaction.client.session,
+                        raid
+                    )
+                )
