@@ -18,7 +18,8 @@ class Incursion:
 
     @property
     def selecciones_completas(self):
-        return len(self.selecciones) >= 1  # prueba temporal
+        # 3 jugadores = 3 selecciones
+        return len(self.selecciones) >= 3
 
     def agregar_jugador(self, user_id, nombre):
 
@@ -36,17 +37,9 @@ class Incursion:
 
         return True
 
-    def seleccionar_pokemon(
-        self,
-        user_id,
-        pokemon_id
-    ):
+    def seleccionar_pokemon(self, user_id, pokemon_id):
 
-        self.selecciones.setdefault(
-            user_id,
-            []
-        )
+        # 1 Pokémon por jugador
+        self.selecciones[user_id] = pokemon_id
 
-        self.selecciones[user_id].append(
-            pokemon_id
-        )
+        return True
