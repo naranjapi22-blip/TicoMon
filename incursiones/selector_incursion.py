@@ -37,8 +37,13 @@ class SelectorIncursion(discord.ui.View):
             6
         )
 
-        print(
-            f"Selecciones: {self.raid.selecciones}"
+        cantidad = len(self.raid.selecciones)
+
+        await interaction.message.edit(
+            content=
+            f"🎯 Selecciona un Pokémon\n\n"
+            f"Selecciones: {cantidad}/3",
+            view=self
         )
 
         await interaction.response.send_message(
