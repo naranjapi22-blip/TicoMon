@@ -18,7 +18,7 @@ class Incursion:
 
     @property
     def selecciones_completas(self):
-        return len(self.selecciones) >= len(self.jugadores)
+        return len(self.selecciones) >= 1
 
     def agregar_jugador(self, user_id, nombre):
 
