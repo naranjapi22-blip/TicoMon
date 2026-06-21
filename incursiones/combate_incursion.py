@@ -1,6 +1,6 @@
 from combate import CombateSim
 from combate_servicios import preparar_equipo_desde_capturas
-from incursion_manager import eliminar_incursion
+from incursiones.incursion_manager import eliminar_incursion
 
 alpha = [{
     "nombre": "Alpha Dratini",
