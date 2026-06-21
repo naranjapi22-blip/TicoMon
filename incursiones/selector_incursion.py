@@ -29,6 +29,11 @@ class SelectorIncursion(discord.ui.View):
         interaction: discord.Interaction,
         button: discord.ui.Button
     ):
+
+        print(
+            f"{interaction.user.display_name} eligió Charizard"
+        )
+
         await interaction.response.send_message(
             "Elegiste Charizard",
             ephemeral=True
