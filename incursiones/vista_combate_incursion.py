@@ -89,16 +89,16 @@ class VistaCombateIncursion:
 
         if ganador == "Jugador 1":
 
-            historial.append(
-                "🏆 ¡Victoria!\n\nAlpha derrotado."
+            await mensaje.edit(
+                content=
+                "🏆 ¡Victoria!\n\n"
+                "Alpha derrotado."
             )
 
         else:
 
-            historial.append(
-                "💀 Derrota\n\nEl Alpha venció al equipo."
+            await mensaje.edit(
+                content=
+                "💀 Derrota\n\n"
+                "El Alpha venció al equipo."
             )
-
-        await mensaje.edit(
-            content="\n\n".join(historial)
-        )
