@@ -47,49 +47,49 @@ class CombateRaidSim:
             resultado.dano,
             resultado.mensaje
         )
-def ejecutar_ronda(self):
+    def ejecutar_ronda(self):
 
-    historial = []
+        historial = []
 
-    for i in self.jugadores_vivos():
+        for i in self.jugadores_vivos():
 
-        atacante = self.jugadores[i]
+            atacante = self.jugadores[i]
 
-        dano, log = self.calcular_resultado_ataque(
-            atacante,
-            self.alpha
-        )
+            dano, log = self.calcular_resultado_ataque(
+                atacante,
+                self.alpha
+            )
 
-        self.hp_alpha -= dano
+            self.hp_alpha -= dano
 
-        if self.hp_alpha < 0:
-            self.hp_alpha = 0
+            if self.hp_alpha < 0:
+                self.hp_alpha = 0
 
-        historial.append(
-            f"{atacante['nombre']} → {dano} daño"
-        )
+            historial.append(
+                f"{atacante['nombre']} → {dano} daño"
+            )
 
-        if self.hp_alpha <= 0:
-            break
+            if self.hp_alpha <= 0:
+                break
 
-    vivos = self.jugadores_vivos()
+        vivos = self.jugadores_vivos()
 
-    if vivos and self.hp_alpha > 0:
+        if vivos and self.hp_alpha > 0:
 
-        objetivo = vivos[0]
+            objetivo = vivos[0]
 
-        dano, log = self.calcular_resultado_ataque(
-            self.alpha,
-            self.jugadores[objetivo]
-        )
+            dano, log = self.calcular_resultado_ataque(
+                self.alpha,
+                self.jugadores[objetivo]
+            )
 
-        self.hp_jugadores[objetivo] -= dano
+            self.hp_jugadores[objetivo] -= dano
 
-        if self.hp_jugadores[objetivo] < 0:
-            self.hp_jugadores[objetivo] = 0
+            if self.hp_jugadores[objetivo] < 0:
+                self.hp_jugadores[objetivo] = 0
 
-        historial.append(
-            f"{self.alpha['nombre']} → {dano} daño a {self.jugadores[objetivo]['nombre']}"
-        )
+            historial.append(
+                f"{self.alpha['nombre']} → {dano} daño a {self.jugadores[objetivo]['nombre']}"
+            )
 
-    return "\n".join(historial)
+        return "\n".join(historial)
