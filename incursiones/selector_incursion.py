@@ -70,9 +70,6 @@ class SelectorIncursion(SelectorPokemon):
 
         if self.raid.selecciones_completas:
 
-            await interaction.channel.send(
-                "⚔️ Iniciando incursión..."
-            )
 
             await iniciar_incursion(
                 self.raid,
