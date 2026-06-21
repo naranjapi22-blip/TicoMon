@@ -1,5 +1,7 @@
 import discord
+
 from incursiones.combate_incursion import iniciar_incursion
+
 
 class SelectorIncursion(discord.ui.View):
 
@@ -32,12 +34,15 @@ class SelectorIncursion(discord.ui.View):
         button: discord.ui.Button
     ):
 
+        # Captura real de tu Charizard
         self.raid.seleccionar_pokemon(
             interaction.user.id,
-            6
+            335
         )
 
-        cantidad = len(self.raid.selecciones)
+        cantidad = len(
+            self.raid.selecciones
+        )
 
         await interaction.response.defer()
 
@@ -54,13 +59,14 @@ class SelectorIncursion(discord.ui.View):
                 "⚔️ Iniciando incursión..."
             )
 
-            await iniciar_incursion(self.raid)
+            await iniciar_incursion(
+                self.raid
+            )
 
         await interaction.followup.send(
             "Elegiste Charizard",
             ephemeral=True
         )
-
 
     @discord.ui.button(
         label="Dragonite",
