@@ -29,6 +29,7 @@ class Incursiones(commands.Cog):
 
         raid = crear_incursion(
             canal_id=ctx.channel.id,
+            canal=ctx.channel,
             alpha="Dratini"
         )
 
