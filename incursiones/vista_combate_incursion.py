@@ -26,15 +26,18 @@ class VistaCombateIncursion:
         )
 
         ronda = 1
+        historial = []
 
         while not self.combate.es_fin_del_juego():
 
             resultado = self.combate.ejecutar_ronda()
 
+            historial.append(
+                f"⚔️ Ronda {ronda}\n{resultado}"
+            )
+
             await mensaje.edit(
-                content=
-                f"⚔️ Ronda {ronda}\n\n"
-                f"{resultado}"
+                content="\n\n".join(historial)
             )
 
             ronda += 1
@@ -45,16 +48,16 @@ class VistaCombateIncursion:
 
         if ganador == "Jugador 1":
 
-            await mensaje.edit(
-                content=
-                "🏆 ¡Victoria!\n\n"
-                "Alpha derrotado."
+            historial.append(
+                "🏆 ¡Victoria!\n\nAlpha derrotado."
             )
 
         else:
 
-            await mensaje.edit(
-                content=
-                "💀 Derrota\n\n"
-                "El Alpha venció al equipo."
+            historial.append(
+                "💀 Derrota\n\nEl Alpha venció al equipo."
             )
+
+        await mensaje.edit(
+            content="\n\n".join(historial)
+        )
