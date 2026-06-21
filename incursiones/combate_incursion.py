@@ -4,10 +4,10 @@ from incursiones.vista_combate_incursion import VistaCombateIncursion
 
 
 alpha = [{
-    "nombre": "Alpha Tyranitar",
-    "species_showdown": "tyranitar",
-    "nature_showdown": "hardy",
-    "tipo": ["rock", "dark"],
+    "nombre": "Alpha Mewtwo",
+    "species_showdown": "mewtwo",
+    "nature_showdown": "modest",
+    "tipo": ["psychic"],
     "ivs": {
         "hp": 31,
         "atk": 31,
@@ -16,15 +16,15 @@ alpha = [{
         "spd": 31,
         "spe": 31
     },
-    "atk": 180,
-    "atk_esp": 140,
-    "def": 180,
-    "def_esp": 180,
-    "spd": 120,
-    "hp_max": 15000,
-    "movimiento": "stoneedge",
-    "movimiento_nombre": "Stone Edge",
-    "id": 248,
+    "atk": 220,
+    "atk_esp": 350,
+    "def": 220,
+    "def_esp": 220,
+    "spd": 180,
+    "hp_max": 30000,
+    "movimiento": "psystrike",
+    "movimiento_nombre": "Psystrike",
+    "id": 150,
     "shiny": False
 }]
 

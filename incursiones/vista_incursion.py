@@ -50,15 +50,7 @@ class VistaIncursion(discord.ui.View):
             for j in raid.jugadores
         )
 
-        # DESARROLLO: usar >= 1
         sala_llena = cantidad >= 3
-
-        if sala_llena:
-
-            raid.estado = "seleccion"
-
-            for child in self.children:
-                child.disabled = True
 
         texto = (
             f"🦖 Alpha {raid.alpha} apareció\n\n"
@@ -67,7 +59,21 @@ class VistaIncursion(discord.ui.View):
         )
 
         if sala_llena:
-            texto += "\n\n✅ Sala completa"
+
+            raid.estado = "lista"
+
+            texto += (
+                "\n\n✅ Sala completa"
+                "\n⚔️ Pulsa 'Iniciar Incursión'"
+            )
+
+            for child in self.children:
+
+                if child.label == "Unirse":
+                    child.disabled = True
+
+                if child.label == "Iniciar Incursión":
+                    child.disabled = False
 
         await interaction.response.defer()
 
@@ -76,30 +82,69 @@ class VistaIncursion(discord.ui.View):
             view=self
         )
 
-        if sala_llena:
+    @discord.ui.button(
+        label="Iniciar Incursión",
+        style=discord.ButtonStyle.red,
+        disabled=True
+    )
+    async def iniciar_incursion(
+        self,
+        interaction: discord.Interaction,
+        button: discord.ui.Button
+    ):
 
-            for jugador in raid.jugadores:
+        raid = obtener_por_mensaje(
+            interaction.message.id
+        )
 
-                miembro = interaction.guild.get_member(
-                    jugador["id"]
+        if not raid:
+            await interaction.response.send_message(
+                "Incursión no encontrada.",
+                ephemeral=True
+            )
+            return
+
+        if len(raid.jugadores) < 3:
+
+            await interaction.response.send_message(
+                "Aún faltan jugadores.",
+                ephemeral=True
+            )
+            return
+
+        raid.estado = "seleccion"
+
+        await interaction.response.defer()
+
+        for child in self.children:
+            child.disabled = True
+
+        await interaction.message.edit(
+            view=self
+        )
+
+        for jugador in raid.jugadores:
+
+            miembro = interaction.guild.get_member(
+                jugador["id"]
+            )
+
+            if not miembro:
+                continue
+
+            datos_equipo = obtener_equipo_selector(
+                jugador["id"]
+            )
+
+            if not datos_equipo["valores"]:
+                continue
+
+            await interaction.channel.send(
+                f"🎯 {jugador['nombre']} selecciona tu Pokémon",
+                view=SelectorIncursion(
+                    miembro,
+                    datos_equipo,
+                    interaction.client.session,
+                    raid
                 )
-
-                if not miembro:
-                    continue
-
-                datos_equipo = obtener_equipo_selector(
-                    jugador["id"]
-                )
-
-                if not datos_equipo["valores"]:
-                    continue
-
-                await interaction.channel.send(
-                    f"🎯 {jugador['nombre']} selecciona tu Pokémon",
-                    view=SelectorIncursion(
-                        miembro,
-                        datos_equipo,
-                        interaction.client.session,
-                        raid
-                    )
-                )
+            )
