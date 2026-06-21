@@ -23,14 +23,21 @@ def crear_alpha(nombre_pokemon):
             "spd": 31,
             "spe": 31
         },
-        "atk": pokemon["attack"] * 5,
-        "atk_esp": pokemon["special_attack"] * 5,
-        "def": pokemon["defense"] * 5,
-        "def_esp": pokemon["special_defense"] * 5,
-        "spd": pokemon["speed"] * 2,
-        "hp_max": pokemon["hp"] * 500,
-        "movimiento": "tackle",
-        "movimiento_nombre": "Tackle",
+
+        # HP muy aumentado
+        "hp_max": pokemon["hp"] * 200,
+
+        # Mantener ataque normal
+        "atk": pokemon["attack"],
+        "atk_esp": pokemon["special_attack"],
+
+        # Aumentar defensas
+        "def": pokemon["defense"] * 3,
+        "def_esp": pokemon["special_defense"] * 3,
+
+        # Mantener velocidad normal
+        "spd": pokemon["speed"],
+
         "id": pokemon["id"],
         "shiny": False
     }]
