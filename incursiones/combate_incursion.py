@@ -21,7 +21,7 @@ alpha = [{
     "def": 120,
     "def_esp": 120,
     "spd": 60,
-    "hp_max": 1000,
+    "hp_max": 10000,
     "movimiento": "dragonrush",
     "movimiento_nombre": "Dragon Rush",
     "id": 147,
