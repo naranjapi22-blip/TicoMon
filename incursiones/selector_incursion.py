@@ -3,8 +3,10 @@ import discord
 
 class SelectorIncursion(discord.ui.View):
 
-    def __init__(self):
+    def __init__(self, raid):
         super().__init__(timeout=300)
+
+        self.raid = raid
 
     @discord.ui.button(
         label="Pikachu",
@@ -30,8 +32,13 @@ class SelectorIncursion(discord.ui.View):
         button: discord.ui.Button
     ):
 
+        self.raid.seleccionar_pokemon(
+            interaction.user.id,
+            6
+        )
+
         print(
-            f"{interaction.user.display_name} eligió Charizard"
+            f"Selecciones: {self.raid.selecciones}"
         )
 
         await interaction.response.send_message(
