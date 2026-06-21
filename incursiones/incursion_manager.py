@@ -1,11 +1,11 @@
 from incursiones.modelos import Incursion
-
+import asyncio
 incursiones_activas = {}
 
 
 def crear_incursion(canal_id, alpha):
     raid = Incursion(canal_id, alpha)
-
+    asyncio.create_task(timeout_incursion(raid, 90))
     incursiones_activas[canal_id] = raid
 
     return raid
@@ -26,3 +26,9 @@ def obtener_por_mensaje(mensaje_id):
             return raid
 
     return None
+async def timeout_incursion(raid, segundos=30):
+
+    await asyncio.sleep(segundos)
+
+    if len(raid.jugadores) < 3 and raid.estado == "esperando":
+        raid.cerrar()

@@ -43,3 +43,5 @@ class Incursion:
         self.selecciones[user_id] = pokemon_id
 
         return True
+    def cerrar(self):
+        self.estado = "cerrada"
