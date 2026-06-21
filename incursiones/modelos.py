@@ -22,7 +22,8 @@ class Incursion:
         return len(self.selecciones) >= 3
 
     def agregar_jugador(self, user_id, nombre):
-
+        if self.estado != "esperando":
+            return False
         for jugador in self.jugadores:
             if jugador["id"] == user_id:
                 return False
@@ -38,7 +39,8 @@ class Incursion:
         return True
 
     def seleccionar_pokemon(self, user_id, pokemon_id):
-
+        if self.estado != "esperando":
+            return False
         # 1 Pokémon por jugador
         self.selecciones[user_id] = pokemon_id
 
