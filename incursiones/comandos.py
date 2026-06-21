@@ -1,6 +1,6 @@
 from discord.ext import commands
 from incursiones.vista_incursion import VistaIncursion
-
+from incursiones.selector_incursion import SelectorIncursion
 from incursiones.incursion_manager import (
     crear_incursion,
     obtener_incursion
@@ -35,7 +35,13 @@ class Incursiones(commands.Cog):
         )
 
         raid.mensaje_id = mensaje.id
+    @commands.command()
+    async def selectorraid(self, ctx):
 
+        await ctx.send(
+            "🎯 Selecciona un Pokémon",
+            view=SelectorIncursion()
+        )
 
 async def setup(bot):
     await bot.add_cog(Incursiones(bot))

@@ -6,12 +6,19 @@ class Incursion:
 
         self.jugadores = []
 
+        self.selecciones = {}
+
         self.estado = "esperando"
 
         self.mensaje_id = None
+
     @property
     def llena(self):
         return len(self.jugadores) >= 3
+
+    @property
+    def selecciones_completas(self):
+        return len(self.selecciones) >= len(self.jugadores)
 
     def agregar_jugador(self, user_id, nombre):
 
@@ -28,3 +35,10 @@ class Incursion:
         })
 
         return True
+
+    def seleccionar_pokemon(
+        self,
+        user_id,
+        pokemon_id
+    ):
+        self.selecciones[user_id] = pokemon_id
