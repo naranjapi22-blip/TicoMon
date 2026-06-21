@@ -79,7 +79,8 @@ class SelectorIncursion(SelectorPokemon):
 
             resultado = await iniciar_incursion(
                 self.raid,
-                interaction.client.session
+                interaction.client.session,
+                interaction.channel
             )
 
             await interaction.channel.send(

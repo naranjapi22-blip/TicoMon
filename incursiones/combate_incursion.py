@@ -30,10 +30,9 @@ alpha = [{
 
 async def iniciar_incursion(
     raid,
-    session
+    session,
+    canal
 ):
-
-    print("=== RAID INICIADA ===")
 
     equipo_jugador = []
 
@@ -46,9 +45,6 @@ async def iniciar_incursion(
         )
 
         equipo_jugador.extend(equipo)
-
-    print("EQUIPO JUGADOR:")
-    print(equipo_jugador)
 
     sim = CombateSim(
         equipo_jugador,
