@@ -36,17 +36,17 @@ class Incursion:
 
         return True
 
-def seleccionar_pokemon(
-    self,
-    user_id,
-    pokemon_id
-):
-
-    self.selecciones.setdefault(
+    def seleccionar_pokemon(
+        self,
         user_id,
-        []
-    )
-
-    self.selecciones[user_id].append(
         pokemon_id
-    )
+    ):
+
+        self.selecciones.setdefault(
+            user_id,
+            []
+        )
+
+        self.selecciones[user_id].append(
+            pokemon_id
+        )
