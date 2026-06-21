@@ -92,4 +92,10 @@ class CombateRaidSim:
                 f"{self.alpha['nombre']} → {dano} daño a {self.jugadores[objetivo]['nombre']}"
             )
 
+            if self.hp_jugadores[objetivo] == 0:
+
+                historial.append(
+                    f"💀 {self.jugadores[objetivo]['nombre']} se debilitó"
+                )
+
         return "\n".join(historial)
