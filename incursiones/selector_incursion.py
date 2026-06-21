@@ -65,7 +65,8 @@ class SelectorIncursion(discord.ui.View):
             await interaction.channel.send(
                 "⚔️ Iniciando incursión..."
             )
-
+            print(interaction.client)
+            print(interaction.client.session)
             await iniciar_incursion(
                 self.raid
             )
