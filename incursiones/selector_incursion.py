@@ -43,7 +43,6 @@ class SelectorIncursion(SelectorPokemon):
         vista_previa=None
     ):
 
-        print("FINALIZAR INCURSION")
 
         captura_id = int(
             self.seleccionados[0]
