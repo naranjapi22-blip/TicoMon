@@ -135,9 +135,9 @@ async def generar_escena_raid(
 
     # POSICIONES RAID (IMPORTANTE)
     posiciones = [
-        (40, 260),
-        (180, 200),
-        (320, 260)
+        (60, 270),   # izquierda (Blastoise)
+        (220, 210),  # centro (Charizard)
+        (380, 270)   # derecha (Dragonite)
     ]
 
     # =========================
@@ -168,9 +168,9 @@ async def generar_escena_raid(
     )
 
     alpha_img = Image.open(io.BytesIO(alpha_bytes)).convert("RGBA")
-    alpha_img = preparar_sprite(alpha_img, 260, 260)
+    alpha_img = preparar_sprite(alpha_img, 300, 300)
 
-    fondo.paste(alpha_img, (520, 80), alpha_img)
+    fondo.paste(alpha_img, (560, 60), alpha_img)
 
     buffer = io.BytesIO()
     fondo.save(buffer, format="PNG")
