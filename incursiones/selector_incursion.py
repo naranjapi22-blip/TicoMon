@@ -20,7 +20,7 @@ class SelectorIncursion(SelectorPokemon):
             user,
             datos_equipo["valores"],
             session,
-            max_seleccion=1,
+            max_seleccion=3,
             titulo="🎯 Selecciona tu Pokémon",
             descripcion_extra=(
                 "Elige el Pokémon que participará "
@@ -44,15 +44,12 @@ class SelectorIncursion(SelectorPokemon):
     ):
 
 
-        captura_id = int(
-            self.seleccionados[0]
-        )
+        for captura_id in self.seleccionados:
 
-        self.raid.seleccionar_pokemon(
-            interaction.user.id,
-            captura_id
-        )
-
+            self.raid.seleccionar_pokemon(
+                interaction.user.id,
+                int(captura_id)
+            )
 
         self.stop()
 
