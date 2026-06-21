@@ -133,12 +133,19 @@ async def generar_escena_raid(
 
     fondo = fondo.resize((800, 400), Image.Resampling.LANCZOS)
 
-    # posiciones base 3 jugadores
-    posiciones = [
-        (60, 240),
-        (200, 200),
-        (340, 240)
-    ]
+    for i, p in enumerate(jugadores):
+
+        img_bytes = await obtener_sprite_bytes(
+            session,
+            p["id"],
+            False,
+            True
+        )
+
+        img = Image.open(io.BytesIO(img_bytes)).convert("RGBA")
+        img = preparar_sprite(img, 160, 160)
+
+        fondo.paste(img, posiciones[i], img)
 
     # dibujar jugadores
     for i, p in enumerate(jugadores):
@@ -164,9 +171,9 @@ async def generar_escena_raid(
     )
 
     alpha_img = Image.open(io.BytesIO(alpha_bytes)).convert("RGBA")
-    alpha_img = preparar_sprite(alpha_img, 240, 240)
+    alpha_img = preparar_sprite(alpha_img, 260, 260)
 
-    fondo.paste(alpha_img, (540, 80), alpha_img)
+    fondo.paste(alpha_img, (520, 80), alpha_img)
 
     buffer = io.BytesIO()
     fondo.save(buffer, format="PNG")
