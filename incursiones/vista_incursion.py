@@ -2,6 +2,7 @@ import discord
 
 from incursiones.incursion_manager import obtener_por_mensaje
 from incursiones.selector_incursion import SelectorIncursion
+from database import obtener_equipo_selector
 
 
 class VistaIncursion(discord.ui.View):
@@ -77,9 +78,25 @@ class VistaIncursion(discord.ui.View):
 
         if sala_llena:
 
+            datos_equipo = obtener_equipo_selector(
+                interaction.user.id
+            )
+
+            if not datos_equipo["valores"]:
+                await interaction.followup.send(
+                    "❌ No tienes Pokémon en tu equipo.",
+                    ephemeral=True
+                )
+                return
+
             selector_msg = await interaction.channel.send(
                 "🎯 Selecciona un Pokémon",
-                view=SelectorIncursion(raid)
+                view=SelectorIncursion(
+                    interaction.user,
+                    datos_equipo,
+                    interaction.client.session,
+                    raid
+                )
             )
 
             raid.selector_mensaje_id = selector_msg.id
