@@ -53,9 +53,6 @@ class SelectorIncursion(SelectorPokemon):
             captura_id
         )
 
-        cantidad = len(
-            self.raid.selecciones
-        )
 
         self.stop()
 
@@ -77,12 +74,8 @@ class SelectorIncursion(SelectorPokemon):
                 "⚔️ Iniciando incursión..."
             )
 
-            resultado = await iniciar_incursion(
+            await iniciar_incursion(
                 self.raid,
                 interaction.client.session,
                 interaction.channel
-            )
-
-            await interaction.channel.send(
-                resultado
             )

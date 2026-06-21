@@ -13,8 +13,6 @@ class VistaCombateIncursion:
         alpha
     ):
         self.canal = canal
-        self.equipo_jugador = equipo_jugador
-        self.alpha = alpha
 
         self.combate = CombateSim(
             equipo_jugador,
@@ -41,24 +39,22 @@ class VistaCombateIncursion:
 
             ronda += 1
 
-            await asyncio.sleep(3)
+            await asyncio.sleep(2)
 
         ganador = self.combate.es_fin_del_juego()
 
         if ganador == "Jugador 1":
 
-            texto = (
+            await mensaje.edit(
+                content=
                 "🏆 ¡Victoria!\n\n"
                 "Alpha derrotado."
             )
 
         else:
 
-            texto = (
+            await mensaje.edit(
+                content=
                 "💀 Derrota\n\n"
                 "El Alpha venció al equipo."
             )
-
-        await mensaje.edit(
-            content=texto
-        )

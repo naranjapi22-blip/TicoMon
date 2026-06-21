@@ -1,6 +1,7 @@
-from combate import CombateSim
 from combate_servicios import preparar_equipo_desde_capturas
 from incursiones.incursion_manager import eliminar_incursion
+from incursiones.vista_combate_incursion import VistaCombateIncursion
+
 
 alpha = [{
     "nombre": "Alpha Dratini",
@@ -46,34 +47,14 @@ async def iniciar_incursion(
 
         equipo_jugador.extend(equipo)
 
-    sim = CombateSim(
+    vista = VistaCombateIncursion(
+        canal,
         equipo_jugador,
         alpha
     )
 
-    resultado = []
-
-    while not sim.es_fin_del_juego():
-
-        resultado.append(
-            sim.ejecutar_ronda()
-        )
-
-    ganador = sim.es_fin_del_juego()
-
-    if ganador == "Jugador 1":
-        resultado.append(
-            "\n🏆 ¡Victoria contra Alpha Dratini!"
-        )
-    else:
-        resultado.append(
-            "\n💀 Alpha Dratini ha derrotado al equipo."
-        )
-
-    texto_final = "\n".join(resultado)
+    await vista.iniciar()
 
     eliminar_incursion(
         raid.canal_id
     )
-
-    return texto_final
