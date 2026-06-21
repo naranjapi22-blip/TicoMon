@@ -52,7 +52,7 @@ class VistaIncursion(discord.ui.View):
 
         if sala_llena:
 
-            raid.estado = "llena"
+            raid.estado = "seleccion"
 
             for child in self.children:
                 child.disabled = True

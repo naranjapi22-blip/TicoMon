@@ -5,12 +5,12 @@ class Incursion:
         self.alpha = alpha
 
         self.jugadores = []
-
         self.selecciones = {}
 
         self.estado = "esperando"
 
         self.mensaje_id = None
+        self.selector_mensaje_id = None
 
     @property
     def llena(self):
