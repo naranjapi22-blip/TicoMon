@@ -1,5 +1,5 @@
 from combate_calc import calcular_dano
-
+import random
 
 class CombateRaidSim:
 
@@ -76,7 +76,7 @@ class CombateRaidSim:
 
         if vivos and self.hp_alpha > 0:
 
-            objetivo = vivos[0]
+            objetivo = random.choice(vivos)
 
             dano, log = self.calcular_resultado_ataque(
                 self.alpha,
