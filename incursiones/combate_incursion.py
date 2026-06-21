@@ -55,7 +55,15 @@ async def iniciar_incursion(
         alpha
     )
 
-    print("=== PRIMERA RONDA ===")
-    print(
-        sim.ejecutar_ronda()
-    )
+    print("=== COMBATE COMPLETO ===")
+
+    while not sim.es_fin_del_juego():
+
+        print(
+            sim.ejecutar_ronda()
+        )
+
+    ganador = sim.es_fin_del_juego()
+
+    print("GANADOR:")
+    print(ganador)
