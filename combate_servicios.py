@@ -50,7 +50,13 @@ async def obtener_datos_combate(session, nombre_pokemon, *, ivs=None, naturaleza
                 "shiny": es_shiny,
             }
     except Exception as e:
+
+        import traceback
+
         print(f"Error al obtener datos de {nombre_pokemon}: {e}")
+
+        traceback.print_exc()
+
         return {
             "nombre": nombre_pokemon.capitalize(),
             "species_showdown": nombre_pokemon.lower(),
