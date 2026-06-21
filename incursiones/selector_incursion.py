@@ -34,7 +34,6 @@ class SelectorIncursion(discord.ui.View):
         button: discord.ui.Button
     ):
 
-        # Captura real de tu Charizard
         self.raid.seleccionar_pokemon(
             interaction.user.id,
             335
@@ -43,6 +42,12 @@ class SelectorIncursion(discord.ui.View):
         cantidad = len(
             self.raid.selecciones
         )
+
+        print("SELECCIONES:")
+        print(self.raid.selecciones)
+
+        print("COMPLETAS?")
+        print(self.raid.selecciones_completas)
 
         await interaction.response.defer()
 
@@ -55,6 +60,8 @@ class SelectorIncursion(discord.ui.View):
 
         if self.raid.selecciones_completas:
 
+            print("ANTES DE INICIAR")
+
             await interaction.channel.send(
                 "⚔️ Iniciando incursión..."
             )
@@ -62,6 +69,8 @@ class SelectorIncursion(discord.ui.View):
             await iniciar_incursion(
                 self.raid
             )
+
+            print("DESPUES DE INICIAR")
 
         await interaction.followup.send(
             "Elegiste Charizard",
