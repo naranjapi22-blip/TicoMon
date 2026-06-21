@@ -80,7 +80,7 @@ class VistaCombateIncursion:
 
             ronda += 1
 
-            await asyncio.sleep(2)
+            await asyncio.sleep(8)
 
         ganador = self.combate.es_fin_del_juego()
 
