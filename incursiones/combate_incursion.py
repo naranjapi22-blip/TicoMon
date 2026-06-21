@@ -22,6 +22,8 @@ async def iniciar_incursion(
 
     print("=== RAID INICIADA ===")
 
+    equipo_jugador = []
+
     for user_id, captura_id in raid.selecciones.items():
 
         equipo = await preparar_equipo_desde_capturas(
@@ -30,5 +32,17 @@ async def iniciar_incursion(
             [captura_id]
         )
 
-        print("EQUIPO:")
-        print(equipo)
+        equipo_jugador.extend(equipo)
+
+    print("EQUIPO JUGADOR:")
+    print(equipo_jugador)
+
+    sim = CombateSim(
+        equipo_jugador,
+        alpha
+    )
+
+    print("=== PRIMERA RONDA ===")
+    print(
+        sim.ejecutar_ronda()
+    )
