@@ -111,7 +111,10 @@ async def generar_escena_raid(
     hp_alpha_max,
     fondo_nombre
 ):
+    print("RAID SPRITES")
 
+    for p in jugadores:
+        print(p["nombre"], p["id"])
     return await generar_escena_combate(
         session,
         jugadores[0]["id"],
