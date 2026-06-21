@@ -1,5 +1,5 @@
 from combate import CombateSim
-
+from combate_servicios import preparar_equipo_desde_capturas
 
 alpha = [{
     "nombre": "Alpha Dratini",
@@ -18,18 +18,13 @@ async def iniciar_incursion(raid):
 
     print("=== RAID INICIADA ===")
 
-    print("Jugadores:")
-    print(raid.jugadores)
-
-    print("Selecciones:")
-    print(raid.selecciones)
-
     for user_id, captura_id in raid.selecciones.items():
 
-        print(
-            f"Usuario: {user_id}"
+        equipo = await preparar_equipo_desde_capturas(
+            None,      # aquí veremos luego qué session necesita
+            user_id,
+            [captura_id]
         )
 
-        print(
-            f"Captura seleccionada: {captura_id}"
-        )
+        print("EQUIPO:")
+        print(equipo)
