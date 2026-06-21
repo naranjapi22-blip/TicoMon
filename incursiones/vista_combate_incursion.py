@@ -47,10 +47,18 @@ class VistaCombateIncursion:
 
             nombre1 = poke1["nombre"]
             nombre2 = poke2["nombre"]
+            lineas_jugadores = []
 
+            for i, pokemon in enumerate(self.combate.jugadores):
+
+                hp = self.combate.hp_jugadores[i]
+
+                lineas_jugadores.append(
+                    f"{pokemon['nombre']}: {hp}/{pokemon['hp_max']} HP"
+                )
             texto_ronda = (
                 f"⚔️ Ronda {ronda}\n\n"
-                f"🔥 {nombre1}: {hp1}/{hp1_max} HP\n"
+                f"{chr(10).join(lineas_jugadores)}\n\n"
                 f"🐉 {nombre2}: {hp2}/{hp2_max} HP\n\n"
                 f"{resultado}"
             )
