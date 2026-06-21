@@ -8,6 +8,8 @@ from incursiones.incursion_manager import (
 )
 from incursiones.modelos import Incursion
 
+from database import obtener_equipo_selector
+
 
 class Incursiones(commands.Cog):
 
@@ -49,6 +51,17 @@ class Incursiones(commands.Cog):
         await ctx.send(
             "🎯 Selecciona un Pokémon",
             view=SelectorIncursion(raid)
+        )
+
+    @commands.command()
+    async def debugteam(self, ctx):
+
+        equipo = obtener_equipo_selector(
+            ctx.author.id
+        )
+
+        await ctx.send(
+            f"```{equipo}```"
         )
 
 
