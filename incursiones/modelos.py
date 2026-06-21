@@ -39,11 +39,11 @@ class Incursion:
         return True
 
     def seleccionar_pokemon(self, user_id, pokemon_id):
-        if self.estado != "esperando":
-            return False
-        # 1 Pokémon por jugador
         self.selecciones[user_id] = pokemon_id
-
+        print(
+        f"SELECCIONES: {len(self.selecciones)}/3"
+        )
         return True
+    
     def cerrar(self):
         self.estado = "cerrada"

@@ -34,6 +34,10 @@ async def timeout_incursion(raid, canal, segundos=30):
 
         raid.cerrar()
 
+        eliminar_incursion(
+            raid.canal_id
+        )
+
         await canal.send(
             "❌ La incursión se cerró por falta de jugadores."
         )
