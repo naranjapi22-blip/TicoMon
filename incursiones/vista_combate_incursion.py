@@ -53,16 +53,24 @@ class VistaCombateIncursion:
 
                 hp = self.combate.hp_jugadores[i]
 
-                lineas_jugadores.append(
-                    f"{pokemon['nombre']}: {hp}/{pokemon['hp_max']} HP"
-                )
+                if hp <= 0:
+
+                    lineas_jugadores.append(
+                        f"{pokemon['nombre']}: 0/{pokemon['hp_max']} HP 💀"
+                    )
+
+                else:
+
+                    lineas_jugadores.append(
+                        f"{pokemon['nombre']}: {hp}/{pokemon['hp_max']} HP"
+                    )
             texto_ronda = (
                 f"⚔️ Ronda {ronda}\n\n"
                 f"{chr(10).join(lineas_jugadores)}\n\n"
                 f"🐉 {nombre2}: {hp2}/{hp2_max} HP\n\n"
                 f"{resultado}"
             )
-
+            print(self.combate.jugadores)
             buffer = await imagencomb.generar_escena_combate(
                 self.session,
                 poke1["id"],
