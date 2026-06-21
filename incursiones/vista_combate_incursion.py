@@ -31,7 +31,6 @@ class VistaCombateIncursion:
         )
 
         ronda = 1
-        historial = []
 
         while not self.combate.es_fin_del_juego():
 
@@ -52,7 +51,7 @@ class VistaCombateIncursion:
             nombre1 = poke1["nombre"]
             nombre2 = poke2["nombre"]
 
-            historial.append(
+            texto_ronda = (
                 f"⚔️ Ronda {ronda}\n\n"
                 f"🔥 {nombre1}: {hp1}/{hp1_max} HP\n"
                 f"🐉 {nombre2}: {hp2}/{hp2_max} HP\n\n"
@@ -78,7 +77,7 @@ class VistaCombateIncursion:
             )
 
             await mensaje.edit(
-                content="\n\n".join(historial),
+                content=texto_ronda,
                 attachments=[file]
             )
 
