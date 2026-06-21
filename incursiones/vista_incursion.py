@@ -3,6 +3,7 @@ import discord
 from incursiones.incursion_manager import obtener_por_mensaje
 from incursiones.selector_incursion import SelectorIncursion
 
+
 class VistaIncursion(discord.ui.View):
 
     def __init__(self):
@@ -48,7 +49,8 @@ class VistaIncursion(discord.ui.View):
             for j in raid.jugadores
         )
 
-        sala_llena = cantidad >= 3
+        # DESARROLLO: usar >= 1
+        sala_llena = cantidad >= 1
 
         if sala_llena:
 

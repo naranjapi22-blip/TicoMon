@@ -14,11 +14,11 @@ class Incursion:
 
     @property
     def llena(self):
-        return len(self.jugadores) >= 1
+        return len(self.jugadores) >= 3
 
     @property
     def selecciones_completas(self):
-        return len(self.selecciones) >= 1
+        return len(self.selecciones) >= 1  # prueba temporal
 
     def agregar_jugador(self, user_id, nombre):
 
