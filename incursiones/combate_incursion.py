@@ -55,15 +55,27 @@ async def iniciar_incursion(
         alpha
     )
 
-    print("=== COMBATE COMPLETO ===")
+    resultado = []
 
     while not sim.es_fin_del_juego():
 
-        print(
+        resultado.append(
             sim.ejecutar_ronda()
         )
 
     ganador = sim.es_fin_del_juego()
 
-    print("GANADOR:")
-    print(ganador)
+    if ganador == "Jugador 1":
+        resultado.append(
+            "\n🏆 ¡Victoria contra Alpha Dratini!"
+        )
+    else:
+        resultado.append(
+            "\n💀 Alpha Dratini ha derrotado al equipo."
+        )
+
+    texto_final = "\n".join(resultado)
+
+    print(texto_final)
+
+    return texto_final

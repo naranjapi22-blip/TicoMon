@@ -67,11 +67,14 @@ class SelectorIncursion(discord.ui.View):
             )
             print(interaction.client)
             print(interaction.client.session)
-            await iniciar_incursion(
+            resultado = await iniciar_incursion(
                 self.raid,
                 interaction.client.session
             )
 
+            await interaction.channel.send(
+                resultado
+            )
             print("DESPUES DE INICIAR")
 
         await interaction.followup.send(
