@@ -60,10 +60,13 @@ class SelectorIncursion(SelectorPokemon):
         embed.title = "✅ Pokémon seleccionado"
         embed.color = discord.Color.green()
 
-        await interaction.response.edit_message(
-            embed=embed,
-            view=None
-        )
+        try:
+            await interaction.response.edit_message(
+                embed=embed,
+                view=None
+            )
+        except discord.NotFound:
+            print("Interacción expirada")
 
         if self.raid.selecciones_completas:
 
