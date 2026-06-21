@@ -1,5 +1,5 @@
 import discord
-
+from incursiones.combate_incursion import iniciar_incursion
 
 class SelectorIncursion(discord.ui.View):
 
@@ -43,6 +43,9 @@ class SelectorIncursion(discord.ui.View):
             await interaction.channel.send(
                 "⚔️ Iniciando incursión..."
             )
+
+        await interaction.response.defer()
+
         await interaction.message.edit(
             content=
             f"🎯 Selecciona un Pokémon\n\n"
@@ -50,7 +53,15 @@ class SelectorIncursion(discord.ui.View):
             view=self
         )
 
-        await interaction.response.send_message(
+        if self.raid.selecciones_completas:
+
+            await interaction.channel.send(
+                "⚔️ Iniciando incursión..."
+            )
+
+            await iniciar_incursion(self.raid)
+
+        await interaction.followup.send(
             "Elegiste Charizard",
             ephemeral=True
         )

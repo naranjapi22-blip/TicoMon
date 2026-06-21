@@ -48,7 +48,7 @@ class VistaIncursion(discord.ui.View):
             for j in raid.jugadores
         )
 
-        sala_llena = cantidad >= 1   # cambiar luego a >= 3
+        sala_llena = cantidad >= 3
 
         if sala_llena:
 
@@ -72,6 +72,7 @@ class VistaIncursion(discord.ui.View):
             content=texto,
             view=self
         )
+
         if sala_llena:
 
             selector_msg = await interaction.channel.send(
