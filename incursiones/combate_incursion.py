@@ -49,6 +49,7 @@ async def iniciar_incursion(
 
     vista = VistaCombateIncursion(
         canal,
+        session,
         equipo_jugador,
         alpha
     )
