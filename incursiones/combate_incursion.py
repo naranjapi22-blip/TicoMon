@@ -1,6 +1,6 @@
 from combate import CombateSim
 from combate_servicios import preparar_equipo_desde_capturas
-
+from incursion_manager import eliminar_incursion
 
 alpha = [{
     "nombre": "Alpha Dratini",
@@ -76,6 +76,8 @@ async def iniciar_incursion(
 
     texto_final = "\n".join(resultado)
 
-    print(texto_final)
+    eliminar_incursion(
+        raid.canal_id
+    )
 
     return texto_final

@@ -43,7 +43,6 @@ class SelectorIncursion(discord.ui.View):
             self.raid.selecciones
         )
 
-        print("SELECCIONES:")
         print(self.raid.selecciones)
 
         print("COMPLETAS?")
@@ -60,7 +59,6 @@ class SelectorIncursion(discord.ui.View):
 
         if self.raid.selecciones_completas:
 
-            print("ANTES DE INICIAR")
 
             await interaction.channel.send(
                 "⚔️ Iniciando incursión..."
@@ -75,7 +73,7 @@ class SelectorIncursion(discord.ui.View):
             await interaction.channel.send(
                 resultado
             )
-            print("DESPUES DE INICIAR")
+
 
         await interaction.followup.send(
             "Elegiste Charizard",
