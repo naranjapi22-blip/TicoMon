@@ -71,16 +71,13 @@ class VistaCombateIncursion:
                 f"{resultado}"
             )
             print(self.combate.jugadores)
-            buffer = await imagencomb.generar_escena_combate(
+            buffer = await imagencomb.generar_escena_raid(
                 self.session,
-                poke1["id"],
-                poke2["id"],
-                nombre1,
-                nombre2,
-                hp1,
-                hp2,
-                hp1_max,
-                hp2_max,
+                self.combate.jugadores,
+                self.combate.hp_jugadores,
+                self.combate.alpha,
+                self.combate.hp_alpha,
+                self.combate.hp_alpha_max,
                 "bosque.png"
             )
 
