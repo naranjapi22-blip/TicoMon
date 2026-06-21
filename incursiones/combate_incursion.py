@@ -23,3 +23,13 @@ async def iniciar_incursion(raid):
 
     print("Selecciones:")
     print(raid.selecciones)
+
+    for user_id, captura_id in raid.selecciones.items():
+
+        print(
+            f"Usuario: {user_id}"
+        )
+
+        print(
+            f"Captura seleccionada: {captura_id}"
+        )
