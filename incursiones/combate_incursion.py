@@ -4,14 +4,27 @@ from combate_servicios import preparar_equipo_desde_capturas
 
 alpha = [{
     "nombre": "Alpha Dratini",
-    "hp_max": 400,
-    "hp": 400,
+    "species_showdown": "dratini",
+    "nature_showdown": "hardy",
+    "tipo": ["dragon"],
+    "ivs": {
+        "hp": 31,
+        "atk": 31,
+        "def": 31,
+        "spa": 31,
+        "spd": 31,
+        "spe": 31
+    },
     "atk": 120,
+    "atk_esp": 120,
     "def": 120,
-    "spa": 120,
-    "spd": 120,
-    "spe": 60,
-    "id": 147
+    "def_esp": 120,
+    "spd": 60,
+    "hp_max": 400,
+    "movimiento": "dragonrush",
+    "movimiento_nombre": "Dragon Rush",
+    "id": 147,
+    "shiny": False
 }]
 
 
