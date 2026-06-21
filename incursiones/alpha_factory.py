@@ -7,7 +7,7 @@ def crear_alpha(nombre_pokemon):
         nombre_pokemon
     )
 
-    if not pokemon:
+    if not pokemon: 
         return None
 
     return [{
