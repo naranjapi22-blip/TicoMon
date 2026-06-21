@@ -102,3 +102,25 @@ async def generar_escena_combate(session, poke1_id, poke2_id, nombre1, nombre2, 
     fondo.save(buffer, format="PNG")
     buffer.seek(0)
     return buffer
+async def generar_escena_raid(
+    session,
+    jugadores,
+    hp_jugadores,
+    alpha,
+    hp_alpha,
+    hp_alpha_max,
+    fondo_nombre
+):
+
+    return await generar_escena_combate(
+        session,
+        jugadores[0]["id"],
+        alpha["id"],
+        jugadores[0]["nombre"],
+        alpha["nombre"],
+        hp_jugadores[0],
+        hp_alpha,
+        jugadores[0]["hp_max"],
+        hp_alpha_max,
+        fondo_nombre
+    )
