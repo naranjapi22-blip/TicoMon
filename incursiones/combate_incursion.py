@@ -37,12 +37,12 @@ async def iniciar_incursion(
 
     equipo_jugador = []
 
-    for user_id, captura_id in raid.selecciones.items():
+    for user_id, captura_ids in raid.selecciones.items():
 
         equipo = await preparar_equipo_desde_capturas(
             session,
             user_id,
-            [captura_id]
+            captura_ids
         )
 
         equipo_jugador.extend(equipo)
