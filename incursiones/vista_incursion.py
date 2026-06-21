@@ -51,7 +51,7 @@ class VistaIncursion(discord.ui.View):
         )
 
         # DESARROLLO: usar >= 1
-        sala_llena = cantidad >= 1
+        sala_llena = cantidad >= 3
 
         if sala_llena:
 
