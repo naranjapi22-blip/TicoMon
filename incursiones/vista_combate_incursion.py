@@ -36,17 +36,14 @@ class VistaCombateIncursion:
 
             resultado = self.combate.ejecutar_ronda()
 
-            j1 = self.combate.equipos["Jugador 1"]
-            j2 = self.combate.equipos["Jugador 2"]
+            poke1 = self.combate.jugadores[0]
+            poke2 = self.combate.alpha
 
-            poke1 = j1["pokes"][j1["activo"]]
-            poke2 = j2["pokes"][j2["activo"]]
+            hp1 = self.combate.hp_jugadores[0]
+            hp1_max = poke1["hp_max"]
 
-            hp1 = j1["hp"][j1["activo"]]
-            hp1_max = j1["hp_max"][j1["activo"]]
-
-            hp2 = j2["hp"][j2["activo"]]
-            hp2_max = j2["hp_max"][j2["activo"]]
+            hp2 = self.combate.hp_alpha
+            hp2_max = self.combate.hp_alpha_max
 
             nombre1 = poke1["nombre"]
             nombre2 = poke2["nombre"]
