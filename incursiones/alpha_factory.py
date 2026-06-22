@@ -37,7 +37,7 @@ def crear_alpha(nombre_pokemon):
         },
 
         # HP muy aumentado
-        "hp_max": pokemon["hp"] * 200,
+        "hp_max": pokemon["hp"] * 35,
 
         # Mantener ataque normal
         "atk": pokemon["attack"],
