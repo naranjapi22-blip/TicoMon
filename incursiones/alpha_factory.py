@@ -1,4 +1,5 @@
 from database import obtener_pokemon_local_nombre
+from combate_calc import elegir_movimiento_automatico
 
 
 def crear_alpha(nombre_pokemon):
@@ -22,6 +23,19 @@ def crear_alpha(nombre_pokemon):
 
     print(f"✅ Datos encontrados: {pokemon['nombre']}")
 
+    movimiento, movimiento_nombre = elegir_movimiento_automatico(
+        pokemon["nombre"].lower(),
+        {
+            "atk": pokemon["attack"],
+            "spa": pokemon["special_attack"]
+        }
+    )
+
+    print(
+        f"⚔️ Movimiento Alpha: "
+        f"{movimiento_nombre} ({movimiento})"
+    )
+
     return [{
         "nombre": f"Alpha {pokemon['nombre'].capitalize()}",
         "species_showdown": pokemon["nombre"].lower(),
@@ -36,19 +50,23 @@ def crear_alpha(nombre_pokemon):
             "spe": 31
         },
 
-        # HP muy aumentado
-        "hp_max": pokemon["hp"] * 100,
+        # HP aumentado
+        "hp_max": pokemon["hp"] * 35,
 
-        # Mantener ataque normal
+        # Ataque normal
         "atk": pokemon["attack"],
         "atk_esp": pokemon["special_attack"],
 
-        # Aumentar defensas
-        "def": pokemon["defense"] * 1.5,
-        "def_esp": pokemon["special_defense"] * 1.5,
+        # Defensa aumentada
+        "def": int(pokemon["defense"] * 1.5),
+        "def_esp": int(pokemon["special_defense"] * 1.5),
 
-        # Mantener velocidad normal
+        # Velocidad normal
         "spd": pokemon["speed"],
+
+        # Movimiento automático
+        "movimiento": movimiento,
+        "movimiento_nombre": movimiento_nombre,
 
         "id": pokemon["id"],
         "shiny": False
