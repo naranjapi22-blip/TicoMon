@@ -6,6 +6,7 @@ import servicios
 from regiones import REGIONES
 
 POR_PAGINA = 10
+VIEW_TIMEOUT = 600
 
 GENERACIONES = [
     (1, 151, 1),
@@ -129,7 +130,12 @@ def _formatear_tipos(tipos_raw: str) -> str:
     return ", ".join(t.strip().capitalize() for t in tipos_raw.split(",") if t.strip())
 
 
-def _construir_embeds(entradas: list[dict], autor: discord.Member, pagina: int, filtros_activos: str) -> tuple[list[discord.Embed], int]:
+def _embed_para_pagina(
+    entradas: list[dict],
+    autor: discord.Member,
+    pagina: int,
+    filtros_activos: str,
+) -> tuple[discord.Embed, int]:
     if not entradas:
         embed = discord.Embed(
             title=f"🎒 Inventario de {autor.display_name}",
@@ -137,35 +143,31 @@ def _construir_embeds(entradas: list[dict], autor: discord.Member, pagina: int, 
             color=discord.Color.orange(),
         )
         embed.set_footer(text=filtros_activos)
-        return [embed], 0
+        return embed, 0
 
-    paginas_datos = [entradas[i : i + POR_PAGINA] for i in range(0, len(entradas), POR_PAGINA)]
-    total_paginas = len(paginas_datos)
+    total_paginas = max(1, (len(entradas) + POR_PAGINA - 1) // POR_PAGINA)
     pagina = max(0, min(pagina, total_paginas - 1))
-    embeds = []
+    bloque = entradas[pagina * POR_PAGINA : (pagina + 1) * POR_PAGINA]
 
-    for i, bloque in enumerate(paginas_datos):
-        lineas = []
-        for e in bloque:
-            shiny = "✨ " if e["es_shiny"] else ""
-            tipos = _formatear_tipos(e.get("tipos", ""))
-            dex = f"#{e['dex_id']}" if e.get("dex_id") else "?"
-            lineas.append(
-                f"{shiny}**{e['nombre'].capitalize()}** "
-                f"`[{e['id']}]` · {tipos} · Dex {dex} · `{int(e['iv_pct'])}%`"
-            )
-
-        embed = discord.Embed(
-            title=f"🎒 Inventario de {autor.display_name}",
-            description="\n".join(lineas),
-            color=discord.Color.green(),
+    lineas = []
+    for e in bloque:
+        shiny = "✨ " if e["es_shiny"] else ""
+        tipos = _formatear_tipos(e.get("tipos", ""))
+        dex = f"#{e['dex_id']}" if e.get("dex_id") else "?"
+        lineas.append(
+            f"{shiny}**{e['nombre'].capitalize()}** "
+            f"`[{e['id']}]` · {tipos} · Dex {dex} · `{int(e['iv_pct'])}%`"
         )
-        embed.set_footer(
-            text=f"Página {i + 1}/{total_paginas} · {filtros_activos} · !ivs [ID] para detalles"
-        )
-        embeds.append(embed)
 
-    return embeds, pagina
+    embed = discord.Embed(
+        title=f"🎒 Inventario de {autor.display_name}",
+        description="\n".join(lineas),
+        color=discord.Color.green(),
+    )
+    embed.set_footer(
+        text=f"Página {pagina + 1}/{total_paginas} · {filtros_activos} · !ivs [ID] para detalles"
+    )
+    return embed, pagina
 
 
 class OrdenInventarioSelect(discord.ui.Select):
@@ -274,7 +276,7 @@ class RegionInventarioSelect(discord.ui.Select):
 
 class VistaInventario(discord.ui.View):
     def __init__(self, ctx, entradas: list[dict]):
-        super().__init__(timeout=180)
+        super().__init__(timeout=VIEW_TIMEOUT)
         self.ctx = ctx
         self.entradas_raw = entradas
         self.orden = "id_desc"
@@ -309,14 +311,21 @@ class VistaInventario(discord.ui.View):
         return _ordenar_entradas(filtradas, self.orden)
 
     def embed_actual(self) -> discord.Embed:
-        embeds, pagina = _construir_embeds(
+        embed, pagina = _embed_para_pagina(
             self._entradas_visibles(),
             self.ctx.author,
             self.pagina,
             self._texto_filtros(),
         )
         self.pagina = pagina
-        return embeds[self.pagina]
+        return embed
+
+    async def _editar_mensaje(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+        try:
+            await interaction.edit_original_response(embed=self.embed_actual(), view=self)
+        except discord.NotFound:
+            pass
 
     async def refrescar(self, interaction: discord.Interaction):
         if interaction.user != self.ctx.author:
@@ -325,7 +334,7 @@ class VistaInventario(discord.ui.View):
                 ephemeral=True,
             )
         self._reconstruir_selects()
-        await interaction.response.edit_message(embed=self.embed_actual(), view=self)
+        await self._editar_mensaje(interaction)
 
     def _reconstruir_selects(self):
         for item in list(self.children):
@@ -349,7 +358,13 @@ class VistaInventario(discord.ui.View):
         for item in self.children:
             item.disabled = True
         try:
-            if self.message:
+            if self.message and self.message.embeds:
+                embed = self.message.embeds[0].copy()
+                embed.set_footer(
+                    text="⏱️ Sesión expirada — usa !new-inventario para abrir de nuevo"
+                )
+                await self.message.edit(embed=embed, view=self)
+            elif self.message:
                 await self.message.edit(view=self)
         except Exception:
             pass
@@ -359,19 +374,19 @@ class VistaInventario(discord.ui.View):
         visibles = self._entradas_visibles()
         total = max(1, (len(visibles) + POR_PAGINA - 1) // POR_PAGINA)
         self.pagina = (self.pagina - 1) % total
-        await interaction.response.edit_message(embed=self.embed_actual(), view=self)
+        await self._editar_mensaje(interaction)
 
     @discord.ui.button(label="▶️", style=discord.ButtonStyle.secondary, row=4)
     async def siguiente(self, interaction: discord.Interaction, button: discord.ui.Button):
         visibles = self._entradas_visibles()
         total = max(1, (len(visibles) + POR_PAGINA - 1) // POR_PAGINA)
         self.pagina = (self.pagina + 1) % total
-        await interaction.response.edit_message(embed=self.embed_actual(), view=self)
+        await self._editar_mensaje(interaction)
 
 
 class PaginadorInventario(discord.ui.View):
     def __init__(self, ctx, embeds):
-        super().__init__(timeout=180)
+        super().__init__(timeout=VIEW_TIMEOUT)
 
         self.ctx = ctx
         self.embeds = embeds
@@ -387,7 +402,11 @@ class PaginadorInventario(discord.ui.View):
             item.disabled = True
 
         try:
-            if self.message:
+            if self.message and self.message.embeds:
+                embed = self.message.embeds[0].copy()
+                embed.set_footer(text="⏱️ Sesión expirada — usa !inventario para abrir de nuevo")
+                await self.message.edit(embed=embed, view=self)
+            elif self.message:
                 await self.message.edit(view=self)
         except Exception:
             pass
@@ -395,7 +414,6 @@ class PaginadorInventario(discord.ui.View):
     @discord.ui.button(
         label="◀️ Anterior",
         style=discord.ButtonStyle.secondary,
-        custom_id="ant",
     )
     async def btn_anterior(
         self,
@@ -417,7 +435,6 @@ class PaginadorInventario(discord.ui.View):
     @discord.ui.button(
         label="Siguiente ▶️",
         style=discord.ButtonStyle.secondary,
-        custom_id="sig",
     )
     async def btn_siguiente(
         self,

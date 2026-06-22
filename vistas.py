@@ -737,6 +737,20 @@ class BotonCaptura(discord.ui.View):
                     pass
 
                 self.stop()
+
+
+def _formatear_id_captura(captura: dict) -> str:
+    badges = ""
+    if captura.get("tiene_record"):
+        badges += "👑"
+    if captura.get("es_shiny"):
+        badges += "✨"
+    texto = f"#{captura['id']}"
+    if badges:
+        texto += f" {badges}"
+    return texto
+
+
 class InfoView(discord.ui.View):
     def __init__(self, user_id, data, versiones, mostrar_shiny): # Agregamos user_id
         super().__init__(timeout=60)
@@ -779,8 +793,8 @@ class InfoView(discord.ui.View):
                     
         titulo = f"{self.data['nombre'].capitalize()} {'✨ Shiny' if self.mostrar_shiny else ''}"
         
-        # 1. Obtenemos datos de DB (ahora recibimos los tres valores)
-        fecha_primera, cantidad, lista_ids = database.obtener_info_captura(
+        # 1. Obtenemos datos de DB (fecha, cantidad y capturas con flags)
+        fecha_primera, cantidad, capturas = database.obtener_info_captura(
             self.user_id,
             self.data['nombre']
         )
@@ -801,11 +815,11 @@ class InfoView(discord.ui.View):
             print(f"⚠️ Error formateando fecha: {e}")
             fecha_str = "N/A"
         # 3. Formateamos los IDs de captura (mostrando los últimos 8 para no saturar)
-        if lista_ids:
-            if len(lista_ids) > 8:
-                ids_formateados = ", ".join([f"#{id_cap}" for id_cap in lista_ids[-8:]]) + "..."
-            else:
-                ids_formateados = ", ".join([f"#{id_cap}" for id_cap in lista_ids])
+        if capturas:
+            visibles = capturas[-8:] if len(capturas) > 8 else capturas
+            ids_formateados = ", ".join(_formatear_id_captura(c) for c in visibles)
+            if len(capturas) > 8:
+                ids_formateados += "..."
         else:
             ids_formateados = "Ninguno"
         
