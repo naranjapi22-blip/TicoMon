@@ -3,12 +3,24 @@ from database import obtener_pokemon_local_nombre
 
 def crear_alpha(nombre_pokemon):
 
+    nombre_pokemon = (
+        str(nombre_pokemon)
+        .replace("Alpha ", "")
+        .strip()
+        .lower()
+    )
+
+    print(f"🎯 Creando Alpha: {nombre_pokemon}")
+
     pokemon = obtener_pokemon_local_nombre(
         nombre_pokemon
     )
 
-    if not pokemon: 
+    if not pokemon:
+        print(f"❌ Pokémon no encontrado: {nombre_pokemon}")
         return None
+
+    print(f"✅ Datos encontrados: {pokemon['nombre']}")
 
     return [{
         "nombre": f"Alpha {pokemon['nombre'].capitalize()}",
