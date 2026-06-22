@@ -23,6 +23,7 @@ class VistaCombateIncursion:
             equipo_jugador,
             alpha
         )
+
     def barra_hp(
         self,
         actual,
@@ -56,6 +57,7 @@ class VistaCombateIncursion:
             color * llenos +
             "⬛" * vacios
         )
+
     def construir_estado(self):
 
         lineas_jugadores = []
@@ -71,7 +73,7 @@ class VistaCombateIncursion:
 
                 lineas_jugadores.append(
                     f"💀 {pokemon['nombre']}\n"
-                    f"░░░░░░░░░░\n"
+                    f"⬛⬛⬛⬛⬛⬛⬛⬛⬛⬛\n"
                     f"0/{hp_max} HP"
                 )
 
@@ -93,8 +95,36 @@ class VistaCombateIncursion:
     async def iniciar(self):
 
         mensaje = await self.canal.send(
-            "⚔️ Comenzando incursión..."
+            "⚔️ Comenzando incursión...\n"
+            "🎨 Preparando escenario..."
         )
+
+        # Imagen inicial
+
+        buffer = await imagencomb.generar_escena_raid(
+            self.session,
+            self.combate.jugadores,
+            self.combate.hp_jugadores,
+            self.combate.alpha,
+            self.combate.hp_alpha,
+            self.combate.hp_alpha_max,
+            "bosque.png"
+        )
+
+        file = discord.File(
+            buffer,
+            filename="raid.png"
+        )
+
+        await mensaje.edit(
+            content=(
+                "⚔️ ¡La incursión ha comenzado!\n\n"
+                f"👹 {self.combate.alpha['nombre']} apareció."
+            ),
+            attachments=[file]
+        )
+
+        await asyncio.sleep(3)
 
         ronda = 1
 
@@ -154,7 +184,7 @@ class VistaCombateIncursion:
 
             ronda += 1
 
-            await asyncio.sleep(2)
+            await asyncio.sleep(1)
 
         ganador = self.combate.es_fin_del_juego()
 
@@ -163,7 +193,7 @@ class VistaCombateIncursion:
             await mensaje.edit(
                 content=(
                     "🏆 ¡Victoria!\n\n"
-                    "Alpha derrotado."
+                    f"👹 {self.combate.alpha['nombre']} fue derrotado."
                 )
             )
 
@@ -172,6 +202,6 @@ class VistaCombateIncursion:
             await mensaje.edit(
                 content=(
                     "💀 Derrota\n\n"
-                    "El Alpha venció al equipo."
+                    f"👹 {self.combate.alpha['nombre']} venció al equipo."
                 )
             )
