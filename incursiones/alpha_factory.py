@@ -54,8 +54,8 @@ def crear_alpha(nombre_pokemon):
         "hp_max": pokemon["hp"] * 35,
 
         # Ataque normal
-        "atk": int(pokemon["attack"] * 0.3),
-        "atk_esp": int(pokemon["special_attack"] * 0.3),
+        "atk": int(pokemon["attack"] * 0.2),
+        "atk_esp": int(pokemon["special_attack"] * 0.2),
 
         # Defensa aumentada
         "def": int(pokemon["defense"] * 1.3),
