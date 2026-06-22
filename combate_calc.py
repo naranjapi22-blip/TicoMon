@@ -99,6 +99,7 @@ def elegir_movimiento_automatico(
         "raindance",
         "sandstorm",
         "hail",
+        "future sight",
     }
 
     species_id = to_id_str(species_showdown)

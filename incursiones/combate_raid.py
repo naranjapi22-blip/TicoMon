@@ -81,17 +81,7 @@ class CombateRaidSim:
 
             historial.append(log)
 
-            historial.append(
-                f"🐉 {self.alpha['nombre']} queda en "
-                f"{self.hp_alpha}/{self.hp_alpha_max} HP"
-            )
-
             if self.hp_alpha <= 0:
-
-                historial.append(
-                    f"💀 {self.alpha['nombre']} fue derrotado"
-                )
-
                 break
 
         vivos = self.jugadores_vivos()
@@ -120,12 +110,6 @@ class CombateRaidSim:
                 self.hp_jugadores[objetivo] = 0
 
             historial.append(log)
-
-            historial.append(
-                f"❤️ {self.jugadores[objetivo]['nombre']} queda en "
-                f"{self.hp_jugadores[objetivo]}/"
-                f"{self.jugadores[objetivo]['hp_max']} HP"
-            )
 
             if self.hp_jugadores[objetivo] == 0:
 
