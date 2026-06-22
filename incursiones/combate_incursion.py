@@ -4,7 +4,7 @@ from incursiones.vista_combate_incursion import VistaCombateIncursion
 from incursiones.alpha_factory import crear_alpha
 
 alpha = crear_alpha(
-    "mewtwo"
+    "Mewtwo"
 )
 
 async def iniciar_incursion(
