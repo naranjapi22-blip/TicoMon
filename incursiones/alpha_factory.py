@@ -52,7 +52,7 @@ def crear_alpha(nombre_pokemon):
         },
 
         # Vida del jefe
-        "hp_max": pokemon["hp"] * 6,
+        "hp_max": pokemon["hp"] * 35,
 
         # Estos valores son informativos
         "atk": pokemon["attack"],
