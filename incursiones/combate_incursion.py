@@ -3,15 +3,15 @@ from incursiones.incursion_manager import eliminar_incursion
 from incursiones.vista_combate_incursion import VistaCombateIncursion
 from incursiones.alpha_factory import crear_alpha
 
-alpha = crear_alpha(
-    "mewtwo"
-)
 
 async def iniciar_incursion(
     raid,
     session,
     canal
 ):
+    alpha = crear_alpha(
+        "mewtwo"
+    )
 
     equipo_jugador = []
 
