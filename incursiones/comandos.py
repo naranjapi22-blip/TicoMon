@@ -30,12 +30,12 @@ class Incursiones(commands.Cog):
         raid = crear_incursion(
             canal_id=ctx.channel.id,
             canal=ctx.channel,
-            alpha="Dratini"
+            alpha="Mewtwo"
         )
 
         mensaje = await ctx.send(
-            "🦖 Alpha Dratini apareció\n\n"
-            "Participantes: 0/3",
+            f"🦖 Alpha {raid.alpha} apareció\n\n"
+            f"Participantes: 0/3",
             view=VistaIncursion()
         )
 
