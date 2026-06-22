@@ -1,4 +1,8 @@
-from combate_calc import calcular_dano
+from combate_calc import (
+    calcular_dano,
+    elegir_movimiento_alpha
+)
+
 import random
 
 
@@ -88,6 +92,19 @@ class CombateRaidSim:
 
         # Turno del Alpha
         if vivos and self.hp_alpha > 0:
+
+            movimiento, movimiento_nombre = (
+                elegir_movimiento_alpha(
+                    self.alpha["species_showdown"],
+                    {
+                        "atk": self.alpha["atk"],
+                        "spa": self.alpha["atk_esp"]
+                    }
+                )
+            )
+
+            self.alpha["movimiento"] = movimiento
+            self.alpha["movimiento_nombre"] = movimiento_nombre
 
             objetivo = random.choice(vivos)
 

@@ -203,7 +203,135 @@ def elegir_movimiento_automatico(
         return mejor[1], mejor[2]
 
     return "tackle", "Tackle"
+def elegir_movimiento_alpha(
+    species_showdown: str,
+    stats: dict[str, int]
+) -> tuple[str, str]:
 
+    MOVIMIENTOS_EXCLUIDOS = {
+        "steelroller",
+        "dreameater",
+        "lastrespects",
+        "revivalblessing",
+        "explosion",
+        "selfdestruct",
+        "mistyexplosion",
+        "focuspunch",
+        "belch",
+        "electroshot",
+        "snowscape",
+        "sunnyday",
+        "raindance",
+        "sandstorm",
+        "hail",
+        "future sight",
+    }
+
+    species_id = to_id_str(species_showdown)
+
+    entry = _GEN_DATA.learnset.get(species_id)
+
+    if not entry:
+        return "tackle", "Tackle"
+
+    learnset = entry.get("learnset", {})
+
+    dex = _GEN_DATA.pokedex.get(
+        species_id,
+        {}
+    )
+
+    tipos = dex.get("types", [])
+
+    prefer_physical = (
+        stats.get("atk", 0)
+        >=
+        stats.get("spa", 0)
+    )
+
+    candidatos = []
+
+    for move_id in learnset:
+
+        if move_id in MOVIMIENTOS_EXCLUIDOS:
+            continue
+
+        data = _GEN_DATA.moves.get(move_id)
+
+        if not data:
+            continue
+
+        bp = data.get("basePower") or 0
+        accuracy = data.get("accuracy") or 100
+
+        if bp <= 0:
+            continue
+
+        if data.get("category") == "Status":
+            continue
+
+        if accuracy < 80:
+            continue
+
+        flags = data.get("flags", {})
+
+        if (
+            flags.get("charge")
+            or flags.get("recharge")
+            or flags.get("mustcharge")
+        ):
+            continue
+
+        es_fisico = (
+            data.get("category")
+            == "Physical"
+        )
+
+        cat_bonus = (
+            15
+            if prefer_physical == es_fisico
+            else 0
+        )
+
+        stab = (
+            40
+            if data.get("type") in tipos
+            else 0
+        )
+
+        puntaje = (
+            bp
+            + stab
+            + cat_bonus
+            + min(accuracy, 100) // 10
+        )
+
+        nombre = data.get(
+            "name",
+            move_id
+        )
+
+        candidatos.append(
+            (
+                puntaje,
+                move_id,
+                nombre
+            )
+        )
+
+    if not candidatos:
+        return "tackle", "Tackle"
+
+    candidatos.sort(
+        reverse=True,
+        key=lambda x: x[0]
+    )
+
+    top = candidatos[:4]
+
+    elegido = random.choice(top)
+
+    return elegido[1], elegido[2]
 def stats_desde_teambuilder(
     species_showdown: str,
     ivs: dict[str, int],
