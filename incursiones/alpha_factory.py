@@ -41,6 +41,7 @@ def crear_alpha(nombre_pokemon):
         "species_showdown": pokemon["nombre"].lower(),
         "nature_showdown": "hardy",
         "tipo": pokemon["tipos"],
+
         "ivs": {
             "hp": 31,
             "atk": 31,
@@ -50,23 +51,22 @@ def crear_alpha(nombre_pokemon):
             "spe": 31
         },
 
-        # HP aumentado
+        # Vida del jefe
         "hp_max": pokemon["hp"] * 35,
 
-        # Ataque normal
-        "atk": int(pokemon["attack"] * 0.2),
-        "atk_esp": int(pokemon["special_attack"] * 0.2),
-
-        # Defensa aumentada
-        "def": int(pokemon["defense"] * 1.3),
-        "def_esp": int(pokemon["special_defense"] * 1.3),
-
-        # Velocidad normal
+        # Estos valores son informativos
+        "atk": pokemon["attack"],
+        "atk_esp": pokemon["special_attack"],
+        "def": pokemon["defense"],
+        "def_esp": pokemon["special_defense"],
         "spd": pokemon["speed"],
 
-        # Movimiento automático
+        # Movimiento real
         "movimiento": movimiento,
         "movimiento_nombre": movimiento_nombre,
+
+        # Nerf global al daño del Alpha
+        "damage_multiplier": 0.5,
 
         "id": pokemon["id"],
         "shiny": False

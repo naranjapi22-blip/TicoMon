@@ -1,6 +1,7 @@
 from combate_calc import calcular_dano
 import random
 
+
 class CombateRaidSim:
 
     def __init__(self, jugadores, alpha):
@@ -16,6 +17,7 @@ class CombateRaidSim:
 
         self.hp_alpha = self.alpha["hp_max"]
         self.hp_alpha_max = self.alpha["hp_max"]
+
     def es_fin_del_juego(self):
 
         if self.hp_alpha <= 0:
@@ -25,6 +27,7 @@ class CombateRaidSim:
             return "Alpha"
 
         return None
+
     def jugadores_vivos(self):
 
         return [
@@ -32,6 +35,7 @@ class CombateRaidSim:
             for i, hp in enumerate(self.hp_jugadores)
             if hp > 0
         ]
+
     def calcular_resultado_ataque(
         self,
         atacante,
@@ -47,10 +51,12 @@ class CombateRaidSim:
             resultado.dano,
             resultado.mensaje
         )
+
     def ejecutar_ronda(self):
 
         historial = []
 
+        # Turno de los jugadores
         for i in self.jugadores_vivos():
 
             atacante = self.jugadores[i]
@@ -60,20 +66,27 @@ class CombateRaidSim:
                 self.alpha
             )
 
+            dano = int(
+                dano *
+                self.alpha.get(
+                    "defense_multiplier",
+                    0.7
+                )
+            )
+
             self.hp_alpha -= dano
 
             if self.hp_alpha < 0:
                 self.hp_alpha = 0
 
-            historial.append(
-                f"{atacante['nombre']} → {dano} daño"
-            )
+            historial.append(log)
 
             if self.hp_alpha <= 0:
                 break
 
         vivos = self.jugadores_vivos()
 
+        # Turno del Alpha
         if vivos and self.hp_alpha > 0:
 
             objetivo = random.choice(vivos)
@@ -83,13 +96,22 @@ class CombateRaidSim:
                 self.jugadores[objetivo]
             )
 
+            dano = int(
+                dano *
+                self.alpha.get(
+                    "damage_multiplier",
+                    1.0
+                )
+            )
+
             self.hp_jugadores[objetivo] -= dano
 
             if self.hp_jugadores[objetivo] < 0:
                 self.hp_jugadores[objetivo] = 0
 
             historial.append(
-                f"{self.alpha['nombre']} → {dano} daño a {self.jugadores[objetivo]['nombre']}"
+                f"{log}\n"
+                f"💥 {dano} daño a {self.jugadores[objetivo]['nombre']}"
             )
 
             if self.hp_jugadores[objetivo] == 0:
