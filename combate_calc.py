@@ -78,48 +78,124 @@ def _contexto_batalla(atacante: dict, defensor: dict) -> Battle:
     return battle
 
 
-def elegir_movimiento_automatico(species_showdown: str, stats: dict[str, int]) -> tuple[str, str]:
-    """Devuelve (move_id, nombre legible) para el Pokémon."""
+def elegir_movimiento_automatico(
+    species_showdown: str,
+    stats: dict[str, int]
+) -> tuple[str, str]:
+
+    MOVIMIENTOS_EXCLUIDOS = {
+        "steelroller",
+        "dreameater",
+        "lastrespects",
+        "revivalblessing",
+        "explosion",
+        "selfdestruct",
+        "mistyexplosion",
+        "focuspunch",
+        "belch",
+    }
+
     species_id = to_id_str(species_showdown)
+
     entry = _GEN_DATA.learnset.get(species_id)
+
     if not entry:
         return "tackle", "Tackle"
 
     learnset = entry.get("learnset", {})
-    dex = _GEN_DATA.pokedex.get(species_id, {})
-    tipos = dex.get("types", [])
-    prefer_physical = stats.get("atk", 0) >= stats.get("spa", 0)
 
-    mejor: tuple[int, str, str] | None = None
+    dex = _GEN_DATA.pokedex.get(
+        species_id,
+        {}
+    )
+
+    tipos = dex.get("types", [])
+
+    prefer_physical = (
+        stats.get("atk", 0)
+        >=
+        stats.get("spa", 0)
+    )
+
+    mejor = None
+
     for move_id in learnset:
+
+        if move_id in MOVIMIENTOS_EXCLUIDOS:
+            continue
+
         data = _GEN_DATA.moves.get(move_id)
+
         if not data:
             continue
+
         bp = data.get("basePower") or 0
+
         accuracy = data.get("accuracy") or 100
-        if bp <= 0 or data.get("category") == "Status":
-            continue
-        if accuracy < 80:
-            continue
-        flags = data.get("flags", {})
-        if flags.get("charge") or flags.get("recharge") or flags.get("mustcharge"):
-            continue
-        if data.get("recoil") or move_id in {"explosion", "selfdestruct", "mistyexplosion", "focuspunch"}:
+
+        if bp <= 0:
             continue
 
-        es_fisico = data.get("category") == "Physical"
-        cat_bonus = 15 if prefer_physical == es_fisico else 0
-        stab = 40 if data.get("type") in tipos else 0
-        puntaje = bp + stab + cat_bonus + min(accuracy, 100) // 10
-        nombre = data.get("name", move_id)
-        candidato = (puntaje, move_id, nombre)
-        if mejor is None or candidato[0] > mejor[0]:
+        if data.get("category") == "Status":
+            continue
+
+        if accuracy < 80:
+            continue
+
+        flags = data.get("flags", {})
+
+        if (
+            flags.get("charge")
+            or flags.get("recharge")
+            or flags.get("mustcharge")
+        ):
+            continue
+
+        es_fisico = (
+            data.get("category")
+            == "Physical"
+        )
+
+        cat_bonus = (
+            15
+            if prefer_physical == es_fisico
+            else 0
+        )
+
+        stab = (
+            40
+            if data.get("type") in tipos
+            else 0
+        )
+
+        puntaje = (
+            bp
+            + stab
+            + cat_bonus
+            + min(accuracy, 100) // 10
+        )
+
+        nombre = data.get(
+            "name",
+            move_id
+        )
+
+        candidato = (
+            puntaje,
+            move_id,
+            nombre
+        )
+
+        if (
+            mejor is None
+            or candidato[0] > mejor[0]
+        ):
             mejor = candidato
 
     if mejor:
         return mejor[1], mejor[2]
-    return "tackle", "Tackle"
 
+    return "tackle", "Tackle"
 
 def stats_desde_teambuilder(
     species_showdown: str,
