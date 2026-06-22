@@ -93,6 +93,12 @@ def elegir_movimiento_automatico(
         "mistyexplosion",
         "focuspunch",
         "belch",
+        "electroshot",
+        "snowscape",
+        "sunnyday",
+        "raindance",
+        "sandstorm",
+        "hail",
     }
 
     species_id = to_id_str(species_showdown)
