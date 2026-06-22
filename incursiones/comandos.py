@@ -9,7 +9,9 @@ from incursiones.incursion_manager import (
 from incursiones.modelos import Incursion
 
 from database import obtener_equipo_selector
-
+from incursiones.alphas import (
+    obtener_alpha_aleatorio
+)
 
 class Incursiones(commands.Cog):
 
@@ -27,14 +29,21 @@ class Incursiones(commands.Cog):
             )
             return
 
+        nombre_alpha = obtener_alpha_aleatorio()
+
+        print(
+            f"👹 Alpha generado: "
+            f"{nombre_alpha}"
+        )
+
         raid = crear_incursion(
             canal_id=ctx.channel.id,
             canal=ctx.channel,
-            alpha="Mewtwo"
+            alpha=nombre_alpha
         )
 
         mensaje = await ctx.send(
-            f"🦖 Alpha {raid.alpha} apareció\n\n"
+            f"🦖 Alpha {raid.alpha.capitalize()} apareció\n\n"
             f"Participantes: 0/3",
             view=VistaIncursion()
         )
