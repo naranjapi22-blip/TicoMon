@@ -32,8 +32,8 @@ def crear_alpha(nombre_pokemon):
         "atk_esp": pokemon["special_attack"],
 
         # Aumentar defensas
-        "def": pokemon["defense"] * 3,
-        "def_esp": pokemon["special_defense"] * 3,
+        "def": pokemon["defense"] * 2,
+        "def_esp": pokemon["special_defense"] * 2,
 
         # Mantener velocidad normal
         "spd": pokemon["speed"],
