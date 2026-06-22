@@ -110,9 +110,9 @@ class CombateRaidSim:
                 self.hp_jugadores[objetivo] = 0
 
             historial.append(
-                f"{self.alpha['nombre']} usó "
-                f"{self.alpha['movimiento_nombre']}.\n"
-                f"💥 {dano} daño a {self.jugadores[objetivo]['nombre']}"
+                f"⚡ {self.alpha['movimiento_nombre']} "
+                f"{self.alpha['nombre']} causa "
+                f"{dano} HP a {self.jugadores[objetivo]['nombre']}."
             )
 
             if self.hp_jugadores[objetivo] == 0:
