@@ -352,31 +352,65 @@ def obtener_info_captura(user_id, nombre_pokemon):
 
         conn = get_connection()
         cursor = conn.cursor()
+        nombre = nombre_pokemon.lower()
+        uid = _uid(user_id)
 
         cursor.execute(
             """
-            SELECT MIN(fecha), COUNT(*), ARRAY_AGG(id)
+            SELECT MIN(fecha), COUNT(*)
             FROM capturas
             WHERE user_id = %s
             AND pokemon_nombre = %s
             """,
-            (str(user_id), nombre_pokemon.lower())
+            (uid, nombre),
         )
 
         res = cursor.fetchone()
+        fecha, cantidad = res if res else (None, 0)
 
-        fecha, cantidad, ids_raw = (
-            res if res else (None, 0, None)
+        cursor.execute(
+            """
+            SELECT id, es_shiny
+            FROM capturas
+            WHERE user_id = %s
+            AND pokemon_nombre = %s
+            ORDER BY id
+            """,
+            (uid, nombre),
         )
+        filas_capturas = cursor.fetchall()
 
-        lista_ids = ids_raw if ids_raw else []
+        cursor.execute(
+            """
+            SELECT id_pokemon_grande, id_pokemon_pequeno
+            FROM RECORDS_ESPECIE
+            WHERE pokemon_nombre = %s
+            """,
+            (nombre,),
+        )
+        record_row = cursor.fetchone()
+        ids_record = set()
+        if record_row:
+            if record_row[0] is not None:
+                ids_record.add(int(record_row[0]))
+            if record_row[1] is not None:
+                ids_record.add(int(record_row[1]))
+
+        capturas = [
+            {
+                "id": int(fila[0]),
+                "es_shiny": bool(fila[1]),
+                "tiene_record": int(fila[0]) in ids_record,
+            }
+            for fila in filas_capturas
+        ]
 
         log.info(
             f"✅ Info de captura obtenida: "
             f"{nombre_pokemon} - Cantidad: {cantidad}"
         )
 
-        return fecha, cantidad, lista_ids
+        return fecha, cantidad, capturas
 
     except Exception as e:
         log.error(
