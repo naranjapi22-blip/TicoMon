@@ -618,7 +618,6 @@ def _uid(user_id):
 
 def obtener_captura(user_id, captura_id: int):
     """Retorna (id, nombre, shiny, naturaleza, ivs...) o None si no es del usuario."""
-
     conn = None
 
     try:
@@ -681,6 +680,65 @@ def obtener_capturas_por_ids(user_id, captura_ids: list) -> dict[int, tuple]:
     except Exception as e:
         log.error(f"🚨 Error obtener_capturas_por_ids: {e}", exc_info=True)
         return {}
+    finally:
+        if conn:
+            conn.close()
+
+
+def obtener_inventario_usuario(user_id) -> list[dict]:
+    """Inventario completo con dex id y tipos desde pokemon_data."""
+    conn = None
+    iv_pct = "((c.iv_hp + c.iv_atk + c.iv_def + c.iv_spa + c.iv_spd + c.iv_spe) * 100 / 186)"
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        uid = str(user_id) if DATABASE_URL else user_id
+        if DATABASE_URL:
+            cursor.execute(
+                f"""
+                SELECT
+                    c.id,
+                    c.pokemon_nombre,
+                    c.es_shiny,
+                    {iv_pct},
+                    p.id,
+                    p.tipos
+                FROM capturas c
+                LEFT JOIN pokemon_data p ON c.pokemon_nombre = p.nombre
+                WHERE c.user_id = %s
+                """,
+                (uid,),
+            )
+        else:
+            cursor.execute(
+                f"""
+                SELECT
+                    c.id,
+                    c.pokemon_nombre,
+                    c.es_shiny,
+                    {iv_pct},
+                    p.id,
+                    p.tipos
+                FROM capturas c
+                LEFT JOIN pokemon_data p ON c.pokemon_nombre = p.nombre
+                WHERE c.user_id = ?
+                """,
+                (uid,),
+            )
+        return [
+            {
+                "id": fila[0],
+                "nombre": fila[1],
+                "es_shiny": bool(fila[2]),
+                "iv_pct": float(fila[3] or 0),
+                "dex_id": fila[4],
+                "tipos": fila[5] or "",
+            }
+            for fila in cursor.fetchall()
+        ]
+    except Exception as e:
+        log.error(f"🚨 Error obtener_inventario_usuario: {e}", exc_info=True)
+        return []
     finally:
         if conn:
             conn.close()
