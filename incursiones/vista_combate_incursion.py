@@ -23,6 +23,72 @@ class VistaCombateIncursion:
             equipo_jugador,
             alpha
         )
+    def barra_hp(
+        self,
+        actual,
+        maximo
+    ):
+
+        if maximo <= 0:
+            return "⬛⬛⬛⬛⬛⬛⬛⬛⬛⬛"
+
+        porcentaje = actual / maximo
+
+        llenos = int(
+            porcentaje * 10
+        )
+
+        if actual > 0 and llenos == 0:
+            llenos = 1
+
+        vacios = 10 - llenos
+
+        if porcentaje >= 0.6:
+            color = "🟩"
+
+        elif porcentaje >= 0.3:
+            color = "🟨"
+
+        else:
+            color = "🟥"
+
+        return (
+            color * llenos +
+            "⬛" * vacios
+        )
+    def construir_estado(self):
+
+        lineas_jugadores = []
+
+        for i, pokemon in enumerate(
+            self.combate.jugadores
+        ):
+
+            hp = self.combate.hp_jugadores[i]
+            hp_max = pokemon["hp_max"]
+
+            if hp <= 0:
+
+                lineas_jugadores.append(
+                    f"💀 {pokemon['nombre']}\n"
+                    f"░░░░░░░░░░\n"
+                    f"0/{hp_max} HP"
+                )
+
+            else:
+
+                lineas_jugadores.append(
+                    f"❤️ {pokemon['nombre']}\n"
+                    f"{self.barra_hp(hp, hp_max)}\n"
+                    f"{hp}/{hp_max} HP"
+                )
+
+        return (
+            f"{chr(10).join(lineas_jugadores)}\n\n"
+            f"🐉 {self.combate.alpha['nombre']}\n"
+            f"{self.barra_hp(self.combate.hp_alpha, self.combate.hp_alpha_max)}\n"
+            f"{self.combate.hp_alpha}/{self.combate.hp_alpha_max} HP"
+        )
 
     async def iniciar(self):
 
@@ -34,43 +100,32 @@ class VistaCombateIncursion:
 
         while not self.combate.es_fin_del_juego():
 
-            resultado = self.combate.ejecutar_ronda()
+            estado_inicial = self.construir_estado()
 
-            poke1 = self.combate.jugadores[0]
-            poke2 = self.combate.alpha
+            eventos = self.combate.ejecutar_ronda()
 
-            hp1 = self.combate.hp_jugadores[0]
-            hp1_max = poke1["hp_max"]
+            historial_visible = []
 
-            hp2 = self.combate.hp_alpha
-            hp2_max = self.combate.hp_alpha_max
+            for evento in eventos:
 
-            nombre1 = poke1["nombre"]
-            nombre2 = poke2["nombre"]
-            lineas_jugadores = []
+                historial_visible.append(
+                    evento
+                )
 
-            for i, pokemon in enumerate(self.combate.jugadores):
+                texto = (
+                    f"⚔️ Ronda {ronda}\n\n"
+                    f"{estado_inicial}\n\n"
+                    f"{chr(10).join(historial_visible)}"
+                )
 
-                hp = self.combate.hp_jugadores[i]
+                await mensaje.edit(
+                    content=texto
+                )
 
-                if hp <= 0:
+                await asyncio.sleep(1)
 
-                    lineas_jugadores.append(
-                        f"{pokemon['nombre']}: 0/{pokemon['hp_max']} HP 💀"
-                    )
+            estado_final = self.construir_estado()
 
-                else:
-
-                    lineas_jugadores.append(
-                        f"{pokemon['nombre']}: {hp}/{pokemon['hp_max']} HP"
-                    )
-            texto_ronda = (
-                f"⚔️ Ronda {ronda}\n\n"
-                f"{chr(10).join(lineas_jugadores)}\n\n"
-                f"🐉 {nombre2}: {hp2}/{hp2_max} HP\n\n"
-                f"{resultado}"
-            )
-            print(self.combate.jugadores)
             buffer = await imagencomb.generar_escena_raid(
                 self.session,
                 self.combate.jugadores,
@@ -86,25 +141,37 @@ class VistaCombateIncursion:
                 filename="raid.png"
             )
 
+            texto_final = (
+                f"⚔️ Ronda {ronda}\n\n"
+                f"{estado_final}\n\n"
+                f"{chr(10).join(eventos)}"
+            )
+
             await mensaje.edit(
-                content=texto_ronda,
+                content=texto_final,
                 attachments=[file]
             )
 
             ronda += 1
 
-            await asyncio.sleep(8)
+            await asyncio.sleep(2)
 
         ganador = self.combate.es_fin_del_juego()
 
         if ganador == "Jugadores":
 
             await mensaje.edit(
-                content="🏆 ¡Victoria!\n\nAlpha derrotado."
+                content=(
+                    "🏆 ¡Victoria!\n\n"
+                    "Alpha derrotado."
+                )
             )
 
         elif ganador == "Alpha":
 
             await mensaje.edit(
-                content="💀 Derrota\n\nEl Alpha venció al equipo."
+                content=(
+                    "💀 Derrota\n\n"
+                    "El Alpha venció al equipo."
+                )
             )
