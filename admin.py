@@ -238,76 +238,76 @@ async def setup(bot):
         )
 
         await ctx.send(embed=embed)
-@bot.command(name="spawnalola")
-@commands.has_permissions(administrator=True)
-async def spawnalola(ctx):
+    @bot.command(name="spawnalola")
+    @commands.has_permissions(administrator=True)
+    async def spawnalola(ctx):
 
-    data_pokes = []
+        data_pokes = []
 
-    nombres = [
-        "raichu-alola",
-        "pikachu",
-        "bulbasaur"
-    ]
+        nombres = [
+            "raichu-alola",
+            "pikachu",
+            "bulbasaur"
+        ]
 
-    for nombre in nombres:
+        for nombre in nombres:
 
-        data, species = await servicios.obtener_pokemon(
+            data, species = await servicios.obtener_pokemon(
+                ctx.bot.session,
+                nombre
+            )
+
+            if not data:
+                await ctx.send(
+                    f"❌ Error cargando {nombre}"
+                )
+                return
+
+            data_pokes.append(
+                (
+                    data,
+                    species,
+                    False,
+                    "Prueba"
+                )
+            )
+
+        datos_para_collage = [
+            (d, s)
+            for d, s, sh, r in data_pokes
+        ]
+
+        buffer_siluetas = await servicios.generar_collage_siluetas(
             ctx.bot.session,
-            nombre
+            datos_para_collage,
+            tenidos=[]
         )
 
-        if not data:
-            await ctx.send(
-                f"❌ Error cargando {nombre}"
+        if not buffer_siluetas:
+            return await ctx.send(
+                "❌ Error generando siluetas."
             )
-            return
 
-        data_pokes.append(
-            (
-                data,
-                species,
-                False,
-                "Prueba"
-            )
+        archivo = discord.File(
+            buffer_siluetas,
+            filename="fragmentos.png"
         )
 
-    datos_para_collage = [
-        (d, s)
-        for d, s, sh, r in data_pokes
-    ]
-
-    buffer_siluetas = await servicios.generar_collage_siluetas(
-        ctx.bot.session,
-        datos_para_collage,
-        tenidos=[]
-    )
-
-    if not buffer_siluetas:
-        return await ctx.send(
-            "❌ Error generando siluetas."
+        embed = discord.Embed(
+            title="🧪 Test Regionales",
+            description=(
+                "1️⃣ Raichu-Alola\n"
+                "2️⃣ Pikachu\n"
+                "3️⃣ Bulbasaur"
+            ),
+            color=discord.Color.blue()
         )
 
-    archivo = discord.File(
-        buffer_siluetas,
-        filename="fragmentos.png"
-    )
+        embed.set_image(
+            url="attachment://fragmentos.png"
+        )
 
-    embed = discord.Embed(
-        title="🧪 Test Regionales",
-        description=(
-            "1️⃣ Raichu-Alola\n"
-            "2️⃣ Pikachu\n"
-            "3️⃣ Bulbasaur"
-        ),
-        color=discord.Color.blue()
-    )
-
-    embed.set_image(
-        url="attachment://fragmentos.png"
-    )
-
-    await ctx.send(
-        embed=embed,
-        file=archivo
-    )
+        await ctx.send(
+            embed=embed,
+            file=archivo
+        )
