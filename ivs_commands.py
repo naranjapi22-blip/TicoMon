@@ -11,6 +11,7 @@ from discord.ui import Button, View
 import records
 from mapeo_pokes import obtener_id_gif
 from candy import add_candy_for_pokemon
+from records import recalcular_record_liberado
 # Fórmulas oficiales de Pokémon
 def calcular_stat_lvl50(base, iv):
     return math.floor(((2 * base + iv) * 50 / 100) + 5)
@@ -53,6 +54,55 @@ STAT_MAP = {
     'special-defense': 'esp_def',
     'speed': 'vel'
 }
+class VistaConfirmarLiberacion(
+    discord.ui.View
+):
+
+    def __init__(
+        self,
+        pokemon_id
+    ):
+        super().__init__(
+            timeout=60
+        )
+
+        self.pokemon_id = pokemon_id
+        self.confirmado = False
+
+    @discord.ui.button(
+        label="Liberar",
+        style=discord.ButtonStyle.danger,
+        emoji="🗑️"
+    )
+    async def liberar(
+        self,
+        interaction: discord.Interaction,
+        button: discord.ui.Button
+    ):
+
+        self.confirmado = True
+
+        await interaction.response.defer()
+
+        self.stop()
+
+    @discord.ui.button(
+        label="Cancelar",
+        style=discord.ButtonStyle.secondary,
+        emoji="❌"
+    )
+    async def cancelar(
+        self,
+        interaction: discord.Interaction,
+        button: discord.ui.Button
+    ):
+
+        await interaction.response.edit_message(
+            content="❌ Liberación cancelada.",
+            view=None
+        )
+
+        self.stop()
 class PaginatorView(View):
     def __init__(self, pages, user):
         super().__init__(timeout=60)
@@ -318,22 +368,48 @@ class IvsCommands(commands.Cog):
                     "❌ No existe ningún Pokémon con ese ID en tu inventario."
                 )
                 return
-
             cursor.execute("""
-                SELECT id_pokemon_grande, id_pokemon_pequeno
-                FROM RECORDS_ESPECIE 
-                WHERE id_pokemon_grande = %s OR id_pokemon_pequeno = %s
-            """, (str(id_pokemon), str(id_pokemon))
-            )
+                SELECT
+                    pokemon_nombre,
+                    id_pokemon_grande,
+                    id_pokemon_pequeno
+                FROM RECORDS_ESPECIE
+                WHERE id_pokemon_grande = %s
+                OR id_pokemon_pequeno = %s
+            """, (
+                str(id_pokemon),
+                str(id_pokemon)
+            ))
 
             record = cursor.fetchone()
 
-            if record:
-                await ctx.send(
-                    "❌ No se puede liberar pokémon con record."
-                )
-                return
+            tipo_record = None
 
+            if record:
+
+                vista = VistaConfirmarLiberacion(
+                    id_pokemon
+                )
+
+                mensaje = await ctx.send(
+                    f"⚠️ **{nombre.capitalize()}** posee un récord "
+                    f"de tamaño **{tipo_record}**.\n\n"
+                    f"Si lo liberas, el sistema buscará "
+                    f"automáticamente un nuevo récord.\n\n"
+                    f"¿Deseas continuar?",
+                    view=vista
+                )
+
+                await vista.wait()
+
+                if not vista.confirmado:
+                    return
+                recalcular_record_liberado(
+                    cursor,
+                    nombre.lower(),
+                    id_pokemon,
+                    tipo_record
+                )
             nombre, shiny, hp, atk, de, spa, spd, spe = resultado
 
             # Eliminar Pokémon

@@ -69,3 +69,114 @@ def obtener_estado_record(cursor, pokemon_nombre, id_pokemon):
         return "pequeno"
     
     return None
+def recalcular_record_liberado(
+    cursor,
+    pokemon_nombre,
+    captura_id,
+    tipo_record
+):
+
+    if tipo_record == "XXL":
+
+        cursor.execute("""
+            SELECT
+                id,
+                user_id,
+                tamano_factor,
+                fecha
+            FROM capturas
+            WHERE pokemon_nombre = %s
+              AND id <> %s
+              AND tamano_factor >= 1.2
+            ORDER BY tamano_factor DESC
+            LIMIT 1
+        """, (
+            pokemon_nombre,
+            captura_id
+        ))
+
+        nuevo = cursor.fetchone()
+
+        if nuevo:
+
+            cursor.execute("""
+                UPDATE RECORDS_ESPECIE
+                SET
+                    id_pokemon_grande = %s,
+                    user_id_grande = %s,
+                    tamano_grande = %s,
+                    fecha_grande = %s
+                WHERE pokemon_nombre = %s
+            """, (
+                nuevo[0],
+                nuevo[1],
+                nuevo[2],
+                nuevo[3],
+                pokemon_nombre
+            ))
+
+        else:
+
+            cursor.execute("""
+                UPDATE RECORDS_ESPECIE
+                SET
+                    id_pokemon_grande = NULL,
+                    user_id_grande = NULL,
+                    tamano_grande = NULL,
+                    fecha_grande = NULL
+                WHERE pokemon_nombre = %s
+            """, (
+                pokemon_nombre,
+            ))
+    elif tipo_record == "XXS":
+
+        cursor.execute("""
+            SELECT
+                id,
+                user_id,
+                tamano_factor,
+                fecha
+            FROM capturas
+            WHERE pokemon_nombre = %s
+              AND id <> %s
+              AND tamano_factor <= 0.8
+            ORDER BY tamano_factor ASC
+            LIMIT 1
+        """, (
+            pokemon_nombre,
+            captura_id
+        ))
+
+        nuevo = cursor.fetchone()
+
+        if nuevo:
+
+            cursor.execute("""
+                UPDATE RECORDS_ESPECIE
+                SET
+                    id_pokemon_pequeno = %s,
+                    user_id_pequeno = %s,
+                    tamano_pequeno = %s,
+                    fecha_pequeno = %s
+                WHERE pokemon_nombre = %s
+            """, (
+                nuevo[0],
+                nuevo[1],
+                nuevo[2],
+                nuevo[3],
+                pokemon_nombre
+            ))
+
+        else:
+
+            cursor.execute("""
+                UPDATE RECORDS_ESPECIE
+                SET
+                    id_pokemon_pequeno = NULL,
+                    user_id_pequeno = NULL,
+                    tamano_pequeno = NULL,
+                    fecha_pequeno = NULL
+                WHERE pokemon_nombre = %s
+            """, (
+                pokemon_nombre,
+            ))
