@@ -327,6 +327,16 @@ async def spawn(ctx):
 
         log.info(f"Spawn generado: {ids_spawn}")
 
+        for pid in ids_spawn:
+
+            poke = database.obtener_pokemon_local_id(pid)
+
+            print(
+                f"{pid} -> "
+                f"{poke['nombre']} -> "
+                f"{poke['pokeapi_id']}"
+            )
+
         # FASE 3: DESCARGA PARALELA
         tasks = [
             servicios.obtener_pokemon(
@@ -334,11 +344,6 @@ async def spawn(ctx):
                 database.obtener_pokeapi_id_por_id(pid)
             )
             for pid in ids_spawn
-            print(
-                f"{pid} -> "
-                f"{poke['nombre']} -> "
-                f"{poke['pokeapi_id']}"
-                 )
         ]
 
         import time
