@@ -337,7 +337,7 @@ async def spawn(ctx):
                 print(
                 f"{pid} -> "
                 f"{poke['nombre']} -> "
-                f"{poke['pokeapi_id']}"
+                f"{poke['pokeapi_id']}")
         ]
 
         import time
