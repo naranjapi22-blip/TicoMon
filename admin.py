@@ -326,3 +326,57 @@ async def setup(bot):
         await ctx.send(
             f"✅ Raichu-Alola agregado. ID: {id_pokemon}"
         )
+    @bot.command(name="spawnnormal")
+    @commands.has_permissions(administrator=True)
+    async def spawnnormal(ctx, *, nombre):
+
+        pokemon = database.obtener_pokemon_local_nombre(
+            nombre.lower()
+        )
+
+        if not pokemon:
+            return await ctx.send(
+                "❌ Pokémon no encontrado."
+            )
+
+        data, species = await servicios.obtener_pokemon(
+            ctx.bot.session,
+            pokemon["pokeapi_id"]
+        )
+
+        if not data:
+            return await ctx.send(
+                "❌ No se pudo cargar desde PokéAPI."
+            )
+
+        es_shiny = False
+
+        capture_rate = species.get(
+            "capture_rate",
+            45
+        )
+
+        view = BotonCaptura(
+            data,
+            "admin",
+            es_shiny,
+            capture_rate,
+            1.0
+        )
+
+        embed = discord.Embed(
+            title="🧪 Spawn de prueba",
+            description="Prueba directa sin siluetas",
+            color=discord.Color.blue()
+        )
+
+        embed.set_image(
+            url=f"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/{pokemon['pokeapi_id']}.png"
+        )
+
+        mensaje = await ctx.send(
+            embed=embed,
+            view=view
+        )
+
+        view.message = mensaje
