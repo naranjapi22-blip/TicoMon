@@ -202,3 +202,21 @@ def setup(bot):
         except Exception as e:
             log.error(f"🚨 Error en comando spawntype: {e}", exc_info=True)
             await ctx.send("❌ Hubo un error al generar el Pokémon de ese tipo.")
+    @bot.command(name="spawnpokemon")
+    @commands.has_permissions(administrator=True)
+    async def spawnpokemon(ctx, *, nombre):
+
+        pokemon = database.obtener_pokemon_local_nombre(
+            nombre.lower()
+        )
+
+        if not pokemon:
+            return await ctx.send(
+                "❌ Pokémon no encontrado."
+            )
+
+        await ctx.send(
+            f"✅ Encontrado: {pokemon['nombre']}\n"
+            f"ID: {pokemon['id']}\n"
+            f"Tipos: {pokemon['tipos']}"
+        )
