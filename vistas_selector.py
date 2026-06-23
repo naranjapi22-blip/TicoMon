@@ -107,7 +107,7 @@ class SelectorPokemon(discord.ui.View):
     async def id_de(self, nombre: str) -> int | None:
         clave = nombre.lower()
         if clave not in self.nombre_a_id:
-            poke_id = database.obtener_id_pokemon(
+            poke_id = database.obtener_pokeapi_id(
                 nombre
             )
             if poke_id:

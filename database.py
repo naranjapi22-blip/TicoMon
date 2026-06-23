@@ -1473,3 +1473,16 @@ async def obtener_trainer(
 
         cursor.close()
         conn.close()
+def obtener_pokeapi_id(nombre):
+
+    pokemon = obtener_pokemon_local_nombre(
+        nombre
+    )
+
+    if not pokemon:
+        return None
+
+    return pokemon.get(
+        "pokeapi_id",
+        pokemon["id"]
+    )
