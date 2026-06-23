@@ -6,6 +6,7 @@ from vistas import BotonCaptura
 from logger_config import log
 import servicios
 from database import obtener_pokemon_local_nombre
+import database
 # DICCIONARIO PARA TRADUCCIONES DE TIPOS
 TRADUCCIONES_TIPOS = {
     "fuego": "fire", "agua": "water", "planta": "grass", "electrico": "electric",
