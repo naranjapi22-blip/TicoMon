@@ -218,7 +218,23 @@ async def setup(bot):
                 "❌ Pokémon no encontrado."
             )
 
-        await ctx.send(
-            f"ID BD: {pokemon['id']}\n"
-            f"Nombre: {pokemon['nombre']}"
+        data, species = await servicios.obtener_pokemon(
+            ctx.bot.session,
+            pokemon["nombre"]   # ← CAMBIO IMPORTANTE
         )
+
+        if not data:
+            return await ctx.send(
+                "❌ PokéAPI no devolvió datos."
+            )
+
+        embed = discord.Embed(
+            title="🧪 Spawn de prueba",
+            description=data["name"]
+        )
+
+        embed.set_image(
+            url=data["sprites"]["other"]["official-artwork"]["front_default"]
+        )
+
+        await ctx.send(embed=embed)
