@@ -1716,5 +1716,14 @@ async def settrainer(ctx):
     await ctx.send(
         f"Trainer: {trainer}"
     )
+@bot.command()
+async def testalola(ctx):
 
+    pokemon = database.obtener_pokemon_local_nombre(
+        "raichu-alola"
+    )
+
+    await ctx.send(
+        f"{pokemon}"
+    )
 bot.run(TOKEN)
