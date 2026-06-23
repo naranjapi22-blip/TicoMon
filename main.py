@@ -1001,7 +1001,17 @@ async def inicializar_rarezas_spawn():
 
             else:
                 pokemon_por_rareza["epico"].append(pokemon_id)
+    regionales = 0
 
+    for lista in pokemon_por_rareza.values():
+
+        regionales += len(
+            [x for x in lista if x > 1025]
+        )
+
+    print(
+        f"REGIONALES EN SPAWN: {regionales}"
+    )
     log.info("=== Rarezas cargadas ===")
     log.info(f"Muy comunes: {len(pokemon_por_rareza['muy_comun'])}")
     log.info(f"Comunes: {len(pokemon_por_rareza['comun'])}")
