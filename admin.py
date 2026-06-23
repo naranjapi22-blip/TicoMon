@@ -218,18 +218,7 @@ async def setup(bot):
                 "❌ Pokémon no encontrado."
             )
 
-        data, species = await servicios.obtener_pokemon(
-            ctx.bot.session,
-            pokemon["id"]
+        await ctx.send(
+            f"ID BD: {pokemon['id']}\n"
+            f"Nombre: {pokemon['nombre']}"
         )
-
-        embed = discord.Embed(
-            title="🧪 Spawn de prueba",
-            description=f"**{pokemon['nombre']}**"
-        )
-
-        embed.set_image(
-            url=data["sprites"]["other"]["official-artwork"]["front_default"]
-        )
-
-        await ctx.send(embed=embed)
