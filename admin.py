@@ -23,7 +23,9 @@ REGIONES = {
     "alola": (722, 809), "galar": (810, 905), "paldea": (906, 1025)
 }
 
-def setup(bot):
+async def setup(bot):
+
+    print("ADMIN SETUP EJECUTADO")
     
 # --- COMANDO SPAWNSHINY CORREGIDO ---
     @bot.command(name="spawnshiny")
