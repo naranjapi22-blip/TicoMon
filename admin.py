@@ -238,3 +238,76 @@ async def setup(bot):
         )
 
         await ctx.send(embed=embed)
+@bot.command(name="spawnalola")
+@commands.has_permissions(administrator=True)
+async def spawnalola(ctx):
+
+    data_pokes = []
+
+    nombres = [
+        "raichu-alola",
+        "pikachu",
+        "bulbasaur"
+    ]
+
+    for nombre in nombres:
+
+        data, species = await servicios.obtener_pokemon(
+            ctx.bot.session,
+            nombre
+        )
+
+        if not data:
+            await ctx.send(
+                f"❌ Error cargando {nombre}"
+            )
+            return
+
+        data_pokes.append(
+            (
+                data,
+                species,
+                False,
+                "Prueba"
+            )
+        )
+
+    datos_para_collage = [
+        (d, s)
+        for d, s, sh, r in data_pokes
+    ]
+
+    buffer_siluetas = await servicios.generar_collage_siluetas(
+        ctx.bot.session,
+        datos_para_collage,
+        tenidos=[]
+    )
+
+    if not buffer_siluetas:
+        return await ctx.send(
+            "❌ Error generando siluetas."
+        )
+
+    archivo = discord.File(
+        buffer_siluetas,
+        filename="fragmentos.png"
+    )
+
+    embed = discord.Embed(
+        title="🧪 Test Regionales",
+        description=(
+            "1️⃣ Raichu-Alola\n"
+            "2️⃣ Pikachu\n"
+            "3️⃣ Bulbasaur"
+        ),
+        color=discord.Color.blue()
+    )
+
+    embed.set_image(
+        url="attachment://fragmentos.png"
+    )
+
+    await ctx.send(
+        embed=embed,
+        file=archivo
+    )
