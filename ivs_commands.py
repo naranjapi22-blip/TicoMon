@@ -364,10 +364,15 @@ class IvsCommands(commands.Cog):
             resultado = cursor.fetchone()
 
             if not resultado:
+
                 await ctx.send(
                     "❌ No existe ningún Pokémon con ese ID en tu inventario."
                 )
+
                 return
+
+            nombre, shiny, hp, atk, de, spa, spd, spe = resultado
+
             cursor.execute("""
                 SELECT
                     pokemon_nombre,
@@ -387,11 +392,19 @@ class IvsCommands(commands.Cog):
 
             if record:
 
+                if str(record[1]) == str(id_pokemon):
+
+                    tipo_record = "XXL"
+
+                elif str(record[2]) == str(id_pokemon):
+
+                    tipo_record = "XXS"
+
                 vista = VistaConfirmarLiberacion(
                     id_pokemon
                 )
 
-                mensaje = await ctx.send(
+                await ctx.send(
                     f"⚠️ **{nombre.capitalize()}** posee un récord "
                     f"de tamaño **{tipo_record}**.\n\n"
                     f"Si lo liberas, el sistema buscará "
@@ -403,14 +416,15 @@ class IvsCommands(commands.Cog):
                 await vista.wait()
 
                 if not vista.confirmado:
+
                     return
+
                 recalcular_record_liberado(
                     cursor,
                     nombre.lower(),
                     id_pokemon,
                     tipo_record
                 )
-            nombre, shiny, hp, atk, de, spa, spd, spe = resultado
 
             # Eliminar Pokémon
             cursor.execute("""
@@ -443,12 +457,12 @@ class IvsCommands(commands.Cog):
             )
 
             row = cursor.fetchone()
-            
+
             if not row:
+
                 return
 
             tipo_primario = row[0].split(",")[0]
-
 
             await ctx.send(
                 f"🗑️ Liberaste a {emoji} **{nombre.capitalize()}** "
@@ -464,7 +478,9 @@ class IvsCommands(commands.Cog):
                 "❌ Ocurrió un error al liberar el Pokémon."
             )
 
-            print(f"[LIBERAR ERROR] {e}")
+            print(
+                f"[LIBERAR ERROR] {e}"
+            )
 
         finally:
 
