@@ -208,7 +208,7 @@ async def setup(bot):
     @bot.command(name="spawnpokemon")
     @commands.has_permissions(administrator=True)
     async def spawnpokemon(ctx, *, nombre):
-        print("COMANDO SPAWNPOKEMON EJECUTADO")
+
         pokemon = database.obtener_pokemon_local_nombre(
             nombre.lower()
         )
@@ -218,8 +218,18 @@ async def setup(bot):
                 "❌ Pokémon no encontrado."
             )
 
-        await ctx.send(
-            f"✅ Encontrado: {pokemon['nombre']}\n"
-            f"ID: {pokemon['id']}\n"
-            f"Tipos: {pokemon['tipos']}"
+        data, species = await servicios.obtener_pokemon(
+            ctx.bot.session,
+            pokemon["id"]
         )
+
+        embed = discord.Embed(
+            title="🧪 Spawn de prueba",
+            description=f"**{pokemon['nombre']}**"
+        )
+
+        embed.set_image(
+            url=data["sprites"]["other"]["official-artwork"]["front_default"]
+        )
+
+        await ctx.send(embed=embed)
