@@ -1224,10 +1224,10 @@ def cargar_cache_pokemon():
                 special_defense,
                 speed,
                 height,
-                weight
+                weight,
+                pokeapi_id
             FROM pokemon_data
         """)
-
         filas = cursor.fetchall()
 
         POKEMON_CACHE.clear()
@@ -1252,7 +1252,8 @@ def cargar_cache_pokemon():
                 "special_defense": fila[10],
                 "speed": fila[11],
                 "height": fila[12],
-                "weight": fila[13]
+                "weight": fila[13],
+                "pokeapi_id": fila[14]
             }
 
             # Caché completa

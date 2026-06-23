@@ -798,7 +798,7 @@ class InfoView(discord.ui.View):
                 f"https://raw.githubusercontent.com/PokeAPI/sprites/master/"
                 f"sprites/pokemon/{poke_id}.png"
             )
-                    
+                        
         titulo = f"{self.data['nombre'].capitalize()} {'✨ Shiny' if self.mostrar_shiny else ''}"
         
         # 1. Obtenemos datos de DB (fecha, cantidad y capturas con flags)
