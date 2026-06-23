@@ -361,7 +361,7 @@ async def spawn(ctx):
         )
 
         # FASE 4: Procesamiento de datos
-        for resultado in resultados:
+        for pid, resultado in zip(ids_spawn, resultados):
 
             if isinstance(resultado, Exception):
                 log.warning(
@@ -374,12 +374,19 @@ async def spawn(ctx):
             if not data:
                 continue
 
-            es_shiny = (random.randint(1, 500) == 1)
-            pokemon_id = data["id"]
-            rareza = rarezas_spawn[pokemon_id]
+            es_shiny = (
+                random.randint(1, 500) == 1
+            )
+
+            rareza = rarezas_spawn[pid]
 
             data_pokes.append(
-                (data, species, es_shiny, rareza)
+                (
+                    data,
+                    species,
+                    es_shiny,
+                    rareza
+                )
             )
 
         # NUEVO BLOQUE
