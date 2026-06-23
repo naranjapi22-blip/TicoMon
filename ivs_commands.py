@@ -186,7 +186,10 @@ class IvsCommands(commands.Cog):
         dex_id = None
 
         if pokemon:
-            dex_id = pokemon["id"]
+            dex_id = pokemon.get(
+            "pokeapi_id",
+            pokemon["id"]
+            )
         nat_stats = NATURALEZAS.get(naturaleza.capitalize(), NATURALEZAS["Fuerte"])
 
         def format_stat_con_nat(base_lvl50, iv, stat_name):
