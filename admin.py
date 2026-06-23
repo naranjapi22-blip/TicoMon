@@ -311,3 +311,18 @@ async def setup(bot):
             embed=embed,
             file=archivo
         )
+    @bot.command(name="daralola")
+    @commands.has_permissions(administrator=True)
+    async def daralola(ctx):
+
+        id_pokemon, resultado = await database.guardar_captura(
+            user_id=ctx.author.id,
+            pokemon_nombre="raichu-alola",
+            tamano_factor=1.0,
+            es_shiny=False,
+            pokeball="Pokéball"
+        )
+
+        await ctx.send(
+            f"✅ Raichu-Alola agregado. ID: {id_pokemon}"
+        )
