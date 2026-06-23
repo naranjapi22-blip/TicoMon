@@ -766,16 +766,8 @@ class InfoView(discord.ui.View):
                     item.disabled = True
     def crear_embed(self):
 
-        poke_id = self.data["id"]
+        poke_id = self.data["pokeapi_id"]
 
-        MAPEO_FORMAS = {
-            "raichu-alola": 10100,
-        }
-
-        poke_id = MAPEO_FORMAS.get(
-            self.data["nombre"].lower(),
-            poke_id
-        )
         if self.mostrar_shiny:
             url_grande = (
                 f"https://raw.githubusercontent.com/PokeAPI/sprites/master/"
