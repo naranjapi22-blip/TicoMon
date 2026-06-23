@@ -1486,3 +1486,21 @@ def obtener_pokeapi_id(nombre):
         "pokeapi_id",
         pokemon["id"]
     )
+def obtener_pokeapi_id_por_id(id_interno):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("""
+            SELECT pokeapi_id
+            FROM pokemon_data
+            WHERE id = %s
+        """, (id_interno,))
+
+        fila = cursor.fetchone()
+
+        return fila[0] if fila else None
+
+    finally:
+        cursor.close()
+        conn.close()

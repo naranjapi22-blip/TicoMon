@@ -331,7 +331,7 @@ async def spawn(ctx):
         tasks = [
             servicios.obtener_pokemon(
                 bot.session,
-                pid
+                database.obtener_pokeapi_id_por_id(pid)
             )
             for pid in ids_spawn
         ]
