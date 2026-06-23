@@ -2,7 +2,7 @@ import discord
 
 import database
 
-MAX_POKEDEX = 1025
+MAX_POKEDEX = 1077
 
 
 def iniciar_modulo_ranking(bot):

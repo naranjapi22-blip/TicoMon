@@ -287,7 +287,58 @@ MAPA_POKEMON = {"736"	:	"739"	,
 "1022"	:	"1184"	,
 "1023"	:	"1185"	,
 "1024"	:	"1186"  ,
-"10100":    "738"   ,
+"10100": "735",   # raichu-alola
+"10101": "736",   # rattata-alola
+"10102": "737",   # raticate-alola
+"10103": "797",   # vulpix-alola
+"10104": "798",   # ninetales-alola
+"10105": "748",   # diglett-alola
+"10106": "749",   # dugtrio-alola
+"10107": "742",   # meowth-alola
+"10108": "743",   # persian-alola
+"10109": "789",   # geodude-alola
+"10110": "790",   # graveler-alola
+"10111": "791",   # golem-alola
+"10112": "744",   # grimer-alola
+"10113": "745",   # muk-alola
+"10114": "800",   # exeggutor-alola
+"10115": "769",   # marowak-alola
+
+"10159": "758",   # meowth-galar
+"10160": "992",   # ponyta-galar
+"10161": "993",   # rapidash-galar
+"10162": "998",   # slowpoke-galar
+"10163": "999",   # slowbro-galar
+"10164": "962",   # farfetchd-galar
+"10165": "991",   # weezing-galar
+"10166": "964",   # mr-mime-galar
+"10170": "1001",  # slowking-galar
+"10171": "960",   # corsola-galar
+"10172": "955",   # zigzagoon-galar
+"10173": "956",   # linoone-galar
+"10174": "994",   # darumaka-galar
+"10177": "966",   # yamask-galar
+"10178": "996",   # stunfisk-galar
+
+"10229": "1024",  # growlithe-hisui
+"10230": "1025",  # arcanine-hisui
+"10231": "1028",  # voltorb-hisui
+"10232": "1029",  # electrode-hisui
+"10233": "1014",  # typhlosion-hisui
+"10234": "1018",  # qwilfish-hisui
+"10235": "1030",  # sneasel-hisui
+"10236": "1015",  # samurott-hisui
+"10237": "1020",  # lilligant-hisui
+"10238": "1033",  # zorua-hisui
+"10239": "1034",  # zoroark-hisui
+"10240": "1035",  # braviary-hisui
+"10241": "1022",  # sliggoo-hisui
+"10242": "1023",  # goodra-hisui
+"10243": "1032",  # avalugg-hisui
+"10244": "1013",  # decidueye-hisui
+"10250": "1039",  # tauros-paldea-combat-breed
+"10251": "1041",  # tauros-paldea-blaze-breed
+"10252": "1040",  # tauros-paldea-aqua-breed
 }
 
 def obtener_id_gif(dex_id):

@@ -11,7 +11,7 @@ class PokedexCog(commands.Cog):
         self.regiones = {
             "1": (1, 151), "2": (152, 251), "3": (252, 386),
             "4": (387, 493), "5": (494, 649), "6": (650, 721),
-            "7": (722, 809), "8": (810, 905), "9": (906, 1025)
+            "7": (722, 809), "8": (810, 905), "9": (906, 1077)
         }
 
     @commands.command(name="pokedex")
@@ -35,7 +35,7 @@ class PokedexCog(commands.Cog):
             ids_usuario = {id_p for id_p in mapping.values() if id_p}
 
             # Preparar variables iniciales
-            inicio, fin = 1, 1025
+            inicio, fin = 1, 1077
             region_label = "Colección"
             es_coleccion_personal = True
             ids_finales = ids_usuario

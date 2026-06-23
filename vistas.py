@@ -103,7 +103,7 @@ class TipoSelect(discord.ui.Select):
 
 # --- CLASE PRINCIPAL DE POKEDEX ---
 class PokedexView(discord.ui.View):
-    def __init__(self, region, tenidos, inicio=1, fin=1025, es_coleccion_personal=False, modo_shiny=False):
+    def __init__(self, region, tenidos, inicio=1, fin=1077, es_coleccion_personal=False, modo_shiny=False):
         super().__init__(timeout=60)
         self.region = region
         self.tenidos = sorted(list(tenidos))
@@ -122,7 +122,7 @@ class PokedexView(discord.ui.View):
         # self.add_item(TipoSelect(self.tenidos)) # Asegúrate de tener esta clase definida
 
 class PokedexView(discord.ui.View):
-    def __init__(self, region, tenidos, inicio=1, fin=1025, es_coleccion_personal=False, modo_shiny=False):
+    def __init__(self, region, tenidos, inicio=1, fin=1077, es_coleccion_personal=False, modo_shiny=False):
         super().__init__(timeout=60)
         self.region = region
         self.tenidos = sorted(list(tenidos))

@@ -92,7 +92,7 @@ def iniciar_modulo_perfil(bot):
         especies_unicas = len(set(todas_las_capturas))
         total_shinies = len(capturas_shinies)
         
-        MAX_POKEDEX = 1025
+        MAX_POKEDEX = 1077
         porcentaje_completado = (especies_unicas / MAX_POKEDEX) * 100 if MAX_POKEDEX > 0 else 0
         bloques_llenos = int(porcentaje_completado // 10)
         barra_visual = "🟩" * bloques_llenos + "⬛" * (10 - bloques_llenos)
