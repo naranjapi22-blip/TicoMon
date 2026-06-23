@@ -1253,7 +1253,7 @@ def cargar_cache_pokemon():
                 "speed": fila[11],
                 "height": fila[12],
                 "weight": fila[13],
-                "pokeapi_id": fila[14]
+                "pokeapi_id": fila[14] if fila[14] else fila[0]
             }
 
             # Caché completa

@@ -42,11 +42,21 @@ async def crear_embed_equipo(user: discord.Member, session, slots: list | None =
     )
     for slot in slots:
         if slot:
-            poke_id = database.obtener_id_pokemon(
+
+            pokemon = database.obtener_pokemon_local_nombre(
                 slot["nombre"]
             )
-            if poke_id:
-                embed.set_thumbnail(url=SPRITE_URL.format(poke_id=poke_id))
+
+            if pokemon:
+
+                poke_id = pokemon["pokeapi_id"]
+
+                embed.set_thumbnail(
+                    url=SPRITE_URL.format(
+                        poke_id=poke_id
+                    )
+                )
+
                 break
     return embed
 

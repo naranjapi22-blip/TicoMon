@@ -6,6 +6,7 @@ import os
 import random
 import psycopg2
 from mapeo_pokes import obtener_id_gif
+from logger_config import log
 
 # --- 1. CONFIGURACIÓN DE BASE DE DATOS DEL PERFIL ---
 def init_db_perfil():
@@ -117,50 +118,79 @@ def iniciar_modulo_perfil(bot):
 
         # --- LÓGICA DE VISUALIZACIÓN DEL DESTACADO ---
         datos_destacado = obtener_destacado(usuario.id)
-        
+
         if datos_destacado:
+
             destacado_nombre, es_shiny_db = datos_destacado
             es_shiny = bool(es_shiny_db)
-            
-        dex_id = database.obtener_id_pokemon(
-            destacado_nombre
-        )
 
-        if dex_id:
-            try:
-
-                id_final = obtener_id_gif(dex_id)
-
-                path_folder = "shiny" if es_shiny else "regular"
-
-                url_gif = (
-                    f"{"https://pub-23cb564f6c174627926c1ac0409563d4.r2.dev"}/"
-                    f"{path_folder}/{id_final}.gif"
-                )
-
-                embed.set_image(url=url_gif)
-
-            except Exception as e:
-                log.warning(
-                    f"No se pudo cargar GIF para "
-                    f"{destacado_nombre}: {e}"
-                )
-
-            titulo_destacado = (
-                f"**{destacado_nombre.capitalize()}** "
-                f"{'✨' if es_shiny else ''}"
+            pokemon = database.obtener_pokemon_local_nombre(
+                destacado_nombre
             )
+
+            dex_id = None
+
+            if pokemon:
+                dex_id = pokemon.get(
+                    "pokeapi_id",
+                    pokemon["id"]
+                )
+
+            if dex_id:
+
+                try:
+
+                    id_final = obtener_id_gif(dex_id)
+
+                    path_folder = (
+                        "shiny"
+                        if es_shiny
+                        else "regular"
+                    )
+
+                    url_gif = (
+                        "https://pub-23cb564f6c174627926c1ac0409563d4.r2.dev/"
+                        f"{path_folder}/{id_final}.gif"
+                    )
+
+                    embed.set_image(url=url_gif)
+
+                except Exception as e:
+
+                    print(
+                        f"Error cargando GIF "
+                        f"{destacado_nombre}: {e}"
+                    )
+
+                titulo_destacado = (
+                    f"**{destacado_nombre.capitalize()}** "
+                    f"{'✨' if es_shiny else ''}"
+                )
+
+                embed.add_field(
+                    name="🌟 Compañero Destacado",
+                    value=titulo_destacado,
+                    inline=False
+                )
+
+                if es_shiny:
+                    embed.color = discord.Color.gold()
+
+        else:
 
             embed.add_field(
                 name="🌟 Compañero Destacado",
-                value=titulo_destacado,
+                value=(
+                    "*No ha destacado ningún Pokémon.*\n"
+                    "Usa `!destacar <nombre>`"
+                ),
                 inline=False
             )
 
             if es_shiny:
                 embed.color = discord.Color.gold()
-        else:
-            embed.add_field(name="🌟 Compañero Destacado", value="*No ha destacado ningún Pokémon.*\nUsa `@Bot destacar <nombre> [shiny]`", inline=False)
+            else:
+                embed.add_field(name="🌟 Compañero Destacado", value="*No ha destacado ningún Pokémon.*\nUsa `@Bot destacar <nombre> [shiny]`", inline=False)
             
         await ctx.send(embed=embed)
 
