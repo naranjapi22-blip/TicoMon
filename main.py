@@ -364,7 +364,7 @@ async def spawn(ctx):
             if not data:
                 continue
 
-            es_shiny = (random.randint(1, 50) == 1)
+            es_shiny = (random.randint(1, 500) == 1)
             pokemon_id = data["id"]
             rareza = rarezas_spawn[pokemon_id]
 
@@ -1716,4 +1716,5 @@ async def settrainer(ctx):
     await ctx.send(
         f"Trainer: {trainer}"
     )
+
 bot.run(TOKEN)
