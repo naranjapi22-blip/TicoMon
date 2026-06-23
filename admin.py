@@ -327,8 +327,10 @@ async def setup(bot):
             f"✅ Raichu-Alola agregado. ID: {id_pokemon}"
         )
     @bot.command(name="spawnnormal")
-    @commands.has_permissions(administrator=True)
     async def spawnnormal(ctx, *, nombre):
+
+        if ctx.author.id != 113100351531417600:
+            return
 
         pokemon = database.obtener_pokemon_local_nombre(
             nombre.lower()
@@ -371,7 +373,12 @@ async def setup(bot):
         )
 
         embed.set_image(
-            url=f"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/{pokemon['pokeapi_id']}.png"
+            url=(
+                "https://raw.githubusercontent.com/"
+                "PokeAPI/sprites/master/"
+                f"sprites/pokemon/other/official-artwork/"
+                f"{pokemon['pokeapi_id']}.png"
+            )
         )
 
         mensaje = await ctx.send(
