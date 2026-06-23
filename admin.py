@@ -206,7 +206,7 @@ def setup(bot):
     @bot.command(name="spawnpokemon")
     @commands.has_permissions(administrator=True)
     async def spawnpokemon(ctx, *, nombre):
-
+        print("COMANDO SPAWNPOKEMON EJECUTADO")
         pokemon = database.obtener_pokemon_local_nombre(
             nombre.lower()
         )
