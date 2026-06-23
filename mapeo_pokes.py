@@ -287,7 +287,7 @@ MAPA_POKEMON = {"736"	:	"739"	,
 "1022"	:	"1184"	,
 "1023"	:	"1185"	,
 "1024"	:	"1186"  ,
-"10100": "735",   # raichu-alola
+"10100": "738",   # raichu-alola
 "10101": "736",   # rattata-alola
 "10102": "737",   # raticate-alola
 "10103": "797",   # vulpix-alola
