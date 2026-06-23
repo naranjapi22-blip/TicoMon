@@ -334,6 +334,10 @@ async def spawn(ctx):
                 database.obtener_pokeapi_id_por_id(pid)
             )
             for pid in ids_spawn
+                print(
+                f"{pid} -> "
+                f"{poke['nombre']} -> "
+                f"{poke['pokeapi_id']}"
         ]
 
         import time
