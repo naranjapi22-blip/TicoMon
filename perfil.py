@@ -142,14 +142,16 @@ def iniciar_modulo_perfil(bot):
 
                     id_final = obtener_id_gif(dex_id)
 
-                    path_folder = (
-                        "shiny"
-                        if es_shiny
-                        else "regular"
+                    print(
+                        f"DESTACADO={destacado_nombre} | "
+                        f"DEX={dex_id} | "
+                        f"GIF={id_final}"
                     )
 
+                    path_folder = "shiny" if es_shiny else "regular"
+
                     url_gif = (
-                        "https://pub-23cb564f6c174627926c1ac0409563d4.r2.dev/"
+                        f"https://pub-23cb564f6c174627926c1ac0409563d4.r2.dev/"
                         f"{path_folder}/{id_final}.gif"
                     )
 
