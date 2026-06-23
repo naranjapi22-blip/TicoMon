@@ -329,7 +329,7 @@ async def spawn(ctx):
 
         for pid in ids_spawn:
 
-            poke = database.obtener_pokemon_local_id(pid)
+            poke = database.obtener_pokemon_local(pid)
 
             print(
                 f"{pid} -> "
