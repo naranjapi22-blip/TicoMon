@@ -287,9 +287,11 @@ MAPA_POKEMON = {"736"	:	"739"	,
 "1022"	:	"1184"	,
 "1023"	:	"1185"	,
 "1024"	:	"1186"  ,
+"10091": "736",   # rattata-alola
+"10092": "737",   # raticate-alola
 "10100": "738",   # raichu-alola
-"10101": "736",   # rattata-alola
-"10102": "737",   # raticate-alola
+"10101": "795",   # sandshrew-alola
+"10102": "796",   # sandslash-alola
 "10103": "797",   # vulpix-alola
 "10104": "798",   # ninetales-alola
 "10105": "748",   # diglett-alola
@@ -304,21 +306,25 @@ MAPA_POKEMON = {"736"	:	"739"	,
 "10114": "800",   # exeggutor-alola
 "10115": "769",   # marowak-alola
 
-"10159": "758",   # meowth-galar
-"10160": "992",   # ponyta-galar
-"10161": "993",   # rapidash-galar
-"10162": "998",   # slowpoke-galar
-"10163": "999",   # slowbro-galar
-"10164": "962",   # farfetchd-galar
-"10165": "991",   # weezing-galar
-"10166": "964",   # mr-mime-galar
-"10170": "1001",  # slowking-galar
-"10171": "960",   # corsola-galar
-"10172": "955",   # zigzagoon-galar
-"10173": "956",   # linoone-galar
-"10174": "994",   # darumaka-galar
-"10177": "966",   # yamask-galar
-"10178": "996",   # stunfisk-galar
+# ===== GALAR =====
+
+"10161": "758",   # meowth-galar
+"10162": "992",   # ponyta-galar
+"10163": "993",   # rapidash-galar
+"10164": "998",   # slowpoke-galar
+"10165": "999",   # slowbro-galar
+"10166": "962",   # farfetchd-galar
+"10167": "991",   # weezing-galar
+"10168": "964",   # mr-mime-galar
+"10172": "1001",  # slowking-galar
+"10173": "960",   # corsola-galar
+"10174": "955",   # zigzagoon-galar
+"10175": "956",   # linoone-galar
+"10176": "994",   # darumaka-galar
+"10179": "966",   # yamask-galar
+"10180": "996",   # stunfisk-galar
+
+# ===== HISUI =====
 
 "10229": "1024",  # growlithe-hisui
 "10230": "1025",  # arcanine-hisui
@@ -336,6 +342,9 @@ MAPA_POKEMON = {"736"	:	"739"	,
 "10242": "1023",  # goodra-hisui
 "10243": "1032",  # avalugg-hisui
 "10244": "1013",  # decidueye-hisui
+
+# ===== PALDEA =====
+
 "10250": "1039",  # tauros-paldea-combat-breed
 "10251": "1041",  # tauros-paldea-blaze-breed
 "10252": "1040",  # tauros-paldea-aqua-breed
