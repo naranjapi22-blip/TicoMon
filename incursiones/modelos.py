@@ -1,5 +1,6 @@
 class Incursion:
 
+
     def __init__(self, canal_id, alpha):
         self.canal_id = canal_id
         self.alpha = alpha
@@ -11,6 +12,8 @@ class Incursion:
 
         self.mensaje_id = None
         self.selector_mensaje_id = None
+
+        self.combate_iniciado = False
 
     @property
     def llena(self):

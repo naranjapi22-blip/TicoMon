@@ -30,7 +30,11 @@ async def timeout_incursion(raid, canal, segundos=30):
 
     await asyncio.sleep(segundos)
 
-    if len(raid.jugadores) < 3 and raid.estado == "esperando":
+    if raid.estado in (
+        "esperando",
+        "lista",
+        "seleccion"
+    ):
 
         raid.cerrar()
 
@@ -39,5 +43,5 @@ async def timeout_incursion(raid, canal, segundos=30):
         )
 
         await canal.send(
-            "❌ La incursión se cerró por falta de jugadores."
+            "❌ La incursión se cerró por inactividad."
         )

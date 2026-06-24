@@ -1,8 +1,36 @@
+import asyncio
 import discord
 
-from incursiones.incursion_manager import obtener_por_mensaje
+from incursiones.incursion_manager import (
+    obtener_por_mensaje,
+    eliminar_incursion
+)
 from incursiones.selector_incursion import SelectorIncursion
 from database import obtener_equipo_selector
+
+
+async def timeout_seleccion(
+    raid,
+    canal
+):
+
+    await asyncio.sleep(60)
+
+    if raid.estado != "seleccion":
+        return
+
+    if raid.selecciones_completas:
+        return
+
+    raid.cerrar()
+
+    eliminar_incursion(
+        raid.canal_id
+    )
+
+    await canal.send(
+        "❌ La incursión fue cancelada porque no todos seleccionaron su Pokémon a tiempo."
+    )
 
 
 class VistaIncursion(discord.ui.View):
@@ -112,7 +140,23 @@ class VistaIncursion(discord.ui.View):
             )
             return
 
+        if raid.estado != "lista":
+
+            await interaction.response.send_message(
+                "La incursión ya fue iniciada.",
+                ephemeral=True
+            )
+            return
+
         raid.estado = "seleccion"
+
+        # Timeout de selección
+        asyncio.create_task(
+            timeout_seleccion(
+                raid,
+                interaction.channel
+            )
+        )
 
         await interaction.response.defer()
 

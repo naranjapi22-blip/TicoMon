@@ -43,6 +43,9 @@ class SelectorIncursion(SelectorPokemon):
         vista_previa=None
     ):
 
+        # Evita que selectores viejos modifiquen la incursión
+        if self.raid.combate_iniciado:
+            return
 
         for captura_id in self.seleccionados:
 
@@ -70,6 +73,11 @@ class SelectorIncursion(SelectorPokemon):
 
         if self.raid.selecciones_completas:
 
+            if self.raid.combate_iniciado:
+                return
+
+            self.raid.combate_iniciado = True
+            self.raid.estado = "combatiendo"
 
             await iniciar_incursion(
                 self.raid,
