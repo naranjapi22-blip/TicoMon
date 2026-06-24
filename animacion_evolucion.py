@@ -104,30 +104,32 @@ PURPLE = (
 # FUENTES
 # ============================================================
 
+from pathlib import Path
+from PIL import ImageFont
+
 def load_font(size: int):
 
-    fuentes = [
+    posibles_fuentes = [
 
-        "assets/fonts/Roboto-Bold.ttf",
+        Path("fonts/DejaVuSans-Bold.ttf"),
 
-        "assets/fonts/Poppins-Bold.ttf",
+        Path("assets/fonts/DejaVuSans-Bold.ttf"),
 
-        "arial.ttf"
+        Path("DejaVuSans-Bold.ttf"),
+
+        Path("arial.ttf")
 
     ]
 
-    for fuente in fuentes:
+    for fuente in posibles_fuentes:
 
         try:
-
             return ImageFont.truetype(
-                fuente,
+                str(fuente),
                 size
             )
-
-        except:
-
-            pass
+        except Exception:
+            continue
 
     return ImageFont.load_default()
 
