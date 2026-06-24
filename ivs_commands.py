@@ -134,19 +134,30 @@ class PaginatorView(View):
 
 
 _ID_SPLIT = re.compile(r"[\s,;]+")
+_INVISIBLE = re.compile(
+    r"[\u200b-\u200d\ufeff\u2060\u00ad\u200e\u200f\u202a-\u202e\u2066-\u2069"
+    r"\u00a0\u202f\u205f\u3000"
+    r"]+"
+)
+_HASH_ID = re.compile(r"#(\d+)")
 
 
 def _parsear_ids_liberar(texto: str) -> list[int]:
     ids: list[int] = []
     vistos: set[int] = set()
+    texto = _INVISIBLE.sub("", texto)
     for part in _ID_SPLIT.split(texto):
-        part = part.strip().strip("`[]#")
+        part = _INVISIBLE.sub("", part).strip().strip("`[]#")
         if not part:
             continue
-        try:
-            cap_id = int(part)
-        except ValueError:
-            continue
+        hash_match = _HASH_ID.search(part)
+        if hash_match:
+            cap_id = int(hash_match.group(1))
+        else:
+            try:
+                cap_id = int(part)
+            except ValueError:
+                continue
         if cap_id not in vistos:
             vistos.add(cap_id)
             ids.append(cap_id)

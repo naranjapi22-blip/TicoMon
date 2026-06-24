@@ -662,7 +662,7 @@ class ComandosView(discord.ui.View):
             value=(
                 "`!batalla @usuario`\n"
                 "`!comparar @usuario`\n"
-                "`!comprar-pokemon @usuario`"
+                "`!comparar-pokemon @usuario`"
             ),
             inline=False
         )
