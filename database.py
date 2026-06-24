@@ -1563,6 +1563,62 @@ def obtener_duplicados_detalle(user_id, limite=10, tipo=None) -> list[dict]:
             conn.close()
 
 
+def obtener_exclusivos_vs_usuario(user_id, otro_user_id) -> list[dict]:
+    """Capturas del otro usuario en especies que user_id no tiene."""
+    conn = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        uid = _uid(user_id)
+        otro_uid = _uid(otro_user_id)
+
+        cursor.execute(
+            """
+            SELECT
+                c.pokemon_nombre,
+                c.id,
+                c.es_shiny,
+                ((c.iv_hp + c.iv_atk + c.iv_def + c.iv_spa + c.iv_spd + c.iv_spe) * 100.0 / 186) AS iv_pct
+            FROM capturas c
+            WHERE c.user_id = %s
+            AND c.pokemon_nombre NOT IN (
+                SELECT DISTINCT pokemon_nombre
+                FROM capturas
+                WHERE user_id = %s
+            )
+            ORDER BY c.pokemon_nombre, c.id
+            """,
+            (otro_uid, uid),
+        )
+
+        grupos: dict[str, dict] = {}
+        orden: list[str] = []
+        for nombre, cap_id, es_shiny, iv_pct in cursor.fetchall():
+            if nombre not in grupos:
+                orden.append(nombre)
+                grupos[nombre] = {
+                    "nombre": nombre,
+                    "cantidad": 0,
+                    "capturas": [],
+                }
+            grupos[nombre]["capturas"].append(
+                {
+                    "id": int(cap_id),
+                    "iv_pct": float(iv_pct or 0),
+                    "es_shiny": bool(es_shiny),
+                }
+            )
+            grupos[nombre]["cantidad"] += 1
+
+        return [grupos[nombre] for nombre in orden]
+    except Exception as e:
+        log.error(f"🚨 Error obtener_exclusivos_vs_usuario: {e}", exc_info=True)
+        return []
+    finally:
+        if conn:
+            conn.close()
+
+
 def obtener_nombre_local(id_pokemon):
 
     return pokemon_por_id.get(

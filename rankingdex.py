@@ -3,6 +3,76 @@ import discord
 import database
 
 MAX_POKEDEX = 1077
+COMPARE_POR_PAGINA = 5
+
+
+def _formatear_capturas_compare(capturas: list[dict], max_mostrar: int = 10) -> str:
+    partes = []
+    for captura in capturas[:max_mostrar]:
+        shiny = " ✨" if captura["es_shiny"] else ""
+        partes.append(f"`#{captura['id']}` {int(captura['iv_pct'])}%{shiny}")
+    texto = " · ".join(partes)
+    restantes = len(capturas) - max_mostrar
+    if restantes > 0:
+        texto += f"\n_…y {restantes} copia(s) más_"
+    return texto
+
+
+def _bloque_compare(grupo: dict) -> str:
+    return (
+        f"**{grupo['nombre'].capitalize()}** · x{grupo['cantidad']}\n"
+        f"{_formatear_capturas_compare(grupo['capturas'])}\n"
+    )
+
+
+def _paginas_compare(grupos: list[dict]) -> list[str]:
+    paginas = []
+    for inicio in range(0, len(grupos), COMPARE_POR_PAGINA):
+        bloque = grupos[inicio : inicio + COMPARE_POR_PAGINA]
+        paginas.append("".join(_bloque_compare(g) for g in bloque))
+    return paginas
+
+
+class VistaCompare(discord.ui.View):
+    def __init__(self, user, paginas: list[str], titulo: str):
+        super().__init__(timeout=120)
+        self.user = user
+        self.paginas = paginas
+        self.titulo = titulo
+        self.pagina_actual = 0
+        if len(paginas) <= 1:
+            for item in self.children:
+                item.disabled = True
+
+    def embed_actual(self) -> discord.Embed:
+        embed = discord.Embed(
+            title=self.titulo,
+            description=self.paginas[self.pagina_actual],
+            color=discord.Color.blue(),
+        )
+        embed.set_footer(
+            text=f"Página {self.pagina_actual + 1}/{len(self.paginas)} · !ivs [ID] para detalles"
+        )
+        return embed
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user != self.user:
+            await interaction.response.send_message(
+                "❌ Solo el dueño puede cambiar de página.",
+                ephemeral=True,
+            )
+            return False
+        return True
+
+    @discord.ui.button(label="◀️", style=discord.ButtonStyle.secondary)
+    async def anterior(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.pagina_actual = (self.pagina_actual - 1) % len(self.paginas)
+        await interaction.response.edit_message(embed=self.embed_actual(), view=self)
+
+    @discord.ui.button(label="▶️", style=discord.ButtonStyle.secondary)
+    async def siguiente(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.pagina_actual = (self.pagina_actual + 1) % len(self.paginas)
+        await interaction.response.edit_message(embed=self.embed_actual(), view=self)
 
 
 def iniciar_modulo_ranking(bot):
@@ -236,3 +306,21 @@ def iniciar_modulo_ranking(bot):
 
         finally:
             conn.close()
+
+    @bot.command(name="comprar-pokemon")
+    async def comprar_pokemon(ctx, miembro: discord.Member):
+        if miembro.bot:
+            return await ctx.send("❌ No puedes comparar con un bot.")
+        if miembro.id == ctx.author.id:
+            return await ctx.send("❌ No puedes compararte contigo mismo.")
+
+        grupos = database.obtener_exclusivos_vs_usuario(ctx.author.id, miembro.id)
+        if not grupos:
+            return await ctx.send(
+                f"No hay especies que **{miembro.display_name}** tenga y tú no."
+            )
+
+        titulo = f"Especies de {miembro.display_name} que tú no tienes"
+        paginas = _paginas_compare(grupos)
+        vista = VistaCompare(ctx.author, paginas, titulo)
+        await ctx.send(embed=vista.embed_actual(), view=vista)

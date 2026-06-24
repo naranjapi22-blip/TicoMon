@@ -1,3 +1,5 @@
+import re
+
 import discord
 from discord.ext import commands
 import database
@@ -131,21 +133,23 @@ class PaginatorView(View):
             await interaction.response.edit_message(embed=self.create_embed())
 
 
-def _parsear_ids_liberar(*tokens: str) -> list[int]:
+_ID_SPLIT = re.compile(r"[\s,;]+")
+
+
+def _parsear_ids_liberar(texto: str) -> list[int]:
     ids: list[int] = []
     vistos: set[int] = set()
-    for raw in tokens:
-        for part in str(raw).replace(",", " ").split():
-            part = part.strip()
-            if not part:
-                continue
-            try:
-                cap_id = int(part)
-            except ValueError:
-                continue
-            if cap_id not in vistos:
-                vistos.add(cap_id)
-                ids.append(cap_id)
+    for part in _ID_SPLIT.split(texto):
+        part = part.strip().strip("`[]#")
+        if not part:
+            continue
+        try:
+            cap_id = int(part)
+        except ValueError:
+            continue
+        if cap_id not in vistos:
+            vistos.add(cap_id)
+            ids.append(cap_id)
     return ids
 
 
@@ -510,11 +514,11 @@ class IvsCommands(commands.Cog):
             conn.close()
 
     @commands.command(name="new-liberar")
-    async def new_liberar(self, ctx, *ids):
-        captura_ids = _parsear_ids_liberar(*ids)
+    async def new_liberar(self, ctx, *, ids: str):
+        captura_ids = _parsear_ids_liberar(ids)
         if not captura_ids:
             return await ctx.send(
-                "❌ Indica al menos un ID. Ejemplo: `!new-liberar 101 202 303`"
+                "❌ Indica al menos un ID. Ejemplo: `!new-liberar 101, 202, 303`"
             )
 
         try:

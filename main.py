@@ -659,7 +659,8 @@ class ComandosView(discord.ui.View):
             name="⚔️ Combate",
             value=(
                 "`!batalla @usuario`\n"
-                "`!comparar`"
+                "`!comparar @usuario`\n"
+                "`!comprar-pokemon @usuario`"
             ),
             inline=False
         )
