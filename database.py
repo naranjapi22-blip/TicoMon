@@ -765,7 +765,7 @@ def liberar_capturas_usuario(user_id, captura_ids: list[int]) -> list[dict]:
             if pequeno is not None:
                 ids_record.add(int(pequeno))
 
-        ids_a_liberar = [i for i in ids_encontrados if i not in ids_record]
+        ids_a_liberar = [i for i in ids if i in capturas and i not in ids_record]
         if not ids_a_liberar:
             return []
 
@@ -1578,8 +1578,11 @@ def obtener_exclusivos_vs_usuario(user_id, otro_user_id) -> list[dict]:
                 c.pokemon_nombre,
                 c.id,
                 c.es_shiny,
-                ((c.iv_hp + c.iv_atk + c.iv_def + c.iv_spa + c.iv_spd + c.iv_spe) * 100.0 / 186) AS iv_pct
+                ((c.iv_hp + c.iv_atk + c.iv_def + c.iv_spa + c.iv_spd + c.iv_spe) * 100.0 / 186) AS iv_pct,
+                p.tipos,
+                p.id AS dex_id
             FROM capturas c
+            LEFT JOIN pokemon_data p ON LOWER(c.pokemon_nombre) = LOWER(p.nombre)
             WHERE c.user_id = %s
             AND c.pokemon_nombre NOT IN (
                 SELECT DISTINCT pokemon_nombre
@@ -1593,12 +1596,14 @@ def obtener_exclusivos_vs_usuario(user_id, otro_user_id) -> list[dict]:
 
         grupos: dict[str, dict] = {}
         orden: list[str] = []
-        for nombre, cap_id, es_shiny, iv_pct in cursor.fetchall():
+        for nombre, cap_id, es_shiny, iv_pct, tipos, dex_id in cursor.fetchall():
             if nombre not in grupos:
                 orden.append(nombre)
                 grupos[nombre] = {
                     "nombre": nombre,
                     "cantidad": 0,
+                    "tipos": tipos or "",
+                    "dex_id": dex_id,
                     "capturas": [],
                 }
             grupos[nombre]["capturas"].append(
