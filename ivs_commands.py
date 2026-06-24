@@ -129,6 +129,26 @@ class PaginatorView(View):
         if self.current_page < len(self.pages) - 1:
             self.current_page += 1
             await interaction.response.edit_message(embed=self.create_embed())
+
+
+def _parsear_ids_liberar(*tokens: str) -> list[int]:
+    ids: list[int] = []
+    vistos: set[int] = set()
+    for raw in tokens:
+        for part in str(raw).replace(",", " ").split():
+            part = part.strip()
+            if not part:
+                continue
+            try:
+                cap_id = int(part)
+            except ValueError:
+                continue
+            if cap_id not in vistos:
+                vistos.add(cap_id)
+                ids.append(cap_id)
+    return ids
+
+
 class IvsCommands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -337,7 +357,6 @@ class IvsCommands(commands.Cog):
         
         await ctx.send(embed=embed)
 
-
     @commands.command(name="liberar")
     async def liberar(self, ctx, id_pokemon: int):
 
@@ -489,6 +508,43 @@ class IvsCommands(commands.Cog):
 
             cursor.close()
             conn.close()
+
+    @commands.command(name="new-liberar")
+    async def new_liberar(self, ctx, *ids):
+        captura_ids = _parsear_ids_liberar(*ids)
+        if not captura_ids:
+            return await ctx.send(
+                "❌ Indica al menos un ID. Ejemplo: `!new-liberar 101 202 303`"
+            )
+
+        try:
+            liberados = database.liberar_capturas_usuario(ctx.author.id, captura_ids)
+        except Exception as e:
+            log.error(f"[NEW-LIBERAR ERROR] {e}", exc_info=True)
+            return await ctx.send("❌ Ocurrió un error al liberar los Pokémon.")
+
+        if not liberados:
+            return await ctx.send(
+                "No se liberó ningún Pokémon (IDs no encontrados o con récord)."
+            )
+
+        lineas = []
+        max_detalle = 15
+        for pokemon in liberados[:max_detalle]:
+            emoji = "✨ " if pokemon["es_shiny"] else ""
+            lineas.append(
+                f"• {emoji}**{pokemon['nombre'].capitalize()}** "
+                f"`{pokemon['id']}` → 🍬 {pokemon['tipo_caramelo']}"
+            )
+        extra = len(liberados) - max_detalle
+        if extra > 0:
+            lineas.append(f"_…y {extra} más_")
+
+        await ctx.send(
+            f"🗑️ Liberaste **{len(liberados)}** Pokémon. "
+            f"🍬 Recibiste **{len(liberados)}** caramelos.\n"
+            + "\n".join(lineas)
+        )
 
 
 async def setup(bot):
