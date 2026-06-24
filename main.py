@@ -1611,6 +1611,7 @@ async def elegir(ctx, id_pokemon: int, opcion: int):
             return
 
         destino, metodo, tier, tipo_caramelo = evo
+
         origen_db = database.obtener_pokemon_local_nombre(
             pokemon_nombre
         )
@@ -1626,10 +1627,21 @@ async def elegir(ctx, id_pokemon: int, opcion: int):
         gif_destino = obtener_id_gif(
             destino_db["id"]
         )
-        print(
-            gif_origen,
-            gif_destino
+
+        anim = EvolutionAnimation(
+
+            sprite_from=f"sprites/regular/{gif_origen}.png",
+
+            sprite_to=f"sprites/regular/{gif_destino}.png",
+
+            pokemon_from=pokemon_nombre.capitalize(),
+
+            pokemon_to=destino.capitalize()
+
         )
+
+        gif = anim.gif_bytes()
+
         costo = get_evolution_cost(
             tier
         )
@@ -1652,12 +1664,19 @@ async def elegir(ctx, id_pokemon: int, opcion: int):
             )
             return
 
+
         remove_candy(
             ctx.author.id,
             tipo_caramelo,
             costo
         )
 
+        await ctx.send(
+            file=discord.File(
+                gif,
+                filename="evolucion.gif"
+            )
+        )
         evolve_pokemon(
             id_pokemon,
             destino
