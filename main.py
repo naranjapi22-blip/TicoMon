@@ -1652,67 +1652,168 @@ async def elegir(ctx, id_pokemon: int, opcion: int):
 
         cursor.close()
         conn.close()
-@bot.command()
-async def duplicados(ctx, tipo=None):
 
-    duplicados = database.obtener_duplicados(
-        ctx.author.id,
-        limite=15,
-        tipo=tipo
+
+DUPLICADOS_POR_PAGINA = 5
+
+
+def _normalizar_tipo_filtro(tipo: str) -> str | None:
+    """Valida el tipo (español o inglés) y devuelve el nombre en inglés para la query."""
+    clave = tipo.lower().strip()
+    if clave in admin.TRADUCCIONES_TIPOS:
+        return admin.TRADUCCIONES_TIPOS[clave]
+    if clave in admin.TRADUCCIONES_TIPOS.values():
+        return clave
+    return None
+
+
+def _formatear_tipos_duplicados(tipos_raw: str) -> str:
+    if not tipos_raw:
+        return "?"
+    return ", ".join(t.strip().capitalize() for t in tipos_raw.split(",") if t.strip())
+
+
+def _formatear_capturas_duplicado(capturas: list[dict], max_mostrar: int = 10) -> str:
+    partes = []
+    for captura in capturas[:max_mostrar]:
+        shiny = " ✨" if captura["es_shiny"] else ""
+        partes.append(f"`#{captura['id']}` {int(captura['iv_pct'])}%{shiny}")
+    texto = " · ".join(partes)
+    restantes = len(capturas) - max_mostrar
+    if restantes > 0:
+        texto += f"\n_…y {restantes} copia(s) más_"
+    return texto
+
+
+def _bloque_duplicado(indice: int, grupo: dict) -> str:
+    medallas = ["🥇", "🥈", "🥉"]
+    puesto = medallas[indice] if indice < 3 else f"{indice + 1}."
+    return (
+        f"{puesto} **{grupo['nombre'].capitalize()}** · x{grupo['cantidad']} · "
+        f"{_formatear_tipos_duplicados(grupo['tipos'])}\n"
+        f"{_formatear_capturas_duplicado(grupo['capturas'])}\n"
     )
 
-    if not duplicados:
 
+def _paginas_duplicados(grupos: list[dict]) -> list[str]:
+    paginas = []
+    for inicio in range(0, len(grupos), DUPLICADOS_POR_PAGINA):
+        bloque = grupos[inicio : inicio + DUPLICADOS_POR_PAGINA]
+        paginas.append("".join(_bloque_duplicado(inicio + i, g) for i, g in enumerate(bloque)))
+    return paginas
+
+
+class VistaDuplicados(discord.ui.View):
+    def __init__(self, user, paginas: list[str], titulo: str):
+        super().__init__(timeout=120)
+        self.user = user
+        self.paginas = paginas
+        self.titulo = titulo
+        self.pagina_actual = 0
+        if len(paginas) <= 1:
+            for item in self.children:
+                item.disabled = True
+
+    def embed_actual(self) -> discord.Embed:
+        embed = discord.Embed(
+            title=self.titulo,
+            description=self.paginas[self.pagina_actual],
+            color=discord.Color.orange(),
+        )
+        embed.set_footer(
+            text=f"Página {self.pagina_actual + 1}/{len(self.paginas)} · !ivs [ID] para detalles"
+        )
+        return embed
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user != self.user:
+            await interaction.response.send_message(
+                "❌ Solo el dueño puede cambiar de página.",
+                ephemeral=True,
+            )
+            return False
+        return True
+
+    @discord.ui.button(label="◀️", style=discord.ButtonStyle.secondary)
+    async def anterior(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.pagina_actual = (self.pagina_actual - 1) % len(self.paginas)
+        await interaction.response.edit_message(embed=self.embed_actual(), view=self)
+
+    @discord.ui.button(label="▶️", style=discord.ButtonStyle.secondary)
+    async def siguiente(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.pagina_actual = (self.pagina_actual + 1) % len(self.paginas)
+        await interaction.response.edit_message(embed=self.embed_actual(), view=self)
+
+
+@bot.command()
+async def duplicados(ctx, tipo=None):
+    tipo_filtro = None
+    if tipo:
+        tipo_filtro = _normalizar_tipo_filtro(tipo)
+        if not tipo_filtro:
+            return await ctx.send(f"❌ Tipo inválido: {tipo}")
+
+    duplicados_lista = database.obtener_duplicados(
+        ctx.author.id,
+        limite=15,
+        tipo=tipo_filtro,
+    )
+
+    if not duplicados_lista:
         if tipo:
             return await ctx.send(
                 f"🎉 No tienes duplicados de tipo **{tipo.capitalize()}**."
             )
-
-        return await ctx.send(
-            "🎉 No tienes Pokémon duplicados."
-        )
+        return await ctx.send("🎉 No tienes Pokémon duplicados.")
 
     descripcion = ""
+    medallas = ["🥇", "🥈", "🥉"]
 
-    medallas = [
-        "🥇",
-        "🥈",
-        "🥉"
-    ]
-
-    for i, (nombre, cantidad) in enumerate(
-        duplicados,
-        start=1
-    ):
-
-        puesto = (
-            medallas[i - 1]
-            if i <= 3
-            else f"{i}."
-        )
-
-        descripcion += (
-            f"{puesto} "
-            f"**{nombre.capitalize()}** "
-            f"x{cantidad}\n"
-        )
+    for i, (nombre, cantidad) in enumerate(duplicados_lista, start=1):
+        puesto = medallas[i - 1] if i <= 3 else f"{i}."
+        descripcion += f"{puesto} **{nombre.capitalize()}** x{cantidad}\n"
 
     titulo = "📦 Pokémon más repetidos"
-
     if tipo:
         titulo += f" ({tipo.capitalize()})"
 
     embed = discord.Embed(
         title=titulo,
         description=descripcion,
-        color=discord.Color.orange()
+        color=discord.Color.orange(),
     )
-
-    embed.set_footer(
-        text="Tus Pokémon con más copias."
-    )
-
+    embed.set_footer(text="Tus Pokémon con más copias.")
     await ctx.send(embed=embed)
+
+
+@bot.command(name="new-duplicados")
+async def new_duplicados(ctx, tipo=None):
+    tipo_filtro = None
+    if tipo:
+        tipo_filtro = _normalizar_tipo_filtro(tipo)
+        if not tipo_filtro:
+            return await ctx.send(f"❌ Tipo inválido: {tipo}")
+
+    grupos = database.obtener_duplicados_detalle(
+        ctx.author.id,
+        limite=15,
+        tipo=tipo_filtro,
+    )
+
+    if not grupos:
+        if tipo:
+            return await ctx.send(
+                f"🎉 No tienes duplicados de tipo **{tipo.capitalize()}**."
+            )
+        return await ctx.send("🎉 No tienes Pokémon duplicados.")
+
+    titulo = "📦 Pokémon duplicados"
+    if tipo:
+        titulo += f" ({tipo.capitalize()})"
+
+    paginas = _paginas_duplicados(grupos)
+    vista = VistaDuplicados(ctx.author, paginas, titulo)
+    await ctx.send(embed=vista.embed_actual(), view=vista)
 
 
 @bot.command()

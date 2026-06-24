@@ -719,6 +719,97 @@ def obtener_capturas_por_ids(user_id, captura_ids: list) -> dict[int, tuple]:
             conn.close()
 
 
+def liberar_capturas_usuario(user_id, captura_ids: list[int]) -> list[dict]:
+    """
+    Libera capturas del usuario en lote.
+    Omite IDs inexistentes, de otros usuarios o con récord.
+    Retorna {id, nombre, es_shiny, tipo_caramelo} por cada Pokémon liberado.
+    """
+    ids = list(dict.fromkeys(int(i) for i in captura_ids))
+    if not ids:
+        return []
+
+    conn = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        uid = _uid(user_id)
+        placeholders = ",".join(["%s"] * len(ids))
+
+        cursor.execute(
+            f"""
+            SELECT id, pokemon_nombre, es_shiny
+            FROM capturas
+            WHERE user_id = %s AND id IN ({placeholders})
+            """,
+            [uid, *ids],
+        )
+        capturas = {int(fila[0]): (fila[1], bool(fila[2])) for fila in cursor.fetchall()}
+        if not capturas:
+            return []
+
+        ids_encontrados = list(capturas.keys())
+        ph = ",".join(["%s"] * len(ids_encontrados))
+        cursor.execute(
+            f"""
+            SELECT id_pokemon_grande, id_pokemon_pequeno
+            FROM RECORDS_ESPECIE
+            WHERE id_pokemon_grande IN ({ph}) OR id_pokemon_pequeno IN ({ph})
+            """,
+            [*ids_encontrados, *ids_encontrados],
+        )
+        ids_record = set()
+        for grande, pequeno in cursor.fetchall():
+            if grande is not None:
+                ids_record.add(int(grande))
+            if pequeno is not None:
+                ids_record.add(int(pequeno))
+
+        ids_a_liberar = [i for i in ids_encontrados if i not in ids_record]
+        if not ids_a_liberar:
+            return []
+
+        ph_del = ",".join(["%s"] * len(ids_a_liberar))
+        cursor.execute(
+            f"""
+            DELETE FROM capturas
+            WHERE user_id = %s AND id IN ({ph_del})
+            """,
+            [uid, *ids_a_liberar],
+        )
+        conn.commit()
+
+        liberados = []
+        for cap_id in ids_a_liberar:
+            nombre, es_shiny = capturas[cap_id]
+            add_candy_for_pokemon(user_id, nombre, 1)
+
+            cursor.execute(
+                "SELECT tipos FROM pokemon_data WHERE nombre = %s",
+                (nombre.lower(),),
+            )
+            row = cursor.fetchone()
+            tipo = row[0].split(",")[0] if row else "?"
+            liberados.append(
+                {
+                    "id": cap_id,
+                    "nombre": nombre,
+                    "es_shiny": es_shiny,
+                    "tipo_caramelo": tipo,
+                }
+            )
+        return liberados
+
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        log.error(f"🚨 Error liberar_capturas_usuario: {e}", exc_info=True)
+        raise
+    finally:
+        if conn:
+            conn.close()
+
+
 def obtener_inventario_usuario(user_id) -> list[dict]:
     """Inventario completo con dex id y tipos desde pokemon_data."""
     conn = None
@@ -1396,6 +1487,81 @@ def obtener_duplicados(user_id, limite=15, tipo=None):
     conn.close()
 
     return resultado
+
+def obtener_duplicados_detalle(user_id, limite=10, tipo=None) -> list[dict]:
+    """Especies duplicadas con tipos y cada copia (id, iv%, shiny)."""
+    conn = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        uid = _uid(user_id)
+        filtro_tipo = ""
+        params_ranked = [uid]
+
+        if tipo:
+            filtro_tipo = "AND p.tipos ILIKE %s"
+            params_ranked.append(f"%{tipo.lower()}%")
+
+        params_ranked.append(limite)
+
+        cursor.execute(
+            f"""
+            WITH ranked AS (
+                SELECT c.pokemon_nombre, COUNT(*) AS cantidad
+                FROM capturas c
+                LEFT JOIN pokemon_data p ON LOWER(c.pokemon_nombre) = LOWER(p.nombre)
+                WHERE c.user_id = %s
+                {filtro_tipo}
+                GROUP BY c.pokemon_nombre
+                HAVING COUNT(*) > 1
+                ORDER BY cantidad DESC
+                LIMIT %s
+            )
+            SELECT
+                c.pokemon_nombre,
+                r.cantidad,
+                p.tipos,
+                p.id AS dex_id,
+                c.id,
+                c.es_shiny,
+                ((c.iv_hp + c.iv_atk + c.iv_def + c.iv_spa + c.iv_spd + c.iv_spe) * 100.0 / 186) AS iv_pct
+            FROM capturas c
+            JOIN ranked r ON c.pokemon_nombre = r.pokemon_nombre
+            LEFT JOIN pokemon_data p ON LOWER(c.pokemon_nombre) = LOWER(p.nombre)
+            WHERE c.user_id = %s
+            ORDER BY r.cantidad DESC, c.pokemon_nombre, c.id
+            """,
+            [*params_ranked, uid],
+        )
+
+        grupos: dict[str, dict] = {}
+        orden: list[str] = []
+        for nombre, cantidad, tipos, dex_id, cap_id, es_shiny, iv_pct in cursor.fetchall():
+            if nombre not in grupos:
+                orden.append(nombre)
+                grupos[nombre] = {
+                    "nombre": nombre,
+                    "cantidad": int(cantidad),
+                    "tipos": tipos or "",
+                    "dex_id": dex_id,
+                    "capturas": [],
+                }
+            grupos[nombre]["capturas"].append(
+                {
+                    "id": int(cap_id),
+                    "iv_pct": float(iv_pct or 0),
+                    "es_shiny": bool(es_shiny),
+                }
+            )
+
+        return [grupos[nombre] for nombre in orden]
+    except Exception as e:
+        log.error(f"🚨 Error obtener_duplicados_detalle: {e}", exc_info=True)
+        return []
+    finally:
+        if conn:
+            conn.close()
+
 
 def obtener_nombre_local(id_pokemon):
 
