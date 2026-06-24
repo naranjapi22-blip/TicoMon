@@ -1664,6 +1664,9 @@ async def elegir(ctx, id_pokemon: int, opcion: int):
             )
             return
 
+        mensaje = await ctx.send(
+            "✨ Evolucionando..."
+        )
 
         remove_candy(
             ctx.author.id,
@@ -1671,11 +1674,29 @@ async def elegir(ctx, id_pokemon: int, opcion: int):
             costo
         )
 
-        await ctx.send(
-            file=discord.File(
-                gif,
-                filename="evolucion.gif"
-            )
+        evolve_pokemon(
+            id_pokemon,
+            destino
+        )
+
+        embed = discord.Embed(
+            title="✨ Evolución completada",
+            description=(
+                f"**{pokemon_nombre.capitalize()}** evolucionó a "
+                f"**{destino.capitalize()}**."
+            ),
+            color=discord.Color.gold()
+        )
+
+        await mensaje.edit(
+            content=None,
+            embed=embed,
+            attachments=[
+                discord.File(
+                    gif,
+                    filename="evolucion.gif"
+                )
+            ]
         )
         evolve_pokemon(
             id_pokemon,

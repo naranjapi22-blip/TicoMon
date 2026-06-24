@@ -1561,12 +1561,14 @@ class EvolutionAnimation:
         for frame in range(FPS):
 
             self.frames.append(
-
-                self.render_frame(
-                    frame
-                )
-
+                self.render_frame(frame)
             )
+
+        # Mantener el último frame visible
+        ultimo = self.frames[-1]
+
+        for _ in range(12):
+            self.frames.append(ultimo.copy())
 
         return self.frames
 
