@@ -9,6 +9,8 @@ from discord import Member
 import psycopg2
 from discord.ext import commands
 from dotenv import load_dotenv
+from animacion_evolucion import EvolutionAnimation
+from mapeo_pokes import obtener_id_gif
 # Módulos locales y de proyecto
 import database
 import servicios
@@ -1609,7 +1611,25 @@ async def elegir(ctx, id_pokemon: int, opcion: int):
             return
 
         destino, metodo, tier, tipo_caramelo = evo
+        origen_db = database.obtener_pokemon_local_nombre(
+            pokemon_nombre
+        )
 
+        destino_db = database.obtener_pokemon_local_nombre(
+            destino
+        )
+
+        gif_origen = obtener_id_gif(
+            origen_db["id"]
+        )
+
+        gif_destino = obtener_id_gif(
+            destino_db["id"]
+        )
+        print(
+            gif_origen,
+            gif_destino
+        )
         costo = get_evolution_cost(
             tier
         )
