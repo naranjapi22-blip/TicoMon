@@ -1703,11 +1703,6 @@ async def elegir(ctx, id_pokemon: int, opcion: int):
             destino
         )
 
-        await ctx.send(
-            f"✨ **{pokemon_nombre.capitalize()}** "
-            f"evolucionó a "
-            f"**{destino.capitalize()}**!"
-        )
 
     finally:
 
