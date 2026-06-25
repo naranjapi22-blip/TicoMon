@@ -100,6 +100,7 @@ def elegir_movimiento_automatico(
         "sandstorm",
         "hail",
         "future sight",
+        "water sprout",
     }
 
     species_id = to_id_str(species_showdown)
