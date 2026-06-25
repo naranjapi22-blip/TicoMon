@@ -1,6 +1,6 @@
 import discord
 import asyncio
-import imagencomb
+import imagen_raid
 
 from incursiones.combate_raid import CombateRaidSim
 
@@ -101,7 +101,7 @@ class VistaCombateIncursion:
 
         # Imagen inicial
 
-        buffer = await imagencomb.generar_escena_raid(
+        buffer = await imagen_raid.generar_escena_raid(
             self.session,
             self.combate.jugadores,
             self.combate.hp_jugadores,
@@ -156,7 +156,7 @@ class VistaCombateIncursion:
 
             estado_final = self.construir_estado()
 
-            buffer = await imagencomb.generar_escena_raid(
+            buffer = await imagen_raid.generar_escena_raid(
                 self.session,
                 self.combate.jugadores,
                 self.combate.hp_jugadores,
