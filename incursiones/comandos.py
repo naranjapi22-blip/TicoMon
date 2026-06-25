@@ -20,7 +20,7 @@ class Incursiones(commands.Cog):
 
     @commands.command()
     async def incursion(self, ctx):
-
+        print(">>> Entró a !incursion")
         existente = obtener_incursion(ctx.channel.id)
 
         if existente:
