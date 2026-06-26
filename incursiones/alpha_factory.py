@@ -52,7 +52,7 @@ def crear_alpha(nombre_pokemon):
         },
 
         # Vida del jefe
-        "hp_max": pokemon["hp"] * 35,
+        "hp_max": pokemon["hp"] * 50,
 
         # Estos valores son informativos
         "atk": pokemon["attack"],
@@ -67,7 +67,7 @@ def crear_alpha(nombre_pokemon):
 
         # Nerf global al daño del Alpha
         "damage_multiplier": 0.6,
-        "defense_multiplier": 0.5,
+        "defense_multiplier": 0.6,
         "id": pokemon["id"],
         "shiny": False
     }]
