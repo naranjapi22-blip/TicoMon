@@ -67,7 +67,7 @@ def crear_alpha(nombre_pokemon):
 
         # Nerf global al daño del Alpha
         "damage_multiplier": 0.6,
-        "defense_multiplier": 0.7,
+        "defense_multiplier": 0.5,
         "id": pokemon["id"],
         "shiny": False
     }]
