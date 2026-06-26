@@ -14,7 +14,7 @@ class Incursion:
         self.selector_mensaje_id = None
 
         self.combate_iniciado = False
-
+        self.timeout_sala = None
     @property
     def llena(self):
         return len(self.jugadores) >= 3
@@ -49,4 +49,9 @@ class Incursion:
         return True
     
     def cerrar(self):
+
         self.estado = "cerrada"
+
+        if self.timeout_sala:
+            self.timeout_sala.cancel()
+            self.timeout_sala = None

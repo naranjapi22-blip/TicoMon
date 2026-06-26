@@ -14,7 +14,7 @@ async def timeout_seleccion(
     canal
 ):
 
-    await asyncio.sleep(60)
+    await asyncio.sleep(120)
 
     if raid.estado != "seleccion":
         return
@@ -150,7 +150,12 @@ class VistaIncursion(discord.ui.View):
 
         raid.estado = "seleccion"
 
-        # Timeout de selección
+        if raid.timeout_sala:
+            raid.timeout_sala.cancel()
+            raid.timeout_sala = None
+
+        raid.estado = "seleccion"
+
         asyncio.create_task(
             timeout_seleccion(
                 raid,
@@ -192,3 +197,48 @@ class VistaIncursion(discord.ui.View):
                     raid
                 )
             )
+
+    @discord.ui.button(
+        label="Cancelar Incursión",
+        style=discord.ButtonStyle.gray
+    )
+    async def cancelar_incursion(
+        self,
+        interaction: discord.Interaction,
+        button: discord.ui.Button
+    ):
+
+        raid = obtener_por_mensaje(
+            interaction.message.id
+        )
+
+        if not raid:
+            await interaction.response.send_message(
+                "La incursión ya no existe.",
+                ephemeral=True
+            )
+            return
+
+        if raid.estado == "seleccion":
+            await interaction.response.send_message(
+                "La selección ya comenzó.",
+                ephemeral=True
+            )
+            return
+
+        raid.cerrar()
+
+        eliminar_incursion(
+            raid.canal_id
+        )
+
+        for child in self.children:
+            child.disabled = True
+
+        await interaction.response.edit_message(
+            view=self
+        )
+
+        await interaction.channel.send(
+            "❌ La incursión fue cancelada."
+        )

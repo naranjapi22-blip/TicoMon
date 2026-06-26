@@ -5,7 +5,15 @@ incursiones_activas = {}
 
 def crear_incursion(canal_id, canal, alpha):
     raid = Incursion(canal_id, alpha)
-    asyncio.create_task(timeout_incursion(raid, canal, 30))
+
+    raid.timeout_sala = asyncio.create_task(
+        timeout_incursion(
+            raid,
+            canal,
+            120
+        )
+    )
+
     incursiones_activas[canal_id] = raid
 
     return raid
@@ -26,14 +34,16 @@ def obtener_por_mensaje(mensaje_id):
             return raid
 
     return None
-async def timeout_incursion(raid, canal, segundos=30):
+async def timeout_incursion(raid, canal, segundos=120):
 
     await asyncio.sleep(segundos)
 
+    if raid.estado == "cerrada":
+        return
+
     if raid.estado in (
         "esperando",
-        "lista",
-        "seleccion"
+        "lista"
     ):
 
         raid.cerrar()
