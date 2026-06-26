@@ -249,7 +249,7 @@ async def generar_escena_raid(
     for i, (p, img) in enumerate(sprites):
 
         if len(sprites) == 3:
-            y = [270, 210, 270][i]
+            y = [270, 270, 270][i]
 
         elif len(sprites) == 2:
             y = 240
