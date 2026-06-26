@@ -719,6 +719,119 @@ def obtener_capturas_por_ids(user_id, captura_ids: list) -> dict[int, tuple]:
             conn.close()
 
 
+def tipo_primario_desde_tipos(tipos_val) -> str:
+    """Primer tipo desde pokemon_data.tipos (texto CSV o array de PostgreSQL)."""
+    if not tipos_val:
+        return "?"
+    if isinstance(tipos_val, (list, tuple)):
+        return str(tipos_val[0]).strip().lower()
+    return str(tipos_val).split(",")[0].strip().lower()
+
+
+def _nombre_captura_db(val) -> str:
+    if val is None:
+        return "?"
+    if isinstance(val, (list, tuple)):
+        return str(val[0]).strip().lower() if val else "?"
+    return str(val).strip().lower()
+
+
+def preview_liberar_capturas(user_id, captura_ids: list[int]) -> dict:
+    """
+    Vista previa antes de liberar en lote.
+    Retorna liberables, bloqueados por récord y IDs no encontrados.
+    """
+    ids = list(dict.fromkeys(int(i) for i in captura_ids))
+    vacio = {"liberables": [], "bloqueados_record": [], "no_encontrados": []}
+    if not ids:
+        return vacio
+
+    conn = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        uid = _uid(user_id)
+        placeholders = ",".join(["%s"] * len(ids))
+        iv_pct = (
+            "((iv_hp + iv_atk + iv_def + iv_spa + iv_spd + iv_spe) * 100 / 186)"
+        )
+
+        cursor.execute(
+            f"""
+            SELECT
+                id,
+                pokemon_nombre,
+                es_shiny,
+                iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe,
+                {iv_pct}
+            FROM capturas
+            WHERE user_id = %s AND id IN ({placeholders})
+            """,
+            [uid, *ids],
+        )
+        filas = cursor.fetchall()
+        encontrados: dict[int, dict] = {}
+        for fila in filas:
+            cap_id = int(fila[0])
+            encontrados[cap_id] = {
+                "id": cap_id,
+                "nombre": _nombre_captura_db(fila[1]),
+                "es_shiny": bool(fila[2]),
+                "iv_hp": int(fila[3]),
+                "iv_atk": int(fila[4]),
+                "iv_def": int(fila[5]),
+                "iv_spa": int(fila[6]),
+                "iv_spd": int(fila[7]),
+                "iv_spe": int(fila[8]),
+                "iv_pct": float(fila[9] or 0),
+            }
+
+        if not encontrados:
+            return {**vacio, "no_encontrados": ids}
+
+        ids_encontrados = list(encontrados.keys())
+        ph = ",".join(["%s"] * len(ids_encontrados))
+        cursor.execute(
+            f"""
+            SELECT id_pokemon_grande, id_pokemon_pequeno
+            FROM RECORDS_ESPECIE
+            WHERE id_pokemon_grande IN ({ph}) OR id_pokemon_pequeno IN ({ph})
+            """,
+            [*ids_encontrados, *ids_encontrados],
+        )
+        record_por_id: dict[int, str] = {}
+        for grande, pequeno in cursor.fetchall():
+            if grande is not None:
+                record_por_id[int(grande)] = "XXL"
+            if pequeno is not None:
+                record_por_id[int(pequeno)] = "XXS"
+
+        liberables = []
+        bloqueados_record = []
+        for cap_id in ids:
+            if cap_id not in encontrados:
+                continue
+            pokemon = encontrados[cap_id]
+            tipo_record = record_por_id.get(cap_id)
+            if tipo_record:
+                bloqueados_record.append({**pokemon, "tipo_record": tipo_record})
+            else:
+                liberables.append(pokemon)
+
+        no_encontrados = [cap_id for cap_id in ids if cap_id not in encontrados]
+        return {
+            "liberables": liberables,
+            "bloqueados_record": bloqueados_record,
+            "no_encontrados": no_encontrados,
+        }
+    except Exception as e:
+        log.error(f"🚨 Error preview_liberar_capturas: {e}", exc_info=True)
+        raise
+    finally:
+        if conn:
+            conn.close()
+
+
 def liberar_capturas_usuario(user_id, captura_ids: list[int]) -> list[dict]:
     """
     Libera capturas del usuario en lote.
@@ -728,6 +841,10 @@ def liberar_capturas_usuario(user_id, captura_ids: list[int]) -> list[dict]:
     ids = list(dict.fromkeys(int(i) for i in captura_ids))
     if not ids:
         return []
+
+    log.info(
+        f"[LIBERAR] Inicio user_id={user_id} ids_solicitados={ids}"
+    )
 
     conn = None
     try:
@@ -744,7 +861,10 @@ def liberar_capturas_usuario(user_id, captura_ids: list[int]) -> list[dict]:
             """,
             [uid, *ids],
         )
-        capturas = {int(fila[0]): (fila[1], bool(fila[2])) for fila in cursor.fetchall()}
+        capturas = {
+            int(fila[0]): (_nombre_captura_db(fila[1]), bool(fila[2]))
+            for fila in cursor.fetchall()
+        }
         if not capturas:
             return []
 
@@ -789,7 +909,7 @@ def liberar_capturas_usuario(user_id, captura_ids: list[int]) -> list[dict]:
                 (nombre.lower(),),
             )
             row = cursor.fetchone()
-            tipo = row[0].split(",")[0] if row else "?"
+            tipo = tipo_primario_desde_tipos(row[0] if row else None)
             liberados.append(
                 {
                     "id": cap_id,
@@ -798,6 +918,10 @@ def liberar_capturas_usuario(user_id, captura_ids: list[int]) -> list[dict]:
                     "tipo_caramelo": tipo,
                 }
             )
+        log.info(
+            f"[LIBERAR] Completado user_id={user_id} "
+            f"liberados={len(liberados)} ids={[p['id'] for p in liberados]}"
+        )
         return liberados
 
     except Exception as e:

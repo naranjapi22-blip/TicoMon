@@ -105,6 +105,126 @@ class VistaConfirmarLiberacion(
         )
 
         self.stop()
+
+
+class VistaConfirmarLiberacionLote(discord.ui.View):
+    def __init__(self, author: discord.Member, captura_ids: list[int]):
+        super().__init__(timeout=60)
+        self.author = author
+        self.captura_ids = captura_ids
+        self.confirmado = False
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user != self.author:
+            await interaction.response.send_message(
+                "❌ Solo quien ejecutó el comando puede confirmar.",
+                ephemeral=True,
+            )
+            return False
+        return True
+
+    @discord.ui.button(
+        label="Confirmar liberación",
+        style=discord.ButtonStyle.danger,
+        emoji="🗑️",
+    )
+    async def confirmar(
+        self,
+        interaction: discord.Interaction,
+        button: discord.ui.Button,
+    ):
+        self.confirmado = True
+        await interaction.response.defer()
+        self.stop()
+
+    @discord.ui.button(
+        label="Cancelar",
+        style=discord.ButtonStyle.secondary,
+        emoji="❌",
+    )
+    async def cancelar(
+        self,
+        interaction: discord.Interaction,
+        button: discord.ui.Button,
+    ):
+        await interaction.response.edit_message(
+            content="❌ Liberación cancelada.",
+            embed=None,
+            view=None,
+        )
+        self.stop()
+
+
+def _linea_preview_liberar(pokemon: dict, extra: str = "") -> str:
+    shiny = "✨ " if pokemon.get("es_shiny") else ""
+    sufijo = f" {extra}" if extra else ""
+    return (
+        f"• {shiny}**{_nombre_display(pokemon['nombre'])}** "
+        f"`{pokemon['id']}` · `{int(pokemon['iv_pct'])}%` IV{sufijo}"
+    )
+
+
+def _embed_preview_liberar(preview: dict) -> discord.Embed:
+    liberables = preview["liberables"]
+    bloqueados = preview["bloqueados_record"]
+    no_encontrados = preview["no_encontrados"]
+
+    embed = discord.Embed(
+        title="🗑️ Confirmar liberación",
+        description="Revisa la lista antes de liberar. Esta acción no se puede deshacer.",
+        color=discord.Color.orange(),
+    )
+
+    if liberables:
+        lineas = [
+            _linea_preview_liberar(p)
+            for p in liberables[:20]
+        ]
+        extra = len(liberables) - 20
+        if extra > 0:
+            lineas.append(f"_…y {extra} más_")
+        embed.add_field(
+            name=f"A liberar ({len(liberables)})",
+            value="\n".join(lineas),
+            inline=False,
+        )
+
+    if bloqueados:
+        lineas = [
+            _linea_preview_liberar(
+                p,
+                extra=f"· récord **{p['tipo_record']}**",
+            )
+            for p in bloqueados[:10]
+        ]
+        extra = len(bloqueados) - 10
+        if extra > 0:
+            lineas.append(f"_…y {extra} más_")
+        embed.add_field(
+            name=f"Bloqueados por récord ({len(bloqueados)})",
+            value="\n".join(lineas),
+            inline=False,
+        )
+
+    if no_encontrados:
+        ids_txt = ", ".join(f"`{i}`" for i in no_encontrados[:15])
+        extra = len(no_encontrados) - 15
+        if extra > 0:
+            ids_txt += f" _…y {extra} más_"
+        embed.add_field(
+            name=f"No encontrados ({len(no_encontrados)})",
+            value=ids_txt,
+            inline=False,
+        )
+
+    if liberables:
+        embed.set_footer(text="Pulsa Confirmar para liberar solo los de la primera lista.")
+    else:
+        embed.set_footer(text="No hay Pokémon liberables en esta selección.")
+
+    return embed
+
+
 class PaginatorView(View):
     def __init__(self, pages, user):
         super().__init__(timeout=60)
@@ -162,6 +282,24 @@ def _parsear_ids_liberar(texto: str) -> list[int]:
             vistos.add(cap_id)
             ids.append(cap_id)
     return ids
+
+
+def _texto_db(val, campo: str = "valor") -> str:
+    """Normaliza valores de BD a str (p. ej. tipos array o composite)."""
+    if val is None:
+        return "?"
+    if isinstance(val, bytes):
+        return val.decode("utf-8", errors="replace")
+    if isinstance(val, (list, tuple)):
+        log.warning(
+            f"[LIBERAR] Campo {campo} con tipo {type(val).__name__}: {val!r}"
+        )
+        return _texto_db(val[0], campo) if val else "?"
+    return str(val)
+
+
+def _nombre_display(val) -> str:
+    return _texto_db(val, "nombre").capitalize()
 
 
 class IvsCommands(commands.Cog):
@@ -417,6 +555,7 @@ class IvsCommands(commands.Cog):
                 return
 
             nombre, shiny, hp, atk, de, spa, spd, spe = resultado
+            nombre = _texto_db(nombre, "pokemon_nombre")
 
             cursor.execute("""
                 SELECT
@@ -448,7 +587,7 @@ class IvsCommands(commands.Cog):
                     tipo_record = "XXS"
 
                 await ctx.send(
-                    f"⚠️ **{nombre.capitalize()}** posee un récord "
+                    f"⚠️ **{_nombre_display(nombre)}** posee un récord "
                     f"de tamaño **{tipo_record}**.\n\n"
                     f"Si lo liberas, el sistema buscará "
                     f"automáticamente un nuevo récord.\n\n"
@@ -518,10 +657,10 @@ class IvsCommands(commands.Cog):
 
                 return
 
-            tipo_primario = row[0].split(",")[0]
+            tipo_primario = database.tipo_primario_desde_tipos(row[0] if row else None)
 
             await ctx.send(
-                f"🗑️ Liberaste a {emoji} **{nombre.capitalize()}** "
+                f"🗑️ Liberaste a {emoji} **{_nombre_display(nombre)}** "
                 f"(ID `{id_pokemon}`)\n"
                 f"🍬 Recibiste 1 caramelo {tipo_primario}."
             )
@@ -537,6 +676,7 @@ class IvsCommands(commands.Cog):
             print(
                 f"[LIBERAR ERROR] {e}"
             )
+            log.error(f"[LIBERAR ERROR] user_id={ctx.author.id} id={id_pokemon}: {e}", exc_info=True)
 
         finally:
 
@@ -551,68 +691,94 @@ class IvsCommands(commands.Cog):
                 "❌ Indica al menos un ID. Ejemplo: `!new-liberar 101, 202, 303`"
             )
 
-        conn = database.get_connection()
-        cursor = conn.cursor()
-        lista = []
-        vista = VistaConfirmarLiberacion(13)
+        log.info(
+            f"[NEW-LIBERAR] Preview solicitado por user_id={ctx.author.id} "
+            f"ids={captura_ids}"
+        )
 
-        for id in captura_ids:
-            cursor.execute("""
-                SELECT
-                    pokemon_nombre
-                FROM capturas
-                WHERE id = %s
-                AND user_id = %s
-            """, (
-                str(id),
-                str(ctx.author.id)
-            ))
+        try:
+            preview = database.preview_liberar_capturas(ctx.author.id, captura_ids)
+        except Exception as e:
+            log.error(f"[NEW-LIBERAR ERROR] Preview falló: {e}", exc_info=True)
+            return await ctx.send("❌ Ocurrió un error al consultar los Pokémon.")
 
-            resultado = cursor.fetchone()
-            lista.append(f"{resultado.capitalize()} (ID `{id}`)\n")
-            
-        cursor.close()
-        conn.close()
+        liberables = preview["liberables"]
+        bloqueados = preview["bloqueados_record"]
+        no_encontrados = preview["no_encontrados"]
 
-        await ctx.send(
-                    f"Elegiste liberar a: {lista}\n"
-                    f"¿Deseas continuar?",
-                    view=vista
-                )
-        
+        log.info(
+            f"[NEW-LIBERAR] Preview user_id={ctx.author.id} "
+            f"liberables={len(liberables)} bloqueados={len(bloqueados)} "
+            f"no_encontrados={len(no_encontrados)}"
+        )
+
+        if not liberables and not bloqueados and not no_encontrados:
+            return await ctx.send("❌ No se encontraron Pokémon para esos IDs.")
+
+        embed = _embed_preview_liberar(preview)
+
+        if not liberables:
+            return await ctx.send(embed=embed)
+
+        ids_a_liberar = [p["id"] for p in liberables]
+        vista = VistaConfirmarLiberacionLote(ctx.author, ids_a_liberar)
+        mensaje = await ctx.send(embed=embed, view=vista)
         await vista.wait()
 
         if not vista.confirmado:
-
-            return        
+            log.info(
+                f"[NEW-LIBERAR] Cancelado por user_id={ctx.author.id} "
+                f"ids={ids_a_liberar}"
+            )
+            return
 
         try:
-            liberados = database.liberar_capturas_usuario(ctx.author.id, captura_ids)
+            liberados = database.liberar_capturas_usuario(
+                ctx.author.id,
+                ids_a_liberar,
+            )
         except Exception as e:
-            log.error(f"[NEW-LIBERAR ERROR] {e}", exc_info=True)
-            return await ctx.send("❌ Ocurrió un error al liberar los Pokémon.")
+            log.error(f"[NEW-LIBERAR ERROR] Liberación falló: {e}", exc_info=True)
+            await mensaje.edit(
+                content="❌ Ocurrió un error al liberar los Pokémon.",
+                embed=None,
+                view=None,
+            )
+            return
 
         if not liberados:
-            return await ctx.send(
-                "No se liberó ningún Pokémon (IDs no encontrados o con récord)."
+            await mensaje.edit(
+                content="No se liberó ningún Pokémon.",
+                embed=None,
+                view=None,
             )
+            return
 
         lineas = []
         max_detalle = 15
         for pokemon in liberados[:max_detalle]:
             emoji = "✨ " if pokemon["es_shiny"] else ""
             lineas.append(
-                f"• {emoji}**{pokemon['nombre'].capitalize()}** "
+                f"• {emoji}**{_nombre_display(pokemon['nombre'])}** "
                 f"`{pokemon['id']}` → 🍬 {pokemon['tipo_caramelo']}"
             )
         extra = len(liberados) - max_detalle
         if extra > 0:
             lineas.append(f"_…y {extra} más_")
 
-        await ctx.send(
-            f"🗑️ Liberaste **{len(liberados)}** Pokémon. "
-            f"🍬 Recibiste **{len(liberados)}** caramelos.\n"
-            + "\n".join(lineas)
+        log.info(
+            f"[NEW-LIBERAR] Completado user_id={ctx.author.id} "
+            f"liberados={len(liberados)} ids={[p['id'] for p in liberados]}"
+        )
+
+        await mensaje.edit(
+            content=(
+                f"🗑️ Liberaste **{len(liberados)}** Pokémon. "
+                f"🍬 Recibiste **{len(liberados)}** caramelos.\n"
+                + "\n".join(lineas)
+            ),
+            embed=None,
+            view=None,
         )
 
 
