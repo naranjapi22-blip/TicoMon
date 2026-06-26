@@ -105,6 +105,7 @@ class CombateRaidSim:
                     self.jugadores[objetivo]["tipo"]
                 )
             )
+            
 
             self.alpha["movimiento"] = movimiento
             self.alpha["movimiento_nombre"] = movimiento_nombre
