@@ -1843,33 +1843,59 @@ async def duplicados(ctx, tipo=None):
 
 
 @bot.command(name="new-duplicados")
-async def new_duplicados(ctx, tipo=None):
+async def new_duplicados(ctx, *, filtro=None):
     tipo_filtro = None
-    if tipo:
-        tipo_filtro = _normalizar_tipo_filtro(tipo)
+    pokemon_filtro = None
+
+    if filtro:
+        # Intentamos interpretarlo como un tipo
+        tipo_filtro = _normalizar_tipo_filtro(filtro)
+
+        # Si no es un tipo, intentamos como nombre de Pokémon
         if not tipo_filtro:
-            return await ctx.send(f"❌ Tipo inválido: {tipo}")
+            pokemon = database.obtener_pokemon_local_nombre(filtro)
+
+            if pokemon:
+                pokemon_filtro = pokemon["nombre"]
+            else:
+                return await ctx.send(
+                    f"❌ '{filtro}' no es un tipo ni un Pokémon válido."
+                )
 
     grupos = database.obtener_duplicados_detalle(
         ctx.author.id,
         limite=15,
         tipo=tipo_filtro,
+        pokemon=pokemon_filtro,
     )
 
     if not grupos:
-        if tipo:
+        if tipo_filtro:
             return await ctx.send(
-                f"🎉 No tienes duplicados de tipo **{tipo.capitalize()}**."
+                f"🎉 No tienes duplicados de tipo **{filtro.capitalize()}**."
             )
+
+        if pokemon_filtro:
+            return await ctx.send(
+                f"🎉 No tienes duplicados de **{pokemon_filtro.capitalize()}**."
+            )
+
         return await ctx.send("🎉 No tienes Pokémon duplicados.")
 
     titulo = "📦 Pokémon duplicados"
-    if tipo:
-        titulo += f" ({tipo.capitalize()})"
+
+    if tipo_filtro:
+        titulo += f" ({filtro.capitalize()})"
+    elif pokemon_filtro:
+        titulo += f" ({pokemon_filtro.capitalize()})"
 
     paginas = _paginas_duplicados(grupos)
     vista = VistaDuplicados(ctx.author, paginas, titulo)
-    await ctx.send(embed=vista.embed_actual(), view=vista)
+
+    await ctx.send(
+        embed=vista.embed_actual(),
+        view=vista,
+    )
 
 
 @bot.command()

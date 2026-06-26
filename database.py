@@ -1488,7 +1488,12 @@ def obtener_duplicados(user_id, limite=15, tipo=None):
 
     return resultado
 
-def obtener_duplicados_detalle(user_id, limite=10, tipo=None) -> list[dict]:
+def obtener_duplicados_detalle(
+    user_id,
+    limite=10,
+    tipo=None,
+    pokemon=None,
+) -> list[dict]:
     """Especies duplicadas con tipos y cada copia (id, iv%, shiny)."""
     conn = None
     try:
@@ -1496,12 +1501,15 @@ def obtener_duplicados_detalle(user_id, limite=10, tipo=None) -> list[dict]:
         cursor = conn.cursor()
         uid = _uid(user_id)
         filtro_tipo = ""
+        filtro_pokemon = ""
         params_ranked = [uid]
 
         if tipo:
             filtro_tipo = "AND p.tipos ILIKE %s"
             params_ranked.append(f"%{tipo.lower()}%")
-
+        if pokemon:
+            filtro_pokemon = "AND LOWER(c.pokemon_nombre) = %s"
+            params_ranked.append(pokemon.lower())
         params_ranked.append(limite)
 
         cursor.execute(
@@ -1512,6 +1520,7 @@ def obtener_duplicados_detalle(user_id, limite=10, tipo=None) -> list[dict]:
                 LEFT JOIN pokemon_data p ON LOWER(c.pokemon_nombre) = LOWER(p.nombre)
                 WHERE c.user_id = %s
                 {filtro_tipo}
+                {filtro_pokemon}
                 GROUP BY c.pokemon_nombre
                 HAVING COUNT(*) > 1
                 ORDER BY cantidad DESC
