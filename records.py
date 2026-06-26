@@ -73,12 +73,18 @@ def recalcular_record_liberado(
     cursor,
     pokemon_nombre,
     captura_id,
-    tipo_record
+    tipo_record,
+    excluir_ids=None,
 ):
+    excluir = {int(captura_id)}
+    if excluir_ids:
+        excluir.update(int(i) for i in excluir_ids)
+    ph = ",".join(["%s"] * len(excluir))
+    excluir_sql = f"AND id NOT IN ({ph})"
 
     if tipo_record == "XXL":
 
-        cursor.execute("""
+        cursor.execute(f"""
             SELECT
                 id,
                 user_id,
@@ -86,13 +92,13 @@ def recalcular_record_liberado(
                 fecha
             FROM capturas
             WHERE pokemon_nombre = %s
-              AND id <> %s
+              {excluir_sql}
               AND tamano_factor >= 1.2
             ORDER BY tamano_factor DESC
             LIMIT 1
         """, (
             pokemon_nombre,
-            captura_id
+            *excluir,
         ))
 
         nuevo = cursor.fetchone()
@@ -130,7 +136,7 @@ def recalcular_record_liberado(
             ))
     elif tipo_record == "XXS":
 
-        cursor.execute("""
+        cursor.execute(f"""
             SELECT
                 id,
                 user_id,
@@ -138,13 +144,13 @@ def recalcular_record_liberado(
                 fecha
             FROM capturas
             WHERE pokemon_nombre = %s
-              AND id <> %s
+              {excluir_sql}
               AND tamano_factor <= 0.8
             ORDER BY tamano_factor ASC
             LIMIT 1
         """, (
             pokemon_nombre,
-            captura_id
+            *excluir,
         ))
 
         nuevo = cursor.fetchone()

@@ -739,10 +739,10 @@ def _nombre_captura_db(val) -> str:
 def preview_liberar_capturas(user_id, captura_ids: list[int]) -> dict:
     """
     Vista previa antes de liberar en lote.
-    Retorna liberables, bloqueados por récord y IDs no encontrados.
+    Retorna liberables (con tipo_record si aplica) e IDs no encontrados.
     """
     ids = list(dict.fromkeys(int(i) for i in captura_ids))
-    vacio = {"liberables": [], "bloqueados_record": [], "no_encontrados": []}
+    vacio = {"liberables": [], "no_encontrados": []}
     if not ids:
         return vacio
 
@@ -807,21 +807,18 @@ def preview_liberar_capturas(user_id, captura_ids: list[int]) -> dict:
                 record_por_id[int(pequeno)] = "XXS"
 
         liberables = []
-        bloqueados_record = []
         for cap_id in ids:
             if cap_id not in encontrados:
                 continue
-            pokemon = encontrados[cap_id]
+            pokemon = dict(encontrados[cap_id])
             tipo_record = record_por_id.get(cap_id)
             if tipo_record:
-                bloqueados_record.append({**pokemon, "tipo_record": tipo_record})
-            else:
-                liberables.append(pokemon)
+                pokemon["tipo_record"] = tipo_record
+            liberables.append(pokemon)
 
         no_encontrados = [cap_id for cap_id in ids if cap_id not in encontrados]
         return {
             "liberables": liberables,
-            "bloqueados_record": bloqueados_record,
             "no_encontrados": no_encontrados,
         }
     except Exception as e:
@@ -835,7 +832,8 @@ def preview_liberar_capturas(user_id, captura_ids: list[int]) -> dict:
 def liberar_capturas_usuario(user_id, captura_ids: list[int]) -> list[dict]:
     """
     Libera capturas del usuario en lote.
-    Omite IDs inexistentes, de otros usuarios o con récord.
+    Omite IDs inexistentes o de otros usuarios.
+    Si un Pokémon tiene récord, recalcula antes de eliminar.
     Retorna {id, nombre, es_shiny, tipo_caramelo} por cada Pokémon liberado.
     """
     ids = list(dict.fromkeys(int(i) for i in captura_ids))
@@ -878,16 +876,29 @@ def liberar_capturas_usuario(user_id, captura_ids: list[int]) -> list[dict]:
             """,
             [*ids_encontrados, *ids_encontrados],
         )
-        ids_record = set()
+        record_por_id: dict[int, str] = {}
         for grande, pequeno in cursor.fetchall():
             if grande is not None:
-                ids_record.add(int(grande))
+                record_por_id[int(grande)] = "XXL"
             if pequeno is not None:
-                ids_record.add(int(pequeno))
+                record_por_id[int(pequeno)] = "XXS"
 
-        ids_a_liberar = [i for i in ids if i in capturas and i not in ids_record]
+        ids_a_liberar = [i for i in ids if i in capturas]
         if not ids_a_liberar:
             return []
+
+        for cap_id in ids_a_liberar:
+            tipo_record = record_por_id.get(cap_id)
+            if not tipo_record:
+                continue
+            nombre, _ = capturas[cap_id]
+            records.recalcular_record_liberado(
+                cursor,
+                nombre.lower(),
+                cap_id,
+                tipo_record,
+                excluir_ids=ids_a_liberar,
+            )
 
         ph_del = ",".join(["%s"] * len(ids_a_liberar))
         cursor.execute(

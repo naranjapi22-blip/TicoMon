@@ -166,18 +166,32 @@ def _linea_preview_liberar(pokemon: dict, extra: str = "") -> str:
 
 def _embed_preview_liberar(preview: dict) -> discord.Embed:
     liberables = preview["liberables"]
-    bloqueados = preview["bloqueados_record"]
     no_encontrados = preview["no_encontrados"]
+    con_record = [p for p in liberables if p.get("tipo_record")]
+
+    desc = "Revisa la lista antes de liberar. Esta acción no se puede deshacer."
+    if con_record:
+        desc += (
+            "\n\n⚠️ Los Pokémon con récord de tamaño serán liberados y "
+            "el sistema buscará automáticamente un nuevo récord."
+        )
 
     embed = discord.Embed(
         title="🗑️ Confirmar liberación",
-        description="Revisa la lista antes de liberar. Esta acción no se puede deshacer.",
+        description=desc,
         color=discord.Color.orange(),
     )
 
     if liberables:
         lineas = [
-            _linea_preview_liberar(p)
+            _linea_preview_liberar(
+                p,
+                extra=(
+                    f"· récord **{p['tipo_record']}**"
+                    if p.get("tipo_record")
+                    else ""
+                ),
+            )
             for p in liberables[:20]
         ]
         extra = len(liberables) - 20
@@ -185,23 +199,6 @@ def _embed_preview_liberar(preview: dict) -> discord.Embed:
             lineas.append(f"_…y {extra} más_")
         embed.add_field(
             name=f"A liberar ({len(liberables)})",
-            value="\n".join(lineas),
-            inline=False,
-        )
-
-    if bloqueados:
-        lineas = [
-            _linea_preview_liberar(
-                p,
-                extra=f"· récord **{p['tipo_record']}**",
-            )
-            for p in bloqueados[:10]
-        ]
-        extra = len(bloqueados) - 10
-        if extra > 0:
-            lineas.append(f"_…y {extra} más_")
-        embed.add_field(
-            name=f"Bloqueados por récord ({len(bloqueados)})",
             value="\n".join(lineas),
             inline=False,
         )
@@ -218,7 +215,7 @@ def _embed_preview_liberar(preview: dict) -> discord.Embed:
         )
 
     if liberables:
-        embed.set_footer(text="Pulsa Confirmar para liberar solo los de la primera lista.")
+        embed.set_footer(text="Pulsa Confirmar para liberar todos los de la lista.")
     else:
         embed.set_footer(text="No hay Pokémon liberables en esta selección.")
 
@@ -703,16 +700,16 @@ class IvsCommands(commands.Cog):
             return await ctx.send("❌ Ocurrió un error al consultar los Pokémon.")
 
         liberables = preview["liberables"]
-        bloqueados = preview["bloqueados_record"]
         no_encontrados = preview["no_encontrados"]
+        con_record = sum(1 for p in liberables if p.get("tipo_record"))
 
         log.info(
             f"[NEW-LIBERAR] Preview user_id={ctx.author.id} "
-            f"liberables={len(liberables)} bloqueados={len(bloqueados)} "
+            f"liberables={len(liberables)} con_record={con_record} "
             f"no_encontrados={len(no_encontrados)}"
         )
 
-        if not liberables and not bloqueados and not no_encontrados:
+        if not liberables and not no_encontrados:
             return await ctx.send("❌ No se encontraron Pokémon para esos IDs.")
 
         embed = _embed_preview_liberar(preview)
