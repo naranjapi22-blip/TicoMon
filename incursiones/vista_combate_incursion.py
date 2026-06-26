@@ -130,29 +130,7 @@ class VistaCombateIncursion:
 
         while not self.combate.es_fin_del_juego():
 
-            estado_inicial = self.construir_estado()
-
             eventos = self.combate.ejecutar_ronda()
-
-            historial_visible = []
-
-            for evento in eventos:
-
-                historial_visible.append(
-                    evento
-                )
-
-                texto = (
-                    f"⚔️ Ronda {ronda}\n\n"
-                    f"{estado_inicial}\n\n"
-                    f"{chr(10).join(historial_visible)}"
-                )
-
-                await mensaje.edit(
-                    content=texto
-                )
-
-                await asyncio.sleep(1)
 
             estado_final = self.construir_estado()
 
@@ -171,21 +149,20 @@ class VistaCombateIncursion:
                 filename="raid.png"
             )
 
-            texto_final = (
+            texto = (
                 f"⚔️ Ronda {ronda}\n\n"
                 f"{estado_final}\n\n"
                 f"{chr(10).join(eventos)}"
             )
 
             await mensaje.edit(
-                content=texto_final,
+                content=texto,
                 attachments=[file]
             )
 
             ronda += 1
 
-            await asyncio.sleep(1)
-
+            await asyncio.sleep(2)
         ganador = self.combate.es_fin_del_juego()
 
         if ganador == "Jugadores":
