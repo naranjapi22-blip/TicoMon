@@ -213,19 +213,26 @@ class IvsCommands(commands.Cog):
         else: color, calidad = discord.Color.blue(), "⏺️ Normal"
 
         emoji_shiny = "✨ " if es_shiny else ""
-        embed = discord.Embed(title=f"{emoji_shiny}{nombre.capitalize()}", color=color)
-        
-        pokemon = database.obtener_pokemon_local_nombre(
-            nombre
+        embed = discord.Embed(
+            title=f"{emoji_shiny}{nombre.capitalize()}",
+            color=color
         )
-        dex_id = None
 
-        if pokemon:
-            dex_id = pokemon.get(
-            "pokeapi_id",
-            pokemon["id"]
-            )
-        nat_stats = NATURALEZAS.get(naturaleza.capitalize(), NATURALEZAS["Fuerte"])
+        # Intentamos obtener la información del Pokémon
+        pokemon = database.obtener_pokemon_local_nombre(nombre)
+
+        # Si es una forma especial (ej. pyroar-male), buscamos la especie base
+        if not pokemon and "-" in nombre:
+            nombre_base = nombre.split("-", 1)[0]
+            pokemon = database.obtener_pokemon_local_nombre(nombre_base)
+
+        # Si el LEFT JOIN no encontró el dex_id, lo obtenemos del caché
+        if dex_id is None and pokemon:
+            dex_id = pokemon.get("pokeapi_id", pokemon["id"])
+
+        nat_stats = NATURALEZAS.get(
+            naturaleza.capitalize(),
+            NATURALEZAS["Fuerte"]
 
         def format_stat_con_nat(base_lvl50, iv, stat_name):
             if stat_name == 'hp': return f"**{base_lvl50:>3}** | {iv:>2}/31"
