@@ -287,7 +287,7 @@ class IvsCommands(commands.Cog):
 
             log.error(f"Error cargando GIF: {e}", exc_info=True)
 
-            await ctx.send(embed=embed)
+            await ctx.send(embed=embed, ephemeral=True)
     @commands.command(name="misrecords")
     async def ver_mis_records(self, ctx):
         conn = database.get_connection()
@@ -462,7 +462,8 @@ class IvsCommands(commands.Cog):
                 )
             else:
                 await ctx.send(
-                    f"**{nombre.capitalize()}** será liberado.\n\n"
+                    f"**{nombre.capitalize()}** será liberado."
+                    f"(ID `{id_pokemon}`)\n"
                     f"¿Deseas continuar?",
                     view=vista
                 )
