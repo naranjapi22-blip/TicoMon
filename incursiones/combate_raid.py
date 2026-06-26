@@ -93,20 +93,21 @@ class CombateRaidSim:
         # Turno del Alpha
         if vivos and self.hp_alpha > 0:
 
+            objetivo = random.choice(vivos)
+
             movimiento, movimiento_nombre = (
                 elegir_movimiento_alpha(
                     self.alpha["species_showdown"],
                     {
                         "atk": self.alpha["atk"],
                         "spa": self.alpha["atk_esp"]
-                    }
+                    },
+                    self.jugadores[objetivo]["tipo"]
                 )
             )
 
             self.alpha["movimiento"] = movimiento
             self.alpha["movimiento_nombre"] = movimiento_nombre
-
-            objetivo = random.choice(vivos)
 
             dano, log = self.calcular_resultado_ataque(
                 self.alpha,

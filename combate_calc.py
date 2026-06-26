@@ -362,7 +362,8 @@ def elegir_movimiento_automatico(
     return "tackle", "Tackle"
 def elegir_movimiento_alpha(
     species_showdown: str,
-    stats: dict[str, int]
+    stats: dict[str, int],
+    tipos_defensor: list[str] | None = None,
 ) -> tuple[str, str]:
 
 
@@ -393,7 +394,32 @@ def elegir_movimiento_alpha(
     for move_id in learnset:
 
         data = _GEN_DATA.moves.get(move_id)
+        if tipos_defensor:
 
+            move_type = data.get("type")
+
+            if move_type:
+
+                multiplicador = 1.0
+
+                for tipo in tipos_defensor:
+
+                    try:
+                        tipo_def = PokemonType.from_name(tipo)
+
+                        tipo_mov = PokemonType.from_name(move_type)
+
+                        multiplicador *= calc_gen9.get_move_effectiveness(
+                            Move(move_id, gen=9),
+                            tipo_mov,
+                            tipo_def
+                        )
+
+                    except Exception:
+                        pass
+
+                if multiplicador == 0:
+                    continue
         if not movimiento_valido_ia(
             move_id,
             data,
