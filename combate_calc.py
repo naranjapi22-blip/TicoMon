@@ -474,11 +474,17 @@ def elegir_movimiento_alpha(
         key=lambda x: x[0]
     )
 
-    top = candidatos[:4]
+    top = candidatos[:3]
 
-    elegido = random.choice(top)
+    pesos = [70, 20, 10][:len(top)]
 
-    return candidatos[0][1], candidatos[0][2]
+    elegido = random.choices(
+        top,
+        weights=pesos,
+        k=1
+    )[0]
+
+    return elegido[1], elegido[2]
 def stats_desde_teambuilder(
     species_showdown: str,
     ivs: dict[str, int],
