@@ -543,146 +543,146 @@ class IvsCommands(commands.Cog):
             cursor.close()
             conn.close()
 
-@commands.command(name="new-liberar")
-async def new_liberar(self, ctx, *, ids: str):
-    captura_ids = _parsear_ids_liberar(ids)
+    @commands.command(name="new-liberar")
+    async def new_liberar(self, ctx, *, ids: str):
+        captura_ids = _parsear_ids_liberar(ids)
 
-    if not captura_ids:
-        return await ctx.send(
-            "❌ Indica al menos un ID. Ejemplo: `!new-liberar 101, 202, 303`"
+        if not captura_ids:
+            return await ctx.send(
+                "❌ Indica al menos un ID. Ejemplo: `!new-liberar 101, 202, 303`"
+            )
+
+        conn = database.get_connection()
+        cursor = conn.cursor()
+
+        lista = []
+        ids_invalidos = []
+
+        vista = VistaConfirmarLiberacion(13)
+
+        try:
+
+            for captura_id in captura_ids:
+
+                cursor.execute(
+                    """
+                    SELECT pokemon_nombre
+                    FROM capturas
+                    WHERE id = %s
+                    AND user_id = %s
+                    """,
+                    (
+                        str(captura_id),
+                        str(ctx.author.id)
+                    )
+                )
+
+                resultado = cursor.fetchone()
+
+                if not resultado:
+                    ids_invalidos.append(captura_id)
+                    continue
+
+                nombre = resultado[0]
+
+                lista.append(
+                    f"• **{nombre.capitalize()}** (ID `{captura_id}`)"
+                )
+
+        finally:
+
+            cursor.close()
+            conn.close()
+
+        if not lista:
+
+            mensaje = "❌ Ninguno de los IDs pertenece a tu inventario."
+
+            if ids_invalidos:
+                mensaje += (
+                    "\n\nIDs inválidos:\n"
+                    + ", ".join(map(str, ids_invalidos))
+                )
+
+            return await ctx.send(mensaje)
+
+        mensaje = (
+            "⚠️ **Vas a liberar los siguientes Pokémon:**\n\n"
+            + "\n".join(lista)
         )
 
-    conn = database.get_connection()
-    cursor = conn.cursor()
-
-    lista = []
-    ids_invalidos = []
-
-    vista = VistaConfirmarLiberacion(13)
-
-    try:
-
-        for captura_id in captura_ids:
-
-            cursor.execute(
-                """
-                SELECT pokemon_nombre
-                FROM capturas
-                WHERE id = %s
-                AND user_id = %s
-                """,
-                (
-                    str(captura_id),
-                    str(ctx.author.id)
-                )
-            )
-
-            resultado = cursor.fetchone()
-
-            if not resultado:
-                ids_invalidos.append(captura_id)
-                continue
-
-            nombre = resultado[0]
-
-            lista.append(
-                f"• **{nombre.capitalize()}** (ID `{captura_id}`)"
-            )
-
-    finally:
-
-        cursor.close()
-        conn.close()
-
-    if not lista:
-
-        mensaje = "❌ Ninguno de los IDs pertenece a tu inventario."
-
         if ids_invalidos:
+
             mensaje += (
-                "\n\nIDs inválidos:\n"
+                "\n\n❌ **Se ignorarán los siguientes IDs porque no existen o no te pertenecen:**\n"
                 + ", ".join(map(str, ids_invalidos))
             )
 
-        return await ctx.send(mensaje)
+        mensaje += "\n\n¿Deseas continuar?"
 
-    mensaje = (
-        "⚠️ **Vas a liberar los siguientes Pokémon:**\n\n"
-        + "\n".join(lista)
-    )
-
-    if ids_invalidos:
-
-        mensaje += (
-            "\n\n❌ **Se ignorarán los siguientes IDs porque no existen o no te pertenecen:**\n"
-            + ", ".join(map(str, ids_invalidos))
+        await ctx.send(
+            mensaje,
+            view=vista
         )
 
-    mensaje += "\n\n¿Deseas continuar?"
+        await vista.wait()
 
-    await ctx.send(
-        mensaje,
-        view=vista
-    )
+        if not vista.confirmado:
+            return
 
-    await vista.wait()
+        try:
 
-    if not vista.confirmado:
-        return
+            liberados = database.liberar_capturas_usuario(
+                ctx.author.id,
+                captura_ids
+            )
 
-    try:
+        except Exception as e:
 
-        liberados = database.liberar_capturas_usuario(
-            ctx.author.id,
-            captura_ids
+            log.error(
+                f"[NEW-LIBERAR ERROR] {e}",
+                exc_info=True
+            )
+
+            return await ctx.send(
+                "❌ Ocurrió un error al liberar los Pokémon."
+            )
+
+        if not liberados:
+            return await ctx.send(
+                "No se liberó ningún Pokémon (IDs no encontrados o con récord)."
+            )
+
+        lineas = []
+        max_detalle = 15
+
+        for pokemon in liberados[:max_detalle]:
+
+            emoji = "✨ " if pokemon["es_shiny"] else ""
+
+            lineas.append(
+                f"• {emoji}**{pokemon['nombre'].capitalize()}** "
+                f"`{pokemon['id']}` → 🍬 {pokemon['tipo_caramelo']}"
+            )
+
+        extra = len(liberados) - max_detalle
+
+        if extra > 0:
+            lineas.append(f"_…y {extra} más_")
+
+        resumen = (
+            f"🗑️ Liberaste **{len(liberados)}** Pokémon.\n"
+            f"🍬 Recibiste **{len(liberados)}** caramelos.\n\n"
+            + "\n".join(lineas)
         )
 
-    except Exception as e:
+        if ids_invalidos:
+            resumen += (
+                "\n\n⚠️ IDs ignorados: "
+                + ", ".join(map(str, ids_invalidos))
+            )
 
-        log.error(
-            f"[NEW-LIBERAR ERROR] {e}",
-            exc_info=True
-        )
-
-        return await ctx.send(
-            "❌ Ocurrió un error al liberar los Pokémon."
-        )
-
-    if not liberados:
-        return await ctx.send(
-            "No se liberó ningún Pokémon (IDs no encontrados o con récord)."
-        )
-
-    lineas = []
-    max_detalle = 15
-
-    for pokemon in liberados[:max_detalle]:
-
-        emoji = "✨ " if pokemon["es_shiny"] else ""
-
-        lineas.append(
-            f"• {emoji}**{pokemon['nombre'].capitalize()}** "
-            f"`{pokemon['id']}` → 🍬 {pokemon['tipo_caramelo']}"
-        )
-
-    extra = len(liberados) - max_detalle
-
-    if extra > 0:
-        lineas.append(f"_…y {extra} más_")
-
-    resumen = (
-        f"🗑️ Liberaste **{len(liberados)}** Pokémon.\n"
-        f"🍬 Recibiste **{len(liberados)}** caramelos.\n\n"
-        + "\n".join(lineas)
-    )
-
-    if ids_invalidos:
-        resumen += (
-            "\n\n⚠️ IDs ignorados: "
-            + ", ".join(map(str, ids_invalidos))
-        )
-
-    await ctx.send(resumen)
+        await ctx.send(resumen)
 
 
 async def setup(bot):
