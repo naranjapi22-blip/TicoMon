@@ -276,7 +276,7 @@ class IvsCommands(commands.Cog):
 
                 embed.set_image(url=url_gif)
 
-            await ctx.send(embed=embed)
+            await ctx.send(embed=embed, ephemeral=True)
             return
 
         except Exception as e:
@@ -427,6 +427,8 @@ class IvsCommands(commands.Cog):
 
             tipo_record = None
 
+            vista = VistaConfirmarLiberacion(id_pokemon)
+            
             if record:
 
                 if str(record[1]) == str(id_pokemon):
@@ -436,10 +438,6 @@ class IvsCommands(commands.Cog):
                 elif str(record[2]) == str(id_pokemon):
 
                     tipo_record = "XXS"
-
-                vista = VistaConfirmarLiberacion(
-                    id_pokemon
-                )
 
                 await ctx.send(
                     f"⚠️ **{nombre.capitalize()}** posee un récord "
@@ -462,6 +460,18 @@ class IvsCommands(commands.Cog):
                     id_pokemon,
                     tipo_record
                 )
+            else:
+                await ctx.send(
+                    f"**{nombre.capitalize()}** será liberado.\n\n"
+                    f"¿Deseas continuar?",
+                    view=vista
+                )
+
+                await vista.wait()
+
+                if not vista.confirmado:
+
+                    return
 
             # Eliminar Pokémon
             cursor.execute("""
@@ -531,6 +541,41 @@ class IvsCommands(commands.Cog):
             return await ctx.send(
                 "❌ Indica al menos un ID. Ejemplo: `!new-liberar 101, 202, 303`"
             )
+
+        conn = database.get_connection()
+        cursor = conn.cursor()
+        lista = []
+        vista = VistaConfirmarLiberacion(13)
+
+        for id in captura_ids:
+            cursor.execute("""
+                SELECT
+                    pokemon_nombre
+                FROM capturas
+                WHERE id = %s
+                AND user_id = %s
+            """, (
+                str(id),
+                str(ctx.author.id)
+            ))
+
+            resultado = cursor.fetchone()
+            lista.append(f"{resultado.capitalize()} (ID `{id}`)\n")
+            
+        cursor.close()
+        conn.close()
+
+        await ctx.send(
+                    f"Elegiste liberar a: {lista}\n"
+                    f"¿Deseas continuar?",
+                    view=vista
+                )
+        
+        await vista.wait()
+
+        if not vista.confirmado:
+
+            return        
 
         try:
             liberados = database.liberar_capturas_usuario(ctx.author.id, captura_ids)
