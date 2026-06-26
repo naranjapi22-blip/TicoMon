@@ -233,6 +233,7 @@ class IvsCommands(commands.Cog):
         nat_stats = NATURALEZAS.get(
             naturaleza.capitalize(),
             NATURALEZAS["Fuerte"]
+        )
 
         def format_stat_con_nat(base_lvl50, iv, stat_name):
             if stat_name == 'hp': return f"**{base_lvl50:>3}** | {iv:>2}/31"
