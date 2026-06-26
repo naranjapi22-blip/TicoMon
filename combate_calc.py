@@ -85,6 +85,10 @@ MOVIMIENTOS_CONDICIONALES = {
     "expandingforce",    # Psychic Terrain
     "risingvoltage",     # Electric Terrain
     "grassyglide",       # Grassy Terrain
+    "waterspout",
+    "eruption",
+    "reversal",
+    "flail",
 }
 
 # Cambian estadísticas o preparan otro turno
