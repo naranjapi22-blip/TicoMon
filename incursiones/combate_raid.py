@@ -74,7 +74,7 @@ class CombateRaidSim:
                 dano *
                 self.alpha.get(
                     "defense_multiplier",
-                    0.6
+                    1.0
                 )
             )
 
