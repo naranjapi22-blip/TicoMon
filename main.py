@@ -517,17 +517,22 @@ async def spawn(ctx):
 @canal_restringido()
 async def info(ctx, *, nombre: str):
     nombre = nombre.lower().strip()
+
     versiones = database.obtener_versiones_pokemon(ctx.author.id, nombre)
-    
+    print("VERSIONES:", versiones)
+
     if not versiones:
         return await ctx.send(f"❌ No tienes a **{nombre.capitalize()}**.")
 
     pokemon = database.obtener_pokemon_local_nombre(nombre)
+    print("POKEMON:", pokemon)
 
     if not pokemon:
         return await ctx.send("Pokémon no encontrado.")
 
     mostrar_shiny = (1 in versiones)
+
+    print("CREANDO VIEW")
 
     view = InfoView(
         ctx.author.id,
@@ -535,7 +540,12 @@ async def info(ctx, *, nombre: str):
         versiones,
         mostrar_shiny
     )
+
+    print("ENVIANDO EMBED")
+
     await view.enviar_embed(ctx)
+
+    print("OK")
 
 perfil.iniciar_modulo_perfil(bot)
 
