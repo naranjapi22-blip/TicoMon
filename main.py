@@ -518,26 +518,36 @@ async def spawn(ctx):
 async def info(ctx, *, nombre: str):
     nombre = nombre.lower().strip()
 
-    versiones = database.obtener_versiones_pokemon(ctx.author.id, nombre)
+    versiones = database.obtener_versiones_pokemon(
+        ctx.author.id,
+        nombre
+    )
 
     if not versiones:
-        return await ctx.send(f"❌ No tienes a **{nombre.capitalize()}**.")
+        return await ctx.send(
+            f"❌ No tienes a **{nombre.capitalize()}**."
+        )
 
-    nombre_busqueda = nombre
-    pokemon = database.obtener_pokemon_local_nombre(nombre_busqueda)
+    # Guardamos el nombre original para las consultas del usuario
+    nombre_captura = nombre
 
-    if not pokemon and "-" in nombre_busqueda:
-        nombre_busqueda = nombre_busqueda.split("-")[0]
-        pokemon = database.obtener_pokemon_local_nombre(nombre_busqueda)
+    # Intentamos obtener la especie exacta
+    pokemon = database.obtener_pokemon_local_nombre(nombre)
+
+    # Si no existe (ej. pyroar-male), buscamos la especie base
+    if not pokemon and "-" in nombre:
+        nombre_base = nombre.split("-", 1)[0]
+        pokemon = database.obtener_pokemon_local_nombre(nombre_base)
 
     if not pokemon:
-        return await ctx.send("Pokémon no encontrado.")
+        return await ctx.send("❌ Pokémon no encontrado.")
 
-    mostrar_shiny = (1 in versiones)
+    mostrar_shiny = 1 in versiones
 
     view = InfoView(
         ctx.author.id,
         pokemon,
+        nombre_captura,
         versiones,
         mostrar_shiny
     )

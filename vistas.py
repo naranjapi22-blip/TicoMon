@@ -752,13 +752,13 @@ def _formatear_id_captura(captura: dict) -> str:
 
 
 class InfoView(discord.ui.View):
-    def __init__(self, user_id, data, versiones, mostrar_shiny): # Agregamos user_id
+    def __init__(self, user_id, data, nombre_captura, versiones, mostrar_shiny): # Agregamos user_id
         super().__init__(timeout=60)
         self.user_id = user_id
         self.data = data
         self.versiones = versiones
         self.mostrar_shiny = mostrar_shiny
-        
+        self.nombre_captura = nombre_captura
         # Desactivamos el botón si no tiene ambas versiones
         if 0 not in versiones or 1 not in versiones:
             for item in self.children:
@@ -796,7 +796,7 @@ class InfoView(discord.ui.View):
         # 1. Obtenemos datos de DB (fecha, cantidad y capturas con flags)
         fecha_primera, cantidad, capturas = database.obtener_info_captura(
             self.user_id,
-            self.data['nombre']
+            self.nombre_captura
         )
         
         # 2. Formateamos fecha de forma segura
