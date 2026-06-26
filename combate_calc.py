@@ -21,15 +21,175 @@ from mapeo_naturalezas import naturaleza_a_showdown
 _GEN_DATA = GenData.from_gen(9)
 _CALC_LOGGER = logging.getLogger("ticomon.combate_calc")
 _SPECIES_CACHE: dict[str, str] = {}
+# Necesitan un turno de carga
+MOVIMIENTOS_CARGA = {
+    "solarbeam",
+    "solarblade",
+    "skyattack",
+    "meteorbeam",
+    "electroshot",
+    "dig",
+    "dive",
+    "fly",
+    "bounce",
+    "phantomforce",
+    "shadowforce",
+    "skullbash",
+    "razorwind",
+    "iceburn",
+    "freezeshock",
+}
 
+# Obligan a recargar después
+MOVIMIENTOS_RECARGA = {
+    "hyperbeam",
+    "gigaimpact",
+    "blastburn",
+    "frenzyplant",
+    "hydrocannon",
+    "rockwrecker",
+    "roaroftime",
+    "prismaticlaser",
+    "eternabeam",
+}
 
+# Se autodestruyen o tienen un coste enorme
+MOVIMIENTOS_SUICIDAS = {
+    "explosion",
+    "selfdestruct",
+    "mistyexplosion",
+    "steelbeam",
+    "mindblown",
+}
+
+# Requieren una condición que no simulamos
+MOVIMIENTOS_CONDICIONALES = {
+    "dreameater",        # rival dormido
+    "belch",             # haber comido baya
+    "lastrespects",      # aliados muertos
+    "steelroller",       # Terrain activo
+    "focuspunch",        # no recibir daño
+    "avalanche",         # recibir daño antes
+    "revenge",           # recibir daño antes
+    "payback",           # moverse último
+    "retaliate",         # aliado debilitado
+    "acrobatics",        # sin objeto
+    "hex",               # rival con estado
+    "venoshock",         # rival envenenado
+    "brine",             # rival <50% HP
+    "assurance",         # rival recibió daño
+    "wakeupslap",        # rival dormido
+    "smellingsalts",     # rival paralizado
+    "weatherball",       # clima
+    "terrainpulse",      # Terrain
+    "expandingforce",    # Psychic Terrain
+    "risingvoltage",     # Electric Terrain
+    "grassyglide",       # Grassy Terrain
+}
+
+# Cambian estadísticas o preparan otro turno
+MOVIMIENTOS_SETUP = {
+    "swordsdance",
+    "dragondance",
+    "nastyplot",
+    "bulkup",
+    "calmmind",
+    "irondefense",
+    "amnesia",
+    "agility",
+    "rockpolish",
+    "coil",
+    "curse",
+    "growth",
+    "workup",
+    "tailglow",
+    "shellsmash",
+    "quiverdance",
+    "shiftgear",
+    "honeclaws",
+    "geomancy",
+}
+
+# Climas
+MOVIMIENTOS_CLIMA = {
+    "sunnyday",
+    "raindance",
+    "sandstorm",
+    "hail",
+    "snowscape",
+}
+
+# Terrains
+MOVIMIENTOS_TERRAIN = {
+    "electricterrain",
+    "grassyterrain",
+    "mistyterrain",
+    "psychicterrain",
+}
+
+# Trampas
+MOVIMIENTOS_HAZARDS = {
+    "stealthrock",
+    "spikes",
+    "toxicspikes",
+    "stickyweb",
+}
+
+# Recuperación
+MOVIMIENTOS_RECUPERACION = {
+    "recover",
+    "softboiled",
+    "roost",
+    "slackoff",
+    "healorder",
+    "milkdrink",
+    "moonlight",
+    "morningsun",
+    "synthesis",
+    "shoreup",
+    "strengthsap",
+}
+
+# Forzar cambio (no sirve en tu motor)
+MOVIMIENTOS_CAMBIO = {
+    "roar",
+    "whirlwind",
+    "dragontail",
+    "circlethrow",
+}
+
+# Movimientos bloqueados por comportamiento extraño
+MOVIMIENTOS_ESPECIALES = {
+    "metronome",
+    "assist",
+    "copycat",
+    "mirrormove",
+    "mefirst",
+    "sleeptalk",
+    "naturepower",
+    "celebrate",
+    "holdhands",
+    "happyhour",
+}
+MOVIMIENTOS_EXCLUIDOS = (
+    MOVIMIENTOS_CARGA
+    | MOVIMIENTOS_RECARGA
+    | MOVIMIENTOS_SUICIDAS
+    | MOVIMIENTOS_CONDICIONALES
+    | MOVIMIENTOS_SETUP
+    | MOVIMIENTOS_CLIMA
+    | MOVIMIENTOS_TERRAIN
+    | MOVIMIENTOS_HAZARDS
+    | MOVIMIENTOS_RECUPERACION
+    | MOVIMIENTOS_CAMBIO
+    | MOVIMIENTOS_ESPECIALES
+)
 @dataclass
 class ResultadoDano:
     dano: int
     mensaje: str
     fallo: bool = False
     critico: bool = False
-
 
 def _ivs_lista(fighter: dict) -> list[int]:
     ivs = fighter.get("ivs")
@@ -83,26 +243,6 @@ def elegir_movimiento_automatico(
     stats: dict[str, int]
 ) -> tuple[str, str]:
 
-    MOVIMIENTOS_EXCLUIDOS = {
-        "steelroller",
-        "dreameater",
-        "lastrespects",
-        "revivalblessing",
-        "explosion",
-        "selfdestruct",
-        "mistyexplosion",
-        "focuspunch",
-        "belch",
-        "electroshot",
-        "snowscape",
-        "sunnyday",
-        "raindance",
-        "sandstorm",
-        "hail",
-        "future sight",
-        "water sprout",
-    }
-
     species_id = to_id_str(species_showdown)
 
     entry = _GEN_DATA.learnset.get(species_id)
@@ -129,35 +269,16 @@ def elegir_movimiento_automatico(
 
     for move_id in learnset:
 
-        if move_id in MOVIMIENTOS_EXCLUIDOS:
-            continue
-
         data = _GEN_DATA.moves.get(move_id)
 
-        if not data:
+        if not movimiento_valido_ia(
+            move_id,
+            data,
+        ):
             continue
 
         bp = data.get("basePower") or 0
-
         accuracy = data.get("accuracy") or 100
-
-        if bp <= 0:
-            continue
-
-        if data.get("category") == "Status":
-            continue
-
-        if accuracy < 80:
-            continue
-
-        flags = data.get("flags", {})
-
-        if (
-            flags.get("charge")
-            or flags.get("recharge")
-            or flags.get("mustcharge")
-        ):
-            continue
 
         es_fisico = (
             data.get("category")
@@ -175,14 +296,39 @@ def elegir_movimiento_automatico(
             if data.get("type") in tipos
             else 0
         )
+        penalizacion = 0
 
+        if move_id in {
+            "dracometeor",
+            "leafstorm",
+            "overheat",
+            "psychoboost",
+        }:
+            penalizacion += 20
+
+        if move_id in {
+            "closecombat",
+            "superpower",
+            "headlongrush",
+        }:
+            penalizacion += 15
+
+        if move_id in {
+            "bravebird",
+            "flareblitz",
+            "woodhammer",
+            "doubleedge",
+            "volttackle",
+            "wavecrash",
+        }:
+            penalizacion += 10
         puntaje = (
             bp
             + stab
             + cat_bonus
             + min(accuracy, 100) // 10
+            - penalizacion
         )
-
         nombre = data.get(
             "name",
             move_id
@@ -209,24 +355,6 @@ def elegir_movimiento_alpha(
     stats: dict[str, int]
 ) -> tuple[str, str]:
 
-    MOVIMIENTOS_EXCLUIDOS = {
-        "steelroller",
-        "dreameater",
-        "lastrespects",
-        "revivalblessing",
-        "explosion",
-        "selfdestruct",
-        "mistyexplosion",
-        "focuspunch",
-        "belch",
-        "electroshot",
-        "snowscape",
-        "sunnyday",
-        "raindance",
-        "sandstorm",
-        "hail",
-        "future sight",
-    }
 
     species_id = to_id_str(species_showdown)
 
@@ -254,34 +382,16 @@ def elegir_movimiento_alpha(
 
     for move_id in learnset:
 
-        if move_id in MOVIMIENTOS_EXCLUIDOS:
-            continue
-
         data = _GEN_DATA.moves.get(move_id)
 
-        if not data:
+        if not movimiento_valido_ia(
+            move_id,
+            data,
+        ):
             continue
 
         bp = data.get("basePower") or 0
         accuracy = data.get("accuracy") or 100
-
-        if bp <= 0:
-            continue
-
-        if data.get("category") == "Status":
-            continue
-
-        if accuracy < 80:
-            continue
-
-        flags = data.get("flags", {})
-
-        if (
-            flags.get("charge")
-            or flags.get("recharge")
-            or flags.get("mustcharge")
-        ):
-            continue
 
         es_fisico = (
             data.get("category")
@@ -299,12 +409,38 @@ def elegir_movimiento_alpha(
             if data.get("type") in tipos
             else 0
         )
+        penalizacion = 0
 
+        if move_id in {
+            "dracometeor",
+            "leafstorm",
+            "overheat",
+            "psychoboost",
+        }:
+            penalizacion += 20
+
+        if move_id in {
+            "closecombat",
+            "superpower",
+            "headlongrush",
+        }:
+            penalizacion += 15
+
+        if move_id in {
+            "bravebird",
+            "flareblitz",
+            "woodhammer",
+            "doubleedge",
+            "volttackle",
+            "wavecrash",
+        }:
+            penalizacion += 10
         puntaje = (
             bp
             + stab
             + cat_bonus
             + min(accuracy, 100) // 10
+            - penalizacion
         )
 
         nombre = data.get(
@@ -332,7 +468,7 @@ def elegir_movimiento_alpha(
 
     elegido = random.choice(top)
 
-    return elegido[1], elegido[2]
+    return candidatos[0][1], candidatos[0][2]
 def stats_desde_teambuilder(
     species_showdown: str,
     ivs: dict[str, int],
@@ -475,3 +611,35 @@ def _calcular_dano_fallback(atacante: dict, defensor: dict) -> ResultadoDano:
     dano = max(3, int((stat_ofensivo / (def_stat + 15)) * 25 * random.uniform(0.85, 1.0)))
     mensaje = f"✨ **{atacante['nombre']}** causa {dano} HP."
     return ResultadoDano(dano=dano, mensaje=mensaje)
+def movimiento_valido_ia(
+    move_id: str,
+    data: dict,
+) -> bool:
+
+    if move_id in MOVIMIENTOS_EXCLUIDOS:
+        return False
+
+    if not data:
+        return False
+
+    if data.get("category") == "Status":
+        return False
+
+    if (data.get("basePower") or 0) <= 0:
+        return False
+
+    accuracy = data.get("accuracy") or 100
+
+    if accuracy < 80:
+        return False
+
+    flags = data.get("flags", {})
+
+    if (
+        flags.get("charge")
+        or flags.get("recharge")
+        or flags.get("mustcharge")
+    ):
+        return False
+
+    return True
