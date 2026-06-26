@@ -683,6 +683,7 @@ class IvsCommands(commands.Cog):
     @commands.command(name="new-liberar")
     async def new_liberar(self, ctx, *, ids: str):
         captura_ids = _parsear_ids_liberar(ids)
+
         if not captura_ids:
             return await ctx.send(
                 "❌ Indica al menos un ID. Ejemplo: `!new-liberar 101, 202, 303`"
