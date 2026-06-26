@@ -769,12 +769,19 @@ class IvsCommands(commands.Cog):
             f"liberados={len(liberados)} ids={[p['id'] for p in liberados]}"
         )
 
+        resumen = (
+            f"🗑️ Liberaste **{len(liberados)}** Pokémon. "
+            f"🍬 Recibiste **{len(liberados)}** caramelos.\n"
+            + "\n".join(lineas)
+        )
+        if no_encontrados:
+            resumen += (
+                "\n\n⚠️ IDs ignorados: "
+                + ", ".join(map(str, no_encontrados))
+            )
+
         await mensaje.edit(
-            content=(
-                f"🗑️ Liberaste **{len(liberados)}** Pokémon. "
-                f"🍬 Recibiste **{len(liberados)}** caramelos.\n"
-                + "\n".join(lineas)
-            ),
+            content=resumen,
             embed=None,
             view=None,
         )
