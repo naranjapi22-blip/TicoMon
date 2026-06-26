@@ -555,59 +555,73 @@ async def new_liberar(self, ctx, *, ids: str):
     conn = database.get_connection()
     cursor = conn.cursor()
 
+    lista = []
+    ids_invalidos = []
+
     vista = VistaConfirmarLiberacion(13)
 
     try:
 
-        cursor.execute(
-            """
-            SELECT
-                id,
-                pokemon_nombre
-            FROM capturas
-            WHERE user_id = %s
-            AND id = ANY(%s)
-            """,
-            (
-                str(ctx.author.id),
-                captura_ids
-            )
-        )
+        for captura_id in captura_ids:
 
-        resultados = cursor.fetchall()
+            cursor.execute(
+                """
+                SELECT pokemon_nombre
+                FROM capturas
+                WHERE id = %s
+                AND user_id = %s
+                """,
+                (
+                    str(captura_id),
+                    str(ctx.author.id)
+                )
+            )
+
+            resultado = cursor.fetchone()
+
+            if not resultado:
+                ids_invalidos.append(captura_id)
+                continue
+
+            nombre = resultado[0]
+
+            lista.append(
+                f"• **{nombre.capitalize()}** (ID `{captura_id}`)"
+            )
 
     finally:
 
         cursor.close()
         conn.close()
 
-    # Diccionario para mantener el orden original
-    pokemon_por_id = {
-        int(id_cap): nombre
-        for id_cap, nombre in resultados
-    }
+    if not lista:
 
-    lista = []
+        mensaje = "❌ Ninguno de los IDs pertenece a tu inventario."
 
-    for captura_id in captura_ids:
-
-        nombre = pokemon_por_id.get(captura_id)
-
-        if nombre:
-
-            lista.append(
-                f"• **{nombre.capitalize()}** (ID `{captura_id}`)"
+        if ids_invalidos:
+            mensaje += (
+                "\n\nIDs inválidos:\n"
+                + ", ".join(map(str, ids_invalidos))
             )
 
-    if not lista:
-        return await ctx.send(
-            "❌ No se encontró ninguno de los IDs indicados."
-        )
+        return await ctx.send(mensaje)
 
-    await ctx.send(
+    mensaje = (
         "⚠️ **Vas a liberar los siguientes Pokémon:**\n\n"
         + "\n".join(lista)
-        + "\n\n¿Deseas continuar?",
+    )
+
+    if ids_invalidos:
+
+        mensaje += (
+            "\n\n❌ **Se ignorarán los siguientes IDs porque no existen o no te pertenecen:**\n"
+            + ", ".join(map(str, ids_invalidos))
+        )
+
+    mensaje += "\n\n¿Deseas continuar?"
+
+    await ctx.send(
+        mensaje,
         view=vista
     )
 
@@ -656,11 +670,19 @@ async def new_liberar(self, ctx, *, ids: str):
     if extra > 0:
         lineas.append(f"_…y {extra} más_")
 
-    await ctx.send(
+    resumen = (
         f"🗑️ Liberaste **{len(liberados)}** Pokémon.\n"
         f"🍬 Recibiste **{len(liberados)}** caramelos.\n\n"
         + "\n".join(lineas)
     )
+
+    if ids_invalidos:
+        resumen += (
+            "\n\n⚠️ IDs ignorados: "
+            + ", ".join(map(str, ids_invalidos))
+        )
+
+    await ctx.send(resumen)
 
 
 async def setup(bot):
