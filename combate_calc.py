@@ -603,7 +603,12 @@ def _calcular_dano_showdown(atacante: dict, defensor: dict) -> ResultadoDano:
         )
 
     es_critico = random.randint(1, 24) == 1
+    print("ATACANTE:", atacante["nombre"])
+    print("DEFENSOR:", defensor["nombre"])
+    print("MOVE:", move_id)
+    print("TIPOS DEF:", defensor.get("tipo"))
     dano_min, dano_max = calc_gen9.calculate_damage(id_atk, id_def, move, battle, is_critical=es_critico)
+    print("DAÑO:", dano_min, dano_max)
     if dano_max <= 0:
         return ResultadoDano(
             0,
