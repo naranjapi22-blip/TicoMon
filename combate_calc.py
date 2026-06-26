@@ -174,6 +174,12 @@ MOVIMIENTOS_ESPECIALES = {
     "celebrate",
     "holdhands",
     "happyhour",
+    "futuresight"
+    "waterspout",
+    "roaroftime",
+    "gigaimpact",
+    "dragonascent",
+    "psychoboost",
 }
 MOVIMIENTOS_EXCLUIDOS = (
     MOVIMIENTOS_CARGA
