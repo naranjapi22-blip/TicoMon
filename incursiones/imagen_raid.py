@@ -58,52 +58,40 @@ def cargar_frames_gif(
     es_espalda=False
 ):
 
+    from urllib.request import Request, urlopen
+    from io import BytesIO
+
+    R2_PUBLIC_URL = "https://pub-23cb564f6c174627926c1ac0409563d4.r2.dev"
+
     if es_espalda and es_shiny:
-        ruta = os.path.join(
-            "gifs",
-            "back_shiny",
-            f"{poke_id}.gif"
-        )
+        carpeta = "back_shiny"
 
     elif es_espalda:
-        ruta = os.path.join(
-            "gifs",
-            "back",
-            f"{poke_id}.gif"
-        )
+        carpeta = "back"
 
     elif es_shiny:
-        ruta = os.path.join(
-            "gifs",
-            "shiny",
-            f"{poke_id}.gif"
-        )
+        carpeta = "shiny"
 
     else:
-        ruta = os.path.join(
-            "gifs",
-            "regular",
-            f"{poke_id}.gif"
+        carpeta = "regular"
+
+    url = (
+        f"{R2_PUBLIC_URL}/"
+        f"{carpeta}/{poke_id}.gif"
+    )
+
+    req = Request(
+        url,
+        headers={
+            "User-Agent": "Mozilla/5.0"
+        }
+    )
+
+    with urlopen(req) as response:
+
+        gif = Image.open(
+            BytesIO(response.read())
         )
-
-    # Fallback
-    if not os.path.exists(ruta):
-
-        if es_shiny:
-            ruta = os.path.join(
-                "gifs",
-                "shiny",
-                f"{poke_id}.gif"
-            )
-
-        else:
-            ruta = os.path.join(
-                "gifs",
-                "regular",
-                f"{poke_id}.gif"
-            )
-
-    gif = Image.open(ruta)
 
     frames = []
 
