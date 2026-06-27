@@ -45,7 +45,7 @@ BALL_START_X = 20
 BALL_START_Y = HEIGHT - 70
 
 FPS = 20
-FRAME_DURATION = 80
+FRAME_DURATION = 50
 
 SPRITE_SIZE = 150
 
@@ -156,7 +156,9 @@ def cargar_frames_gif(
 ):
 
     if str(ruta).startswith("http"):
+
         print(ruta)
+
         from urllib.request import Request, urlopen
 
         req = Request(
@@ -167,9 +169,11 @@ def cargar_frames_gif(
         )
 
         with urlopen(req) as response:
+
             gif = Image.open(
                 BytesIO(response.read())
             )
+
     else:
 
         ruta = Path(ruta)
@@ -180,20 +184,9 @@ def cargar_frames_gif(
         gif = Image.open(ruta)
 
     frames = []
-
-    base = Image.new(
-        "RGBA",
-        gif.size,
-        (0, 0, 0, 0)
-    )
+    duraciones = []
 
     for frame in ImageSequence.Iterator(gif):
-
-       # base = base.copy()
-
-       # base.alpha_composite(
-     #       frame.convert("RGBA")
-      #  )
 
         img = frame.convert("RGBA")
 
@@ -217,7 +210,11 @@ def cargar_frames_gif(
 
         frames.append(img)
 
-    return frames
+        duraciones.append(
+            frame.info.get("duration", 80)
+        )
+
+    return frames, duraciones
 def cargar_pokeball(tipo):
 
     archivo = (
@@ -1047,7 +1044,7 @@ class CaptureAnimation:
         capturado=True
     ):
 
-        self.sprite_frames = cargar_frames_gif(
+        self.sprite_frames, self.sprite_duraciones = cargar_frames_gif(
             sprite_path
         )
 
@@ -1059,6 +1056,8 @@ class CaptureAnimation:
 
         ]
 
+        self.sprite_index = 0
+        self.sprite_timer = 0
         self.nombre = pokemon_name
 
         self.capturado = capturado
@@ -1321,9 +1320,24 @@ class CaptureAnimation:
         )
 
 
-        gif_frame = frame % len(
-            self.sprite_frames
-        )
+        self.sprite_timer += FRAME_DURATION
+
+        while (
+            self.sprite_timer >=
+            self.sprite_duraciones[self.sprite_index]
+        ):
+
+            self.sprite_timer -= (
+                self.sprite_duraciones[
+                    self.sprite_index
+                ]
+            )
+
+            self.sprite_index = (
+                self.sprite_index + 1
+            ) % len(self.sprite_frames)
+
+        gif_frame = self.sprite_index
 
         sprite = self.sprite_actual(
             frame,
@@ -1439,6 +1453,9 @@ class CaptureAnimation:
         SPARKS = SparkEmitter()
 
         self.frames.clear()
+
+        self.sprite_index = 0
+        self.sprite_timer = 0
 
         EMITTER.reset()
 
