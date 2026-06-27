@@ -49,7 +49,7 @@ FPS = 24
 FRAME_DURATION = 80
 
 SPRITE_SIZE = 140
-
+GROUND_Y = HEIGHT - 40
 # ============================================================
 # COLORES
 # ============================================================
@@ -755,20 +755,6 @@ class Pokeball:
         # Sprite actual
         self.sprite = self.sprite_cerrada
 
-        # Crear sombra una sola vez
-        self.shadow = Image.new(
-            "RGBA",
-            self.sprite.size,
-            (0, 0, 0, 90)
-        )
-
-        self.shadow.putalpha(
-            self.sprite.getchannel("A")
-        )
-
-        self.shadow = self.shadow.filter(
-            ImageFilter.GaussianBlur(3)
-        )
 
         self.frame = 0
 
@@ -840,7 +826,7 @@ class Pokeball:
 
             self.y = lerp(
                 CENTER_Y + 25,
-                CENTER_Y + 145,
+                GROUND_Y,
                 t
             )
             self.rotation += 15
@@ -856,7 +842,7 @@ class Pokeball:
             self.x = CENTER_X
 
             self.y = (
-                CENTER_Y + 120
+                GROUND_Y
                 - math.sin(t * math.pi) * 18
             )
 
@@ -867,7 +853,7 @@ class Pokeball:
         elif frame < 22:
 
             self.x = CENTER_X
-            self.y = CENTER_Y + 120
+            self.y = GROUND_Y
 
         # ---------------------------------
         # Shake 1
@@ -876,7 +862,7 @@ class Pokeball:
         elif frame < 24:
 
             self.x = CENTER_X - 12
-            self.y = CENTER_Y + 120
+            self.y = GROUND_Y
             self.rotation = -18
 
         # ---------------------------------
@@ -886,7 +872,7 @@ class Pokeball:
         elif frame < 26:
 
             self.x = CENTER_X + 12
-            self.y = CENTER_Y + 120
+            self.y = GROUND_Y
             self.rotation = 18
 
         # ---------------------------------
@@ -896,7 +882,7 @@ class Pokeball:
         elif frame < 28:
 
             self.x = CENTER_X - 8
-            self.y = CENTER_Y + 120
+            self.y = GROUND_Y
             self.rotation = -12
 
         # ---------------------------------
@@ -906,7 +892,7 @@ class Pokeball:
         else:
 
             self.x = CENTER_X
-            self.y = CENTER_Y + 120
+            self.y = GROUND_Y
             self.rotation = 0
     # --------------------------------------------------------
 
@@ -926,19 +912,6 @@ class Pokeball:
             resample=Image.BICUBIC
         )
 
-        shadow = self.shadow.rotate(
-            self.rotation,
-            expand=True,
-            resample=Image.BICUBIC
-        )
-
-        img.alpha_composite(
-            shadow,
-            (
-                int(self.x - ball.width / 2 + 2),
-                int(self.y - ball.height / 2 + 2)
-            )
-        )
 
         img.alpha_composite(
             ball,
@@ -1239,11 +1212,11 @@ class CaptureAnimation:
                 )
             )
 
-            y = lerp(
-                CENTER_Y + 35,
-                CENTER_Y + 155,
-                t
-            )
+        y = lerp(
+            CENTER_Y + 35,
+            GROUND_Y,
+            t
+        )
 
         x -= sprite.width // 2
         y -= sprite.height // 2
@@ -1294,9 +1267,9 @@ class CaptureAnimation:
 
             (
 
-                (WIDTH-(bbox[2]-bbox[0]))//2,
+                (WIDTH - (bbox[2] - bbox[0])) // 2,
 
-                400
+                HEIGHT - 30
 
             ),
 
