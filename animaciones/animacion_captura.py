@@ -911,6 +911,7 @@ class SparkEmitter:
 
         random.seed(frame)
 
+
         for _ in range(30):
 
             ang = random.random()*math.pi*2
