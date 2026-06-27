@@ -4,39 +4,7 @@ import logging
 from PIL import Image
 from PIL import Image, ImageFilter
 log = logging.getLogger('imagencomb')
-
-
-# =========================
-# SPRITE DOWNLOAD
-# =========================
-async def obtener_sprite_bytes(session, poke_id, es_shiny, es_espalda):
-    base = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon"
-
-    async def descargar(back):
-        partes = ["back"] if back else []
-        if es_shiny:
-            partes.append("shiny")
-
-        url = (
-            f"{base}/{'/'.join(partes)}/{poke_id}.png"
-            if partes
-            else f"{base}/{poke_id}.png"
-        )
-
-        async with session.get(url) as response:
-            if response.status == 200:
-                data = await response.read()
-                if data:
-                    return data
-
-            raise Exception(f"HTTP {response.status}")
-
-    try:
-        return await descargar(es_espalda)
-    except Exception:
-        if es_espalda:
-            return await descargar(False)
-        raise
+from PIL import ImageSequence
 
 
 # =========================
@@ -53,7 +21,117 @@ def preparar_sprite(img, max_w, max_h):
         (int(img.width * escala), int(img.height * escala)),
         Image.Resampling.NEAREST
     )
+def crear_aura(img):
 
+    aura = Image.new(
+        "RGBA",
+        img.size,
+        (0, 0, 0, 0)
+    )
+
+    pixeles = aura.load()
+
+    alpha = img.getchannel("A").load()
+
+    for y in range(img.height):
+
+        for x in range(img.width):
+
+            if alpha[x, y] > 0:
+
+                pixeles[x, y] = (
+                    255,
+                    0,
+                    0,
+                    180
+                )
+
+    return aura.filter(
+        ImageFilter.GaussianBlur(12)
+    )
+
+def cargar_frames_gif(
+    poke_id,
+    max_w,
+    max_h,
+    es_shiny=False,
+    es_espalda=False
+):
+
+    if es_espalda and es_shiny:
+        ruta = os.path.join(
+            "gifs",
+            "back_shiny",
+            f"{poke_id}.gif"
+        )
+
+    elif es_espalda:
+        ruta = os.path.join(
+            "gifs",
+            "back",
+            f"{poke_id}.gif"
+        )
+
+    elif es_shiny:
+        ruta = os.path.join(
+            "gifs",
+            "shiny",
+            f"{poke_id}.gif"
+        )
+
+    else:
+        ruta = os.path.join(
+            "gifs",
+            "regular",
+            f"{poke_id}.gif"
+        )
+
+    # Fallback
+    if not os.path.exists(ruta):
+
+        if es_shiny:
+            ruta = os.path.join(
+                "gifs",
+                "shiny",
+                f"{poke_id}.gif"
+            )
+
+        else:
+            ruta = os.path.join(
+                "gifs",
+                "regular",
+                f"{poke_id}.gif"
+            )
+
+    gif = Image.open(ruta)
+
+    frames = []
+
+    for i, frame in enumerate(ImageSequence.Iterator(gif)):
+
+        if i % 2:
+            continue
+
+        frame = preparar_sprite(
+            frame.convert("RGBA"),
+            max_w,
+            max_h
+        )
+
+        if es_espalda:
+
+            frames.append(frame)
+
+        else:
+
+            frames.append(
+                (
+                    frame,
+                    crear_aura(frame)
+                )
+            )
+
+    return frames
 
 # =========================
 # COMBATE NORMAL (2v1 legacy)
@@ -108,7 +186,107 @@ async def generar_escena_combate(
 
     return buffer
 
+def renderizar_frame_raid(
+    fondo,
+    sprites,
+    alpha_img,
+    aura,
+):
 
+    escena = fondo.copy()
+
+    # ==================================================
+    # CALCULAR CENTRO DEL GRUPO
+    # ==================================================
+
+    ESPACIO = 25
+
+    ancho_total = sum(
+        img.width
+        for _, img in sprites
+    )
+
+    ancho_total += ESPACIO * (len(sprites) - 1)
+
+    CENTRO_JUGADORES = 400
+
+    x_actual = int(
+        CENTRO_JUGADORES -
+        ancho_total / 2
+    )
+
+
+    # ==================================================
+    # ALPHA
+    # ==================================================
+
+    CENTRO_ALPHA = 440
+
+    x_alpha = int(
+        CENTRO_ALPHA -
+        alpha_img.width / 2
+    )
+
+    Y_ALPHA = 50
+
+    escena.paste(
+        aura,
+        (x_alpha, Y_ALPHA),
+        aura
+    )
+
+    escena.paste(
+        alpha_img,
+        (x_alpha, Y_ALPHA),
+        alpha_img
+    )
+
+    # ==================================================
+    # JUGADORES
+    # ==================================================
+
+    # =====================================
+    # POSICIONES PREDEFINIDAS
+    # =====================================
+
+    if len(sprites) == 3:
+
+        posiciones = [
+            (120, 250),   # Izquierda
+            (260, 250),   # Centro adelantado
+            (410, 250),   # Derecha
+        ]
+
+    elif len(sprites) == 2:
+
+        posiciones = [
+            (170, 235),
+            (340, 235),
+        ]
+
+    else:
+
+        posiciones = [
+            (250, 230)
+        ]
+
+    for (p, img), (x, y) in zip(sprites, posiciones):
+
+        escena.paste(
+            img,
+            (x, y),
+            img
+        )
+# =====================================
+# FUTUROS EFECTOS
+# =====================================
+
+# Barras de HP
+# Daño flotante
+# Clima
+# Estado
+# Sacudida de pantalla
+    return escena
 # =========================
 # RAID (3v1)
 # =========================
@@ -123,159 +301,253 @@ async def generar_escena_raid(
 ):
 
     carpeta_fondos = "fondos"
-    ruta_fondo = os.path.join(carpeta_fondos, fondo_nombre)
+
+    ruta_fondo = os.path.join(
+        carpeta_fondos,
+        fondo_nombre
+    )
 
     if not os.path.exists(ruta_fondo):
-        fondo = Image.new("RGBA", (800, 400), (50, 50, 50, 255))
+        fondo = Image.new(
+            "RGBA",
+            (800, 400),
+            (50, 50, 50, 255)
+        )
     else:
-        fondo = Image.open(ruta_fondo).convert("RGBA")
+        fondo = Image.open(
+            ruta_fondo
+        ).convert("RGBA")
 
-    fondo = fondo.resize((800, 400), Image.Resampling.LANCZOS)
+    fondo = fondo.resize(
+        (800, 400),
+        Image.Resampling.LANCZOS
+    )
 
-
-    # ==================================================
-    # CARGAR SPRITES DE LOS JUGADORES
-    # ==================================================
+    # =====================================
+    # CARGAR JUGADORES
+    # =====================================
 
     sprites = []
 
     for p in jugadores:
 
-        img_bytes = await obtener_sprite_bytes(
-            session,
+        frames = cargar_frames_gif(
             p["id"],
-            False,
-            True
-        )
-
-        img = Image.open(
-            io.BytesIO(img_bytes)
-        ).convert("RGBA")
-
-        img = preparar_sprite(
-            img,
-            160,
-            160
+            145,
+            145,
+            es_espalda=True
         )
 
         sprites.append(
-            (p, img)
+            (
+                p,
+                frames[0]
+            )
         )
 
-    # ==================================================
-    # CALCULAR CENTRO DEL GRUPO
-    # ==================================================
-
-    ESPACIO = 25
-
-    ancho_total = sum(
-        img.width
-        for _, img in sprites
-    )
-
-    ancho_total += (
-        ESPACIO *
-        (len(sprites) - 1)
-    )
-
-    CENTRO_JUGADORES = 400
-
-    x_actual = int(
-        CENTRO_JUGADORES -
-        ancho_total / 2
-    )
-    # ==================================================
-    # ALPHA
-    # ==================================================
-
-    alpha_bytes = await obtener_sprite_bytes(
-        session,
+    # Cargar el Alpha una sola vez
+    alpha_frames = cargar_frames_gif(
         alpha["id"],
-        False,
-        False
+        260,
+        260,
+        es_espalda=False
     )
+    alpha_img, aura = alpha_frames[0]
 
-    alpha_img = Image.open(
-        io.BytesIO(alpha_bytes)
-    ).convert("RGBA")
+    # =====================================
+    # RENDER
+    # =====================================
 
-    alpha_img = preparar_sprite(
+    escena = renderizar_frame_raid(
+        fondo,
+        sprites,
         alpha_img,
-        300,
-        300
-    )
-    # =========================
-    # AURA ROJA
-    # =========================
-
-    aura = Image.new("RGBA", alpha_img.size, (0, 0, 0, 0))
-
-    pixeles = aura.load()
-    alpha_pixeles = alpha_img.getchannel("A").load()
-
-    for y in range(alpha_img.height):
-        for x in range(alpha_img.width):
-            if alpha_pixeles[x, y] > 0:
-                pixeles[x, y] = (255, 0, 0, 180)
-
-    aura = aura.filter(ImageFilter.GaussianBlur(12))
-    CENTRO_ALPHA = 440
-
-    x_alpha = int(
-        CENTRO_ALPHA -
-        alpha_img.width / 2
-    )
-
-    Y_ALPHA = 50  # Más pequeño = más arriba
-
-    # Aura detrás
-    fondo.paste(
-        aura,
-        (x_alpha, Y_ALPHA),
         aura
     )
 
-    # Alpha encima
-    fondo.paste(
-        alpha_img,
-        (x_alpha, Y_ALPHA),
-        alpha_img
-    )
-
-    # ==================================================
-    # DIBUJAR JUGADORES
-    # ==================================================
-
-    for i, (p, img) in enumerate(sprites):
-
-        if len(sprites) == 3:
-            y = [270, 270, 270][i]
-
-        elif len(sprites) == 2:
-            y = 240
-
-        else:
-            y = 240
-
-        fondo.paste(
-            img,
-            (int(x_actual), y),
-            img
-        )
-
-        x_actual += img.width + ESPACIO
-
-
-
-    # ==================================================
+    # =====================================
     # EXPORTAR
-    # ==================================================
+    # =====================================
 
     buffer = io.BytesIO()
 
-    fondo.save(
+    escena.save(
         buffer,
         format="PNG"
+    )
+
+    buffer.seek(0)
+
+    return buffer
+async def generar_escena_raid_gif(
+    session,
+    jugadores,
+    hp_jugadores,
+    alpha,
+    hp_alpha,
+    hp_alpha_max,
+    fondo_nombre
+):
+
+    carpeta_fondos = "fondos"
+
+    ruta_fondo = os.path.join(
+        carpeta_fondos,
+        fondo_nombre
+    )
+
+    if not os.path.exists(ruta_fondo):
+        fondo = Image.new(
+            "RGBA",
+            (800, 400),
+            (50, 50, 50, 255)
+        )
+    else:
+        fondo = Image.open(
+            ruta_fondo
+        ).convert("RGBA")
+
+    fondo = fondo.resize(
+        (800, 400),
+        Image.Resampling.LANCZOS
+    )
+
+    # =====================================
+    # CARGAR GIFS
+    # =====================================
+
+    sprites = []
+
+    for p in jugadores:
+
+        frames = cargar_frames_gif(
+            p["id"],
+            145,
+            145,
+            es_espalda=True
+        )
+
+        sprites.append(
+            (p, frames)
+        )
+
+    alpha_frames = cargar_frames_gif(
+        alpha["id"],
+        260,
+        260,
+        es_espalda=False
+    )
+
+    print(
+        "Jugadores:",
+        [len(f) for _, f in sprites]
+    )
+
+    print(
+        "Alpha:",
+        len(alpha_frames)
+    )
+
+    # =====================================
+    # TOTAL DE FRAMES
+    # =====================================
+
+    MAX_FRAMES = 32
+
+    total_frames = min(
+        MAX_FRAMES,
+        max(
+            len(alpha_frames),
+            *[
+                len(frames)
+                for _, frames in sprites
+            ]
+        )
+    )
+
+    print(
+        "Frames finales:",
+        total_frames
+    )
+
+    # =====================================
+    # CREAR ESCENAS
+    # =====================================
+
+    resultado = []
+
+    for frame_index in range(total_frames):
+
+        # ==========================
+        # Jugadores (frame actual)
+        # ==========================
+
+        sprites_frame = []
+
+        for p, frames in sprites:
+
+            frame = frames[
+                frame_index % len(frames)
+            ]
+
+            sprites_frame.append(
+                (p, frame)
+            )
+
+        # ==========================
+        # Alpha (frame actual)
+        # ==========================
+
+        alpha_img, aura = alpha_frames[
+            frame_index % len(alpha_frames)
+        ]
+
+
+        # ==========================
+        # Renderizar escena
+        # ==========================
+
+        escena = renderizar_frame_raid(
+            fondo,
+            sprites_frame,
+            alpha_img,
+            aura
+        )
+
+        resultado.append(
+            escena
+        )
+
+    print(
+        "Escenas creadas:",
+        len(resultado)
+    )
+
+    # =====================================
+    # EXPORTAR GIF
+    # =====================================
+
+    buffer = io.BytesIO()
+    frames_gif = []
+
+    for frame in resultado:
+
+        frames_gif.append(
+            frame.convert(
+                "P",
+                palette=Image.Palette.ADAPTIVE,
+                colors=128
+            )
+        )
+    frames_gif[0].save(
+        buffer,
+        format="GIF",
+        save_all=True,
+        append_images=frames_gif[1:],
+        duration=80,
+        loop=0,
+        optimize=True,
+        disposal=2
     )
 
     buffer.seek(0)

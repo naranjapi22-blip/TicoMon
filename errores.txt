@@ -1,0 +1,100 @@
+Regular: 990 iron-treads
+Shiny: 990 iron-treads
+Back: 990 iron-treads
+Back Shiny: 990 iron-treads
+Regular: 991 iron-bundle
+Shiny: 991 iron-bundle
+Back: 991 iron-bundle
+Back Shiny: 991 iron-bundle
+Regular: 992 iron-hands
+Shiny: 992 iron-hands
+Back: 992 iron-hands
+Back Shiny: 992 iron-hands
+Regular: 993 iron-jugulis
+Shiny: 993 iron-jugulis
+Back: 993 iron-jugulis
+Back Shiny: 993 iron-jugulis
+Regular: 994 iron-moth
+Shiny: 994 iron-moth
+Back: 994 iron-moth
+Back Shiny: 994 iron-moth
+Regular: 995 iron-thorns
+Shiny: 995 iron-thorns
+Back: 995 iron-thorns
+Back Shiny: 995 iron-thorns
+Regular: 1001 wo-chien
+Shiny: 1001 wo-chien
+Back: 1001 wo-chien
+Back Shiny: 1001 wo-chien
+Regular: 1002 chien-pao
+Shiny: 1002 chien-pao
+Back: 1002 chien-pao
+Back Shiny: 1002 chien-pao
+Regular: 1003 ting-lu
+Shiny: 1003 ting-lu
+Back: 1003 ting-lu
+Back Shiny: 1003 ting-lu
+Regular: 1004 chi-yu
+Shiny: 1004 chi-yu
+Back: 1004 chi-yu
+Back Shiny: 1004 chi-yu
+Regular: 1006 iron-valiant
+Shiny: 1006 iron-valiant
+Back: 1006 iron-valiant
+Back Shiny: 1006 iron-valiant
+Regular: 1008 miraidon
+Shiny: 1008 miraidon
+Back: 1008 miraidon
+Back Shiny: 1008 miraidon
+Regular: 1010 iron-leaves
+Shiny: 1010 iron-leaves
+Back: 1010 iron-leaves
+Back Shiny: 1010 iron-leaves
+Regular: 1014 okidogi
+Shiny: 1014 okidogi
+Back: 1014 okidogi
+Back Shiny: 1014 okidogi
+Regular: 1015 munkidori
+Shiny: 1015 munkidori
+Back: 1015 munkidori
+Back Shiny: 1015 munkidori
+Regular: 1016 fezandipiti
+Shiny: 1016 fezandipiti
+Back: 1016 fezandipiti
+Back Shiny: 1016 fezandipiti
+Regular: 1017 ogerpon
+Shiny: 1017 ogerpon
+Back: 1017 ogerpon
+Back Shiny: 1017 ogerpon
+Regular: 1022 iron-boulder
+Shiny: 1022 iron-boulder
+Back: 1022 iron-boulder
+Back Shiny: 1022 iron-boulder
+Regular: 1023 iron-crown
+Shiny: 1023 iron-crown
+Back: 1023 iron-crown
+Back Shiny: 1023 iron-crown
+Regular: 1024 terapagos
+Shiny: 1024 terapagos
+Back: 1024 terapagos
+Back Shiny: 1024 terapagos
+Regular: 1025 pecharunt
+Shiny: 1025 pecharunt
+Back: 1025 pecharunt
+Back Shiny: 1025 pecharunt
+Regular: 10168 mr-mime-galar
+Shiny: 10168 mr-mime-galar
+Back: 10168 mr-mime-galar
+Back Shiny: 10168 mr-mime-galar
+Regular: 10250 tauros-paldea-combat-breed
+Shiny: 10250 tauros-paldea-combat-breed
+Back: 10250 tauros-paldea-combat-breed
+Back Shiny: 10250 tauros-paldea-combat-breed
+Regular: 10251 tauros-paldea-blaze-breed
+Shiny: 10251 tauros-paldea-blaze-breed
+Back: 10251 tauros-paldea-blaze-breed
+Back Shiny: 10251 tauros-paldea-blaze-breed
+Regular: 10252 tauros-paldea-aqua-breed
+Shiny: 10252 tauros-paldea-aqua-breed
+Back: 10252 tauros-paldea-aqua-breed
+Back Shiny: 10252 tauros-paldea-aqua-breed

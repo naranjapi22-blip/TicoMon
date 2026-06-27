@@ -2,7 +2,7 @@ import asyncio
 import aiohttp
 from PIL import Image
 
-import imagen_raid
+from incursiones import imagen_raid
 
 
 async def main():
@@ -16,12 +16,12 @@ async def main():
     hp = [100, 100, 100]
 
     alpha = {
-        "id": 384   
+        "id": 484
     }
 
     async with aiohttp.ClientSession() as session:
 
-        buffer = await imagen_raid.generar_escena_raid(
+        buffer = await imagen_raid.generar_escena_raid_gif(
             session,
             jugadores,
             hp,
@@ -31,10 +31,11 @@ async def main():
             "bosque.png"
         )
 
-        imagen = Image.open(buffer)
-        imagen.save("raid_test_v2.png")
+        with open("raid.gif", "wb") as f:
+            f.write(buffer.getvalue())
 
-        print("✅ Imagen creada: raid_test.png")
+        print("GIF creado")
+
 
 
 asyncio.run(main())
