@@ -283,47 +283,45 @@ class Halo:
 
 class Glow:
 
+    def __init__(self):
+
+        self.cache = {}
+
     def draw(
-
         self,
-
         img,
-
         sprite,
-
         x,
-
         y
-
     ):
 
-        glow = Image.new(
+        key = sprite.size
 
-            "RGBA",
+        if key not in self.cache:
 
-            sprite.size,
-
-            (
-
-                CYAN[0],
-                CYAN[1],
-                CYAN[2],
-                180
-
+            glow = Image.new(
+                "RGBA",
+                sprite.size,
+                (
+                    CYAN[0],
+                    CYAN[1],
+                    CYAN[2],
+                    180
+                )
             )
 
-        )
+            glow.putalpha(
+                sprite.getchannel("A")
+            )
 
-        glow.putalpha(
-            sprite.getchannel("A")
-        )
+            glow = glow.filter(
+                ImageFilter.GaussianBlur(8)
+            )
 
-        glow = glow.filter(
-            ImageFilter.GaussianBlur(8)
-        )
+            self.cache[key] = glow
 
         img.alpha_composite(
-            glow,
+            self.cache[key],
             (x, y)
         )
 
@@ -1284,17 +1282,17 @@ class CaptureAnimation:
 
         )
 
-      #  GLOW.draw(
+        GLOW.draw(
 
-     #       img,
+            img,
 
-       #     sprite,
+            sprite,
 
-      #      x,
+            x,
 
-       #     y
+            y
 
-       # )
+        )
 
         img.alpha_composite(
 
