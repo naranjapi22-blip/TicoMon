@@ -349,7 +349,9 @@ class SpawnSelectionView(discord.ui.View):
             description=f"**Rareza:** {obtener_nombre_rareza(rareza)}",
             color=color_embed
         )
-
+        print("=" * 80)
+        print(url_gif)
+        print("=" * 80)
         embed_revelado.set_image(url=url_gif)
         embed_revelado.set_footer(text="Intentos fallidos: 0")
 
