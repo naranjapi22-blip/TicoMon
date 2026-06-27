@@ -1409,24 +1409,23 @@ class CaptureAnimation:
 
         buffer = BytesIO()
 
-        self.frames[0].save(
+        frames = [
+            f.convert(
+                "P",
+                palette=Image.ADAPTIVE
+            )
+            for f in self.frames
+        ]
 
+        frames[0].save(
             buffer,
-
             format="GIF",
-
             save_all=True,
-
-            append_images=self.frames[1:],
-
+            append_images=frames[1:],
             duration=FRAME_DURATION,
-
             loop=0,
-
-            optimize=False,
-
+            optimize=True,
             disposal=2
-
         )
 
         buffer.seek(0)
