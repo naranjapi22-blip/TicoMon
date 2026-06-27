@@ -1212,11 +1212,11 @@ class CaptureAnimation:
                 )
             )
 
-        y = lerp(
-            CENTER_Y + 35,
-            GROUND_Y,
-            t
-        )
+            y = lerp(
+                CENTER_Y + 35,
+                GROUND_Y,
+                t
+            )
 
         x -= sprite.width // 2
         y -= sprite.height // 2
