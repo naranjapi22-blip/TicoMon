@@ -157,7 +157,7 @@ def cargar_frames_gif(
 ):
 
     if str(ruta).startswith("http"):
-
+        print(ruta)
         with urlopen(ruta) as response:
             gif = Image.open(
                 BytesIO(response.read())
