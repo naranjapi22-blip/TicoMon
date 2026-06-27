@@ -147,12 +147,18 @@ def cargar_sprite(ruta):
         raise FileNotFoundError(ruta)
 
     return Image.open(ruta).convert("RGBA")
-def cargar_pokeball():
+def cargar_pokeball(tipo):
+
+    archivo = (
+        tipo.lower()
+        .replace("é", "e")
+        .replace(" ", "_")
+        + ".png"
+    )
 
     return Image.open(
-        "animaciones/assets/pokeballs/pokeball.png"
+        f"animaciones/assets/pokeballs/{archivo}"
     ).convert("RGBA")
-
 
 def sprite_blanco(sprite):
 
@@ -637,9 +643,9 @@ EMITTER = ParticleEmitter()
 
 class Pokeball:
 
-    def __init__(self):
+    def __init__(self, tipo="Pokéball"):
 
-        self.sprite = cargar_pokeball()
+        self.sprite = cargar_pokeball(tipo)
 
         self.reset()
 
@@ -956,11 +962,11 @@ class CaptureAnimation:
         self,
         sprite_path,
         pokemon_name,
+        pokeball="Pokéball",
         capturado=True
     ):
-
         self.sprite_original = cargar_sprite(sprite_path)
-
+        self.pokeball_sprite = Pokeball(self.pokeball)
         self.sprite_white = sprite_blanco(
             self.sprite_original
         )
@@ -970,7 +976,7 @@ class CaptureAnimation:
         self.capturado = capturado
 
         self.frames = []
-
+        self.pokeball = pokeball
 
  # --------------------------------------------------------
 
@@ -1191,7 +1197,7 @@ class CaptureAnimation:
 
         CAMERA.update(frame)
 
-        POKEBALL.position(frame)
+        self.pokeball_sprite.position(frame)
 
         EMITTER.update()
 
@@ -1289,7 +1295,7 @@ class CaptureAnimation:
 
         )
 
-        POKEBALL.draw(img)
+        self.pokeball_sprite.draw(img)
 
         FLASH.draw(
 
@@ -1318,7 +1324,7 @@ class CaptureAnimation:
 
         EMITTER.reset()
 
-        POKEBALL.reset()
+        self.pokeball_sprite.reset()
 
         for frame in range(FPS):
 
