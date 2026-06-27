@@ -636,7 +636,7 @@ class BotonCaptura(discord.ui.View):
                         )
                         from mapeo_pokes import obtener_id_gif
 
-                        R2_PUBLIC_URL = "https://pub-23cb5644.r2.dev"
+                        R2_PUBLIC_URL = "https://pub-23cb564f6c174627926c1ac0409563d4.r2.dev"
 
                         id_final = obtener_id_gif(
                             self.pokemon_id
