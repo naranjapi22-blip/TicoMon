@@ -1404,31 +1404,24 @@ class CaptureAnimation:
     def gif_bytes(self):
 
         if not self.frames:
-
             self.render()
 
         buffer = BytesIO()
 
-        frames = [
-            f.convert(
-                "P",
-                palette=Image.ADAPTIVE
-            )
-            for f in self.frames
-        ]
-
-        frames[0].save(
+        self.frames[0].save(
             buffer,
             format="GIF",
             save_all=True,
-            append_images=frames[1:],
+            append_images=self.frames[1:],
             duration=FRAME_DURATION,
             loop=0,
-            optimize=True,
+            optimize=False,
             disposal=2
         )
 
         buffer.seek(0)
+
+        print("Resolución:", self.frames[0].size)
 
         return buffer
 
