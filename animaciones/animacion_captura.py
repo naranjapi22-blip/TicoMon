@@ -713,7 +713,7 @@ class Pokeball:
 
             self.x = CENTER_X
 
-            y = lerp(
+            self.y = lerp(
                 CENTER_Y + 25,
                 CENTER_Y + 145,
                 t
@@ -948,7 +948,7 @@ class SparkEmitter:
 # INSTANCIAS
 # ============================================================
 
-POKEBALL = Pokeball()
+
 
 FLASH = ImpactFlash()
 
@@ -965,8 +965,9 @@ class CaptureAnimation:
         pokeball="Pokéball",
         capturado=True
     ):
+
         self.sprite_original = cargar_sprite(sprite_path)
-        self.pokeball_sprite = Pokeball(self.pokeball)
+
         self.sprite_white = sprite_blanco(
             self.sprite_original
         )
@@ -976,8 +977,12 @@ class CaptureAnimation:
         self.capturado = capturado
 
         self.frames = []
+
+        # Guardar el nombre de la Poké Ball
         self.pokeball = pokeball
 
+        # Crear la Poké Ball con ese sprite
+        self.pokeball_sprite = Pokeball(self.pokeball)
  # --------------------------------------------------------
 
     def sprite_actual(self, frame):
