@@ -44,8 +44,8 @@ CENTER_Y = HEIGHT // 2
 BALL_START_X = 20
 BALL_START_Y = HEIGHT - 70
 
-FPS = 35
-FRAME_DURATION = 100
+FPS = 24
+FRAME_DURATION = 80
 
 SPRITE_SIZE = 150
 
@@ -1546,7 +1546,6 @@ class CaptureAnimation:
 
         buffer.seek(0)
 
-        print("Resolución:", self.frames[0].size)
         print("Frames:", len(self.frames))
         print("Resolución:", self.frames[0].size)
         print("Duración:", FRAME_DURATION)
