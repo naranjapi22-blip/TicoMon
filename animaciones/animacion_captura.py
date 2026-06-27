@@ -195,19 +195,6 @@ def cargar_frames_gif(
         if bbox:
             img = img.crop(bbox)
 
-        escala = min(
-            size / img.width,
-            size / img.height
-        )
-
-        img = img.resize(
-            (
-                int(img.width * escala),
-                int(img.height * escala)
-            ),
-            Image.Resampling.NEAREST
-        )
-
         frames.append(img)
 
         duraciones.append(
@@ -249,16 +236,18 @@ def sprite_blanco(sprite):
     return blanco
 
 
-def redimensionar(sprite,size):
+def redimensionar(sprite, size):
+
+    escala = min(
+        size / sprite.width,
+        size / sprite.height
+    )
 
     return sprite.resize(
 
         (
-
-            size,
-
-            size
-
+            int(sprite.width * escala),
+            int(sprite.height * escala)
         ),
 
         Image.LANCZOS
@@ -1122,10 +1111,6 @@ class CaptureAnimation:
     def sprite_scale(self, frame):
 
         escala = 1.0
-
-        escala += math.sin(
-            frame*0.25
-        ) * 0.03
 
         # Compresión hacia la Poké Ball
 
