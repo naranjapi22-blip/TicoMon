@@ -295,7 +295,10 @@ class Glow:
         y
     ):
 
-        key = sprite.size
+        key = (
+            (sprite.width // 8) * 8,
+            (sprite.height // 8) * 8
+        )
 
         if key not in self.cache:
 
@@ -315,7 +318,7 @@ class Glow:
             )
 
             glow = glow.filter(
-                ImageFilter.GaussianBlur(8)
+                ImageFilter.GaussianBlur(3)
             )
 
             self.cache[key] = glow
