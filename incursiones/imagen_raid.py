@@ -325,6 +325,7 @@ async def generar_escena_raid(
             p["id"],
             145,
             145,
+            es_shiny=p.get("shiny", False),
             es_espalda=True
         )
 
@@ -416,6 +417,7 @@ async def generar_escena_raid_gif(
             p["id"],
             145,
             145,
+            es_shiny=p.get("shiny", False),
             es_espalda=True
         )
 
