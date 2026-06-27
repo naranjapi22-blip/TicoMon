@@ -330,7 +330,9 @@ async def generar_escena_raid(
     sprites = []
 
     for p in jugadores:
-
+        print(
+            f"{p['nombre']} -> id={p['id']} pokeapi={p.get('pokeapi_id')}"
+        )
         frames = cargar_frames_gif(
             p["id"],
             145,
@@ -419,7 +421,9 @@ async def generar_escena_raid_gif(
     sprites = []
 
     for p in jugadores:
-
+        print(
+            f"{p['nombre']} -> id={p['id']} pokeapi={p.get('pokeapi_id')}"
+        )
         frames = cargar_frames_gif(
             p["id"],
             145,
