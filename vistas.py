@@ -634,14 +634,30 @@ class BotonCaptura(discord.ui.View):
                             else
                             f"gifs/regular/{self.pokemon_id}.gif"
                         )
+                        from mapeo_pokes import obtener_id_gif
 
+                        R2_PUBLIC_URL = "https://pub-23cb5644.r2.dev"
+
+                        id_final = obtener_id_gif(
+                            self.pokemon_id
+                        )
+
+                        path_folder = (
+                            "shiny"
+                            if self.es_shiny
+                            else "regular"
+                        )
+
+                        url_gif = (
+                            f"{R2_PUBLIC_URL}/"
+                            f"{path_folder}/{id_final}.gif"
+                        )
                         animacion = CaptureAnimation(
-                            sprite_path=sprite_path,
+                            sprite_path=url_gif,
                             pokemon_name=self.nombre,
                             pokeball=nombre_bola,
                             capturado=True
                         )
-
                         buffer_captura = animacion.gif_bytes()
 
                         print("Frames:", len(animacion.frames))

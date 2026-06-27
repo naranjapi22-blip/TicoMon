@@ -10,15 +10,14 @@ Motor de animaciones para capturas.
 
 ============================================================
 """
-
+from urllib.request import urlopen
+from io import BytesIO
 from __future__ import annotations
 import time
 import math
 import random
 from pathlib import Path
-from io import BytesIO
-from pathlib import Path
-
+from mapeo_pokes import obtener_id_gif
 from PIL import (
     Image,
     ImageDraw,
@@ -153,12 +152,21 @@ def cargar_frames_gif(
     size=SPRITE_SIZE
 ):
 
-    ruta = Path(ruta)
+    if str(ruta).startswith("http"):
 
-    if not ruta.exists():
-        raise FileNotFoundError(ruta)
+        with urlopen(ruta) as response:
+            gif = Image.open(
+                BytesIO(response.read())
+            )
 
-    gif = Image.open(ruta)
+    else:
+
+        ruta = Path(ruta)
+
+        if not ruta.exists():
+            raise FileNotFoundError(ruta)
+
+        gif = Image.open(ruta)
 
     frames = []
 
