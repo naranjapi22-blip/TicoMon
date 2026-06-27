@@ -1540,14 +1540,16 @@ class CaptureAnimation:
             append_images=self.frames[1:],
             duration=FRAME_DURATION,
             loop=0,
-            optimize=False,
+            optimize=True,
             disposal=2
         )
 
         buffer.seek(0)
 
         print("Resolución:", self.frames[0].size)
-
+        print("Frames:", len(self.frames))
+        print("Resolución:", self.frames[0].size)
+        print("Duración:", FRAME_DURATION)
         return buffer
 
     # ========================================================
