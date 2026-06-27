@@ -1296,8 +1296,6 @@ class CaptureAnimation:
 
         self.pokeball_sprite.position(frame)
 
-        EMITTER.update()
-
         img = BACKGROUND.render(frame)
 
         HALO.draw(
@@ -1310,15 +1308,26 @@ class CaptureAnimation:
             frame
         )
 
-        EMITTER.draw(
-            img
-        )
+        # =====================================
+        # Partículas del impacto
+        # =====================================
+
+        if frame == 12:
+
+            EMITTER.reset()
+
+        if frame >= 12:
+
+            EMITTER.update()
+
+            EMITTER.draw(
+                img
+            )
 
         SPARKS.draw(
             img,
             frame
         )
-
 
         self.sprite_timer += FRAME_DURATION
 
@@ -1380,7 +1389,7 @@ class CaptureAnimation:
 
         sprite.putalpha(a)
 
-        x,y = self.sprite_position(
+        x, y = self.sprite_position(
 
             sprite,
 
@@ -1456,8 +1465,6 @@ class CaptureAnimation:
 
         self.sprite_index = 0
         self.sprite_timer = 0
-
-        EMITTER.reset()
 
         self.pokeball_sprite.reset()
 
