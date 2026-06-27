@@ -647,7 +647,31 @@ class Pokeball:
 
     def __init__(self, tipo="Pokéball"):
 
-        self.sprite = cargar_pokeball(tipo)
+        sprite = cargar_pokeball(tipo)
+
+        bbox = sprite.getbbox()
+        if bbox:
+            sprite = sprite.crop(bbox)
+
+        self.sprite = sprite.resize(
+            (44, 44),
+            Image.LANCZOS
+        )
+
+        # Crear sombra una sola vez
+        self.shadow = Image.new(
+            "RGBA",
+            self.sprite.size,
+            (0, 0, 0, 90)
+        )
+
+        self.shadow.putalpha(
+            self.sprite.getchannel("A")
+        )
+
+        self.shadow = self.shadow.filter(
+            ImageFilter.GaussianBlur(3)
+        )
 
         self.reset()
 
@@ -795,15 +819,6 @@ class Pokeball:
         ball = self.sprite.copy()
 
         # Elimina el borde transparente
-        bbox = ball.getbbox()
-        if bbox:
-            ball = ball.crop(bbox)
-
-        # Tamaño
-        ball = ball.resize(
-            (44, 44),
-            Image.LANCZOS
-        )
 
         # Rotación
         ball = ball.rotate(
@@ -812,19 +827,11 @@ class Pokeball:
             resample=Image.BICUBIC
         )
 
-        # Sombra
-        shadow = Image.new(
-            "RGBA",
-            ball.size,
-            (0, 0, 0, 90)
+        shadow = self.shadow.rotate(
+            self.rotation,
+            expand=True,
+            resample=Image.BICUBIC
         )
-
-        shadow.putalpha(ball.getchannel("A"))
-
-        shadow = shadow.filter(
-            ImageFilter.GaussianBlur(3)
-        )
-
         img.alpha_composite(
             shadow,
             (

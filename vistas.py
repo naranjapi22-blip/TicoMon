@@ -683,14 +683,18 @@ class BotonCaptura(discord.ui.View):
                             pass
 
                         import uuid
+                        import time
+                        inicio = time.perf_counter()
 
                         await interaction.channel.send(
                             content=mensaje,
                             file=discord.File(
                                 buffer_captura,
-                                filename=f"captura_{uuid.uuid4().hex}.gif"
+                                filename=f"captura_{time.time_ns()}.gif"
                             )
                         )
+
+                        print("ENVÍO:", time.perf_counter() - inicio)
 
                         self.stop()
 
