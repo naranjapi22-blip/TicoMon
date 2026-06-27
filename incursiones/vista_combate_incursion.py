@@ -1,6 +1,6 @@
 import discord
 import asyncio
-from incursiones.imagen_raid import generar_escena_raid
+from incursiones.imagen_raid import generar_escena_raid_gif
 
 from incursiones.combate_raid import CombateRaidSim
 
@@ -101,7 +101,7 @@ class VistaCombateIncursion:
 
         # Imagen inicial
 
-        buffer = await generar_escena_raid(
+        buffer = await generar_escena_raid_gif(
             self.session,
             self.combate.jugadores,
             self.combate.hp_jugadores,
@@ -113,13 +113,14 @@ class VistaCombateIncursion:
 
         file = discord.File(
             buffer,
-            filename="raid.png"
+            filename="raid.gif"
         )
 
         await mensaje.edit(
             content=(
                 "⚔️ ¡La incursión ha comenzado!\n\n"
-                f"👹 {self.combate.alpha['nombre']} apareció."
+                f"👹 {self.combate.alpha['nombre']} apareció.\n\n"
+                f"{self.construir_estado()}"
             ),
             attachments=[file]
         )
@@ -134,7 +135,7 @@ class VistaCombateIncursion:
 
             estado_final = self.construir_estado()
 
-            buffer = await generar_escena_raid(
+            buffer = await generar_escena_raid_gif(
                 self.session,
                 self.combate.jugadores,
                 self.combate.hp_jugadores,
@@ -146,7 +147,7 @@ class VistaCombateIncursion:
 
             file = discord.File(
                 buffer,
-                filename="raid.png"
+            filename="raid.gif"
             )
 
             texto = (
@@ -156,8 +157,7 @@ class VistaCombateIncursion:
             )
 
             await mensaje.edit(
-                content=texto,
-                attachments=[file]
+                content=texto
             )
 
             ronda += 1
