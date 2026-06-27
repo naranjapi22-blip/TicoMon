@@ -314,9 +314,12 @@ class SpawnSelectionView(discord.ui.View):
 
         path_folder = "shiny" if es_shiny else "regular"
 
+        import time
+
         url_gif = (
             f"{R2_PUBLIC_URL}/"
             f"{path_folder}/{dex_id}.gif"
+            f"?v={int(time.time())}"
         )
         # Variables para captura
         es_legendario = species.get('is_legendary', False)
@@ -640,11 +643,13 @@ class BotonCaptura(discord.ui.View):
                         )
 
 
+                        import time
+
                         url_gif = (
                             f"{R2_PUBLIC_URL}/"
                             f"{path_folder}/{self.pokemon_id}.gif"
+                            f"?v={int(time.time())}"
                         )
-
                         print("Pokemon:", self.nombre)
                         print("pokemon_id:", self.pokemon_id)
                         print("URL:", url_gif)
