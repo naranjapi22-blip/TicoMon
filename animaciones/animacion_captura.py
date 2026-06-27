@@ -35,11 +35,11 @@ FONDOS_DIR = Path("animaciones/assets/fondos")
 # CONFIGURACIÓN
 # ============================================================
 
-WIDTH = 640
-HEIGHT = 360
+WIDTH = 480
+HEIGHT = 270
 
 CENTER_X = WIDTH // 2
-CENTER_Y = 180
+CENTER_Y = HEIGHT // 2
 
 BALL_START_X = 20
 BALL_START_Y = HEIGHT - 70
@@ -398,6 +398,12 @@ class Shadow:
 
         img,
 
+        x,
+
+        y,
+
+        sprite,
+
         frame
 
     ):
@@ -415,15 +421,21 @@ class Shadow:
         draw = ImageDraw.Draw(capa)
 
         mover = math.sin(
-            frame*0.30
+            frame * 0.30
         ) * 4
+
+        centro_x = x + sprite.width // 2
+        base_y = y + sprite.height - 6
+
+        ancho = sprite.width * 0.40
+        alto = 10
 
         draw.ellipse(
             (
-                CENTER_X - 60,
-                CENTER_Y + 180 + mover,
-                CENTER_X + 60,
-                CENTER_Y + 197 + mover
+                centro_x - ancho,
+                base_y + mover,
+                centro_x + ancho,
+                base_y + alto + mover
             ),
             fill=(0, 0, 0, 120)
         )
@@ -708,13 +720,39 @@ class Pokeball:
         sprite = cargar_pokeball(tipo)
 
         bbox = sprite.getbbox()
+
         if bbox:
             sprite = sprite.crop(bbox)
 
-        self.sprite = sprite.resize(
-            (44, 44),
+        self.sprite_cerrada = sprite.resize(
+            (20, 20),
             Image.LANCZOS
         )
+
+        archivo = (
+            tipo.lower()
+            .replace("é", "e")
+            .replace("-", "_")
+            .replace(" ", "_")
+        )
+
+        sprite_abierta = Image.open(
+            f"animaciones/assets/pokeballs/{archivo}_open.png"
+        ).convert("RGBA")
+
+
+        bbox = sprite_abierta.getbbox()
+
+        if bbox:
+            sprite_abierta = sprite_abierta.crop(bbox)
+
+        self.sprite_abierta = sprite_abierta.resize(
+            (20, 20),
+            Image.LANCZOS
+        )
+
+        # Sprite actual
+        self.sprite = self.sprite_cerrada
 
         # Crear sombra una sola vez
         self.shadow = Image.new(
@@ -730,6 +768,8 @@ class Pokeball:
         self.shadow = self.shadow.filter(
             ImageFilter.GaussianBlur(3)
         )
+
+        self.frame = 0
 
         self.reset()
 
@@ -874,11 +914,11 @@ class Pokeball:
         if not self.visible:
             return
 
-        ball = self.sprite.copy()
+        if 12 <= self.frame <= 15:
+            ball = self.sprite_abierta.copy()
+        else:
+            ball = self.sprite_cerrada.copy()
 
-        # Elimina el borde transparente
-
-        # Rotación
         ball = ball.rotate(
             self.rotation,
             expand=True,
@@ -890,22 +930,22 @@ class Pokeball:
             expand=True,
             resample=Image.BICUBIC
         )
+
         img.alpha_composite(
             shadow,
             (
-                int(self.x - ball.width/2 + 2),
-                int(self.y - ball.height/2 + 2)
+                int(self.x - ball.width / 2 + 2),
+                int(self.y - ball.height / 2 + 2)
             )
         )
 
         img.alpha_composite(
             ball,
             (
-                int(self.x - ball.width/2),
-                int(self.y - ball.height/2)
+                int(self.x - ball.width / 2),
+                int(self.y - ball.height / 2)
             )
         )
-
 
 # ============================================================
 # DESTELLO DEL IMPACTO
@@ -1279,6 +1319,8 @@ class CaptureAnimation:
 
         CAMERA.update(frame)
 
+        self.pokeball_sprite.frame = frame
+
         self.pokeball_sprite.position(frame)
 
         img = BACKGROUND.render(frame)
@@ -1287,12 +1329,6 @@ class CaptureAnimation:
             img,
             frame
         )
-
-        SHADOW.draw(
-            img,
-            frame
-        )
-
         # =====================================
         # Partículas del impacto
         # =====================================
@@ -1337,32 +1373,8 @@ class CaptureAnimation:
             frame,
             gif_frame
         )
-
-        lado = int(
-
-            SPRITE_SIZE *
-
-            self.sprite_scale(frame) *
-
-            CAMERA.zoom
-
-        )
-
-        lado = max(
-
-            8,
-
-            lado
-
-        )
-
-        sprite = redimensionar(
-
-            sprite,
-
-            lado
-
-        )
+        # Mantener el tamaño original del GIF
+        sprite = sprite.copy()
 
         alpha = self.sprite_alpha(frame)
 
@@ -1381,16 +1393,17 @@ class CaptureAnimation:
             frame
 
         )
-
-        GLOW.draw(
+        SHADOW.draw(
 
             img,
 
-            sprite,
-
             x,
 
-            y
+            y,
+
+            sprite,
+
+            frame
 
         )
 
