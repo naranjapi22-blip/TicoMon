@@ -69,10 +69,18 @@ def cargar_frames_gif(
     if es_espalda:
         if es_shiny:
             carpetas.append("back_shiny")
+
         carpetas.append("back")
+
+        if es_shiny:
+            carpetas.append("shiny")
+
+        carpetas.append("regular")
+
     else:
         if es_shiny:
             carpetas.append("shiny")
+
         carpetas.append("regular")
 
     gif = None
