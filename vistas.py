@@ -629,10 +629,10 @@ class BotonCaptura(discord.ui.View):
 
 
                         sprite_path = (
-                            f"sprites/shiny/{self.pokemon_id}.png"
+                            f"gifs/shiny/{self.pokemon_id}.gif"
                             if self.es_shiny
                             else
-                            f"sprites/regular/{self.pokemon_id}.png"
+                            f"gifs/regular/{self.pokemon_id}.gif"
                         )
 
                         animacion = CaptureAnimation(
