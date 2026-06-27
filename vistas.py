@@ -647,7 +647,13 @@ class BotonCaptura(discord.ui.View):
                             if self.es_shiny
                             else "regular"
                         )
+                        print("Pokemon:", self.nombre)
+                        print("pokemon_id:", self.pokemon_id)
 
+                        id_final = obtener_id_gif(self.pokemon_id)
+
+                        print("id_final:", id_final)
+                        print("URL:", url_gif)
                         url_gif = (
                             f"{R2_PUBLIC_URL}/"
                             f"{path_folder}/{id_final}.gif"
