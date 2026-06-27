@@ -435,8 +435,8 @@ class Camera:
 
         if 9 <= frame <= 11:
 
-            self.offset_x = random.randint(-3,3)
-            self.offset_y = random.randint(-3,3)
+            self.offset_x = random.randint(-3, 3)
+            self.offset_y = random.randint(-3, 3)
 
 
 # ============================================================
@@ -562,16 +562,16 @@ class ParticleEmitter:
         self.reset()
 
     def reset(self):
-
+        rng = random.Random()
         self.particles.clear()
 
         for _ in range(self.amount):
 
-            angle=random.random()*math.pi*2
+            angle=rng.random()*math.pi*2
 
-            dist=random.randint(30,120)
+            dist=rng.randint(30,120)
 
-            speed=random.uniform(0.4,1.4)
+            speed=rng.uniform(0.4,1.4)
 
             x=CENTER_X+math.cos(angle)*dist
             y=CENTER_Y+math.sin(angle)*dist
@@ -579,7 +579,7 @@ class ParticleEmitter:
             vx=math.cos(angle)*speed
             vy=math.sin(angle)*speed
 
-            color=random.choice([WHITE,CYAN,GREEN,GOLD])
+            color = rng.choice([WHITE, CYAN, GREEN, GOLD])
 
             self.particles.append(
 
@@ -593,11 +593,11 @@ class ParticleEmitter:
 
                     vy,
 
-                    random.randint(2,4),
+                    rng.randint(2,4),
 
                     color,
 
-                    random.randint(30,55)
+                    rng.randint(30,55)
 
                 )
 
@@ -917,14 +917,14 @@ class SparkEmitter:
 
         draw = ImageDraw.Draw(img)
 
-        random.seed(frame)
+        rng = random.Random(frame)
 
 
         for _ in range(30):
 
-            ang = random.random()*math.pi*2
+            ang = rng.random() * math.pi * 2
 
-            dist = random.randint(10,80)
+            dist = rng.randint(10, 80)
 
             IMPACT_Y = CENTER_Y + 85
 
