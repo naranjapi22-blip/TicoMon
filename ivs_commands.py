@@ -355,13 +355,13 @@ class IvsCommands(commands.Cog):
         # Intentamos obtener la información del Pokémon
         pokemon = database.obtener_pokemon_local_nombre(nombre)
 
-        # Si es una forma especial (ej. pyroar-male), buscamos la especie base
+        # Si no existe exactamente, buscamos la especie base
         if not pokemon and "-" in nombre:
             nombre_base = nombre.split("-", 1)[0]
             pokemon = database.obtener_pokemon_local_nombre(nombre_base)
 
-        # Si el LEFT JOIN no encontró el dex_id, lo obtenemos del caché
-        if dex_id is None and pokemon:
+        # Siempre usamos el ID del caché en lugar del LEFT JOIN
+        if pokemon:
             dex_id = pokemon.get("pokeapi_id", pokemon["id"])
 
         nat_stats = NATURALEZAS.get(
