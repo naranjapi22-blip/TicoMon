@@ -41,8 +41,8 @@ CENTER_Y = 180
 BALL_START_X = 20
 BALL_START_Y = HEIGHT - 70
 
-FPS = 22
-FRAME_DURATION = 65
+FPS = 20
+FRAME_DURATION = 80
 
 SPRITE_SIZE = 260
 
@@ -1284,17 +1284,17 @@ class CaptureAnimation:
 
         )
 
-        GLOW.draw(
+      #  GLOW.draw(
 
-            img,
+     #       img,
 
-            sprite,
+       #     sprite,
 
-            x,
+      #      x,
 
-            y
+       #     y
 
-        )
+       # )
 
         img.alpha_composite(
 
