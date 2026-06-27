@@ -12,7 +12,7 @@ Motor de animaciones para capturas.
 """
 
 from __future__ import annotations
-
+import time
 import math
 import random
 from pathlib import Path
@@ -1362,7 +1362,9 @@ class CaptureAnimation:
 
         self,
 
-        filename="captura.gif"
+
+
+        filename=f"captura_{time.time_ns()}.gif"
 
     ):
 

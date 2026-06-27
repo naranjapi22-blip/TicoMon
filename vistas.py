@@ -678,11 +678,13 @@ class BotonCaptura(discord.ui.View):
                         except discord.NotFound:
                             pass
 
+                        import uuid
+
                         await interaction.channel.send(
                             content=mensaje,
                             file=discord.File(
                                 buffer_captura,
-                                filename="captura.gif"
+                                filename=f"captura_{uuid.uuid4().hex}.gif"
                             )
                         )
 
