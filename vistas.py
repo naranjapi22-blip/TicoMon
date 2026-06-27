@@ -646,6 +646,10 @@ class BotonCaptura(discord.ui.View):
                         )
 
                         buffer_captura = animacion.gif_bytes()
+
+                        print("Frames:", len(animacion.frames))
+                        print("Bytes:", buffer_captura.getbuffer().nbytes)
+
                         liberar_canal_completo(
                             interaction.channel.id
                         )
