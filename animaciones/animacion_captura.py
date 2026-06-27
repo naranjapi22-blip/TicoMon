@@ -182,29 +182,41 @@ def cargar_frames_gif(
 
     frames = []
 
+    base = Image.new(
+        "RGBA",
+        gif.size,
+        (0, 0, 0, 0)
+    )
+
     for frame in ImageSequence.Iterator(gif):
 
-        frame = frame.convert("RGBA")
+        base = base.copy()
 
-        bbox = frame.getbbox()
-
-        if bbox:
-            frame = frame.crop(bbox)
-
-        escala = min(
-            size / frame.width,
-            size / frame.height
+        base.alpha_composite(
+            frame.convert("RGBA")
         )
 
-        frame = frame.resize(
+        img = base
+
+        bbox = img.getbbox()
+
+        if bbox:
+            img = img.crop(bbox)
+
+        escala = min(
+            size / img.width,
+            size / img.height
+        )
+
+        img = img.resize(
             (
-                int(frame.width * escala),
-                int(frame.height * escala)
+                int(img.width * escala),
+                int(img.height * escala)
             ),
             Image.Resampling.NEAREST
         )
 
-        frames.append(frame)
+        frames.append(img)
 
     return frames
 def cargar_pokeball(tipo):
@@ -1411,9 +1423,22 @@ class CaptureAnimation:
     # ========================================================
 
     def render(self):
+
         global BACKGROUND
+        global HALO
+        global GLOW
+        global SHADOW
+        global FLASH
+        global SPARKS
 
         BACKGROUND = Background()
+
+        HALO = Halo()
+        GLOW = Glow()
+        SHADOW = Shadow()
+        FLASH = ImpactFlash()
+        SPARKS = SparkEmitter()
+
         self.frames.clear()
 
         EMITTER.reset()
