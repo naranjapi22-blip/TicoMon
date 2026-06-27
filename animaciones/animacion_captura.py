@@ -10,14 +10,17 @@ Motor de animaciones para capturas.
 
 ============================================================
 """
+from __future__ import annotations
+
 from urllib.request import urlopen
 from io import BytesIO
-from __future__ import annotations
 import time
 import math
 import random
 from pathlib import Path
+
 from mapeo_pokes import obtener_id_gif
+
 from PIL import (
     Image,
     ImageDraw,
@@ -26,6 +29,7 @@ from PIL import (
     ImageOps,
     ImageSequence,
 )
+
 FONDOS_DIR = Path("animaciones/assets/fondos")
 
 # ============================================================
