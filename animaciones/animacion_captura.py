@@ -19,7 +19,6 @@ import math
 import random
 from pathlib import Path
 
-from mapeo_pokes import obtener_id_gif
 
 from PIL import (
     Image,

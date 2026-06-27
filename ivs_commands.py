@@ -11,7 +11,6 @@ from logger_config import log # Necesario para el log
 from datetime import datetime, timezone # Asegúrate de tener este también
 from discord.ui import Button, View
 import records
-from mapeo_pokes import obtener_id_gif
 from candy import add_candy_for_pokemon
 from records import recalcular_record_liberado
 # Fórmulas oficiales de Pokémon
@@ -408,13 +407,11 @@ class IvsCommands(commands.Cog):
         try:
             if dex_id is not None:
 
-                id_final = obtener_id_gif(dex_id)
-
                 path_folder = "shiny" if es_shiny else "regular"
 
                 url_gif = (
-                    f"{"https://pub-23cb564f6c174627926c1ac0409563d4.r2.dev"}/"
-                    f"{path_folder}/{id_final}.gif"
+                    "https://pub-23cb564f6c174627926c1ac0409563d4.r2.dev/"
+                    f"{path_folder}/{dex_id}.gif"
                 )
 
                 embed.set_image(url=url_gif)

@@ -1,59 +1,139 @@
 from pathlib import Path
-import csv
 import requests
 import time
+import csv
+# ==========================================================
+# CONFIGURACIÓN
+# ==========================================================
 
-# ============================================
-# Configuración
-# ============================================
+TOTAL_POKEMON = 1025
 
-CSV_FILE = Path("pokemon_data.csv")
-
-OUTPUT_DIR = Path("gifs")
-
-REGULAR_DIR = OUTPUT_DIR / "regular"
-SHINY_DIR = OUTPUT_DIR / "shiny"
-BACK_DIR = OUTPUT_DIR / "back"
-BACK_SHINY_DIR = OUTPUT_DIR / "back_shiny"
-
-BACK_DIR.mkdir(parents=True, exist_ok=True)
-BACK_SHINY_DIR.mkdir(parents=True, exist_ok=True)
-REGULAR_DIR.mkdir(parents=True, exist_ok=True)
-SHINY_DIR.mkdir(parents=True, exist_ok=True)
-
-BASE_REGULAR = "https://play.pokemonshowdown.com/sprites/ani"
-BASE_SHINY = "https://play.pokemonshowdown.com/sprites/ani-shiny"
-BASE_BACK = "https://play.pokemonshowdown.com/sprites/ani-back"
-BASE_BACK_SHINY = "https://play.pokemonshowdown.com/sprites/ani-back-shiny"
 TIMEOUT = 20
 RETRIES = 3
 
+HEADERS = {
+    "User-Agent": "Mozilla/5.0"
+}
+
+BASES = {
+
+    "regular":
+        "https://play.pokemonshowdown.com/sprites/ani",
+
+    "shiny":
+        "https://play.pokemonshowdown.com/sprites/ani-shiny",
+
+    "back":
+        "https://play.pokemonshowdown.com/sprites/ani-back",
+
+    "back_shiny":
+        "https://play.pokemonshowdown.com/sprites/ani-back-shiny",
+
+}
+OUTPUT = Path("gifs")
+
+CARPETAS = {}
+
+for nombre in BASES:
+
+    carpeta = OUTPUT / nombre
+
+    carpeta.mkdir(
+        parents=True,
+        exist_ok=True
+    )
+
+    CARPETAS[nombre] = carpeta
+
 errores = []
+CSV_FILE = Path("pokemon_data.csv")
+
+pokemon = []
+
+with open(CSV_FILE, encoding="utf-8-sig") as f:
+
+    reader = csv.DictReader(f)
+
+    for row in reader:
+
+        pokemon.append({
+
+            "id": int(row["pokeapi_id"]),
+
+            "nombre": row["nombre"].strip().lower()
+
+        })
+
+print(f"Pokémon cargados: {len(pokemon)}")
+# ==========================================================
+# HTTP
+# ==========================================================
+
+def obtener_json(url):
+
+    r = requests.get(
+        url,
+        headers=HEADERS,
+        timeout=TIMEOUT
+    )
+
+    r.raise_for_status()
+
+    return r.json()
 
 
-# ============================================
-# Conversión PokéAPI -> Showdown
-# ============================================
+def descargar(url, destino):
 
-SPECIAL_NAMES = {
+    if destino.exists():
+        return True
+
+    for _ in range(RETRIES):
+
+        try:
+
+            r = requests.get(
+                url,
+                headers=HEADERS,
+                timeout=TIMEOUT
+            )
+
+            if r.status_code == 200:
+
+                with open(destino, "wb") as f:
+                    f.write(r.content)
+
+                return True
+
+            if r.status_code == 404:
+
+                return False
+
+        except Exception:
+
+            pass
+
+        time.sleep(1)
+
+    return False
+# ==========================================================
+# POKÉAPI -> SHOWDOWN
+# ==========================================================
+
+SPECIAL = {
 
     "mr-mime": "mrmime",
     "mr-rime": "mrrime",
-
     "mime-jr": "mimejr",
 
     "type-null": "typenull",
 
-    "jangmo-o": "jangmoo",
-    "hakamo-o": "hakamoo",
-    "kommo-o": "kommoo",
-
-    "farfetchd": "farfetchd",
-    "sirfetchd": "sirfetchd",
+    "ho-oh": "hooh",
 
     "porygon-z": "porygonz",
 
-    "ho-oh": "hooh",
+    "jangmo-o": "jangmoo",
+    "hakamo-o": "hakamoo",
+    "kommo-o": "kommoo",
 
     "wo-chien": "wochien",
     "chien-pao": "chienpao",
@@ -66,6 +146,7 @@ SPECIAL_NAMES = {
     "flutter-mane": "fluttermane",
     "slither-wing": "slitherwing",
     "sandy-shocks": "sandyshocks",
+
     "iron-treads": "irontreads",
     "iron-bundle": "ironbundle",
     "iron-hands": "ironhands",
@@ -73,274 +154,103 @@ SPECIAL_NAMES = {
     "iron-moth": "ironmoth",
     "iron-thorns": "ironthorns",
     "roaring-moon": "roaringmoon",
-    "iron-valiant": "ironvaliant"
+    "iron-valiant": "ironvaliant",
+
+    "walking-wake": "walkingwake",
+    "gouging-fire": "gougingfire",
+    "raging-bolt": "ragingbolt",
+    "iron-boulder": "ironboulder",
+    "iron-crown": "ironcrown",
+    "iron-leaves": "ironleaves",
 
 }
-
 
 def showdown_name(nombre):
 
     nombre = nombre.lower()
 
-    # Excepciones conocidas
-    SPECIAL_NAMES = {
-
-        "mr-mime": "mrmime",
-        "mr-rime": "mrrime",
-        "mime-jr": "mimejr",
-
-        "type-null": "typenull",
-
-        "jangmo-o": "jangmoo",
-        "hakamo-o": "hakamoo",
-        "kommo-o": "kommoo",
-
-        "farfetchd": "farfetchd",
-        "sirfetchd": "sirfetchd",
-
-        "porygon-z": "porygonz",
-
-        "ho-oh": "hooh",
-    }
-
-    if nombre in SPECIAL_NAMES:
-        return SPECIAL_NAMES[nombre]
-
-    # ==========================================
-    # Formas regionales
-    # ==========================================
-
-    for sufijo in (
-        "-alola",
-        "-galar",
-        "-hisui",
-        "-paldea",
-    ):
-
-        if nombre.endswith(sufijo):
-
-            base = nombre[:-len(sufijo)]
-
-            region = sufijo[1:]
-
-            return f"{base}-{region}"
-
-    # ==========================================
-    # Tauros Paldea
-    # ==========================================
-
-    nombre = nombre.replace(
-        "taurospaldeacombatbreed",
-        "tauros-paldea-combat"
-    )
-
-    nombre = nombre.replace(
-        "taurospaldeablazebreed",
-        "tauros-paldea-blaze"
-    )
-
-    nombre = nombre.replace(
-        "taurospaldeaaquabreed",
-        "tauros-paldea-aqua"
-    )
-
-    # ==========================================
-    # Iron Pokémon
-    # ==========================================
-
-    iron = {
-        "irontreads": "iron-treads",
-        "ironbundle": "iron-bundle",
-        "ironhands": "iron-hands",
-        "ironjugulis": "iron-jugulis",
-        "ironmoth": "iron-moth",
-        "ironthorns": "iron-thorns",
-        "ironvaliant": "iron-valiant",
-        "ironleaves": "iron-leaves",
-        "ironboulder": "iron-boulder",
-        "ironcrown": "iron-crown",
-    }
-
-    if nombre in iron:
-        return iron[nombre]
-
-    paradox = {
-        "wochien": "wo-chien",
-        "chienpao": "chien-pao",
-        "tinglu": "ting-lu",
-        "chiyu": "chi-yu",
-        "greattusk": "great-tusk",
-        "screamtail": "scream-tail",
-        "brutebonnet": "brute-bonnet",
-        "fluttermane": "flutter-mane",
-        "slitherwing": "slither-wing",
-        "sandyshocks": "sandy-shocks",
-        "roaringmoon": "roaring-moon",
-        "walkingwake": "walking-wake",
-        "gougingfire": "gouging-fire",
-        "ragingbolt": "raging-bolt",
-    }
-
-    if nombre in paradox:
-        return paradox[nombre]
-
-    # ==========================================
-
-    nombre = nombre.replace(".", "")
-    nombre = nombre.replace("'", "")
-    nombre = nombre.replace(":", "")
-    nombre = nombre.replace(" ", "")
+    if nombre in SPECIAL:
+        return SPECIAL[nombre]
 
     return nombre
-# ============================================
-# Descargar un GIF
-# ============================================
 
-def descargar(url, destino):
+# ==========================================================
+# DESCARGAR POKÉMON
+# ==========================================================
 
-    if destino.exists():
-        return True
+def descargar_pokemon(pokemon):
 
-    for intento in range(RETRIES):
+    poke_id = pokemon["id"]
 
-        try:
+    nombre = showdown_name(
+        pokemon["nombre"]
+    )
 
-            r = requests.get(
-                url,
-                timeout=TIMEOUT,
-                headers={
-                    "User-Agent": "Mozilla/5.0"
-                }
+    print(
+        f"[{poke_id}] {nombre}"
+    )
+
+    for carpeta, base in BASES.items():
+
+        url = (
+            f"{base}/{nombre}.gif"
+        )
+
+        destino = (
+            CARPETAS[carpeta] /
+            f"{poke_id}.gif"
+        )
+
+        ok = descargar(
+            url,
+            destino
+        )
+
+        if ok:
+
+            print(
+                f"   ✓ {carpeta}"
             )
 
-            if r.status_code == 200:
+        else:
 
-                with open(destino, "wb") as f:
-                    f.write(r.content)
-
-                return True
-
-            if r.status_code == 404:
-                return False
-
-        except Exception:
-
-            pass
-
-        time.sleep(1)
-
-    return False
-
-
-# ============================================
-# Leer CSV
-# ============================================
-
-pokemon = []
-
-with open(CSV_FILE, encoding="utf-8-sig") as f:
-
-    reader = csv.DictReader(f)
-
-    for row in reader:
-
-        pokemon.append({
-
-            "id": str(row["pokeapi_id"]).strip(),
-
-            "nombre": showdown_name(
-                row["nombre"].strip()
+            print(
+                f"   ✗ {carpeta}"
             )
 
-        })
+            errores.append(url)
+# ==========================================================
+# MAIN
+# ==========================================================
 
-print(f"Pokémon encontrados: {len(pokemon)}")
+print("=" * 60)
+print("DESCARGANDO GIFS")
+print("=" * 60)
 
+for poke in pokemon:
 
-# ============================================
-# Descargar todos
-# ============================================
+    descargar_pokemon(poke)
+print()
+print("=" * 60)
+print("RESUMEN")
 
-total = len(pokemon)
-
-for i, p in enumerate(pokemon, start=1):
-
-    nombre = p["nombre"]
-    pokeapi_id = p["id"]
-
-    print(f"[{i}/{total}] {nombre}")
-
-    url_regular = f"{BASE_REGULAR}/{nombre}.gif"
-    url_shiny = f"{BASE_SHINY}/{nombre}.gif"
-    url_back = f"{BASE_BACK}/{nombre}.gif"
-    url_back_shiny = f"{BASE_BACK_SHINY}/{nombre}.gif"
-
-    ok_regular = descargar(
-        url_regular,
-        REGULAR_DIR / f"{pokeapi_id}.gif"
-    )
-
-    ok_shiny = descargar(
-        url_shiny,
-        SHINY_DIR / f"{pokeapi_id}.gif"
-    )
-
-    ok_back = descargar(
-        url_back,
-        BACK_DIR / f"{pokeapi_id}.gif"
-    )
-
-    ok_back_shiny = descargar(
-        url_back_shiny,
-        BACK_SHINY_DIR / f"{pokeapi_id}.gif"
-    )
-
-    if not ok_regular:
-        errores.append(
-            f"Regular: {pokeapi_id} {nombre}"
-        )
-
-    if not ok_shiny:
-        errores.append(
-            f"Shiny: {pokeapi_id} {nombre}"
-        )
-
-    if not ok_back:
-        errores.append(
-            f"Back: {pokeapi_id} {nombre}"
-        )
-
-    if not ok_back_shiny:
-        errores.append(
-            f"Back Shiny: {pokeapi_id} {nombre}"
-        )
-# ============================================
-# Guardar errores
-# ============================================
-
-print("\n======================================")
-print("DESCARGA TERMINADA")
-print("======================================")
-
-print(f"Pokémon procesados : {total}")
-
-regular_ok = len(list(REGULAR_DIR.glob("*.gif")))
-shiny_ok = len(list(SHINY_DIR.glob("*.gif")))
-
-print(f"GIF Regular : {regular_ok}")
-print(f"GIF Shiny   : {shiny_ok}")
+print(f"Errores: {len(errores)}")
 
 if errores:
 
-    print(f"\nErrores encontrados: {len(errores)}")
-
-    with open("errores.txt", "w", encoding="utf-8") as f:
+    with open(
+        "errores.txt",
+        "w",
+        encoding="utf-8"
+    ) as f:
 
         for e in errores:
-            f.write(e + "\n")
+            f.write(f"{e}\n")
 
     print("Se creó errores.txt")
 
-else:
+print("Proceso terminado.")
 
-    print("\nTodos los GIF fueron descargados correctamente.")
+for p in pokemon:
+    if "-" in p["nombre"]:
+        print(p["nombre"])

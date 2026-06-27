@@ -15,7 +15,6 @@ from pathlib import Path
 from captura_imagen import (
     generar_imagen_captura
 )
-from mapeo_pokes import obtener_id_gif # Asegúrate de tener este import al inicio del archivo
 import records  # Importa tu archivo de lógica de récords
 COOLDOWN_LANZAMIENTO = 10.0
 COOLDOWN_GRACE = 0.25
@@ -309,10 +308,7 @@ class SpawnSelectionView(discord.ui.View):
         # Datos del Pokémon elegido
         data, species, es_shiny, rareza = self.data_pokes[indice]
 
-        from mapeo_pokes import obtener_id_gif
-
-        dex_id = data['id']
-        id_final = obtener_id_gif(dex_id)
+        dex_id = data["id"]
 
         R2_PUBLIC_URL = "https://pub-23cb564f6c174627926c1ac0409563d4.r2.dev"
 
@@ -320,7 +316,7 @@ class SpawnSelectionView(discord.ui.View):
 
         url_gif = (
             f"{R2_PUBLIC_URL}/"
-            f"{path_folder}/{id_final}.gif"
+            f"{path_folder}/{dex_id}.gif"
         )
         # Variables para captura
         es_legendario = species.get('is_legendary', False)
@@ -634,30 +630,24 @@ class BotonCaptura(discord.ui.View):
                             else
                             f"gifs/regular/{self.pokemon_id}.gif"
                         )
-                        from mapeo_pokes import obtener_id_gif
 
                         R2_PUBLIC_URL = "https://pub-23cb564f6c174627926c1ac0409563d4.r2.dev"
-
-                        id_final = obtener_id_gif(
-                            self.pokemon_id
-                        )
 
                         path_folder = (
                             "shiny"
                             if self.es_shiny
                             else "regular"
                         )
-                        print("Pokemon:", self.nombre)
-                        print("pokemon_id:", self.pokemon_id)
 
-                        id_final = obtener_id_gif(self.pokemon_id)
 
-                        print("id_final:", id_final)
-                        print("URL:", url_gif)
                         url_gif = (
                             f"{R2_PUBLIC_URL}/"
-                            f"{path_folder}/{id_final}.gif"
+                            f"{path_folder}/{self.pokemon_id}.gif"
                         )
+
+                        print("Pokemon:", self.nombre)
+                        print("pokemon_id:", self.pokemon_id)
+                        print("URL:", url_gif)
                         animacion = CaptureAnimation(
                             sprite_path=url_gif,
                             pokemon_name=self.nombre,

@@ -5,7 +5,6 @@ import servicios
 import os
 import random
 import psycopg2
-from mapeo_pokes import obtener_id_gif
 from logger_config import log
 
 # --- 1. CONFIGURACIÓN DE BASE DE DATOS DEL PERFIL ---
@@ -140,19 +139,16 @@ def iniciar_modulo_perfil(bot):
 
                 try:
 
-                    id_final = obtener_id_gif(dex_id)
-
                     print(
                         f"DESTACADO={destacado_nombre} | "
-                        f"DEX={dex_id} | "
-                        f"GIF={id_final}"
+                        f"DEX={dex_id}"
                     )
 
                     path_folder = "shiny" if es_shiny else "regular"
 
                     url_gif = (
                         f"https://pub-23cb564f6c174627926c1ac0409563d4.r2.dev/"
-                        f"{path_folder}/{id_final}.gif"
+                        f"{path_folder}/{dex_id}.gif"
                     )
 
                     embed.set_image(url=url_gif)

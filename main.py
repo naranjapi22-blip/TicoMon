@@ -10,7 +10,6 @@ import psycopg2
 from discord.ext import commands
 from dotenv import load_dotenv
 from animacion_evolucion import EvolutionAnimation
-from mapeo_pokes import obtener_id_gif
 # Módulos locales y de proyecto
 import database
 import servicios
@@ -1654,13 +1653,9 @@ async def elegir(ctx, id_pokemon: int, opcion: int):
             destino
         )
 
-        gif_origen = obtener_id_gif(
-            origen_db["id"]
-        )
+        gif_origen = origen_db["id"]
 
-        gif_destino = obtener_id_gif(
-            destino_db["id"]
-        )
+        gif_destino = destino_db["id"]
 
         anim = EvolutionAnimation(
 
