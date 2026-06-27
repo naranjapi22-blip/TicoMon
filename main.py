@@ -1007,6 +1007,7 @@ async def cargar_pokemon_por_rareza(session):
 
 
 async def inicializar_rarezas_spawn():
+    
     global pokemon_por_rareza
 
     # Limpiar listas por si se vuelve a ejecutar
@@ -1014,7 +1015,8 @@ async def inicializar_rarezas_spawn():
         pokemon_por_rareza[rareza].clear()
 
     datos = database.obtener_datos_rareza()
-
+    print("TOTAL DATOS:", len(datos))
+    print("PRIMEROS 10:", datos[:10])
     for pokemon_id, capture_rate, es_legendario, es_mitico in datos:
 
         if es_legendario:
@@ -1049,6 +1051,18 @@ async def inicializar_rarezas_spawn():
     print(
         f"REGIONALES EN SPAWN: {regionales}"
     )
+    print("=== RESUMEN SPAWN ===")
+
+    for rareza, lista in pokemon_por_rareza.items():
+        print(f"{rareza}: {len(lista)}")
+
+    print("Primeros muy_comun:", pokemon_por_rareza["muy_comun"][:10])
+    print("Primeros comun:", pokemon_por_rareza["comun"][:10])
+    print("Primeros poco_comun:", pokemon_por_rareza["poco_comun"][:10])
+    print("Primeros raro:", pokemon_por_rareza["raro"][:10])
+    print("Primeros epico:", pokemon_por_rareza["epico"][:10])
+    print("Primeros mitico:", pokemon_por_rareza["mitico"][:10])
+    print("Primeros legendario:", pokemon_por_rareza["legendario"][:10])
     log.info("=== Rarezas cargadas ===")
     log.info(f"Muy comunes: {len(pokemon_por_rareza['muy_comun'])}")
     log.info(f"Comunes: {len(pokemon_por_rareza['comun'])}")
@@ -1057,6 +1071,9 @@ async def inicializar_rarezas_spawn():
     log.info(f"Épicos: {len(pokemon_por_rareza['epico'])}")
     log.info(f"Míticos: {len(pokemon_por_rareza['mitico'])}")
     log.info(f"Legendarios: {len(pokemon_por_rareza['legendario'])}")
+    print("=== RESUMEN RAREZAS ===")
+    for rareza, lista in pokemon_por_rareza.items():
+        print(f"{rareza}: {len(lista)}")
 def generar_ids_spawn():
     ids_spawn = []
     rarezas_spawn = {}
