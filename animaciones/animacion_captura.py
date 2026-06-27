@@ -1138,35 +1138,6 @@ class CaptureAnimation:
 
         draw = ImageDraw.Draw(img)
 
-        titulo = "¡CAPTURA!"
-
-        bbox = draw.textbbox(
-
-            (0,0),
-
-            titulo,
-
-            font=TITLE_FONT
-
-        )
-
-        draw.text(
-
-            (
-
-                (WIDTH-(bbox[2]-bbox[0]))//2,
-
-                18
-
-            ),
-
-            titulo,
-
-            font=TITLE_FONT,
-
-            fill=GOLD
-
-        )
 
         if frame < 19:
 
