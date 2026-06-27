@@ -189,11 +189,11 @@ def cargar_frames_gif(
 
     for frame in ImageSequence.Iterator(gif):
 
-        base = base.copy()
+       # base = base.copy()
 
-        base.alpha_composite(
-            frame.convert("RGBA")
-        )
+       # base.alpha_composite(
+     #       frame.convert("RGBA")
+      #  )
 
         img = frame.convert("RGBA")
 
