@@ -671,18 +671,20 @@ class BotonCaptura(discord.ui.View):
                                 "Has entrado en el Salón de la Fama."
                             )
 
-                        await interaction.message.edit(
-                            content=mensaje,
-                            attachments=[
-                                discord.File(
+                            try:
+                                await interaction.message.delete()
+                            except discord.NotFound:
+                                pass
+
+                            await interaction.channel.send(
+                                content=mensaje,
+                                file=discord.File(
                                     buffer_captura,
                                     filename="captura.gif"
                                 )
-                            ],
-                            view=None
-                        )
+                            )
 
-                        self.stop()
+                            self.stop()
 
                     except Exception as db_error:
 
