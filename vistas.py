@@ -20,9 +20,9 @@ import records  # Importa tu archivo de lógica de récords
 COOLDOWN_LANZAMIENTO = 10.0
 COOLDOWN_GRACE = 0.25
 
+from animaciones.animacion_captura import CaptureAnimation
 
-
-
+from animaciones.animacion_captura import ruta_sprite
 
 def liberar_canal_completo(channel_id):
     import gestor_spawn
@@ -628,17 +628,23 @@ class BotonCaptura(discord.ui.View):
                         )
 
 
-                        trainer = await database.obtener_trainer(
-                            interaction.user.id
+                        sprite_path = (
+                            f"sprites/shiny/{self.pokemon_id}.png"
+                            if self.es_shiny
+                            else
+                            f"sprites/regular/{self.pokemon_id}.png"
                         )
 
-                        buffer_captura = await generar_imagen_captura(
-                            trainer=trainer,
-                            pokemon_id=self.pokemon_id,
-                            es_shiny=self.es_shiny,
-                            jugador=interaction.user.display_name,
-                            pokemon=self.nombre
+                        animacion = CaptureAnimation(
+                            sprite_path=ruta_sprite(
+                                self.pokemon_id,
+                                self.es_shiny
+                            ),
+                            pokemon_name=self.nombre,
+                            capturado=True
                         )
+
+                        buffer_captura = animacion.gif_bytes()
                         liberar_canal_completo(
                             interaction.channel.id
                         )
@@ -669,7 +675,7 @@ class BotonCaptura(discord.ui.View):
                             attachments=[
                                 discord.File(
                                     buffer_captura,
-                                    filename="captura.png"
+                                    filename="captura.gif"
                                 )
                             ],
                             view=None
