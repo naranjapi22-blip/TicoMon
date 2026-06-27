@@ -158,11 +158,19 @@ def cargar_frames_gif(
 
     if str(ruta).startswith("http"):
         print(ruta)
-        with urlopen(ruta) as response:
+        from urllib.request import Request, urlopen
+
+        req = Request(
+            ruta,
+            headers={
+                "User-Agent": "Mozilla/5.0"
+            }
+        )
+
+        with urlopen(req) as response:
             gif = Image.open(
                 BytesIO(response.read())
             )
-
     else:
 
         ruta = Path(ruta)
