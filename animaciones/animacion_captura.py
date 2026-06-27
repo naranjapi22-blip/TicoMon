@@ -35,19 +35,20 @@ FONDOS_DIR = Path("animaciones/assets/fondos")
 # CONFIGURACIÓN
 # ============================================================
 
-WIDTH = 480
-HEIGHT = 270
+WIDTH = 400
+HEIGHT = 225
+
 
 CENTER_X = WIDTH // 2
 CENTER_Y = HEIGHT // 2
 
 BALL_START_X = 20
-BALL_START_Y = HEIGHT - 70
+BALL_START_Y = HEIGHT - 60
 
 FPS = 24
 FRAME_DURATION = 80
 
-SPRITE_SIZE = 150
+SPRITE_SIZE = 140
 
 # ============================================================
 # COLORES
