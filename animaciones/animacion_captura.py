@@ -195,7 +195,7 @@ def cargar_frames_gif(
             frame.convert("RGBA")
         )
 
-        img = base
+        img = frame.convert("RGBA")
 
         bbox = img.getbbox()
 
