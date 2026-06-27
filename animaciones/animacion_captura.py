@@ -25,6 +25,7 @@ from PIL import (
     ImageFilter,
     ImageFont,
     ImageOps,
+    ImageSequence,
 )
 FONDOS_DIR = Path("animaciones/assets/fondos")
 
@@ -44,7 +45,7 @@ BALL_START_Y = HEIGHT - 70
 FPS = 20
 FRAME_DURATION = 80
 
-SPRITE_SIZE = 260
+SPRITE_SIZE = 150
 
 # ============================================================
 # COLORES
@@ -147,6 +148,45 @@ def cargar_sprite(ruta):
         raise FileNotFoundError(ruta)
 
     return Image.open(ruta).convert("RGBA")
+def cargar_frames_gif(
+    ruta,
+    size=SPRITE_SIZE
+):
+
+    ruta = Path(ruta)
+
+    if not ruta.exists():
+        raise FileNotFoundError(ruta)
+
+    gif = Image.open(ruta)
+
+    frames = []
+
+    for frame in ImageSequence.Iterator(gif):
+
+        frame = frame.convert("RGBA")
+
+        bbox = frame.getbbox()
+
+        if bbox:
+            frame = frame.crop(bbox)
+
+        escala = min(
+            size / frame.width,
+            size / frame.height
+        )
+
+        frame = frame.resize(
+            (
+                int(frame.width * escala),
+                int(frame.height * escala)
+            ),
+            Image.Resampling.NEAREST
+        )
+
+        frames.append(frame)
+
+    return frames
 def cargar_pokeball(tipo):
 
     archivo = (
@@ -726,7 +766,7 @@ class Pokeball:
         elif frame <= 14:
 
             self.x = CENTER_X
-            self.y = CENTER_Y + 85
+            self.y = CENTER_Y + 35
 
             self.rotation += 25
 
@@ -934,7 +974,7 @@ class SparkEmitter:
 
             dist = rng.randint(10, 80)
 
-            IMPACT_Y = CENTER_Y + 85
+            IMPACT_Y = CENTER_Y + 35
 
             x = CENTER_X + math.cos(ang) * dist
             y = IMPACT_Y + math.sin(ang) * dist
@@ -976,11 +1016,17 @@ class CaptureAnimation:
         capturado=True
     ):
 
-        self.sprite_original = cargar_sprite(sprite_path)
-
-        self.sprite_white = sprite_blanco(
-            self.sprite_original
+        self.sprite_frames = cargar_frames_gif(
+            sprite_path
         )
+
+        self.sprite_white_frames = [
+
+            sprite_blanco(frame)
+
+            for frame in self.sprite_frames
+
+        ]
 
         self.nombre = pokemon_name
 
@@ -996,49 +1042,50 @@ class CaptureAnimation:
         self.pokeball_sprite = Pokeball(self.pokeball)
  # --------------------------------------------------------
 
-    def sprite_actual(self, frame):
+    def sprite_actual(
+        self,
+        frame,
+        gif_frame
+    ):
+
+        original = self.sprite_frames[gif_frame]
+        blanco = self.sprite_white_frames[gif_frame]
 
         # Antes del impacto
 
-        if frame <= 12:
+        if frame <= 7:
 
-            return self.sprite_original
+            return original
 
         # Se vuelve blanco
 
-        elif frame <= 11:
+        elif frame <= 10:
 
             t = ease_in_out(
-
-                (frame-8)/3
-
+                (frame - 8) / 2
             )
 
             return Image.blend(
-
-                self.sprite_original,
-
-                self.sprite_white,
-
+                original,
+                blanco,
                 t
-
             )
 
         # Totalmente blanco
 
         elif frame <= 13:
 
-            return self.sprite_white
+            return blanco
 
         # Si escapó vuelve inmediatamente
 
         elif not self.capturado:
 
-            return self.sprite_original
+            return original
 
         # Capturado
 
-        return self.sprite_white
+        return blanco
 
     # --------------------------------------------------------
 
@@ -1118,10 +1165,14 @@ class CaptureAnimation:
 
     # --------------------------------------------------------
 
-    def sprite_position(self, sprite, frame):
+    def sprite_position(
+        self,
+        sprite,
+        frame
+    ):
 
         x = CENTER_X
-        y = CENTER_Y + 85
+        y = CENTER_Y + 35
 
         if self.capturado and frame >= 12:
 
@@ -1133,8 +1184,8 @@ class CaptureAnimation:
             )
 
             y = lerp(
-                CENTER_Y + 85,
-                CENTER_Y + 205,
+                CENTER_Y + 35,
+                CENTER_Y + 155,
                 t
             )
 
@@ -1239,7 +1290,14 @@ class CaptureAnimation:
         )
 
 
-        sprite = self.sprite_actual(frame)
+        gif_frame = frame % len(
+            self.sprite_frames
+        )
+
+        sprite = self.sprite_actual(
+            frame,
+            gif_frame
+        )
 
         lado = int(
 

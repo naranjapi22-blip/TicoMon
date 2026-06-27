@@ -3,7 +3,7 @@ from animaciones.animacion_captura import CaptureAnimation
 
 anim = CaptureAnimation(
 
-    sprite_path="sprites/regular/3.png",
+    sprite_path="gifs/regular/25.gif",
 
     pokemon_name="Pikachu",
 
