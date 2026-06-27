@@ -641,6 +641,7 @@ class BotonCaptura(discord.ui.View):
                                 self.es_shiny
                             ),
                             pokemon_name=self.nombre,
+                            pokeball=nombre_bola,
                             capturado=True
                         )
 

@@ -156,6 +156,8 @@ def cargar_pokeball(tipo):
         + ".png"
     )
 
+    print("Cargando:", archivo)
+
     return Image.open(
         f"animaciones/assets/pokeballs/{archivo}"
     ).convert("RGBA")
@@ -982,6 +984,7 @@ class CaptureAnimation:
         self.pokeball = pokeball
 
         # Crear la Poké Ball con ese sprite
+        print(f"Poké Ball recibida: '{self.pokeball}'")
         self.pokeball_sprite = Pokeball(self.pokeball)
  # --------------------------------------------------------
 
