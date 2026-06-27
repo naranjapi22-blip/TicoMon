@@ -901,12 +901,10 @@ class SparkEmitter:
 
     ):
 
-        if frame < 8:
-
+        if frame < 12:
             return
 
-        if frame > 12:
-
+        if frame > 14:
             return
 
         draw = ImageDraw.Draw(img)
