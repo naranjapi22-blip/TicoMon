@@ -636,10 +636,7 @@ class BotonCaptura(discord.ui.View):
                         )
 
                         animacion = CaptureAnimation(
-                            sprite_path=ruta_sprite(
-                                self.pokemon_id,
-                                self.es_shiny
-                            ),
+                            sprite_path=sprite_path,
                             pokemon_name=self.nombre,
                             pokeball=nombre_bola,
                             capturado=True
