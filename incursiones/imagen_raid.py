@@ -59,38 +59,51 @@ def cargar_frames_gif(
 ):
 
     from urllib.request import Request, urlopen
+    from urllib.error import HTTPError
     from io import BytesIO
 
     R2_PUBLIC_URL = "https://pub-23cb564f6c174627926c1ac0409563d4.r2.dev"
 
-    if es_espalda and es_shiny:
-        carpeta = "back_shiny"
+    carpetas = []
 
-    elif es_espalda:
-        carpeta = "back"
-
-    elif es_shiny:
-        carpeta = "shiny"
-
+    if es_espalda:
+        if es_shiny:
+            carpetas.append("back_shiny")
+        carpetas.append("back")
     else:
-        carpeta = "regular"
+        if es_shiny:
+            carpetas.append("shiny")
+        carpetas.append("regular")
 
-    url = (
-        f"{R2_PUBLIC_URL}/"
-        f"{carpeta}/{poke_id}.gif"
-    )
+    gif = None
 
-    req = Request(
-        url,
-        headers={
-            "User-Agent": "Mozilla/5.0"
-        }
-    )
+    for carpeta in carpetas:
 
-    with urlopen(req) as response:
+        url = f"{R2_PUBLIC_URL}/{carpeta}/{poke_id}.gif"
 
-        gif = Image.open(
-            BytesIO(response.read())
+        try:
+
+            req = Request(
+                url,
+                headers={
+                    "User-Agent": "Mozilla/5.0"
+                }
+            )
+
+            with urlopen(req) as response:
+
+                gif = Image.open(
+                    BytesIO(response.read())
+                )
+
+            break
+
+        except HTTPError:
+            continue
+
+    if gif is None:
+        raise FileNotFoundError(
+            f"No se encontró ningún GIF para {poke_id}"
         )
 
     frames = []
