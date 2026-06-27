@@ -147,8 +147,8 @@ def iniciar_modulo_perfil(bot):
                     path_folder = "shiny" if es_shiny else "regular"
 
                     url_gif = (
-                        f"https://pub-23cb564f6c174627926c1ac0409563d4.r2.dev/"
-                        f"{path_folder}/{dex_id}.gif"
+                        "https://pub-23cb564f6c174627926c1ac0409563d4.r2.dev/"
+                        f"{path_folder}/{dex_id}.gif?v=2"
                     )
 
                     embed.set_image(url=url_gif)
