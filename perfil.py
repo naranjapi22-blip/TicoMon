@@ -6,6 +6,7 @@ import os
 import random
 import psycopg2
 from logger_config import log
+from mapeo_pokes import obtener_id_gif
 # --- 1. CONFIGURACIÓN DE BASE DE DATOS DEL PERFIL ---
 def init_db_perfil():
     """Prepara la tabla del perfil."""
@@ -134,6 +135,8 @@ def iniciar_modulo_perfil(bot):
                     pokemon["id"]
                 )
 
+                gif_id = obtener_id_gif(dex_id)
+
             if dex_id:
 
                 try:
@@ -147,7 +150,7 @@ def iniciar_modulo_perfil(bot):
 
                     url_gif = (
                         "https://pub-23cb564f6c174627926c1ac0409563d4.r2.dev/"
-                        f"{path_folder}/{dex_id}.gif?v=2"
+                        f"gifs_calidad/{gif_id}.gif?v=2"
                     )
 
                     embed.set_image(url=url_gif)
