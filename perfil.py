@@ -150,7 +150,7 @@ def iniciar_modulo_perfil(bot):
 
                     url_gif = (
                         "https://pub-23cb564f6c174627926c1ac0409563d4.r2.dev/"
-                        f"gifs_calidad/{gif_id}.gif?v=2"
+                        f"gifs_calidad/{path_folder}/{gif_id}.gif?v=2"
                     )
 
                     embed.set_image(url=url_gif)
