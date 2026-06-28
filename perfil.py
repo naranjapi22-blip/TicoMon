@@ -202,18 +202,18 @@ def iniciar_modulo_perfil(bot):
             else:
                 embed.add_field(name="🌟 Compañero Destacado", value="*No ha destacado ningún Pokémon.*\nUsa `@Bot destacar <nombre> [shiny]`", inline=False)
             
-            if datos_destacado and dex_id:
+        if datos_destacado and dex_id:
 
-                await ctx.send(
-                    embed=embed,
-                    file=file
-                )
+            await ctx.send(
+                embed=embed,
+                file=file
+            )
 
-            else:
+        else:
 
-                await ctx.send(
-                    embed=embed
-                )
+            await ctx.send(
+                embed=embed
+            )
 
     @bot.command(name="destacar")
     async def destacar(ctx, *, argumentos: str):
