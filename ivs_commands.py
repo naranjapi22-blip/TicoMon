@@ -13,6 +13,7 @@ from discord.ui import Button, View
 import records
 from candy import add_candy_for_pokemon
 from records import recalcular_record_liberado
+from mapeo_pokes import obtener_id_gif
 # Fórmulas oficiales de Pokémon
 def calcular_stat_lvl50(base, iv):
     return math.floor(((2 * base + iv) * 50 / 100) + 5)
@@ -361,9 +362,15 @@ class IvsCommands(commands.Cog):
             pokemon = database.obtener_pokemon_local_nombre(nombre_base)
 
         # Siempre usamos el ID del caché en lugar del LEFT JOIN
-        if pokemon:
-            dex_id = pokemon.get("pokeapi_id", pokemon["id"])
+        gif_id = None
 
+        if pokemon:
+            dex_id = pokemon.get(
+                "pokeapi_id",
+                pokemon["id"]
+            )
+
+            gif_id = obtener_id_gif(dex_id)
         nat_stats = NATURALEZAS.get(
             naturaleza.capitalize(),
             NATURALEZAS["Fuerte"]
@@ -407,12 +414,12 @@ class IvsCommands(commands.Cog):
         try:
             if dex_id is not None:
 
-                url_gif = servicios.obtener_url_gif(
-                    dex_id,
-                    es_shiny
-                )
+                path_folder = "shiny" if es_shiny else "regular"
 
-                embed.set_image(url=url_gif)
+                url_gif = (
+                    "https://pub-23cb564f6c174627926c1ac0409563d4.r2.dev/"
+                    f"gifs_calidad/{path_folder}/{gif_id}.gif?v=2"
+                )
 
                 embed.set_image(url=url_gif)
 
