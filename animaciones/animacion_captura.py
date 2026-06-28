@@ -161,19 +161,47 @@ def cargar_frames_gif(
         print(ruta)
 
         from urllib.request import Request, urlopen
+        from urllib.error import HTTPError
 
-        req = Request(
-            ruta,
-            headers={
-                "User-Agent": "Mozilla/5.0"
-            }
-        )
+        try:
 
-        with urlopen(req) as response:
-
-            gif = Image.open(
-                BytesIO(response.read())
+            req = Request(
+                ruta,
+                headers={
+                    "User-Agent": "Mozilla/5.0"
+                }
             )
+
+            with urlopen(req) as response:
+
+                gif = Image.open(
+                    BytesIO(response.read())
+                )
+
+        except HTTPError as e:
+
+            if e.code != 404:
+                raise
+
+            ruta = (
+                ruta
+                .replace("/shiny/", "/regular/")
+            )
+
+            print("Fallback:", ruta)
+
+            req = Request(
+                ruta,
+                headers={
+                    "User-Agent": "Mozilla/5.0"
+                }
+            )
+
+            with urlopen(req) as response:
+
+                gif = Image.open(
+                    BytesIO(response.read())
+                )
 
     else:
 

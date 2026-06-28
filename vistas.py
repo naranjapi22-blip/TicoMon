@@ -312,15 +312,45 @@ class SpawnSelectionView(discord.ui.View):
 
         R2_PUBLIC_URL = "https://pub-23cb564f6c174627926c1ac0409563d4.r2.dev"
 
-        path_folder = "shiny" if es_shiny else "regular"
-
         import time
+        from urllib.request import Request, urlopen
+        from urllib.error import HTTPError
 
-        url_gif = (
-            f"{R2_PUBLIC_URL}/"
-            f"{path_folder}/{dex_id}.gif"
-            f"?v={int(time.time())}"
-        )
+        if es_shiny:
+
+            url_gif = (
+                f"{R2_PUBLIC_URL}/"
+                f"shiny/{dex_id}.gif"
+                f"?v={int(time.time())}"
+            )
+
+            try:
+
+                req = Request(
+                    url_gif,
+                    headers={
+                        "User-Agent": "Mozilla/5.0"
+                    }
+                )
+
+                with urlopen(req):
+                    pass
+
+            except HTTPError:
+
+                url_gif = (
+                    f"{R2_PUBLIC_URL}/"
+                    f"regular/{dex_id}.gif"
+                    f"?v={int(time.time())}"
+                )
+
+        else:
+
+            url_gif = (
+                f"{R2_PUBLIC_URL}/"
+                f"regular/{dex_id}.gif"
+                f"?v={int(time.time())}"
+            )
         # Variables para captura
         es_legendario = species.get('is_legendary', False)
         capture_rate = species.get('capture_rate', 45)
