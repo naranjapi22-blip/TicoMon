@@ -824,3 +824,50 @@ async def generar_imagen_top(
         )
 
         return None
+from urllib.request import Request, urlopen
+from urllib.error import HTTPError
+
+R2_PUBLIC_URL = "https://pub-23cb564f6c174627926c1ac0409563d4.r2.dev"
+
+_gif_existentes = {}
+
+def obtener_url_gif(dex_id, es_shiny=False):
+
+    cache_key = (dex_id, es_shiny)
+
+    if cache_key in _gif_existentes:
+        return _gif_existentes[cache_key]
+
+    if es_shiny:
+
+        url_shiny = (
+            f"{R2_PUBLIC_URL}/shiny/{dex_id}.gif?v=2"
+        )
+
+        try:
+
+            req = Request(
+                url_shiny,
+                headers={
+                    "User-Agent": "Mozilla/5.0"
+                }
+            )
+
+            with urlopen(req):
+                pass
+
+            _gif_existentes[cache_key] = url_shiny
+
+            return url_shiny
+
+        except HTTPError:
+
+            pass
+
+    url_regular = (
+        f"{R2_PUBLIC_URL}/regular/{dex_id}.gif?v=2"
+    )
+
+    _gif_existentes[cache_key] = url_regular
+
+    return url_regular
