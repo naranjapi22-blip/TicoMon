@@ -6,7 +6,7 @@ import os
 import random
 import psycopg2
 from logger_config import log
-
+from servicios_gif import obtener_gif
 # --- 1. CONFIGURACIÓN DE BASE DE DATOS DEL PERFIL ---
 def init_db_perfil():
     """Prepara la tabla del perfil."""
@@ -135,6 +135,12 @@ def iniciar_modulo_perfil(bot):
                     pokemon["id"]
                 )
 
+                display_scale = float(
+                    pokemon.get(
+                        "display_scale",
+                        1.0
+                    )
+                )
             if dex_id:
 
                 try:
@@ -144,14 +150,20 @@ def iniciar_modulo_perfil(bot):
                         f"DEX={dex_id}"
                     )
 
-                    path_folder = "shiny" if es_shiny else "regular"
-
-                    url_gif = (
-                        "https://pub-23cb564f6c174627926c1ac0409563d4.r2.dev/"
-                        f"{path_folder}/{dex_id}.gif?v=2"
+                    buffer = await obtener_gif(
+                        dex_id,
+                        es_shiny,
+                        display_scale
                     )
 
-                    embed.set_image(url=url_gif)
+                    file = discord.File(
+                        buffer,
+                        filename="pokemon.gif"
+                    )
+
+                    embed.set_image(
+                        url="attachment://pokemon.gif"
+                    )
 
                 except Exception as e:
 
@@ -190,7 +202,18 @@ def iniciar_modulo_perfil(bot):
             else:
                 embed.add_field(name="🌟 Compañero Destacado", value="*No ha destacado ningún Pokémon.*\nUsa `@Bot destacar <nombre> [shiny]`", inline=False)
             
-        await ctx.send(embed=embed)
+            if datos_destacado and dex_id:
+
+                await ctx.send(
+                    embed=embed,
+                    file=file
+                )
+
+            else:
+
+                await ctx.send(
+                    embed=embed
+                )
 
     @bot.command(name="destacar")
     async def destacar(ctx, *, argumentos: str):
