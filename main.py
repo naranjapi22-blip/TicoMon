@@ -12,6 +12,7 @@ from dotenv import load_dotenv
 from animacion_evolucion import EvolutionAnimation
 # Módulos locales y de proyecto
 import database
+from mundo.mundo_manager import MundoManager
 import servicios
 import admin
 import configuracion
@@ -21,7 +22,6 @@ import gestor_spawn
 import setup_cache
 import perfil
 import intercambio
-from mundo.mundo_manager import MundoManager
 # Configuración específica
 from configuracion import canal_restringido
 from logger_config import log
@@ -111,7 +111,7 @@ bot = commands.Bot(
     case_insensitive=True,
     setup_hook=setup_hook
 )
-
+mundo_manager = MundoManager()
 
 bot.setup_hook = cargar_extensiones
 REGIONES = {
@@ -155,7 +155,6 @@ async def on_ready():
     iniciar_modulo_ranking(bot)
     iniciar_modulo_ranking_legend(bot)
     iniciar_modulo_ranking_shiny(bot)
-    mundo_manager = MundoManager()
     try:
         synced = await bot.tree.sync()
         log.info(f"✅ {len(synced)} slash command(s) sincronizados.")
