@@ -29,11 +29,6 @@ class VistaMundo(discord.ui.View):
                 ephemeral=True
             )
 
-        await interaction.response.send_message(
-            "📩 Revisa tus mensajes privados.",
-            ephemeral=True
-        )
-
         await self.manager.abrir_exploracion(
-            interaction.user
+            interaction
         )
