@@ -87,7 +87,7 @@ class MundoManager:
             self.loop_task = asyncio.create_task(
                 self.loop()
             )   
-    async def abrir_exploracion(self, usuario):
+    async def abrir_exploracion(self, interaction):
 
         nombres = []
 
@@ -102,4 +102,7 @@ class MundoManager:
             + "\n".join(nombres)
         )
 
-        await usuario.send(mensaje)
+        await interaction.response.send_message(
+            mensaje,
+            ephemeral=True
+        )
