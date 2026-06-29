@@ -1,5 +1,5 @@
 import discord
-
+import asyncio
 
 class VistaExploracion(discord.ui.View):
 
@@ -97,8 +97,45 @@ class VistaExploracion(discord.ui.View):
 
     async def capturar(self, interaction):
 
+        exploracion = self.manager.world.exploracion
+
+        exploracion.estado = "capturando"
+        exploracion.captura_en_progreso = True
+
+        self.reconstruir()
+
         await interaction.response.edit_message(
-            content="🚧 Sistema de captura próximamente.",
+            content=(
+                "🎯 **Intentando capturar...**\n\n"
+                "⏳ Espera unos segundos..."
+            ),
+            view=self
+        )
+
+        await asyncio.sleep(5)
+
+        exploracion.estado = "lista"
+        exploracion.captura_en_progreso = False
+        exploracion.pokemon_seleccionado = None
+
+        self.reconstruir()
+
+        nombres = []
+
+        for pokemon in self.manager.world.pokemons_visibles():
+
+            nombres.append(
+                f"• {pokemon['nombre'].capitalize()}"
+            )
+
+        mensaje = (
+            "❌ El Pokémon escapó.\n\n"
+            f"🌍 **Mundo {self.manager.world.tipo.title()}**\n\n"
+            + "\n".join(nombres)
+        )
+
+        await interaction.edit_original_response(
+            content=mensaje,
             view=self
         )
 
@@ -110,6 +147,7 @@ class VistaExploracion(discord.ui.View):
 
         exploracion.pokemon_seleccionado = None
 
+        exploracion.captura_en_progreso = False
         self.reconstruir()
 
         nombres = []

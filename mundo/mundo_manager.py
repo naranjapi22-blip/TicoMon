@@ -95,7 +95,6 @@ class MundoManager:
             self.world.pokemons_visibles(),
             start=1
         ):
-
             nombres.append(
                 f"{i}. {pokemon['nombre'].capitalize()}"
             )
@@ -105,16 +104,8 @@ class MundoManager:
             + "\n".join(nombres)
         )
 
-        exploracion = self.manager.world.exploracion
-
-        exploracion.estado = "capturando"
-
-        self.reconstruir()
-
-        await interaction.response.edit_message(
-            content=(
-                "🎯 **Intentando capturar...**\n\n"
-                "⏳ Espera unos segundos..."
-            ),
-            view=self
+        await interaction.response.send_message(
+            mensaje,
+            view=VistaExploracion(self),
+            ephemeral=True
         )
