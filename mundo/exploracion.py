@@ -9,6 +9,8 @@ class Exploracion:
 
         self.inicio = datetime.utcnow()
 
+        self.estado = "lista"
+
         self.pokemon_seleccionado = None
 
         self.captura_en_progreso = False

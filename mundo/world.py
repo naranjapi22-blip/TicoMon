@@ -105,25 +105,3 @@ class World:
         if None in self.pokemons:
 
             self.agregar_pokemon()
-    def esta_ocupado(self):
-
-        return self.exploracion is not None
-
-
-    def iniciar_exploracion(self, jugador_id):
-
-        if self.esta_ocupado():
-            return False
-
-
-
-        self.exploracion = Exploracion(
-            jugador_id
-        )
-
-        return True
-
-
-    def finalizar_exploracion(self):
-
-        self.exploracion = None
