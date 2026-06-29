@@ -308,7 +308,20 @@ class SpawnSelectionView(discord.ui.View):
 
         # Datos del Pokémon elegido
         data, species, es_shiny, rareza = self.data_pokes[indice]
+        pokemon_bd = database.obtener_pokemon_local_nombre(
+            data["name"]
+        )
 
+        tipo = "normal"
+
+        if pokemon_bd:
+
+            tipo = (
+                pokemon_bd["tipos"]
+                .split(",")[0]
+                .strip()
+                .lower()
+            )
         dex_id = data["id"]
         gif_id = obtener_id_gif(dex_id)
 
@@ -392,7 +405,8 @@ class SpawnSelectionView(discord.ui.View):
             rareza=rareza,
             es_shiny=es_shiny,
             capture_rate=capture_rate,
-            tamano_factor=tamano_factor
+            tamano_factor=tamano_factor,
+            tipo=tipo
         )
 
         # Editar el mensaje original
@@ -435,7 +449,8 @@ class BotonCaptura(discord.ui.View):
         rareza,
         es_shiny,
         capture_rate,
-        tamano_factor
+        tamano_factor,
+        tipo
     ):
         super().__init__(timeout=300.0)
 
@@ -445,7 +460,7 @@ class BotonCaptura(discord.ui.View):
         self.pokemon_id = pokemon_data["id"]
 
         self.nombre = pokemon_data["name"]
-        self.tipo = pokemon_data["tipos"].split(",")[0].strip().lower()
+        self.tipo = tipo
         self.rareza = rareza
         self.es_shiny = es_shiny
         self.capture_rate = capture_rate
