@@ -322,7 +322,7 @@ class SpawnSelectionView(discord.ui.View):
 
             url_gif = (
                 f"{R2_PUBLIC_URL}/"
-                f"shiny/{gif_id}.gif"
+                f"gifs_calidad/shiny/{gif_id}.gif"
                 f"?v={int(time.time())}"
             )
 
@@ -342,7 +342,7 @@ class SpawnSelectionView(discord.ui.View):
 
                 url_gif = (
                     f"{R2_PUBLIC_URL}/"
-                    f"regular/{gif_id}.gif"
+                    f"gifs_calidad/regular/{gif_id}.gif"
                     f"?v={int(time.time())}"
                 )
 
@@ -350,7 +350,7 @@ class SpawnSelectionView(discord.ui.View):
 
             url_gif = (
                 f"{R2_PUBLIC_URL}/"
-                f"regular/{gif_id}.gif"
+                f"gifs_calidad/regular/{gif_id}.gif"
                 f"?v={int(time.time())}"
             )
         # Variables para captura
