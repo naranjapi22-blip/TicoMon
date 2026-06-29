@@ -1,6 +1,6 @@
 import discord
 import asyncio
-
+import random
 class VistaExploracion(discord.ui.View):
 
     def __init__(self, manager):
@@ -114,6 +114,26 @@ class VistaExploracion(discord.ui.View):
 
         await asyncio.sleep(5)
 
+        indice = exploracion.pokemon_seleccionado
+        pokemon = self.manager.world.pokemons[indice]
+
+        capturado = random.random() < 0.5
+
+        if capturado:
+
+            self.manager.world.eliminar_pokemon(indice)
+
+            await self.manager.evolucionar()
+
+            self.manager.world.finalizar_exploracion()
+
+            return await interaction.edit_original_response(
+                content=(
+                    f"✅ **¡{pokemon['nombre'].capitalize()} fue capturado!**"
+                ),
+                view=None
+            )
+
         exploracion.estado = "lista"
         exploracion.captura_en_progreso = False
         exploracion.pokemon_seleccionado = None
@@ -129,7 +149,7 @@ class VistaExploracion(discord.ui.View):
             )
 
         mensaje = (
-            "❌ El Pokémon escapó.\n\n"
+            "❌ **El Pokémon escapó.**\n\n"
             f"🌍 **Mundo {self.manager.world.tipo.title()}**\n\n"
             + "\n".join(nombres)
         )
