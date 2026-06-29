@@ -290,34 +290,30 @@ def redimensionar(sprite, size):
 class Background:
 
     def __init__(self, tipo=None):
-        print("=" * 60)
-        print("TIPO:", tipo)
-        carpeta = FONDOS_DIR
 
         if tipo:
 
-            posible = FONDOS_DIR / tipo
+            ruta = FONDOS_DIR / f"{tipo}.png"
 
-            if posible.exists():
+            if ruta.exists():
 
-                carpeta = posible
-            print("CARPETA:", posible)
-            print("EXISTE:", posible.exists())
-        fondos = list(carpeta.glob("*.png"))
+                self.background = Image.open(ruta).convert("RGBA")
 
-        if not fondos:
+            else:
 
-            fondos = list(FONDOS_DIR.glob("*.png"))
+                ruta = random.choice(
+                    list(FONDOS_DIR.glob("*.png"))
+                )
 
-        if not fondos:
+                self.background = Image.open(ruta).convert("RGBA")
 
-            raise FileNotFoundError(
-                f"No se encontraron fondos en {carpeta}"
+        else:
+
+            ruta = random.choice(
+                list(FONDOS_DIR.glob("*.png"))
             )
-        print("FONDOS ENCONTRADOS:", fondos)
-        ruta = random.choice(fondos)
 
-        self.background = Image.open(ruta).convert("RGBA")
+            self.background = Image.open(ruta).convert("RGBA")
 
         self.background = self.background.resize(
             (WIDTH, HEIGHT),
