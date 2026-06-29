@@ -111,8 +111,14 @@ bot = commands.Bot(
     case_insensitive=True,
     setup_hook=setup_hook
 )
-mundo_manager = MundoManager()
+mundos = {}
+def obtener_mundo(guild_id):
 
+    if guild_id not in mundos:
+
+        mundos[guild_id] = MundoManager()
+
+    return mundos[guild_id]
 bot.setup_hook = cargar_extensiones
 REGIONES = {
     "1": (1, 151), "2": (152, 251), "3": (252, 386),
@@ -171,7 +177,9 @@ async def on_ready():
     if not ids:
         print("⚠️ Tabla detectada pero vacía. Iniciando carga masiva...")
         await prellenar_cache() 
-        await mundo_manager.iniciar()
+        manager = obtener_mundo(ctx.guild.id)
+
+        await manager.iniciar()
         print("✅ ¡Carga masiva completada!")
         print("Base de datos, módulos y sesión de red verificados.")
 # 2. Tu evento de encendido con la inicialización correcta
@@ -1880,16 +1888,22 @@ async def testalola(ctx):
 @commands.is_owner()
 async def mundo(ctx):
 
-    if mundo_manager.mensaje:
+    manager = obtener_mundo(
+        ctx.guild.id
+    )
+
+    if manager.mensaje:
 
         return await ctx.send(
             "🌍 El Mundo Pokémon ya está activo."
         )
 
-    await mundo_manager.iniciar()
+    await manager.iniciar()
 
-    await mundo_manager.publicar(ctx.channel)
+    await manager.publicar(
+        ctx.channel
+    )
 
-    await mundo_manager.iniciar_loop()
+    await manager.iniciar_loop()
 
 bot.run(TOKEN)
