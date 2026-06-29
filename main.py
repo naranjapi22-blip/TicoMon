@@ -1880,19 +1880,16 @@ async def testalola(ctx):
 @commands.is_owner()
 async def mundo(ctx):
 
+    if mundo_manager.mensaje:
+
+        return await ctx.send(
+            "🌍 El Mundo Pokémon ya está activo."
+        )
+
     await mundo_manager.iniciar()
 
     await mundo_manager.publicar(ctx.channel)
 
     await mundo_manager.iniciar_loop()
-
-    buffer = await mundo_manager.obtener_gif()
-
-    await ctx.send(
-        file=discord.File(
-            buffer,
-            filename="mundo.gif"
-        )
-    )
 
 bot.run(TOKEN)
