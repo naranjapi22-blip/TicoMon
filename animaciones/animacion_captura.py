@@ -290,7 +290,8 @@ def redimensionar(sprite, size):
 class Background:
 
     def __init__(self, tipo=None):
-
+        print("=" * 60)
+        print("TIPO:", tipo)
         carpeta = FONDOS_DIR
 
         if tipo:
@@ -300,7 +301,8 @@ class Background:
             if posible.exists():
 
                 carpeta = posible
-
+            print("CARPETA:", posible)
+            print("EXISTE:", posible.exists())
         fondos = list(carpeta.glob("*.png"))
 
         if not fondos:
@@ -312,7 +314,7 @@ class Background:
             raise FileNotFoundError(
                 f"No se encontraron fondos en {carpeta}"
             )
-
+        print("FONDOS ENCONTRADOS:", fondos)
         ruta = random.choice(fondos)
 
         self.background = Image.open(ruta).convert("RGBA")
