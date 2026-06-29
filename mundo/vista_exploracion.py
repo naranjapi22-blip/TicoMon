@@ -44,7 +44,9 @@ class VistaExploracion(discord.ui.View):
             salir.callback = self.salir
 
             self.add_item(salir)
+        elif exploracion.estado == "capturando":
 
+            pass
         # ==========================
         # POKÉMON SELECCIONADO
         # ==========================
@@ -95,9 +97,9 @@ class VistaExploracion(discord.ui.View):
 
     async def capturar(self, interaction):
 
-        await interaction.response.send_message(
-            "🚧 Sistema de captura próximamente.",
-            ephemeral=True
+        await interaction.response.edit_message(
+            content="🚧 Sistema de captura próximamente.",
+            view=self
         )
 
     async def volver(self, interaction):

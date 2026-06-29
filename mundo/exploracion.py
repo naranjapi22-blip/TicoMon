@@ -16,3 +16,5 @@ class Exploracion:
         self.captura_en_progreso = False
 
         self.mensaje = None
+
+        self.estado = "lista"

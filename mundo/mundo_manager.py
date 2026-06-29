@@ -105,8 +105,16 @@ class MundoManager:
             + "\n".join(nombres)
         )
 
-        await interaction.response.send_message(
-            mensaje,
-            view=VistaExploracion(self),
-            ephemeral=True
+        exploracion = self.manager.world.exploracion
+
+        exploracion.estado = "capturando"
+
+        self.reconstruir()
+
+        await interaction.response.edit_message(
+            content=(
+                "🎯 **Intentando capturar...**\n\n"
+                "⏳ Espera unos segundos..."
+            ),
+            view=self
         )
