@@ -1,4 +1,6 @@
+import asyncio
 import discord
+from mundo.vista_mundo import VistaMundo
 
 from mundo.world import World
 
@@ -10,8 +12,9 @@ class MundoManager:
         self.world = World()
 
         self.canal = None
-
         self.mensaje = None
+
+        self.loop_task = None
 
     async def iniciar(self):
 
@@ -31,9 +34,9 @@ class MundoManager:
             file=discord.File(
                 gif,
                 filename="mundo.gif"
-            )
+            ),
+            view=VistaMundo(self)
         )
-
     async def actualizar(self):
 
         self.world.iniciar()
@@ -51,3 +54,52 @@ class MundoManager:
                 )
             ]
         )
+
+    async def evolucionar(self):
+
+        self.world.evolucionar()
+
+        if self.mensaje:
+
+            gif = await self.obtener_gif()
+
+            await self.mensaje.edit(
+                attachments=[
+                    discord.File(
+                        gif,
+                        filename="mundo.gif"
+                    )
+                ]
+            )
+
+    async def loop(self):
+
+        while True:
+
+            await asyncio.sleep(180)
+
+            await self.evolucionar()
+
+    async def iniciar_loop(self):
+
+        if self.loop_task is None:
+
+            self.loop_task = asyncio.create_task(
+                self.loop()
+            )   
+    async def abrir_exploracion(self, usuario):
+
+        nombres = []
+
+        for pokemon in self.world.pokemons_visibles():
+
+            nombres.append(
+                f"• {pokemon['nombre'].capitalize()}"
+            )
+
+        mensaje = (
+            f"🌍 **Mundo {self.world.tipo.title()}**\n\n"
+            + "\n".join(nombres)
+        )
+
+        await usuario.send(mensaje)

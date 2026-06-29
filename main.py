@@ -1882,6 +1882,10 @@ async def mundo(ctx):
 
     await mundo_manager.iniciar()
 
+    await mundo_manager.publicar(ctx.channel)
+
+    await mundo_manager.iniciar_loop()
+
     buffer = await mundo_manager.obtener_gif()
 
     await ctx.send(
@@ -1890,4 +1894,5 @@ async def mundo(ctx):
             filename="mundo.gif"
         )
     )
+
 bot.run(TOKEN)
