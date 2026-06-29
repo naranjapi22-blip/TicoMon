@@ -15,6 +15,7 @@ from pathlib import Path
 from captura_imagen import (
     generar_imagen_captura
 )
+from mapeo_pokes import obtener_id_gif
 import records  # Importa tu archivo de lógica de récords
 COOLDOWN_LANZAMIENTO = 10.0
 COOLDOWN_GRACE = 0.25
@@ -309,6 +310,7 @@ class SpawnSelectionView(discord.ui.View):
         data, species, es_shiny, rareza = self.data_pokes[indice]
 
         dex_id = data["id"]
+        gif_id = obtener_id_gif(dex_id)
 
         R2_PUBLIC_URL = "https://pub-23cb564f6c174627926c1ac0409563d4.r2.dev"
 
@@ -320,7 +322,7 @@ class SpawnSelectionView(discord.ui.View):
 
             url_gif = (
                 f"{R2_PUBLIC_URL}/"
-                f"shiny/{dex_id}.gif"
+                f"shiny/{gif_id}.gif"
                 f"?v={int(time.time())}"
             )
 
@@ -340,7 +342,7 @@ class SpawnSelectionView(discord.ui.View):
 
                 url_gif = (
                     f"{R2_PUBLIC_URL}/"
-                    f"regular/{dex_id}.gif"
+                    f"regular/{gif_id}.gif"
                     f"?v={int(time.time())}"
                 )
 
@@ -348,7 +350,7 @@ class SpawnSelectionView(discord.ui.View):
 
             url_gif = (
                 f"{R2_PUBLIC_URL}/"
-                f"regular/{dex_id}.gif"
+                f"regular/{gif_id}.gif"
                 f"?v={int(time.time())}"
             )
         # Variables para captura
