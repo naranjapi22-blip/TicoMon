@@ -21,6 +21,7 @@ import gestor_spawn
 import setup_cache
 import perfil
 import intercambio
+from mundo.mundo_manager import MundoManager
 # Configuración específica
 from configuracion import canal_restringido
 from logger_config import log
@@ -154,7 +155,7 @@ async def on_ready():
     iniciar_modulo_ranking(bot)
     iniciar_modulo_ranking_legend(bot)
     iniciar_modulo_ranking_shiny(bot)
-    
+    mundo_manager = MundoManager()
     try:
         synced = await bot.tree.sync()
         log.info(f"✅ {len(synced)} slash command(s) sincronizados.")
@@ -171,7 +172,9 @@ async def on_ready():
     if not ids:
         print("⚠️ Tabla detectada pero vacía. Iniciando carga masiva...")
         await prellenar_cache() 
+        await mundo_manager.iniciar()
         print("✅ ¡Carga masiva completada!")
+        print("Base de datos, módulos y sesión de red verificados.")
 # 2. Tu evento de encendido con la inicialización correcta
 
 @bot.event
@@ -1873,5 +1876,17 @@ async def testalola(ctx):
 
     await ctx.send(
         f"{pokemon}"
+    )
+@bot.command()
+@commands.is_owner()
+async def mundo(ctx):
+
+    buffer = await mundo_manager.obtener_gif()
+
+    await ctx.send(
+        file=discord.File(
+            buffer,
+            filename="mundo.gif"
+        )
     )
 bot.run(TOKEN)

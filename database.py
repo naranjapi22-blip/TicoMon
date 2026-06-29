@@ -1875,3 +1875,35 @@ def obtener_pokeapi_id_por_id(id_interno):
     finally:
         cursor.close()
         conn.close()
+def obtener_pokemon_aleatorios_por_tipo(
+    tipo,
+    cantidad=3
+):
+    """
+    Devuelve Pokémon aleatorios del tipo indicado
+    usando la caché en memoria.
+    """
+
+    candidatos = []
+
+    for pokemon in POKEMON_CACHE.values():
+
+        tipos = pokemon["tipos"]
+
+        if tipo.lower() in tipos.lower():
+
+            candidatos.append(
+                {
+                    "id": pokemon["id"],
+                    "nombre": pokemon["nombre"],
+                    "shiny": False
+                }
+            )
+
+    if len(candidatos) <= cantidad:
+        return candidatos
+
+    return random.sample(
+        candidatos,
+        cantidad
+    )
