@@ -1880,6 +1880,8 @@ async def testalola(ctx):
 @commands.is_owner()
 async def mundo(ctx):
 
+    await mundo_manager.iniciar()
+
     buffer = await mundo_manager.obtener_gif()
 
     await ctx.send(

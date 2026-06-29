@@ -1,4 +1,4 @@
-import asyncio
+import discord
 
 from mundo.world import World
 
@@ -13,19 +13,21 @@ class MundoManager:
 
         self.mensaje = None
 
-    async def iniciar(self, canal):
-
-        self.canal = canal
+    async def iniciar(self):
 
         self.world.iniciar()
 
-        await self.publicar()
+    async def obtener_gif(self):
 
-    async def publicar(self):
+        return await self.world.generar_gif()
 
-        gif = await self.world.generar_gif()
+    async def publicar(self, canal):
 
-        self.mensaje = await self.canal.send(
+        self.canal = canal
+
+        gif = await self.obtener_gif()
+
+        self.mensaje = await canal.send(
             file=discord.File(
                 gif,
                 filename="mundo.gif"
@@ -36,7 +38,10 @@ class MundoManager:
 
         self.world.iniciar()
 
-        gif = await self.world.generar_gif()
+        gif = await self.obtener_gif()
+
+        if self.mensaje is None:
+            return
 
         await self.mensaje.edit(
             attachments=[
