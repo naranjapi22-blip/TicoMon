@@ -99,69 +99,85 @@ class VistaExploracion(discord.ui.View):
 
         exploracion = self.manager.world.exploracion
 
-        exploracion.estado = "capturando"
-        exploracion.captura_en_progreso = True
+        try:
 
-        self.reconstruir()
+            exploracion.estado = "capturando"
+            exploracion.captura_en_progreso = True
 
-        await interaction.response.edit_message(
-            content=(
-                "🎯 **Intentando capturar...**\n\n"
-                "⏳ Espera unos segundos..."
-            ),
-            view=self
-        )
+            self.reconstruir()
 
-        await asyncio.sleep(5)
+            await interaction.response.edit_message(
+                content=(
+                    "🎯 **Intentando capturar...**\n\n"
+                    "⏳ Espera unos segundos..."
+                ),
+                view=self
+            )
 
-        indice = exploracion.pokemon_seleccionado
-        pokemon = self.manager.world.pokemons[indice]
+            await asyncio.sleep(5)
 
-        capturado = random.random() < 0.5
+            indice = exploracion.pokemon_seleccionado
+            pokemon = self.manager.world.pokemons[indice]
 
-        if capturado:
+            capturado = random.random() < 0.5
 
-            self.manager.world.eliminar_pokemon(indice)
+            if capturado:
 
-            await self.manager.actualizar()
+                self.manager.world.eliminar_pokemon(indice)
 
-            await asyncio.sleep(2)
+                await self.manager.actualizar()
 
-            await self.manager.evolucionar()
+                await asyncio.sleep(2)
+
+                await self.manager.evolucionar()
+
+                try:
+                    await interaction.edit_original_response(
+                        content=(
+                            f"✅ **¡{pokemon['nombre'].capitalize()} fue capturado!**"
+                        ),
+                        view=None
+                    )
+                except discord.NotFound:
+                    pass
+
+                return
+
+            exploracion.estado = "lista"
+            exploracion.captura_en_progreso = False
+            exploracion.pokemon_seleccionado = None
+
+            self.reconstruir()
+
+            nombres = []
+
+            for pokemon in self.manager.world.pokemons_visibles():
+
+                nombres.append(
+                    f"• {pokemon['nombre'].capitalize()}"
+                )
+
+            mensaje = (
+                "❌ **El Pokémon escapó.**\n\n"
+                f"🌍 **Mundo {self.manager.world.tipo.title()}**\n\n"
+                + "\n".join(nombres)
+            )
+
+            try:
+                await interaction.edit_original_response(
+                    content=mensaje,
+                    view=self
+                )
+            except discord.NotFound:
+                pass
+
+        except Exception as e:
+
+            print(f"Error en captura: {e}")
+
+        finally:
 
             self.manager.world.finalizar_exploracion()
-
-            return await interaction.edit_original_response(
-                content=(
-                    f"✅ **¡{pokemon['nombre'].capitalize()} fue capturado!**"
-                ),
-                view=None
-            )
-
-        exploracion.estado = "lista"
-        exploracion.captura_en_progreso = False
-        exploracion.pokemon_seleccionado = None
-
-        self.reconstruir()
-
-        nombres = []
-
-        for pokemon in self.manager.world.pokemons_visibles():
-
-            nombres.append(
-                f"• {pokemon['nombre'].capitalize()}"
-            )
-
-        mensaje = (
-            "❌ **El Pokémon escapó.**\n\n"
-            f"🌍 **Mundo {self.manager.world.tipo.title()}**\n\n"
-            + "\n".join(nombres)
-        )
-
-        await interaction.edit_original_response(
-            content=mensaje,
-            view=self
-        )
 
     async def volver(self, interaction):
 

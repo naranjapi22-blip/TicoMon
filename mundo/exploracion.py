@@ -1,4 +1,5 @@
 from datetime import datetime
+import time
 
 
 class Exploracion:
@@ -18,3 +19,5 @@ class Exploracion:
         self.mensaje = None
 
         self.estado = "lista"
+
+        self.inicio = time.time()

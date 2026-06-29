@@ -1,5 +1,5 @@
 import random
-
+import time
 from database import (
     obtener_pokemon_aleatorios_por_tipo
 )
@@ -107,7 +107,16 @@ class World:
             self.agregar_pokemon()
     def esta_ocupado(self):
 
-        return self.exploracion is not None
+        if self.exploracion is None:
+            return False
+
+        if time.time() - self.exploracion.inicio > 60:
+
+            self.finalizar_exploracion()
+
+            return False
+
+        return True
 
     def iniciar_exploracion(self, jugador_id):
 
