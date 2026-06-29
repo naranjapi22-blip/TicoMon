@@ -123,6 +123,10 @@ class VistaExploracion(discord.ui.View):
 
             self.manager.world.eliminar_pokemon(indice)
 
+            await self.manager.actualizar()
+
+            await asyncio.sleep(2)
+
             await self.manager.evolucionar()
 
             self.manager.world.finalizar_exploracion()

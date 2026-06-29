@@ -39,12 +39,10 @@ class MundoManager:
         )
     async def actualizar(self):
 
-        self.world.iniciar()
-
-        gif = await self.obtener_gif()
-
         if self.mensaje is None:
             return
+
+        gif = await self.obtener_gif()
 
         await self.mensaje.edit(
             attachments=[
