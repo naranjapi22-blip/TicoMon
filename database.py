@@ -1880,17 +1880,19 @@ def obtener_pokemon_aleatorios_por_tipo(
     cantidad=3
 ):
     """
-    Devuelve Pokémon aleatorios del tipo indicado
-    usando la caché en memoria.
+    Devuelve Pokémon aleatorios cuyo
+    tipo principal coincide con el bioma.
     """
 
     candidatos = []
 
     for pokemon in POKEMON_CACHE.values():
 
-        tipos = pokemon["tipos"]
+        tipos = pokemon["tipos"].lower().split(",")
 
-        if tipo.lower() in tipos.lower():
+        primer_tipo = tipos[0].strip()
+
+        if primer_tipo == tipo.lower():
 
             candidatos.append(
                 {
