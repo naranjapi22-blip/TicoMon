@@ -289,13 +289,28 @@ def redimensionar(sprite, size):
 
 class Background:
 
-    def __init__(self):
+    def __init__(self, tipo=None):
 
-        fondos = list(FONDOS_DIR.glob("*.png"))
+        carpeta = FONDOS_DIR
+
+        if tipo:
+
+            posible = FONDOS_DIR / tipo
+
+            if posible.exists():
+
+                carpeta = posible
+
+        fondos = list(carpeta.glob("*.png"))
 
         if not fondos:
+
+            fondos = list(FONDOS_DIR.glob("*.png"))
+
+        if not fondos:
+
             raise FileNotFoundError(
-                f"No se encontraron fondos en {FONDOS_DIR}"
+                f"No se encontraron fondos en {carpeta}"
             )
 
         ruta = random.choice(fondos)
@@ -1072,7 +1087,8 @@ class CaptureAnimation:
         sprite_path,
         pokemon_name,
         pokeball="Pokéball",
-        capturado=True
+        capturado=True,
+        tipo=None
     ):
 
         self.sprite_frames, self.sprite_duraciones = cargar_frames_gif(
@@ -1092,7 +1108,7 @@ class CaptureAnimation:
         self.nombre = pokemon_name
 
         self.capturado = capturado
-
+        self.tipo = tipo
         self.frames = []
 
         # Guardar el nombre de la Poké Ball
@@ -1453,7 +1469,7 @@ class CaptureAnimation:
         global FLASH
         global SPARKS
 
-        BACKGROUND = Background()
+        BACKGROUND = Background(self.tipo)
 
         HALO = Halo()
         GLOW = Glow()

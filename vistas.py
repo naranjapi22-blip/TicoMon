@@ -445,6 +445,7 @@ class BotonCaptura(discord.ui.View):
         self.pokemon_id = pokemon_data["id"]
 
         self.nombre = pokemon_data["name"]
+        self.tipo = pokemon_data["tipos"].split(",")[0].strip().lower()
         self.rareza = rareza
         self.es_shiny = es_shiny
         self.capture_rate = capture_rate
@@ -691,7 +692,8 @@ class BotonCaptura(discord.ui.View):
                             sprite_path=url_gif,
                             pokemon_name=self.nombre,
                             pokeball=nombre_bola,
-                            capturado=True
+                            capturado=True,
+                            tipo=self.tipo
                         )
                         buffer_captura = animacion.gif_bytes()
 
