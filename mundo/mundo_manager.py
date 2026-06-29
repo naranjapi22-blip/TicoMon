@@ -1,7 +1,7 @@
 import asyncio
 import discord
 from mundo.vista_mundo import VistaMundo
-
+from mundo.vista_exploracion import VistaExploracion
 from mundo.world import World
 
 
@@ -91,10 +91,13 @@ class MundoManager:
 
         nombres = []
 
-        for pokemon in self.world.pokemons_visibles():
+        for i, pokemon in enumerate(
+            self.world.pokemons_visibles(),
+            start=1
+        ):
 
             nombres.append(
-                f"• {pokemon['nombre'].capitalize()}"
+                f"{i}. {pokemon['nombre'].capitalize()}"
             )
 
         mensaje = (
@@ -104,5 +107,6 @@ class MundoManager:
 
         await interaction.response.send_message(
             mensaje,
+            view=VistaExploracion(self),
             ephemeral=True
         )
