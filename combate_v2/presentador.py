@@ -22,17 +22,18 @@ class PresentadorCombate:
                 evento
             )
 
-            if texto:
+        if texto:
 
-                historial.append(texto)
+            historial.append(texto)
 
-                historial = historial[-4:]
+            # Solo conservar las últimas 3 acciones
+            historial = historial[-3:]
 
             if callback:
 
                 await callback(
                     paso,
-                    historial
+                    historial.copy()
                 )
 
             else:

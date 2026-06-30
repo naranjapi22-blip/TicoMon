@@ -1,13 +1,16 @@
 from .eventos import (
     EventoInicio,
+    EventoMovimiento,
+    EventoDaño,
     EventoAtaque,
     EventoCambioPokemon,
     EventoVictoria,
 )
+
 import copy
 
-class MotorCombate:
 
+class MotorCombate:
 
     def __init__(self):
 
@@ -17,6 +20,7 @@ class MotorCombate:
     def limpiar(self):
 
         self.eventos.clear()
+        self.snapshots.clear()
 
     def inicio(
         self,
@@ -48,6 +52,60 @@ class MotorCombate:
         efectivo=1.0,
         debilitado=False,
     ):
+
+        # ===========================
+        # Nuevo evento: Movimiento
+        # ===========================
+
+        self.eventos.append(
+
+            EventoMovimiento(
+
+                tipo="movimiento",
+
+                turno=turno,
+
+                atacante=atacante,
+
+                movimiento=movimiento,
+
+            )
+
+        )
+
+        # ===========================
+        # Nuevo evento: Daño
+        # ===========================
+
+        self.eventos.append(
+
+            EventoDaño(
+
+                tipo="dano",
+
+                turno=turno,
+
+                atacante=atacante,
+
+                defensor=defensor,
+
+                dano=dano,
+
+                hp_actual=hp_actual,
+
+                hp_max=hp_max,
+
+                critico=critico,
+
+                efectivo=efectivo,
+
+            )
+
+        )
+
+        # ===========================
+        # Evento antiguo (compatibilidad)
+        # ===========================
 
         self.eventos.append(
 
@@ -128,11 +186,13 @@ class MotorCombate:
     def obtener_eventos(self):
 
         return list(self.eventos)
+
     def snapshot(self, equipos):
 
         self.snapshots.append(
             copy.deepcopy(equipos)
         )
+
     def obtener_snapshot(self, indice):
 
         return self.snapshots[indice]

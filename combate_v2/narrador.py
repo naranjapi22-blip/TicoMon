@@ -25,7 +25,11 @@ class NarradorCombate:
 
             ])
 
-        if evento.tipo == "ataque":
+        # ===========================
+        # NUEVO
+        # ===========================
+
+        if evento.tipo == "movimiento":
 
             nombre = evento.atacante
 
@@ -33,9 +37,7 @@ class NarradorCombate:
                 self.ataques.get(nombre, 0) + 1
             )
 
-            veces = self.ataques[nombre]
-
-            texto = random.choice([
+            return random.choice([
 
                 f"⚔️ {nombre} usa {evento.movimiento}.",
 
@@ -45,24 +47,38 @@ class NarradorCombate:
 
             ])
 
-            if evento.dano > 0:
+        # ===========================
+        # NUEVO
+        # ===========================
 
-                texto += (
-                    f"\n💥 {evento.defensor} recibe "
-                    f"{evento.dano} de daño."
-                )
+        if evento.tipo == "dano":
+
+            texto = (
+                f"💥 {evento.defensor} recibe "
+                f"{evento.dano} de daño."
+            )
 
             if evento.critico:
 
                 texto += "\n💢 ¡Golpe crítico!"
 
-            if getattr(evento, "efectividad", 1) > 1:
+            if evento.efectivo > 1:
 
                 texto += "\n🔥 ¡Es muy eficaz!"
 
-            elif getattr(evento, "efectividad", 1) < 1:
+            elif evento.efectivo < 1:
 
                 texto += "\n🛡️ No es muy eficaz."
+
+            return texto
+
+        # ===========================
+        # COMPATIBILIDAD
+        # ===========================
+
+        if evento.tipo == "ataque":
+
+            nombre = evento.atacante
 
             if evento.debilitado:
 
@@ -70,23 +86,11 @@ class NarradorCombate:
                     self.ko.get(nombre, 0) + 1
                 )
 
-                texto += (
-                    f"\n☠️ {evento.defensor} cae debilitado."
+                return (
+                    f"☠️ {evento.defensor} cae debilitado."
                 )
 
-            elif veces >= 4:
-
-                texto += random.choice([
-
-                    "\n⚔️ Mantiene la presión.",
-
-                    "\n🔥 Domina completamente el combate.",
-
-                    "\n⚡ No da respiro al rival.",
-
-                ])
-
-            return texto
+            return ""
 
         if evento.tipo == "cambio":
 
