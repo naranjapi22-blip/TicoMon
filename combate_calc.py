@@ -174,7 +174,7 @@ MOVIMIENTOS_ESPECIALES = {
     "celebrate",
     "holdhands",
     "happyhour",
-    "futuresight"
+    "futuresight",
     "waterspout",
     "roaroftime",
     "gigaimpact",
