@@ -131,7 +131,9 @@ class CombateSim:
 
                     critico=resultado.critico,
 
-                    debilitado=hp_actual <= 0
+                    efectivo=resultado.efectivo,
+
+                    motivo=resultado.motivo,
 
                 )
 

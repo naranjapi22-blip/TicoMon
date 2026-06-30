@@ -201,6 +201,8 @@ class ResultadoDano:
     mensaje: str
     fallo: bool = False
     critico: bool = False
+    efectivo: float = 1.0
+    motivo: str | None = None
 
 def _ivs_lista(fighter: dict) -> list[int]:
     ivs = fighter.get("ivs")
@@ -599,6 +601,36 @@ def _etiqueta_efectividad(move: Move, defensor: dict) -> str:
         return " No afecta al objetivo..."
     return ""
 
+def _multiplicador_efectividad(
+    move: Move,
+    defensor: dict,
+) -> float:
+
+    move_type = move.type
+
+    if move_type is None:
+        return 1.0
+
+    tipos_def = defensor.get("tipo") or []
+
+    mult = 1.0
+
+    for tipo_nombre in tipos_def:
+
+        try:
+
+            tipo_def = PokemonType.from_name(tipo_nombre)
+
+            mult *= calc_gen9.get_move_effectiveness(
+                move,
+                move_type,
+                tipo_def
+            )
+
+        except Exception:
+            pass
+
+    return mult
 
 def calcular_dano(atacante: dict, defensor: dict) -> ResultadoDano:
     """Calcula daño de un turno usando poke-env. Fallback a fórmula simple si falla."""
@@ -637,10 +669,19 @@ def _calcular_dano_showdown(atacante: dict, defensor: dict) -> ResultadoDano:
     dano_min, dano_max = calc_gen9.calculate_damage(id_atk, id_def, move, battle, is_critical=es_critico)
     print("DAÑO:", dano_min, dano_max)
     if dano_max <= 0:
+
         return ResultadoDano(
-            0,
-            f"💨 ¡{atacante['nombre']} usó **{move_nombre}** pero no hizo daño!",
+
+            dano=0,
+
+            mensaje=f"💨 ¡{atacante['nombre']} usó **{move_nombre}**!",
+
             fallo=True,
+
+            motivo="inmune",
+
+            efectivo=0,
+
         )
 
     dano = random.randint(int(dano_min), int(dano_max)) if dano_max > dano_min else int(dano_max)
@@ -650,7 +691,19 @@ def _calcular_dano_showdown(atacante: dict, defensor: dict) -> ResultadoDano:
     sufijo = _etiqueta_efectividad(move, defensor)
     mensaje = f"{prefijo} **{atacante['nombre']}** causa {dano} HP.{sufijo}"
 
-    return ResultadoDano(dano=dano, mensaje=mensaje, critico=es_critico)
+    return ResultadoDano(
+
+        dano=dano,
+
+        mensaje=mensaje,
+
+        critico=es_critico,
+
+        efectivo=_multiplicador_efectividad(move, defensor),
+
+        motivo=None,
+
+    )
 
 
 def _calcular_dano_fallback(atacante: dict, defensor: dict) -> ResultadoDano:

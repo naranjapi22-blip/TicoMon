@@ -55,7 +55,7 @@ class MotorCombate:
         hp_max,
         critico=False,
         efectivo=1.0,
-        debilitado=False,
+        motivo=None,
     ):
 
         # ===========================
@@ -102,6 +102,8 @@ class MotorCombate:
             critico=critico,
 
             efectivo=efectivo,
+
+            motivo=motivo,
 
         )
 

@@ -53,6 +53,10 @@ class NarradorCombate:
 
         if evento.tipo == "dano":
 
+            if evento.motivo == "inmune":
+
+                return f"🛡️ ¡No afecta a {evento.defensor}!"
+
             texto = (
                 f"💥 {evento.defensor} recibe "
                 f"{evento.dano} de daño."
@@ -62,13 +66,13 @@ class NarradorCombate:
 
                 texto += "\n💢 ¡Golpe crítico!"
 
-            if evento.efectivo > 1:
+            if evento.efectivo >= 2:
 
-                texto += "\n🔥 ¡Es muy eficaz!"
+                texto += "\n🔥 ¡Es súper efectivo!"
 
-            elif evento.efectivo < 1:
+            elif 0 < evento.efectivo < 1:
 
-                texto += "\n🛡️ No es muy eficaz."
+                texto += "\n🛡️ No es muy efectivo."
 
             return texto
 
