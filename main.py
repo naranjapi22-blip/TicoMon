@@ -1086,10 +1086,75 @@ from vistas_safari import (
 )
 from datetime import datetime, timedelta
 from database import get_connection
+def crear_embed_safari(
+    world,
+    titulo,
+    descripcion,
+    nivel_safari=None,
+    safari=None
+):
+
+    embed = discord.Embed(
+        title=titulo,
+        description=descripcion,
+        color=discord.Color.green()
+    )
+
+    embed.add_field(
+        name="📈 Progreso del servidor",
+        value=(
+            f"**{world.progreso}/{world.objetivo}** "
+            f"({world.porcentaje}%)"
+        ),
+        inline=False
+    )
+
+    estado = []
+
+    for i in range(5):
+
+        if i < world.safaris_utilizados:
+
+            estado.append(f"{i+1}️⃣✅")
+
+        elif i < world.safaris_desbloqueados:
+
+            estado.append(f"{i+1}️⃣🟢")
+
+        else:
+
+            estado.append(f"{i+1}️⃣🔒")
+
+    embed.add_field(
+        name="🏕 Safaris del día",
+        value="  ".join(estado),
+        inline=False
+    )
+
+    if safari is not None:
+
+        embed.add_field(
+            name="🎒 Expedición",
+            value=(
+                f"Nivel: **{nivel_safari}**\n"
+                f"Encuentros: **{safari.max_encuentros}**\n"
+                f"Safari Balls: **{safari.balls_iniciales}**\n"
+                f"Eventos: **{safari.config['eventos']}**"
+            ),
+            inline=False
+        )
+
+    embed.set_footer(
+        text="Los últimos Pokémon capturados aparecen en la imagen."
+    )
+
+    return embed
 @bot.command()
 @canal_restringido()
 async def safari(ctx):
+
     print("Entró a !safari")
+
     # ==========================
     # VALIDAR ÚLTIMO ORGANIZADOR
     # ==========================
@@ -1119,6 +1184,7 @@ async def safari(ctx):
 
         cursor.close()
         conn.close()
+
     # ==========================
     # PANEL SAFARI
     # ==========================
@@ -1139,6 +1205,7 @@ async def safari(ctx):
             buffer,
             filename="safari.gif"
         )
+
     # ==========================
     # VALIDAR SAFARIS DISPONIBLES
     # ==========================
@@ -1147,44 +1214,10 @@ async def safari(ctx):
         ctx.guild.id
     ):
 
-        embed = discord.Embed(
-            title="🏕 Safari",
-            color=discord.Color.green()
-        )
-
-        embed.add_field(
-            name="📈 Progreso",
-            value=(
-                f"{world.progreso}/{world.objetivo} "
-                f"({world.porcentaje}%)"
-            ),
-            inline=False
-        )
-
-        estado = []
-
-        for i in range(5):
-
-            if i < world.safaris_utilizados:
-
-                estado.append("⚫")
-
-            elif i < world.safaris_desbloqueados:
-
-                estado.append("🟢")
-
-            else:
-
-                estado.append("⚪")
-
-        embed.add_field(
-            name="🏕 Safaris",
-            value=" ".join(estado),
-            inline=False
-        )
-
-        embed.set_image(
-            url="attachment://safari.gif"
+        embed = crear_embed_safari(
+            world,
+            "🏕 Safari",
+            "No quedan Safaris disponibles por hoy."
         )
 
         if archivo:
@@ -1220,6 +1253,8 @@ async def safari(ctx):
     # CREAR SAFARI
     # ==========================
 
+    nivel_safari = world.safaris_utilizados + 1
+
     safari = crear_safari(
         ctx.guild.id,
         ctx.channel.id
@@ -1230,24 +1265,23 @@ async def safari(ctx):
         ctx.channel.id,
         ctx.channel,
         bot.session,
-        lambda guild_id: VistaApuestasSafari(guild_id)
+        lambda guild_id: VistaApuestasSafari(guild_id),
+        nivel_safari
     )
 
-    embed = discord.Embed(
-        title="🚙 Safari Pokémon",
-        description=(
-            "El recorrido comenzará en 60 segundos.\n\n"
+    embed = crear_embed_safari(
+        world,
+        f"🚙 Safari #{nivel_safari}",
+        (
+            "La expedición comenzará en **60 segundos**.\n\n"
             "Presiona el botón para subir a la camioneta."
         ),
-        color=discord.Color.green()
+        nivel_safari,
+        safari
     )
 
     view = VistaParticiparSafari(
         ctx.guild.id
-    )
-
-    embed.set_image(
-        url="attachment://safari.gif"
     )
 
     if archivo:
@@ -1293,6 +1327,7 @@ async def safari(ctx):
         )
 
         return
+
     # ==========================
     # CONSUMIR SAFARI
     # ==========================
@@ -1300,6 +1335,7 @@ async def safari(ctx):
     mundo_manager.usar_safari(
         ctx.guild.id
     )
+
     # ==========================
     # GUARDAR ÚLTIMO ORGANIZADOR
     # ==========================
@@ -1338,7 +1374,7 @@ async def safari(ctx):
     )
 
     await ctx.send(
-        f"🚙 **El Safari ha comenzado**\n\n"
+        f"🚙 **Safari #{nivel_safari}**\n\n"
         f"👥 Participantes: {participantes}\n"
         f"🌎 Región: {safari.region_actual}\n\n"
         f"{safari.guia_actual['emoji']} "

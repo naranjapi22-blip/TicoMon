@@ -128,6 +128,7 @@ async def generar_panel_safari(
             gifs
         ):
             x, y = posicion
+
             sprite = frames[
                 frame_index % len(frames)
             ]

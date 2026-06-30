@@ -292,6 +292,39 @@ EVENTOS_COMUNES = [
     "ruinas",
     "arcoiris"
 ]
+CONFIG_SAFARIS = {
+
+    1: {
+        "encuentros": 5,
+        "eventos": 3,
+        "balls": 9
+    },
+
+    2: {
+        "encuentros": 7,
+        "eventos": 4,
+        "balls": 12
+    },
+
+    3: {
+        "encuentros": 9,
+        "eventos": 5,
+        "balls": 15
+    },
+
+    4: {
+        "encuentros": 11,
+        "eventos": 5,
+        "balls": 18
+    },
+
+    5: {
+        "encuentros": 13,
+        "eventos": 6,
+        "balls": 21
+    }
+
+}
 class SafariManager:
 
     def __init__(self):
@@ -317,8 +350,12 @@ class SafariManager:
             "apuestas": {}
         }
 
+        self.nivel_safari = 1
+        self.config = CONFIG_SAFARIS[1]
+
         self.encuentro_numero = 0
-        self.max_encuentros = 5
+        self.max_encuentros = self.config["encuentros"]
+        self.balls_iniciales = self.config["balls"]
 
         self.tarea_principal = None
 
@@ -328,28 +365,35 @@ class SafariManager:
         canal_id,
         canal,
         session,
-        creador_vistas
+        creador_vistas,
+        nivel_safari
     ):
         self.guild_id = guild_id
         self.canal_id = canal_id
         self.canal = canal
         self.session = session
         self.creador_vistas = creador_vistas
-        self.activo = True
-        self.participantes.clear()
-        self.pokemons_vistos.clear()    
-        self.frases_viaje_usadas = 0   
-        self.guia_id, self.guia_actual = (
-        obtener_guia_aleatorio()
+
+        # Configuración del Safari
+        self.nivel_safari = nivel_safari
+
+        self.config = CONFIG_SAFARIS.get(
+            nivel_safari,
+            CONFIG_SAFARIS[1]
         )
 
-        roll = random.random()
+        self.max_encuentros = self.config["encuentros"]
+        self.balls_iniciales = self.config["balls"]
+        cantidad_eventos = self.config["eventos"]
 
-        if roll < 0.80:
-            cantidad_eventos = 2
+        self.activo = True
+        self.participantes.clear()
+        self.pokemons_vistos.clear()
+        self.frases_viaje_usadas = 0
 
-        else:
-            cantidad_eventos = 3
+        self.guia_id, self.guia_actual = (
+            obtener_guia_aleatorio()
+        )
 
         self.encuentros_evento = set(
             random.sample(
@@ -372,15 +416,11 @@ class SafariManager:
             )
         }
 
-        print(
-            f"EVENTOS SAFARI: "
-            f"{self.encuentros_evento}"
-        )
+        print(f"SAFARI NIVEL: {self.nivel_safari}")
+        print(f"CONFIG: {self.config}")
+        print(f"EVENTOS SAFARI: {self.encuentros_evento}")
+        print(f"MAPA EVENTOS: {self.mapa_eventos}")
 
-        print(
-            f"MAPA EVENTOS: "
-            f"{self.mapa_eventos}"
-        )
         self.region_actual = obtener_siguiente_region()
 
         self.encuentro_actual = {
@@ -394,7 +434,7 @@ class SafariManager:
         self.encuentro_numero = 0
 
         log.info(
-            f"🚙 Safari iniciado en guild {guild_id}"
+            f"🚙 Safari nivel {self.nivel_safari} iniciado en guild {guild_id}"
         )
 
     async def finalizar_safari(self):
@@ -884,7 +924,7 @@ class SafariManager:
             return False
 
         self.participantes[user_id] = {
-            "balls": 9,
+            "balls": self.balls_iniciales,
             "capturas": 0
         }
 
