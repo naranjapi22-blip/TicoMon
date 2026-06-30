@@ -142,7 +142,15 @@ class CombateSim:
                 if self.equipos[oponente]["hp"][idx_d] <= 0:
 
                     self.equipos[oponente]["hp"][idx_d] = 0
+                    self.motor.ko(
 
+                        self.equipos,
+
+                        self.turno,
+
+                        p_def["nombre"]
+
+                    )
                     if (
                         self.equipos[oponente]["activo"] + 1
                         <

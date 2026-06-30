@@ -57,3 +57,7 @@ class EventoCambioPokemon(Evento):
 class EventoVictoria(Evento):
 
     ganador: str
+@dataclass
+class EventoKO(Evento):
+
+    pokemon: str

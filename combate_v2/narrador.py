@@ -72,25 +72,18 @@ class NarradorCombate:
 
             return texto
 
-        # ===========================
-        # COMPATIBILIDAD
-        # ===========================
 
-        if evento.tipo == "movimiento":
+        if evento.tipo == "ko":
 
-            nombre = evento.atacante
+            return random.choice([
 
-            if evento.debilitado:
+                f"☠️ {evento.pokemon} cae debilitado.",
 
-                self.ko[nombre] = (
-                    self.ko.get(nombre, 0) + 1
-                )
+                f"💥 {evento.pokemon} ya no puede continuar.",
 
-                return (
-                    f"☠️ {evento.defensor} cae debilitado."
-                )
+                f"⚠️ {evento.pokemon} queda fuera de combate.",
 
-            return ""
+            ])
 
         if evento.tipo == "cambio":
 

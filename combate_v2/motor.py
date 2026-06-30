@@ -4,6 +4,7 @@ from .eventos import (
     EventoDaño,
     EventoCambioPokemon,
     EventoVictoria,
+    EventoKO,
 )
 
 import copy
@@ -189,3 +190,25 @@ class MotorCombate:
     def obtener_pasos(self):
 
         return self.pasos
+def ko(
+    self,
+    equipos,
+    turno,
+    pokemon,
+):
+
+    evento = EventoKO(
+
+        tipo="ko",
+
+        turno=turno,
+
+        pokemon=pokemon
+
+    )
+
+    self.agregar_paso(
+        evento,
+        equipos,
+        pausa=2.2
+    )
