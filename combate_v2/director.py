@@ -12,7 +12,11 @@ class DirectorCombate:
 
             indice = max(0, evento.turno - 1)
 
-            estado = snapshots[indice]
+            estado = (
+                snapshots[indice]
+                if indice < len(snapshots)
+                else snapshots[-1]
+            )
 
             pausa = self._pausa_evento(evento)
 
