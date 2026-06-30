@@ -127,8 +127,22 @@ class VistaCombate(discord.ui.View):
             f"El ganador es: "
             f"**{self.p1.display_name if ganador == 'Jugador 1' else self.p2.display_name}**"
         )
-    def on_timeout(self):
+    async def on_timeout(self):
+
         self.stop()
+
+        try:
+
+            if self.msg_ui:
+
+                await self.msg_ui.edit(
+                    content="⌛ El combate expiró.",
+                    embed=None,
+                    view=None
+                )
+
+        except Exception:
+            pass
     async def actualizar_discord(
         self,
         paso,
