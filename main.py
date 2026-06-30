@@ -1885,25 +1885,35 @@ async def testalola(ctx):
         f"{pokemon}"
     )
 @bot.command()
-@commands.is_owner()
 async def mundo(ctx):
 
-    manager = obtener_mundo(
+    world = mundo_manager.obtener_estado(
         ctx.guild.id
     )
 
-    if manager.mensaje:
-
-        return await ctx.send(
-            "🌍 El Mundo Pokémon ya está activo."
-        )
-
-    await manager.iniciar()
-
-    await manager.publicar(
-        ctx.channel
+    embed = discord.Embed(
+        title="🌍 Mundo del Servidor",
+        color=discord.Color.green()
     )
 
-    await manager.iniciar_loop()
+    embed.add_field(
+        name="📈 Progreso",
+        value=(
+            f"{world.progreso}/{world.objetivo}\n"
+            f"{world.porcentaje}%"
+        ),
+        inline=False
+    )
+
+    embed.add_field(
+        name="🏕 Safaris",
+        value=(
+            f"Desbloqueados: {world.safaris_desbloqueados}\n"
+            f"Disponibles: {world.safaris_disponibles}"
+        ),
+        inline=False
+    )
+
+    await ctx.send(embed=embed)
 
 bot.run(TOKEN)

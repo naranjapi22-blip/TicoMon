@@ -1,134 +1,51 @@
-import random
-import time
-from database import (
-    obtener_pokemon_aleatorios_por_tipo
-)
-
-from mundo.imagen_mundo import (
-    generar_escena_mundo
-)
-
-from mundo.exploracion import Exploracion
-TIPOS = [
-    "grass",
-    "fire",
-    "water",
-    "electric",
-    "psychic",
-    "ghost",
-    "dragon",
-    "steel",
-    "fairy",
-    "ice",
-    "fighting",
-    "poison",
-    "flying",
-    "bug",
-    "rock",
-    "ground",
-    "normal",
-    "dark",
-]
+from datetime import date
 
 
 class World:
 
-    def __init__(self):
+    def __init__(self, guild_id):
 
-        self.tipo = None
+        self.guild_id = guild_id
 
-        # Siempre habrá 3 espacios en el mundo
-        self.pokemons = [
-            None,
-            None,
-            None
-        ]
-        self.ultimo_pokemon = None
+        self.fecha = date.today()
 
-        self.ultimo_bioma = None
-        self.exploracion = None
+        self.objetivo = 100
 
-    def iniciar(self):
+        self.progreso = 0
 
-        self.tipo = random.choice(TIPOS)
+        self.safaris_desbloqueados = 0
 
-        pokemons = obtener_pokemon_aleatorios_por_tipo(
-            self.tipo,
-            3
+        self.safaris_utilizados = 0
+
+    @property
+    def porcentaje(self):
+
+        if self.objetivo == 0:
+            return 0
+
+        return int(
+            (self.progreso / self.objetivo) * 100
         )
 
-        self.pokemons = [
-            pokemons[0],
-            pokemons[1],
-            pokemons[2]
-        ]
+    @property
+    def safaris_disponibles(self):
 
-    def agregar_pokemon(self):
+        return max(
+            0,
+            self.safaris_desbloqueados -
+            self.safaris_utilizados
+        )
 
-        for i in range(len(self.pokemons)):
+    def sumar_progreso(self, cantidad=1):
 
-            if self.pokemons[i] is None:
+        self.progreso += cantidad
 
-                pokemon = obtener_pokemon_aleatorios_por_tipo(
-                    self.tipo,
-                    1
-                )[0]
+    def usar_safari(self):
 
-                self.pokemons[i] = pokemon
+        if self.safaris_disponibles > 0:
 
-                return True
+            self.safaris_utilizados += 1
+
+            return True
 
         return False
-
-    def eliminar_pokemon(self, indice):
-
-        if 0 <= indice < len(self.pokemons):
-
-            self.pokemons[indice] = None
-
-    def pokemons_visibles(self):
-
-        return [
-            pokemon
-            for pokemon in self.pokemons
-            if pokemon is not None
-        ]
-
-    async def generar_gif(self):
-
-        return await generar_escena_mundo(
-            self.pokemons_visibles(),
-            self.tipo
-        )
-    def evolucionar(self):
-
-        if None in self.pokemons:
-
-            self.agregar_pokemon()
-    def esta_ocupado(self):
-
-        if self.exploracion is None:
-            return False
-
-        if time.time() - self.exploracion.inicio > 60:
-
-            self.finalizar_exploracion()
-
-            return False
-
-        return True
-
-    def iniciar_exploracion(self, jugador_id):
-
-        if self.esta_ocupado():
-            return False
-
-        self.exploracion = Exploracion(
-            jugador_id
-        )
-
-        return True
-
-    def finalizar_exploracion(self):
-
-        self.exploracion = None

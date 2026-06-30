@@ -1909,3 +1909,148 @@ def obtener_pokemon_aleatorios_por_tipo(
         candidatos,
         cantidad
     )
+# =====================================================
+# WORLD
+# =====================================================
+
+def obtener_world(guild_id):
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+
+        cursor.execute(
+            """
+            SELECT
+                fecha,
+                objetivo,
+                progreso,
+                safaris_desbloqueados,
+                safaris_utilizados
+            FROM world
+            WHERE guild_id = %s
+            """,
+            (guild_id,)
+        )
+
+        return cursor.fetchone()
+
+    finally:
+
+        cursor.close()
+        conn.close()
+
+
+def crear_world(guild_id, fecha, objetivo):
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+
+        cursor.execute(
+            """
+            INSERT INTO world
+            (
+                guild_id,
+                fecha,
+                objetivo,
+                progreso,
+                safaris_desbloqueados,
+                safaris_utilizados
+            )
+            VALUES
+            (
+                %s,
+                %s,
+                %s,
+                0,
+                0,
+                0
+            )
+            ON CONFLICT (guild_id)
+            DO NOTHING
+            """,
+            (
+                guild_id,
+                fecha,
+                objetivo
+            )
+        )
+
+        conn.commit()
+
+    finally:
+
+        cursor.close()
+        conn.close()
+
+
+def guardar_world(world):
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+
+        cursor.execute(
+            """
+            UPDATE world
+            SET
+                fecha = %s,
+                objetivo = %s,
+                progreso = %s,
+                safaris_desbloqueados = %s,
+                safaris_utilizados = %s
+            WHERE guild_id = %s
+            """,
+            (
+                world.fecha,
+                world.objetivo,
+                world.progreso,
+                world.safaris_desbloqueados,
+                world.safaris_utilizados,
+                world.guild_id
+            )
+        )
+
+        conn.commit()
+
+    finally:
+
+        cursor.close()
+        conn.close()
+
+
+def reiniciar_world(guild_id, fecha, objetivo):
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+
+        cursor.execute(
+            """
+            UPDATE world
+            SET
+                fecha = %s,
+                objetivo = %s,
+                progreso = 0,
+                safaris_desbloqueados = 0,
+                safaris_utilizados = 0
+            WHERE guild_id = %s
+            """,
+            (
+                fecha,
+                objetivo,
+                guild_id
+            )
+        )
+
+        conn.commit()
+
+    finally:
+
+        cursor.close()
+        conn.close()

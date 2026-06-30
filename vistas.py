@@ -19,7 +19,7 @@ from mapeo_pokes import obtener_id_gif
 import records  # Importa tu archivo de lógica de récords
 COOLDOWN_LANZAMIENTO = 10.0
 COOLDOWN_GRACE = 0.25
-
+from mundo.mundo_manager import mundo_manager
 from animaciones.animacion_captura import CaptureAnimation
 
 from animaciones.animacion_captura import ruta_sprite
@@ -675,7 +675,9 @@ class BotonCaptura(discord.ui.View):
                                 pokeball=nombre_bola
                             )
                         )
-
+                        nuevo_safari = mundo_manager.sumar_progreso(
+                            interaction.guild.id
+                        )
 
                         sprite_path = (
                             f"gifs/shiny/{self.pokemon_id}.gif"
@@ -758,7 +760,15 @@ class BotonCaptura(discord.ui.View):
                                 filename=f"captura_{time.time_ns()}.gif"
                             )
                         )
+                        if nuevo_safari:
 
+                            world = mundo_manager.obtener_estado(
+                                interaction.guild.id
+                            )
+
+                            await interaction.channel.send(
+                                f"🏕 ¡Se ha desbloqueado el Safari #{world.safaris_desbloqueados}!"
+                            )
                         print("ENVÍO:", time.perf_counter() - inicio)
 
                         self.stop()

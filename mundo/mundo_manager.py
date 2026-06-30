@@ -1,109 +1,124 @@
-import asyncio
-import discord
-from mundo.vista_mundo import VistaMundo
-from mundo.vista_exploracion import VistaExploracion
+from datetime import date
+
+import database
+
 from mundo.world import World
 
 
 class MundoManager:
 
-    def __init__(self):
+    def calcular_objetivo(
+        self,
+        guild_id
+    ):
+        # Temporal
+        return 100
 
-        self.world = World()
+    def obtener_estado(
+        self,
+        guild_id
+    ):
 
-        self.canal = None
-        self.mensaje = None
-
-        self.loop_task = None
-
-    async def iniciar(self):
-
-        self.world.iniciar()
-
-    async def obtener_gif(self):
-
-        return await self.world.generar_gif()
-
-    async def publicar(self, canal):
-
-        self.canal = canal
-
-        gif = await self.obtener_gif()
-
-        self.mensaje = await canal.send(
-            file=discord.File(
-                gif,
-                filename="mundo.gif"
-            ),
-            view=VistaMundo(self)
-        )
-    async def actualizar(self):
-
-        if self.mensaje is None:
-            return
-
-        gif = await self.obtener_gif()
-
-        await self.mensaje.edit(
-            attachments=[
-                discord.File(
-                    gif,
-                    filename="mundo.gif"
-                )
-            ]
+        fila = database.obtener_world(
+            guild_id
         )
 
-    async def evolucionar(self):
+        if not fila:
 
-        self.world.evolucionar()
-
-        if self.mensaje:
-
-            gif = await self.obtener_gif()
-
-            await self.mensaje.edit(
-                attachments=[
-                    discord.File(
-                        gif,
-                        filename="mundo.gif"
-                    )
-                ]
+            objetivo = self.calcular_objetivo(
+                guild_id
             )
 
-    async def loop(self):
-
-        while True:
-
-            await asyncio.sleep(180)
-
-            await self.evolucionar()
-
-    async def iniciar_loop(self):
-
-        if self.loop_task is None:
-
-            self.loop_task = asyncio.create_task(
-                self.loop()
-            )   
-    async def abrir_exploracion(self, interaction):
-
-        nombres = []
-
-        for i, pokemon in enumerate(
-            self.world.pokemons_visibles(),
-            start=1
-        ):
-            nombres.append(
-                f"{i}. {pokemon['nombre'].capitalize()}"
+            database.crear_world(
+                guild_id,
+                date.today(),
+                objetivo
             )
 
-        mensaje = (
-            f"🌍 **Mundo {self.world.tipo.title()}**\n\n"
-            + "\n".join(nombres)
+            fila = database.obtener_world(
+                guild_id
+            )
+
+        world = World(
+            guild_id
         )
 
-        await interaction.response.send_message(
-            mensaje,
-            view=VistaExploracion(self),
-            ephemeral=True
+        (
+            world.fecha,
+            world.objetivo,
+            world.progreso,
+            world.safaris_desbloqueados,
+            world.safaris_utilizados
+        ) = fila
+
+        if world.fecha != date.today():
+
+            objetivo = self.calcular_objetivo(
+                guild_id
+            )
+
+            database.reiniciar_world(
+                guild_id,
+                date.today(),
+                objetivo
+            )
+
+            return self.obtener_estado(
+                guild_id
+            )
+
+        return world
+
+    def sumar_progreso(
+        self,
+        guild_id,
+        cantidad=1
+    ):
+
+        world = self.obtener_estado(
+            guild_id
         )
+
+        world.sumar_progreso(
+            cantidad
+        )
+
+        desbloqueados = min(
+            5,
+            world.porcentaje // 20
+        )
+
+        nuevo = (
+            desbloqueados >
+            world.safaris_desbloqueados
+        )
+
+        world.safaris_desbloqueados = desbloqueados
+
+        database.guardar_world(
+            world
+        )
+
+        return nuevo
+
+    def usar_safari(
+        self,
+        guild_id
+    ):
+
+        world = self.obtener_estado(
+            guild_id
+        )
+
+        if not world.usar_safari():
+
+            return False
+
+        database.guardar_world(
+            world
+        )
+
+        return True
+
+
+mundo_manager = MundoManager()
