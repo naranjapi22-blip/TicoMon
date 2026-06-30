@@ -38,6 +38,8 @@ class VistaCombate(discord.ui.View):
         self.fondo_seleccionado = None
         self.imagen_actual = None
         self.historial = []
+        self.msg_imagen = None
+        self.msg_ui = None
     async def preparar_combate(self):
 
         if self.modo == "capturas":
@@ -88,21 +90,17 @@ class VistaCombate(discord.ui.View):
             view=self
         )
 
-        msg = await interaction.original_response()
+        self.msg_imagen = await interaction.original_response()
 
-        carpeta_fondos = "fondos"
+        self.msg_ui = await interaction.followup.send(
 
-        lista_fondos = [
-            f
-            for f in os.listdir(carpeta_fondos)
-            if f.endswith((".jpg", ".png"))
-        ]
+            embed=discord.Embed(
+                title="⚔️ Preparando combate..."
+            ),
 
-        self.fondo_seleccionado = random.choice(
-            lista_fondos
+            wait=True
+
         )
-
-        self.msg = msg
         self.interaction = interaction
 
         eventos = self.combate.simular()
@@ -296,38 +294,18 @@ class VistaCombate(discord.ui.View):
                 embed.set_image(
                     url="attachment://combate.png"
                 )
-                print("EDITANDO MENSAJE")
-                await self.msg.edit(
 
-                    embed=embed,
+                await self.msg_imagen.edit(
 
                     attachments=[self.imagen_actual]
 
                 )
 
-            else:
+            await self.msg_ui.edit(
+                embed=embed
+            )
 
-                if self.imagen_actual:
 
-                    embed.set_image(
-                        url="attachment://combate.png"
-                    )
-
-                if self.imagen_actual:
-
-                    await self.msg.edit(
-
-                        embed=embed,
-
-                        attachments=[self.imagen_actual]
-
-                    )
-
-                else:
-
-                    await self.msg.edit(
-                        embed=embed
-                    )
         except Exception:
 
             import traceback
