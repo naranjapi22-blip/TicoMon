@@ -190,25 +190,25 @@ class MotorCombate:
     def obtener_pasos(self):
 
         return self.pasos
-def ko(
-    self,
-    equipos,
-    turno,
-    pokemon,
-):
-
-    evento = EventoKO(
-
-        tipo="ko",
-
-        turno=turno,
-
-        pokemon=pokemon
-
-    )
-
-    self.agregar_paso(
-        evento,
+    def ko(
+        self,
         equipos,
-        pausa=2.2
-    )
+        turno,
+        pokemon,
+    ):
+
+        evento = EventoKO(
+
+            tipo="ko",
+
+            turno=turno,
+
+            pokemon=pokemon
+
+        )
+
+        self.agregar_paso(
+            evento,
+            equipos,
+            pausa=2.2
+        )
