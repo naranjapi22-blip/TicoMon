@@ -3,7 +3,7 @@ from datetime import date
 import database
 
 from mundo.world import World
-
+from mundo.mundo_manager import mundo_manager
 
 class MundoManager:
 
