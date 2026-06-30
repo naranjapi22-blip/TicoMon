@@ -37,6 +37,7 @@ class VistaCombate(discord.ui.View):
         self.combate = None
         self.fondo_seleccionado = None
         self.imagen_actual = None
+        self.historial = []
     async def preparar_combate(self):
 
         if self.modo == "capturas":
@@ -196,7 +197,17 @@ class VistaCombate(discord.ui.View):
                 else:
 
                     id2 = 25
+            self.agregar_historial(texto)
 
+            barra1 = self.barra_hp(
+                hp1,
+                hp_max1
+            )
+
+            barra2 = self.barra_hp(
+                hp2,
+                hp_max2
+            )
             embed = discord.Embed(
                 title="⚔️ Duelo Épico",
                 color=discord.Color.red()
@@ -204,26 +215,38 @@ class VistaCombate(discord.ui.View):
 
             embed.add_field(
                 name=f"👤 {self.p1.display_name}",
-                value=f"**{p1_actual['nombre']}**",
+                value=(
+                    f"**{p1_actual['nombre']}**\n"
+                    f"❤️ `{barra1}`\n"
+                    f"**{hp1}/{hp_max1} HP**"
+                ),
                 inline=True
             )
 
             embed.add_field(
-                name="VS",
-                value="🆚",
+                name="🆚",
+                value=" ",
                 inline=True
             )
 
             embed.add_field(
                 name=f"👤 {self.p2.display_name}",
-                value=f"**{p2_actual['nombre']}**",
+                value=(
+                    f"**{p2_actual['nombre']}**\n"
+                    f"❤️ `{barra2}`\n"
+                    f"**{hp2}/{hp_max2} HP**"
+                ),
                 inline=True
             )
 
             embed.add_field(
-                name="📜 Combate",
-                value=texto,
+                name="📜 Últimas acciones",
+                value="\n\n".join(self.historial),
                 inline=False
+            )
+
+            embed.set_footer(
+                text=f"Turno {escena['turno']}"
             )
             if self.necesita_actualizar_imagen(escena):
 
@@ -319,3 +342,29 @@ class VistaCombate(discord.ui.View):
                 return True
 
         return False
+    def barra_hp(self, actual, maximo, largo=10):
+
+        if maximo <= 0:
+            return "░" * largo
+
+        porcentaje = max(0, actual / maximo)
+
+        llenos = round(
+            porcentaje * largo
+        )
+
+        vacios = largo - llenos
+
+        return (
+            "█" * llenos +
+            "░" * vacios
+        )
+
+
+    def agregar_historial(self, texto):
+
+        self.historial.append(
+            texto
+        )
+
+        self.historial = self.historial[-5:]    
