@@ -138,7 +138,11 @@ class VistaCombate(discord.ui.View):
         historial,
     ):
         try:
-
+            print(
+                evento.tipo,
+                p1_actual["nombre"],
+                p2_actual["nombre"]
+            )
             print("ACTUALIZANDO DISCORD")
             evento = paso["evento"]
 
