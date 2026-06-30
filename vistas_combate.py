@@ -2,7 +2,7 @@ import discord
 import asyncio
 import random
 import os
-
+from combate_v2.orquestador import CombateV2
 import imagencomb
 import servicios
 import combate_servicios
@@ -36,7 +36,7 @@ class VistaCombate(discord.ui.View):
         self.owner2_id = owner2_id
         self.combate = None
         self.fondo_seleccionado = None
-
+        self.imagen_actual = None
     async def preparar_combate(self):
 
         if self.modo == "capturas":
@@ -101,144 +101,203 @@ class VistaCombate(discord.ui.View):
             lista_fondos
         )
 
-        while not self.combate.es_fin_del_juego():
+        self.msg = msg
+        self.interaction = interaction
 
-            resumen_ronda = self.combate.ejecutar_ronda()
+        eventos = self.combate.simular()
 
-            e1 = self.combate.equipos["Jugador 1"]
-            e2 = self.combate.equipos["Jugador 2"]
+        snapshots = self.combate.obtener_snapshots()
 
-            p1_actual = e1["pokes"][e1["activo"]]
-            p2_actual = e2["pokes"][e2["activo"]]
+        orquestador = CombateV2()
 
-            hp1 = e1["hp"][e1["activo"]]
-            hp_max1 = e1["hp_max"][e1["activo"]]
+        await orquestador.reproducir(
+            eventos,
+            snapshots,
+            callback=self.actualizar_discord
+        )
 
-            hp2 = e2["hp"][e2["activo"]]
-            hp_max2 = e2["hp_max"][e2["activo"]]
+        ganador = self.combate.es_fin_del_juego()
 
-            turno_atacante = (
-                1
-                if resumen_ronda.startswith(
-                    p1_actual["nombre"]
-                )
-                else 2
+        await interaction.followup.send(
+            f"🏆 **¡El combate ha finalizado!**\n"
+            f"El ganador es: "
+            f"**{self.p1.display_name if ganador == 'Jugador 1' else self.p2.display_name}**"
+        )
+    def on_timeout(self):
+        self.stop()
+    async def actualizar_discord(
+        self,
+        escena,
+        texto,
+    ):
+
+        estado = escena["estado"]
+
+        e1 = estado["Jugador 1"]
+        e2 = estado["Jugador 2"]
+
+        p1_actual = e1["pokes"][e1["activo"]]
+        p2_actual = e2["pokes"][e2["activo"]]
+
+        hp1 = e1["hp"][e1["activo"]]
+        hp_max1 = e1["hp_max"][e1["activo"]]
+
+        hp2 = e2["hp"][e2["activo"]]
+        hp_max2 = e2["hp_max"][e2["activo"]]
+
+        turno_atacante = 1
+
+        for evento in escena["eventos"]:
+
+            if getattr(evento, "tipo", "") == "ataque":
+
+                if evento.atacante == p2_actual["nombre"]:
+
+                    turno_atacante = 2
+
+                break
+
+        id1 = p1_actual.get("id")
+
+        if not id1:
+
+            pokemon1 = database.obtener_pokemon_local_nombre(
+                p1_actual["nombre"]
             )
 
-            # ==================================================
-            # IDs visuales (compatibles con formas regionales)
-            # ==================================================
+            if pokemon1:
 
-            id1 = p1_actual.get("id")
-
-            if not id1:
-
-                pokemon1 = database.obtener_pokemon_local_nombre(
-                    p1_actual["nombre"]
+                id1 = pokemon1.get(
+                    "pokeapi_id",
+                    pokemon1["id"]
                 )
 
-                if pokemon1:
-                    id1 = pokemon1.get(
-                        "pokeapi_id",
-                        pokemon1["id"]
-                    )
-                else:
-                    id1 = 25
+            else:
 
-            id2 = p2_actual.get("id")
+                id1 = 25
 
-            if not id2:
+        id2 = p2_actual.get("id")
 
-                pokemon2 = database.obtener_pokemon_local_nombre(
-                    p2_actual["nombre"]
+        if not id2:
+
+            pokemon2 = database.obtener_pokemon_local_nombre(
+                p2_actual["nombre"]
+            )
+
+            if pokemon2:
+
+                id2 = pokemon2.get(
+                    "pokeapi_id",
+                    pokemon2["id"]
                 )
 
-                if pokemon2:
-                    id2 = pokemon2.get(
-                        "pokeapi_id",
-                        pokemon2["id"]
-                    )
-                else:
-                    id2 = 25
+            else:
+
+                id2 = 25
+
+        embed = discord.Embed(
+            title="⚔️ Duelo Épico",
+            color=discord.Color.red()
+        )
+
+        embed.add_field(
+            name=f"👤 {self.p1.display_name}",
+            value=f"**{p1_actual['nombre']}**",
+            inline=True
+        )
+
+        embed.add_field(
+            name="VS",
+            value="🆚",
+            inline=True
+        )
+
+        embed.add_field(
+            name=f"👤 {self.p2.display_name}",
+            value=f"**{p2_actual['nombre']}**",
+            inline=True
+        )
+
+        embed.add_field(
+            name="📜 Combate",
+            value=texto,
+            inline=False
+        )
+        if self.necesita_actualizar_imagen(escena):
 
             buffer = await imagencomb.generar_escena_combate(
+
                 self.session,
+
                 id1,
+
                 id2,
+
                 nombre1=p1_actual["nombre"],
+
                 nombre2=p2_actual["nombre"],
+
                 hp1=hp1,
+
                 hp2=hp2,
+
                 hp_max1=hp_max1,
+
                 hp_max2=hp_max2,
+
                 turno_jugador=turno_atacante,
+
                 es_shiny1=p1_actual.get(
                     "shiny",
                     False
                 ),
+
                 es_shiny2=p2_actual.get(
                     "shiny",
                     False
                 ),
+
                 fondo_nombre=self.fondo_seleccionado
+
             )
 
-            file = discord.File(
+            self.imagen_actual = discord.File(
                 buffer,
                 filename="combate.png"
-            )
-
-            embed = discord.Embed(
-                title="⚔️ Duelo Épico",
-                color=discord.Color.red()
             )
 
             embed.set_image(
                 url="attachment://combate.png"
             )
 
-            embed.add_field(
-                name=f"👤 {self.p1.display_name}",
-                value=f"**{p1_actual['nombre']}**",
-                inline=True
-            )
+            await self.msg.edit(
 
-            embed.add_field(
-                name="VS",
-                value="🆚",
-                inline=True
-            )
-
-            embed.add_field(
-                name=f"👤 {self.p2.display_name}",
-                value=f"**{p2_actual['nombre']}**",
-                inline=True
-            )
-
-            embed.add_field(
-                name="📜 Resumen de la ronda",
-                value=resumen_ronda,
-                inline=False
-            )
-
-            await msg.edit(
                 embed=embed,
-                attachments=[file]
+
+                attachments=[self.imagen_actual]
+
             )
 
-            ganador = self.combate.es_fin_del_juego()
+        else:
 
-            if ganador:
+            if self.imagen_actual:
 
-                await interaction.followup.send(
-                    f"🏆 **¡El combate ha finalizado!**\n"
-                    f"El ganador es: "
-                    f"**{self.p1.display_name if ganador == 'Jugador 1' else self.p2.display_name}**"
+                embed.set_image(
+                    url="attachment://combate.png"
                 )
 
-                break
+            await self.msg.edit(
+                embed=embed
+            )
+    def necesita_actualizar_imagen(self, escena):
 
-            await asyncio.sleep(6)
+        for evento in escena["eventos"]:
 
-    def on_timeout(self):
-        self.stop()
+            if evento.tipo in (
+                "inicio",
+                "cambio",
+                "victoria",
+            ):
+                return True
+
+        return False
