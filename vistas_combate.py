@@ -100,7 +100,17 @@ class VistaCombate(discord.ui.View):
 
         )
         self.interaction = interaction
+        carpeta_fondos = "fondos"
 
+        lista_fondos = [
+            f
+            for f in os.listdir(carpeta_fondos)
+            if f.endswith((".jpg", ".png"))
+        ]
+
+        self.fondo_seleccionado = random.choice(
+            lista_fondos
+        )
         eventos = self.combate.simular()
 
         snapshots = self.combate.obtener_snapshots()
