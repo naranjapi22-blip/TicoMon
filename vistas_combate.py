@@ -206,7 +206,13 @@ class VistaCombate(discord.ui.View):
                 else:
 
                     id2 = 25
+            trainer1 = database.obtener_trainer(
+                self.owner1_id
+            )
 
+            trainer2 = database.obtener_trainer(
+                self.owner2_id
+            )
 
             barra1 = self.barra_hp(
                 hp1,
@@ -260,8 +266,44 @@ class VistaCombate(discord.ui.View):
                 "inicio",
                 "cambio",
                 "victoria",
-            )     
-            if actualizar_imagen:
+            )
+        if actualizar_imagen:
+
+            if evento.tipo == "victoria":
+
+                ganador_es_j1 = (
+                    evento.ganador == "Jugador 1"
+                )
+
+                pokemon = (
+                    p1_actual
+                    if ganador_es_j1
+                    else p2_actual
+                )
+
+                trainer = (
+                    trainer1
+                    if ganador_es_j1
+                    else trainer2
+                )
+
+                buffer = await imagencomb.generar_pantalla_victoria(
+
+                    self.session,
+
+                    pokemon["id"],
+
+                    pokemon["nombre"],
+
+                    pokemon.get("shiny", False),
+
+                    self.fondo_seleccionado,
+
+                    trainer,
+
+                )
+
+            else:
 
                 buffer = await imagencomb.generar_escena_combate(
 
@@ -285,61 +327,47 @@ class VistaCombate(discord.ui.View):
 
                     turno_jugador=turno_atacante,
 
-                    es_shiny1=p1_actual.get(
-                        "shiny",
-                        False
-                    ),
+                    es_shiny1=p1_actual.get("shiny", False),
 
-                    es_shiny2=p2_actual.get(
-                        "shiny",
-                        False
-                    ),
+                    es_shiny2=p2_actual.get("shiny", False),
 
-                    fondo_nombre=self.fondo_seleccionado
+                    fondo_nombre=self.fondo_seleccionado,
+
+                    trainer1=trainer1,
+
+                    trainer2=trainer2,
 
                 )
 
-                self.imagen_actual = discord.File(
-                    buffer,
-                    filename="combate.png"
-                )
+            self.imagen_actual = discord.File(
+                buffer,
+                filename="combate.png"
+            )
 
-                embed.set_image(
-                    url="attachment://combate.png"
-                )
-
-                embed_imagen = discord.Embed(
-                    title="⚔️ Duelo Épico"
-                )
-
-                embed_imagen.set_image(
-                    url="attachment://combate.png"
-                )
-
-                if self.msg_imagen is None:
-
-                    self.msg_imagen = await self.interaction.followup.send(
-                        embed=embed_imagen,
-                        file=self.imagen_actual,
-                        wait=True
-                    )
-
-                else:
-
-                    await self.msg_imagen.edit(
-                        embed=embed_imagen,
-                        attachments=[self.imagen_actual]
-                    )
-
-            await self.msg_ui.edit(
-                embed=embed
+            embed_imagen = discord.Embed(
+                title="⚔️ Duelo Épico"
             )
 
 
-        except Exception:
+            if self.msg_imagen is None:
 
-            import traceback
-            traceback.print_exc()
+                self.msg_imagen = await self.interaction.followup.send(
+                    embed=embed_imagen,
+                    file=self.imagen_actual,
+                    wait=True
+                )
+
+            else:
+
+                await self.msg_imagen.edit(
+                    embed=embed_imagen,
+                    attachments=[self.imagen_actual]
+                )
+
+        await self.msg_ui.edit(
+            embed=embed
+        )
+
 
     def barra_hp(self, actual, maximo, largo=10):
 
