@@ -31,7 +31,14 @@ async def obtener_datos_combate(session, nombre_pokemon, *, ivs=None, naturaleza
             computed = combate_calc.stats_desde_teambuilder(species_showdown, iv_dict, naturaleza)
 
             move_id, move_nombre = combate_calc.elegir_movimiento_automatico(species_showdown, computed)
-
+            print(
+                "MOVIMIENTO IA:",
+                nombre_pokemon,
+                "->",
+                move_id,
+                "|",
+                move_nombre
+            )
             return {
                 "nombre": nombre_pokemon.capitalize(),
                 "species_showdown": species_showdown,
