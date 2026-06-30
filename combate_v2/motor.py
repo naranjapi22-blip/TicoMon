@@ -14,13 +14,9 @@ class MotorCombate:
 
     def __init__(self):
 
-        self.eventos = []
-        self.snapshots = []
         self.pasos = []
     def limpiar(self):
 
-        self.eventos.clear()
-        self.snapshots.clear()
         self.pasos.clear()
 
     def inicio(
@@ -197,15 +193,8 @@ class MotorCombate:
             equipos
         )
 
-    def obtener_eventos(self):
 
-        return list(self.eventos)
 
-    def snapshot(self, equipos):
-
-        self.snapshots.append(
-            copy.deepcopy(equipos)
-        )
 
     def agregar_paso(
         self,
@@ -214,9 +203,6 @@ class MotorCombate:
         pausa=1.5,
     ):
 
-        self.eventos.append(
-            evento
-        )
 
         self.pasos.append(
 
