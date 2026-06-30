@@ -689,13 +689,8 @@ def _calcular_dano_showdown(atacante: dict, defensor: dict) -> ResultadoDano:
     }
 
     move_id, move_nombre = elegir_movimiento_combate(
-
-        atacante["species_showdown"],
-
-        stats,
-
+        atacante["moveset"],
         defensor.get("tipo"),
-
     )
 
     atacante["movimiento"] = move_id
@@ -816,64 +811,21 @@ def movimiento_valido_ia(
 
     return True
 def elegir_movimiento_combate(
-    species_showdown: str,
-    stats: dict[str, int],
+    moveset: list[tuple[str, str]],
     tipos_defensor: list[str] | None = None,
 ) -> tuple[str, str]:
 
-    species_id = to_id_str(species_showdown)
-
-    entry = _GEN_DATA.learnset.get(species_id)
-
-    if not entry:
-        return "tackle", "Tackle"
-
-    learnset = entry.get("learnset", {})
-
-    dex = _GEN_DATA.pokedex.get(
-        species_id,
-        {}
-    )
-
-    tipos = dex.get("types", [])
-
-    prefer_physical = (
-        stats.get("atk", 0)
-        >=
-        stats.get("spa", 0)
-    )
-
     candidatos = []
 
-    for move_id in learnset:
+    for move_id, nombre in moveset:
 
         data = _GEN_DATA.moves.get(move_id)
 
-        if not movimiento_valido_ia(
-            move_id,
-            data,
-        ):
+        if not data:
             continue
 
         bp = data.get("basePower") or 0
         accuracy = data.get("accuracy") or 100
-
-        es_fisico = (
-            data.get("category")
-            == "Physical"
-        )
-
-        cat_bonus = (
-            15
-            if prefer_physical == es_fisico
-            else 0
-        )
-
-        stab = (
-            25
-            if data.get("type") in tipos
-            else 0
-        )
 
         penalizacion = 0
 
@@ -946,8 +898,6 @@ def elegir_movimiento_combate(
 
         puntaje = (
             bp
-            + stab
-            + cat_bonus
             + bonus_tipo
             + min(accuracy, 100) // 10
             - penalizacion
@@ -957,7 +907,7 @@ def elegir_movimiento_combate(
             (
                 puntaje,
                 move_id,
-                data.get("name", move_id)
+                nombre,
             )
         )
 
@@ -978,3 +928,127 @@ def elegir_movimiento_combate(
     )[0]
 
     return elegido[1], elegido[2]
+def generar_moveset_combate(
+    species_showdown: str,
+    stats: dict[str, int],
+) -> list[tuple[str, str]]:
+
+    species_id = to_id_str(species_showdown)
+
+    entry = _GEN_DATA.learnset.get(species_id)
+
+    if not entry:
+        return [
+            ("tackle", "Tackle")
+        ]
+
+    learnset = entry.get("learnset", {})
+
+    dex = _GEN_DATA.pokedex.get(
+        species_id,
+        {}
+    )
+
+    tipos = dex.get("types", [])
+
+    prefer_physical = (
+        stats.get("atk", 0)
+        >=
+        stats.get("spa", 0)
+    )
+
+    candidatos = []
+    for move_id in learnset:
+
+        data = _GEN_DATA.moves.get(move_id)
+
+        if not movimiento_valido_ia(
+            move_id,
+            data,
+        ):
+            continue
+
+        bp = data.get("basePower") or 0
+        accuracy = data.get("accuracy") or 100
+
+        es_fisico = (
+            data.get("category")
+            == "Physical"
+        )
+
+        cat_bonus = (
+            15
+            if prefer_physical == es_fisico
+            else 0
+        )
+
+        stab = (
+            25
+            if data.get("type") in tipos
+            else 0
+        )
+
+        penalizacion = 0
+
+        if move_id in {
+            "dracometeor",
+            "leafstorm",
+            "overheat",
+            "psychoboost",
+        }:
+            penalizacion += 20
+
+        if move_id in {
+            "closecombat",
+            "superpower",
+            "headlongrush",
+        }:
+            penalizacion += 15
+
+        if move_id in {
+            "bravebird",
+            "flareblitz",
+            "woodhammer",
+            "doubleedge",
+            "volttackle",
+            "wavecrash",
+        }:
+            penalizacion += 10
+
+        puntaje = (
+            bp
+            + stab
+            + cat_bonus
+            + min(accuracy, 100) // 10
+            - penalizacion
+        )
+
+        candidatos.append(
+            (
+                puntaje,
+                move_id,
+                data.get("name", move_id),
+            )
+        )
+    if not candidatos:
+
+        return [
+            ("tackle", "Tackle")
+        ]
+
+    candidatos.sort(
+        reverse=True,
+        key=lambda x: x[0]
+    )
+
+    top = candidatos[:12]
+
+    seleccion = random.sample(
+        top,
+        k=min(4, len(top))
+    )
+
+    return [
+        (move_id, nombre)
+        for _, move_id, nombre in seleccion
+    ]

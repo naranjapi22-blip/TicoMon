@@ -30,15 +30,10 @@ async def obtener_datos_combate(session, nombre_pokemon, *, ivs=None, naturaleza
             nature_showdown = naturaleza_a_showdown(naturaleza, _GEN_DATA.natures)
             computed = combate_calc.stats_desde_teambuilder(species_showdown, iv_dict, naturaleza)
 
-            move_id, move_nombre = combate_calc.elegir_movimiento_automatico(species_showdown, computed)
-            print(
-                "MOVIMIENTO IA:",
-                nombre_pokemon,
-                "->",
-                move_id,
-                "|",
-                move_nombre
-            )
+            moveset = combate_calc.generar_moveset_combate(
+            species_showdown,
+            computed
+             )
             return {
                 "nombre": nombre_pokemon.capitalize(),
                 "species_showdown": species_showdown,
@@ -51,8 +46,7 @@ async def obtener_datos_combate(session, nombre_pokemon, *, ivs=None, naturaleza
                 "def_esp": computed["spd"],
                 "spd": computed["spe"],
                 "hp_max": computed["hp"],
-                "movimiento": move_id,
-                "movimiento_nombre": move_nombre,
+                "moveset": moveset,
                 "id": data["id"],
                 "shiny": es_shiny,
             }
