@@ -1887,31 +1887,21 @@ async def testalola(ctx):
 @bot.command()
 async def mundo(ctx):
 
+    print("Entró a !mundo")
+
     world = mundo_manager.obtener_estado(
         ctx.guild.id
     )
 
+    print(world)
+
     embed = discord.Embed(
-        title="🌍 Mundo del Servidor",
-        color=discord.Color.green()
+        title="🌍 Mundo del Servidor"
     )
 
     embed.add_field(
-        name="📈 Progreso",
-        value=(
-            f"{world.progreso}/{world.objetivo}\n"
-            f"{world.porcentaje}%"
-        ),
-        inline=False
-    )
-
-    embed.add_field(
-        name="🏕 Safaris",
-        value=(
-            f"Desbloqueados: {world.safaris_desbloqueados}\n"
-            f"Disponibles: {world.safaris_disponibles}"
-        ),
-        inline=False
+        name="Progreso",
+        value=f"{world.progreso}/{world.objetivo}"
     )
 
     await ctx.send(embed=embed)
