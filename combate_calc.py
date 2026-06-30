@@ -885,8 +885,32 @@ def elegir_movimiento_combate(
             "wavecrash",
         }:
             penalizacion += 10
+        multiplicador = 1.0
+
+        if tipos_defensor:
+
+            move_type = data.get("type")
+
+            if move_type:
+
+                for tipo in tipos_defensor:
+
+                    try:
+
+                        tipo_def = PokemonType.from_name(tipo)
+
+                        tipo_mov = PokemonType.from_name(move_type)
+
+                        multiplicador *= calc_gen9.get_move_effectiveness(
+                            Move(move_id, gen=9),
+                            tipo_mov,
+                            tipo_def
+                        )
+
+                    except Exception:
+                        pass
         puntaje = (
-            bp
+            bp * multiplicador
             + stab
             + cat_bonus
             + min(accuracy, 100) // 10
