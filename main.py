@@ -50,7 +50,7 @@ from evolutions import (
     get_evolution_cost,
     get_evolution_choice
 )
-
+from mundo.imagen_mundo import generar_escena_mundo
 from candy import (
     get_candies,
     remove_candy,
@@ -1887,23 +1887,41 @@ async def testalola(ctx):
 @bot.command()
 async def mundo(ctx):
 
-    print("Entró a !mundo")
-
     world = mundo_manager.obtener_estado(
         ctx.guild.id
     )
 
-    print(world)
+    buffer = await generar_escena_mundo(
+        ctx.guild.id
+    )
+
+    if buffer is None:
+
+        return await ctx.send(
+            "🌍 Aún no hay capturas en este servidor."
+        )
+
+    archivo = discord.File(
+        buffer,
+        filename="mundo.gif"
+    )
 
     embed = discord.Embed(
-        title="🌍 Mundo del Servidor"
+        title="🌍 Mundo del Servidor",
+        description=(
+            f"📈 Progreso: **{world.progreso}/{world.objetivo}**\n"
+            f"🏕 Safaris disponibles: **{world.safaris_disponibles}**"
+        ),
+        color=discord.Color.green()
     )
 
-    embed.add_field(
-        name="Progreso",
-        value=f"{world.progreso}/{world.objetivo}"
+    embed.set_image(
+        url="attachment://mundo.gif"
     )
 
-    await ctx.send(embed=embed)
+    await ctx.send(
+        embed=embed,
+        file=archivo
+    )
 
 bot.run(TOKEN)

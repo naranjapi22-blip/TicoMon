@@ -669,6 +669,7 @@ class BotonCaptura(discord.ui.View):
                         id_captura, resultado_record = (
                             await database.guardar_captura(
                                 user_id=user_id,
+                                guild_id=interaction.guild.id,
                                 pokemon_nombre=self.nombre,
                                 tamano_factor=self.tamano_factor,
                                 es_shiny=self.es_shiny,

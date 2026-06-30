@@ -1,36 +1,60 @@
 import io
 import os
-
+import database
 from PIL import Image, ImageSequence
-
+import random
 
 
 POSICIONES = [
-    (120, 140),   # Izquierda
-    (250, 140),   # Centro
-    (400, 140),   # Derecha
+    (120,250),
+    (230,250),
+    (340,250),
+    (450,250),
+    (560,250),
 ]
 
-
 async def generar_escena_mundo(
-    pokemons,
-    tipo,
+    guild_id,
 ):
-    """
-    pokemons = [
-        {"id":25, "nombre":"pikachu", "shiny":False},
-        {"id":1,  "nombre":"bulbasaur", "shiny":False},
-        ...
-    ]
+    capturas = database.obtener_ultimas_capturas(
+        guild_id
+    )
 
-    tipo = "grass"
-    """
+    pokemons = []
 
-    ruta_fondo = os.path.join(
+    for nombre, es_shiny in capturas[:5]:
+
+        pokemon = database.obtener_pokemon_local_nombre(
+            nombre
+        )
+
+        if not pokemon:
+            continue
+
+        pokemons.append({
+            "id": pokemon["id"],
+            "nombre": nombre,
+            "shiny": bool(es_shiny)
+        })
+    carpeta_fondos = os.path.join(
         "animaciones",
         "assets",
-        "fondos",
-        f"{tipo}.png"
+        "fondos"
+    )
+
+    fondos = [
+        f for f in os.listdir(carpeta_fondos)
+        if f.lower().endswith(".png")
+    ]
+
+    if not fondos:
+        raise FileNotFoundError(
+            "No hay fondos disponibles."
+        )
+
+    ruta_fondo = os.path.join(
+        carpeta_fondos,
+        random.choice(fondos)
     )
 
     if not os.path.exists(ruta_fondo):
@@ -57,21 +81,28 @@ async def generar_escena_mundo(
 
     for pokemon in pokemons:
 
-        frames = cargar_frames_gif_mundo(
-            pokemon["id"],
-            es_shiny=pokemon.get(
-                "shiny",
-                False
-            ),
-            es_espalda=False
-        )
+        try:
 
-        gifs.append(frames)
+            frames = cargar_frames_gif_mundo(
+                pokemon["id"],
+                es_shiny=pokemon.get(
+                    "shiny",
+                    False
+                )
+            )
+
+            gifs.append(frames)
+
+        except Exception:
+
+            continue
 
     # ==========================
     # TOTAL DE FRAMES
     # ==========================
+    if not gifs:
 
+        return None
     total_frames = min(
         32,
         max(
@@ -99,9 +130,14 @@ async def generar_escena_mundo(
                 frame_index % len(frames)
             ]
 
+            w, h = sprite.size
+
             escena.paste(
                 sprite,
-                (x, y),
+                (
+                    x - w // 2,
+                    y - h // 2
+                ),
                 sprite
             )
 

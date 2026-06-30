@@ -92,10 +92,11 @@ def init_db():
 
 async def guardar_captura(
     user_id,
+    guild_id,
     pokemon_nombre,
     tamano_factor,
-    es_shiny=False,
-    pokeball='Pokéball'
+    es_shiny,
+    pokeball
 ):
     async with db_lock:
 
@@ -124,7 +125,7 @@ async def guardar_captura(
 
             # 3. Inserción
             campos = (
-                "user_id, pokemon_nombre, es_shiny, "
+                "user_id, guild_id, pokemon_nombre, es_shiny, "
                 "pokeball, fecha, iv_hp, iv_atk, iv_def, "
                 "iv_spa, iv_spd, iv_spe, naturaleza, "
                 "tamano_factor"
@@ -132,6 +133,7 @@ async def guardar_captura(
 
             valores = (
                 str(user_id),
+                guild_id,
                 pokemon_nombre.lower(),
                 1 if es_shiny else 0,
                 pokeball,
@@ -144,14 +146,13 @@ async def guardar_captura(
                 iv_spe,
                 naturaleza_seleccionada,
                 tamano_factor
-            )
-
+                )
             cursor.execute(
                 f"""
                 INSERT INTO capturas ({campos})
                 VALUES (
                     %s, %s, %s, %s, %s,
-                    %s, %s, %s, %s,
+                    %s, %s, %s, %s, %s,
                     %s, %s, %s, %s
                 )
                 RETURNING id
@@ -2049,6 +2050,35 @@ def reiniciar_world(guild_id, fecha, objetivo):
         )
 
         conn.commit()
+
+    finally:
+
+        cursor.close()
+        conn.close()
+def obtener_ultimas_capturas(
+    guild_id,
+    limite=5
+):
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+
+        cursor.execute("""
+            SELECT
+                pokemon_nombre,
+                es_shiny
+            FROM capturas
+            WHERE guild_id = %s
+            ORDER BY fecha DESC
+            LIMIT %s
+        """, (
+            guild_id,
+            limite
+        ))
+
+        return cursor.fetchall()
 
     finally:
 
