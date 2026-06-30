@@ -90,25 +90,6 @@ class VistaCombate(discord.ui.View):
             view=self
         )
 
-        buffer = await imagencomb.generar_escena_combate(
-            ...
-        )
-
-        self.msg_imagen = await interaction.followup.send(
-            file=discord.File(
-                buffer,
-                filename="combate.png"
-            ),
-            wait=True
-        )
-
-        self.msg_ui = await interaction.followup.send(
-            embed=discord.Embed(
-                title="⚔️ Preparando combate..."
-            ),
-            wait=True
-        )
-
         self.msg_ui = await interaction.followup.send(
 
             embed=discord.Embed(
@@ -312,11 +293,28 @@ class VistaCombate(discord.ui.View):
                     url="attachment://combate.png"
                 )
 
-                await self.msg_imagen.edit(
-
-                    attachments=[self.imagen_actual]
-
+                embed_imagen = discord.Embed(
+                    title="⚔️ Duelo Épico"
                 )
+
+                embed_imagen.set_image(
+                    url="attachment://combate.png"
+                )
+
+                if self.msg_imagen is None:
+
+                    self.msg_imagen = await self.interaction.followup.send(
+                        embed=embed_imagen,
+                        file=self.imagen_actual,
+                        wait=True
+                    )
+
+                else:
+
+                    await self.msg_imagen.edit(
+                        embed=embed_imagen,
+                        attachments=[self.imagen_actual]
+                    )
 
             await self.msg_ui.edit(
                 embed=embed
@@ -327,18 +325,7 @@ class VistaCombate(discord.ui.View):
 
             import traceback
             traceback.print_exc()
-    def necesita_actualizar_imagen(self, escena):
 
-        for evento in escena["eventos"]:
-
-            if evento.tipo in (
-                "inicio",
-                "cambio",
-                "victoria",
-            ):
-                return True
-
-        return False
     def barra_hp(self, actual, maximo, largo=10):
 
         if maximo <= 0:
