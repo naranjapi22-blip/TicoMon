@@ -130,165 +130,183 @@ class VistaCombate(discord.ui.View):
         escena,
         texto,
     ):
-        print("ACTUALIZANDO DISCORD")
-        estado = escena["estado"]
+        try:
 
-        e1 = estado["Jugador 1"]
-        e2 = estado["Jugador 2"]
+            print("ACTUALIZANDO DISCORD")
+            estado = escena["estado"]
 
-        p1_actual = e1["pokes"][e1["activo"]]
-        p2_actual = e2["pokes"][e2["activo"]]
+            e1 = estado["Jugador 1"]
+            e2 = estado["Jugador 2"]
 
-        hp1 = e1["hp"][e1["activo"]]
-        hp_max1 = e1["hp_max"][e1["activo"]]
+            p1_actual = e1["pokes"][e1["activo"]]
+            p2_actual = e2["pokes"][e2["activo"]]
 
-        hp2 = e2["hp"][e2["activo"]]
-        hp_max2 = e2["hp_max"][e2["activo"]]
+            hp1 = e1["hp"][e1["activo"]]
+            hp_max1 = e1["hp_max"][e1["activo"]]
 
-        turno_atacante = 1
+            hp2 = e2["hp"][e2["activo"]]
+            hp_max2 = e2["hp_max"][e2["activo"]]
 
-        for evento in escena["eventos"]:
+            turno_atacante = 1
 
-            if getattr(evento, "tipo", "") == "ataque":
+            for evento in escena["eventos"]:
 
-                if evento.atacante == p2_actual["nombre"]:
+                if getattr(evento, "tipo", "") == "ataque":
 
-                    turno_atacante = 2
+                    if evento.atacante == p2_actual["nombre"]:
 
-                break
+                        turno_atacante = 2
 
-        id1 = p1_actual.get("id")
+                    break
 
-        if not id1:
+            id1 = p1_actual.get("id")
 
-            pokemon1 = database.obtener_pokemon_local_nombre(
-                p1_actual["nombre"]
-            )
+            if not id1:
 
-            if pokemon1:
-
-                id1 = pokemon1.get(
-                    "pokeapi_id",
-                    pokemon1["id"]
+                pokemon1 = database.obtener_pokemon_local_nombre(
+                    p1_actual["nombre"]
                 )
 
-            else:
+                if pokemon1:
 
-                id1 = 25
+                    id1 = pokemon1.get(
+                        "pokeapi_id",
+                        pokemon1["id"]
+                    )
 
-        id2 = p2_actual.get("id")
+                else:
 
-        if not id2:
+                    id1 = 25
 
-            pokemon2 = database.obtener_pokemon_local_nombre(
-                p2_actual["nombre"]
-            )
+            id2 = p2_actual.get("id")
 
-            if pokemon2:
+            if not id2:
 
-                id2 = pokemon2.get(
-                    "pokeapi_id",
-                    pokemon2["id"]
+                pokemon2 = database.obtener_pokemon_local_nombre(
+                    p2_actual["nombre"]
                 )
 
-            else:
+                if pokemon2:
 
-                id2 = 25
+                    id2 = pokemon2.get(
+                        "pokeapi_id",
+                        pokemon2["id"]
+                    )
 
-        embed = discord.Embed(
-            title="⚔️ Duelo Épico",
-            color=discord.Color.red()
-        )
+                else:
 
-        embed.add_field(
-            name=f"👤 {self.p1.display_name}",
-            value=f"**{p1_actual['nombre']}**",
-            inline=True
-        )
+                    id2 = 25
 
-        embed.add_field(
-            name="VS",
-            value="🆚",
-            inline=True
-        )
-
-        embed.add_field(
-            name=f"👤 {self.p2.display_name}",
-            value=f"**{p2_actual['nombre']}**",
-            inline=True
-        )
-
-        embed.add_field(
-            name="📜 Combate",
-            value=texto,
-            inline=False
-        )
-        if self.necesita_actualizar_imagen(escena):
-
-            buffer = await imagencomb.generar_escena_combate(
-
-                self.session,
-
-                id1,
-
-                id2,
-
-                nombre1=p1_actual["nombre"],
-
-                nombre2=p2_actual["nombre"],
-
-                hp1=hp1,
-
-                hp2=hp2,
-
-                hp_max1=hp_max1,
-
-                hp_max2=hp_max2,
-
-                turno_jugador=turno_atacante,
-
-                es_shiny1=p1_actual.get(
-                    "shiny",
-                    False
-                ),
-
-                es_shiny2=p2_actual.get(
-                    "shiny",
-                    False
-                ),
-
-                fondo_nombre=self.fondo_seleccionado
-
+            embed = discord.Embed(
+                title="⚔️ Duelo Épico",
+                color=discord.Color.red()
             )
 
-            self.imagen_actual = discord.File(
-                buffer,
-                filename="combate.png"
+            embed.add_field(
+                name=f"👤 {self.p1.display_name}",
+                value=f"**{p1_actual['nombre']}**",
+                inline=True
             )
 
-            embed.set_image(
-                url="attachment://combate.png"
+            embed.add_field(
+                name="VS",
+                value="🆚",
+                inline=True
             )
 
-            await self.msg.edit(
-
-                embed=embed,
-
-                attachments=[self.imagen_actual]
-
+            embed.add_field(
+                name=f"👤 {self.p2.display_name}",
+                value=f"**{p2_actual['nombre']}**",
+                inline=True
             )
 
-        else:
+            embed.add_field(
+                name="📜 Combate",
+                value=texto,
+                inline=False
+            )
+            if self.necesita_actualizar_imagen(escena):
 
-            if self.imagen_actual:
+                buffer = await imagencomb.generar_escena_combate(
+
+                    self.session,
+
+                    id1,
+
+                    id2,
+
+                    nombre1=p1_actual["nombre"],
+
+                    nombre2=p2_actual["nombre"],
+
+                    hp1=hp1,
+
+                    hp2=hp2,
+
+                    hp_max1=hp_max1,
+
+                    hp_max2=hp_max2,
+
+                    turno_jugador=turno_atacante,
+
+                    es_shiny1=p1_actual.get(
+                        "shiny",
+                        False
+                    ),
+
+                    es_shiny2=p2_actual.get(
+                        "shiny",
+                        False
+                    ),
+
+                    fondo_nombre=self.fondo_seleccionado
+
+                )
+
+                self.imagen_actual = discord.File(
+                    buffer,
+                    filename="combate.png"
+                )
 
                 embed.set_image(
                     url="attachment://combate.png"
                 )
+                print("EDITANDO MENSAJE")
+                await self.msg.edit(
 
-            await self.msg.edit(
-                embed=embed
-            )
+                    embed=embed,
+
+                    attachments=[self.imagen_actual]
+
+                )
+
+            else:
+
+                if self.imagen_actual:
+
+                    embed.set_image(
+                        url="attachment://combate.png"
+                    )
+
+                if self.imagen_actual:
+
+                    await self.msg.edit(
+
+                        embed=embed,
+
+                        attachments=[self.imagen_actual]
+
+                    )
+
+                else:
+
+                    await self.msg.edit(
+                        embed=embed
+                    )
+        except Exception:
+
+            import traceback
+            traceback.print_exc()
     def necesita_actualizar_imagen(self, escena):
 
         for evento in escena["eventos"]:
