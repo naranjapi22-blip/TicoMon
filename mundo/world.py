@@ -49,3 +49,16 @@ class World:
             return True
 
         return False
+    def obtener_objetivos_safari(self):
+
+        objetivos = []
+
+        for i in range(1, 6):
+
+            objetivo = (
+                self.objetivo * i
+            ) // 5
+
+            objetivos.append(objetivo)
+
+        return objetivos

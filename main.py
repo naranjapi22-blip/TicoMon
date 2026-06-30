@@ -1109,25 +1109,36 @@ def crear_embed_safari(
         inline=False
     )
 
+    objetivos = world.obtener_objetivos_safari()
+
     estado = []
 
-    for i in range(5):
+    for i, objetivo in enumerate(objetivos):
 
         if i < world.safaris_utilizados:
 
-            estado.append(f"{i+1}️⃣✅")
+            icono = "✅"
 
         elif i < world.safaris_desbloqueados:
 
-            estado.append(f"{i+1}️⃣🟢")
+            icono = "🟢"
 
         else:
 
-            estado.append(f"{i+1}️⃣🔒")
+            icono = "🔒"
+
+        progreso = min(
+            world.progreso,
+            objetivo
+        )
+
+        estado.append(
+            f"{i+1}️⃣ {icono} {progreso}/{objetivo}"
+        )
 
     embed.add_field(
         name="🏕 Safaris del día",
-        value="  ".join(estado),
+        value="\n".join(estado),
         inline=False
     )
 

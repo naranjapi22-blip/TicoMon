@@ -384,7 +384,7 @@ class SafariManager:
 
         self.max_encuentros = self.config["encuentros"]
         self.balls_iniciales = self.config["balls"]
-        cantidad_eventos = self.config["eventos"]
+        self.eventos = self.config["eventos"]
 
         self.activo = True
         self.participantes.clear()
@@ -401,7 +401,7 @@ class SafariManager:
                     1,
                     self.max_encuentros + 1
                 ),
-                cantidad_eventos
+                self.eventos
             )
         )
 
@@ -416,10 +416,6 @@ class SafariManager:
             )
         }
 
-        print(f"SAFARI NIVEL: {self.nivel_safari}")
-        print(f"CONFIG: {self.config}")
-        print(f"EVENTOS SAFARI: {self.encuentros_evento}")
-        print(f"MAPA EVENTOS: {self.mapa_eventos}")
 
         self.region_actual = obtener_siguiente_region()
 
@@ -911,7 +907,6 @@ class SafariManager:
 
         await self.finalizar_safari()
 
-        await self.finalizar_safari()
     def agregar_participante(
         self,
         user_id
