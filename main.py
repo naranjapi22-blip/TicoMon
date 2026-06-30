@@ -50,7 +50,7 @@ from evolutions import (
     get_evolution_cost,
     get_evolution_choice
 )
-from mundo.imagen_mundo import generar_escena_mundo
+from mundo.panel_safari import generar_panel_safari
 from candy import (
     get_candies,
     remove_candy,
@@ -1119,7 +1119,26 @@ async def safari(ctx):
 
         cursor.close()
         conn.close()
+    # ==========================
+    # PANEL SAFARI
+    # ==========================
 
+    world = mundo_manager.obtener_estado(
+        ctx.guild.id
+    )
+
+    buffer = await generar_panel_safari(
+        ctx.guild.id
+    )
+
+    archivo = None
+
+    if buffer:
+
+        archivo = discord.File(
+            buffer,
+            filename="safari.gif"
+        )
     # ==========================
     # VALIDAR SAFARIS DISPONIBLES
     # ==========================
@@ -1128,33 +1147,28 @@ async def safari(ctx):
         ctx.guild.id
     ):
 
-        world = mundo_manager.obtener_estado(
-            ctx.guild.id
+        embed = discord.Embed(
+            title="🏕 Safari",
+            description=(
+                "Todavía no hay Safaris disponibles.\n\n"
+                f"📈 Progreso: **{world.progreso}/{world.objetivo}**"
+            ),
+            color=discord.Color.green()
         )
+
+        if archivo:
+
+            embed.set_image(
+                url="attachment://safari.gif"
+            )
+
+            return await ctx.send(
+                embed=embed,
+                file=archivo
+            )
 
         return await ctx.send(
-            f"🚙 No hay Safaris disponibles.\n\n"
-            f"🌍 Progreso: {world.progreso}/{world.objetivo}"
-        )
-
-        world = mundo_manager.obtener_estado(
-            ctx.guild.id
-        )
-
-        print(
-            world.progreso,
-            world.safaris_desbloqueados,
-            world.safaris_utilizados,
-            world.safaris_disponibles
-        )
-
-        return await ctx.send(
-            f"""
-    Progreso: {world.progreso}
-    Desbloqueados: {world.safaris_desbloqueados}
-    Utilizados: {world.safaris_utilizados}
-    Disponibles: {world.safaris_disponibles}
-    """
+            embed=embed
         )
 
     # ==========================
@@ -1201,10 +1215,28 @@ async def safari(ctx):
         ctx.guild.id
     )
 
-    mensaje = await ctx.send(
-        embed=embed,
-        view=view
+    embed.set_image(
+        url="attachment://safari.gif"
     )
+
+    if archivo:
+
+        embed.set_image(
+            url="attachment://safari.gif"
+        )
+
+        mensaje = await ctx.send(
+            embed=embed,
+            file=archivo,
+            view=view
+        )
+
+    else:
+
+        mensaje = await ctx.send(
+            embed=embed,
+            view=view
+        )
 
     view.message = mensaje
 
@@ -1883,45 +1915,6 @@ async def testalola(ctx):
 
     await ctx.send(
         f"{pokemon}"
-    )
-@bot.command()
-async def mundo(ctx):
-
-    world = mundo_manager.obtener_estado(
-        ctx.guild.id
-    )
-
-    buffer = await generar_escena_mundo(
-        ctx.guild.id
-    )
-
-    if buffer is None:
-
-        return await ctx.send(
-            "🌍 Aún no hay capturas en este servidor."
-        )
-
-    archivo = discord.File(
-        buffer,
-        filename="mundo.gif"
-    )
-
-    embed = discord.Embed(
-        title="🌍 Mundo del Servidor",
-        description=(
-            f"📈 Progreso: **{world.progreso}/{world.objetivo}**\n"
-            f"🏕 Safaris disponibles: **{world.safaris_disponibles}**"
-        ),
-        color=discord.Color.green()
-    )
-
-    embed.set_image(
-        url="attachment://mundo.gif"
-    )
-
-    await ctx.send(
-        embed=embed,
-        file=archivo
     )
 
 bot.run(TOKEN)
