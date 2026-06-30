@@ -14,7 +14,7 @@ class PresentadorCombate:
         callback=None,
 
     ):
-
+        print("ESCENAS:", len(escenas))
         for escena in escenas:
 
             texto = narrador.narrar(
@@ -36,7 +36,7 @@ class PresentadorCombate:
                 )
                 print(texto)
                 print("=" * 50)
-
+            print("ESCENA", escena["turno"])
             await asyncio.sleep(
                 escena["pausa"]
             )

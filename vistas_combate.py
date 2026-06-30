@@ -130,7 +130,7 @@ class VistaCombate(discord.ui.View):
         escena,
         texto,
     ):
-
+        print("ACTUALIZANDO DISCORD")
         estado = escena["estado"]
 
         e1 = estado["Jugador 1"]

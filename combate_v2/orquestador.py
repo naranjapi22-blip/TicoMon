@@ -34,7 +34,8 @@ class CombateV2:
             eventos,
             snapshots,
         )
-
+        print("EVENTOS:", len(eventos))
+        print("HISTORIA:", len(historia))
         await self.presentador.reproducir(
             historia,
             self.narrador,
