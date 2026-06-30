@@ -90,11 +90,6 @@ class VistaCombate(discord.ui.View):
             view=self
         )
 
-        await interaction.response.edit_message(
-            content="⚔️ ¡El combate ha comenzado!",
-            view=None
-        )
-
         buffer = await imagencomb.generar_escena_combate(
             ...
         )
