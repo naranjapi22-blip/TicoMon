@@ -128,14 +128,15 @@ class VistaCombate(discord.ui.View):
         self.stop()
     async def actualizar_discord(
         self,
-        escena,
-        evento,
-        texto,
+        paso,
+        historial,
     ):
         try:
 
             print("ACTUALIZANDO DISCORD")
-            estado = escena["estado"]
+            evento = paso["evento"]
+
+            estado = paso["estado"]
 
             e1 = estado["Jugador 1"]
             e2 = estado["Jugador 2"]
@@ -194,7 +195,7 @@ class VistaCombate(discord.ui.View):
                 else:
 
                     id2 = 25
-            self.agregar_historial(texto)
+
 
             barra1 = self.barra_hp(
                 hp1,
@@ -238,18 +239,17 @@ class VistaCombate(discord.ui.View):
 
             embed.add_field(
                 name="📜 Últimas acciones",
-                value="\n\n".join(self.historial),
+                value="\n\n".join(historial),
                 inline=False
             )
-
             embed.set_footer(
-                text=f"Turno {escena['turno']}"
+                text=f"Turno {evento.turno}"
             )
             actualizar_imagen = evento.tipo in (
                 "inicio",
                 "cambio",
                 "victoria",
-            )            
+            )     
             if actualizar_imagen:
 
                 buffer = await imagencomb.generar_escena_combate(

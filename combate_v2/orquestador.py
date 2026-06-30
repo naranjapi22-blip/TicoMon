@@ -1,19 +1,17 @@
-from .motor import MotorCombate
-from .director import DirectorCombate
-from .narrador import NarradorCombate
-from .presentador import PresentadorCombate
+from combate_v2.director import DirectorCombate
+from combate_v2.narrador import NarradorCombate
+from combate_v2.presentador import PresentadorCombate
 
 
 class CombateV2:
 
     def __init__(self):
 
-        self.motor = MotorCombate()
         self.director = DirectorCombate()
         self.narrador = NarradorCombate()
         self.presentador = PresentadorCombate()
 
-    def crear_historia(
+    def crear_timeline(
         self,
         eventos,
         snapshots,
@@ -23,6 +21,7 @@ class CombateV2:
             eventos,
             snapshots,
         )
+
     async def reproducir(
         self,
         eventos,
@@ -30,14 +29,13 @@ class CombateV2:
         callback=None,
     ):
 
-        historia = self.crear_historia(
+        timeline = self.crear_timeline(
             eventos,
             snapshots,
         )
-        print("EVENTOS:", len(eventos))
-        print("HISTORIA:", len(historia))
+
         await self.presentador.reproducir(
-            historia,
+            timeline,
             self.narrador,
             callback,
         )

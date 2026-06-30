@@ -1,80 +1,54 @@
 class DirectorCombate:
 
     def analizar(
-    self,
-    eventos,
-    snapshots,
+        self,
+        eventos,
+        snapshots,
     ):
 
-        escenas = []
-
-        escena_actual = []
-
-        turno_actual = None
+        timeline = []
 
         for evento in eventos:
 
-            if turno_actual is None:
-                turno_actual = evento.turno
+            indice = max(0, evento.turno - 1)
 
-            if evento.turno != turno_actual:
+            estado = snapshots[indice]
 
-                escenas.append(
-                    self._crear_escena(
-                        turno_actual,
-                        escena_actual,
-                        snapshots[turno_actual - 1]
-                    )
-                )
-                escena_actual = []
+            pausa = self._pausa_evento(evento)
 
-                turno_actual = evento.turno
+            timeline.append({
 
-            escena_actual.append(evento)
+                "evento": evento,
 
-        if escena_actual:
+                "estado": estado,
 
-            escenas.append(
-                self._crear_escena(
-                    turno_actual,
-                    escena_actual,
-                    snapshots[turno_actual - 1]
-                )
-            )
+                "pausa": pausa,
 
-        return escenas
+            })
 
-    def _crear_escena(
+        return timeline
+
+    def _pausa_evento(
         self,
-        turno,
-        eventos,
-        estado,
+        evento,
     ):
 
-        pausa = 1.5
+        if evento.tipo == "inicio":
+            return 2.5
 
-        for e in eventos:
+        if evento.tipo == "victoria":
+            return 4.0
 
-            if e.tipo == "victoria":
-                pausa = 3.0
+        if evento.tipo == "cambio":
+            return 2.5
 
-            elif e.tipo == "cambio":
-                pausa = 2.6
+        if evento.tipo == "ataque":
+            return 2.0
 
-            elif getattr(e, "debilitado", False):
-                pausa = 2.5
+        if getattr(evento, "debilitado", False):
+            return 3.0
 
-            elif getattr(e, "critico", False):
-                pausa = 2.0
+        if getattr(evento, "critico", False):
+            return 2.5
 
-        return {
-
-            "turno": turno,
-
-            "eventos": eventos,
-
-            "estado": estado,
-
-            "pausa": pausa,
-
-        }
+        return 1.8
