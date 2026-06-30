@@ -90,7 +90,29 @@ class VistaCombate(discord.ui.View):
             view=self
         )
 
-        self.msg_imagen = await interaction.original_response()
+        await interaction.response.edit_message(
+            content="⚔️ ¡El combate ha comenzado!",
+            view=None
+        )
+
+        buffer = await imagencomb.generar_escena_combate(
+            ...
+        )
+
+        self.msg_imagen = await interaction.followup.send(
+            file=discord.File(
+                buffer,
+                filename="combate.png"
+            ),
+            wait=True
+        )
+
+        self.msg_ui = await interaction.followup.send(
+            embed=discord.Embed(
+                title="⚔️ Preparando combate..."
+            ),
+            wait=True
+        )
 
         self.msg_ui = await interaction.followup.send(
 
