@@ -253,7 +253,8 @@ def _contexto_batalla(atacante: dict, defensor: dict) -> Battle:
 
 def elegir_movimiento_automatico(
     species_showdown: str,
-    stats: dict[str, int]
+    stats: dict[str, int],
+    tipos_defensor: list[str] | None = None,
 ) -> tuple[str, str]:
 
     species_id = to_id_str(species_showdown)
@@ -305,10 +306,11 @@ def elegir_movimiento_automatico(
         )
 
         stab = (
-            40
+            25
             if data.get("type") in tipos
             else 0
         )
+
         penalizacion = 0
 
         if move_id in {
@@ -335,22 +337,61 @@ def elegir_movimiento_automatico(
             "wavecrash",
         }:
             penalizacion += 10
+
+        multiplicador = 1.0
+
+        if tipos_defensor:
+
+            move_type = data.get("type")
+
+            if move_type:
+
+                for tipo in tipos_defensor:
+
+                    try:
+
+                        tipo_mov = PokemonType.from_name(move_type)
+                        tipo_def = PokemonType.from_name(tipo)
+
+                        multiplicador *= calc_gen9.get_move_effectiveness(
+                            Move(move_id, gen=9),
+                            tipo_mov,
+                            tipo_def
+                        )
+
+                    except Exception:
+                        pass
+
+        if multiplicador == 0:
+            continue
+
+        bonus_tipo = 0
+
+        if multiplicador == 4:
+            bonus_tipo = 35
+
+        elif multiplicador == 2:
+            bonus_tipo = 18
+
+        elif multiplicador == 0.5:
+            bonus_tipo = -12
+
+        elif multiplicador == 0.25:
+            bonus_tipo = -25
+
         puntaje = (
             bp
             + stab
             + cat_bonus
+            + bonus_tipo
             + min(accuracy, 100) // 10
             - penalizacion
-        )
-        nombre = data.get(
-            "name",
-            move_id
         )
 
         candidato = (
             puntaje,
             move_id,
-            nombre
+            data.get("name", move_id),
         )
 
         if (
@@ -362,7 +403,7 @@ def elegir_movimiento_automatico(
     if mejor:
         return mejor[1], mejor[2]
 
-    return "tackle", "Tackle"
+
 def elegir_movimiento_alpha(
     species_showdown: str,
     stats: dict[str, int],
@@ -780,7 +821,6 @@ def elegir_movimiento_combate(
     tipos_defensor: list[str] | None = None,
 ) -> tuple[str, str]:
 
-
     species_id = to_id_str(species_showdown)
 
     entry = _GEN_DATA.learnset.get(species_id)
@@ -808,32 +848,7 @@ def elegir_movimiento_combate(
     for move_id in learnset:
 
         data = _GEN_DATA.moves.get(move_id)
-        if tipos_defensor:
 
-            move_type = data.get("type")
-
-            if move_type:
-
-                multiplicador = 1.0
-
-                for tipo in tipos_defensor:
-
-                    try:
-                        tipo_def = PokemonType.from_name(tipo)
-
-                        tipo_mov = PokemonType.from_name(move_type)
-
-                        multiplicador *= calc_gen9.get_move_effectiveness(
-                            Move(move_id, gen=9),
-                            tipo_mov,
-                            tipo_def
-                        )
-
-                    except Exception:
-                        pass
-
-                if multiplicador == 0:
-                    continue
         if not movimiento_valido_ia(
             move_id,
             data,
@@ -855,10 +870,11 @@ def elegir_movimiento_combate(
         )
 
         stab = (
-            40
+            25
             if data.get("type") in tipos
             else 0
         )
+
         penalizacion = 0
 
         if move_id in {
@@ -885,6 +901,7 @@ def elegir_movimiento_combate(
             "wavecrash",
         }:
             penalizacion += 10
+
         multiplicador = 1.0
 
         if tipos_defensor:
@@ -897,9 +914,9 @@ def elegir_movimiento_combate(
 
                     try:
 
-                        tipo_def = PokemonType.from_name(tipo)
-
                         tipo_mov = PokemonType.from_name(move_type)
+
+                        tipo_def = PokemonType.from_name(tipo)
 
                         multiplicador *= calc_gen9.get_move_effectiveness(
                             Move(move_id, gen=9),
@@ -909,24 +926,38 @@ def elegir_movimiento_combate(
 
                     except Exception:
                         pass
+
+        if multiplicador == 0:
+            continue
+
+        bonus_tipo = 0
+
+        if multiplicador == 4:
+            bonus_tipo = 35
+
+        elif multiplicador == 2:
+            bonus_tipo = 18
+
+        elif multiplicador == 0.5:
+            bonus_tipo = -12
+
+        elif multiplicador == 0.25:
+            bonus_tipo = -25
+
         puntaje = (
-            bp * multiplicador
+            bp
             + stab
             + cat_bonus
+            + bonus_tipo
             + min(accuracy, 100) // 10
             - penalizacion
-        )
-
-        nombre = data.get(
-            "name",
-            move_id
         )
 
         candidatos.append(
             (
                 puntaje,
                 move_id,
-                nombre
+                data.get("name", move_id)
             )
         )
 
@@ -940,11 +971,9 @@ def elegir_movimiento_combate(
 
     top = candidatos[:3]
 
-    pesos = [70, 20, 10][:len(top)]
-
     elegido = random.choices(
         top,
-        weights=pesos,
+        weights=[60, 25, 15][:len(top)],
         k=1
     )[0]
 
