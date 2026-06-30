@@ -8,20 +8,7 @@ class NarradorCombate:
         self.ataques = {}
         self.ko = {}
 
-    def narrar(self, escena):
-
-        lineas = []
-
-        for evento in escena["eventos"]:
-
-            texto = self._narrar_evento(evento)
-
-            if texto:
-                lineas.append(texto)
-
-        return "\n".join(lineas)
-
-    def _narrar_evento(self, evento):
+    def narrar_evento(self, evento):
 
         if evento.tipo == "inicio":
 
@@ -48,53 +35,7 @@ class NarradorCombate:
 
             veces = self.ataques[nombre]
 
-            if evento.debilitado:
-
-                self.ko[nombre] = (
-                    self.ko.get(nombre, 0) + 1
-                )
-
-                if self.ko[nombre] >= 2:
-
-                    return (
-                        f"👑 {nombre} sigue imparable y derrota a {evento.defensor}."
-                    )
-
-                return random.choice([
-
-                    f"☠️ {evento.defensor} cae debilitado.",
-
-                    f"💥 {evento.defensor} no puede continuar.",
-
-                    f"⚠️ {evento.defensor} queda fuera de combate.",
-
-                ])
-
-            if evento.critico:
-
-                return random.choice([
-
-                    f"💥 ¡Golpe crítico de {nombre}!",
-
-                    f"💥 {nombre} conecta un ataque devastador.",
-
-                    f"🔥 ¡{nombre} encuentra un punto débil!",
-
-                ])
-
-            if veces >= 4:
-
-                return random.choice([
-
-                    f"🔥 {nombre} mantiene la presión.",
-
-                    f"⚔️ {nombre} domina completamente este duelo.",
-
-                    f"⚡ {nombre} sigue atacando sin descanso.",
-
-                ])
-
-            return random.choice([
+            texto = random.choice([
 
                 f"⚔️ {nombre} usa {evento.movimiento}.",
 
@@ -103,6 +44,49 @@ class NarradorCombate:
                 f"⚡ {nombre} lanza {evento.movimiento}.",
 
             ])
+
+            if evento.dano > 0:
+
+                texto += (
+                    f"\n💥 {evento.defensor} recibe "
+                    f"{evento.dano} de daño."
+                )
+
+            if evento.critico:
+
+                texto += "\n💢 ¡Golpe crítico!"
+
+            if getattr(evento, "efectividad", 1) > 1:
+
+                texto += "\n🔥 ¡Es muy eficaz!"
+
+            elif getattr(evento, "efectividad", 1) < 1:
+
+                texto += "\n🛡️ No es muy eficaz."
+
+            if evento.debilitado:
+
+                self.ko[nombre] = (
+                    self.ko.get(nombre, 0) + 1
+                )
+
+                texto += (
+                    f"\n☠️ {evento.defensor} cae debilitado."
+                )
+
+            elif veces >= 4:
+
+                texto += random.choice([
+
+                    "\n⚔️ Mantiene la presión.",
+
+                    "\n🔥 Domina completamente el combate.",
+
+                    "\n⚡ No da respiro al rival.",
+
+                ])
+
+            return texto
 
         if evento.tipo == "cambio":
 
