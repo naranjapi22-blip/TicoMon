@@ -23,6 +23,7 @@ class PresentadorCombate:
                 )
 
                 if callback:
+
                     await callback(
                         escena,
                         evento,
@@ -36,9 +37,14 @@ class PresentadorCombate:
                     print("=" * 50)
 
                 # Pausa corta entre eventos
-                await asyncio.sleep(1.5)
+                if evento.tipo == "ataque":
+                    await asyncio.sleep(2)
 
-            # Pausa de la escena (KO, cambio, victoria...)
-            await asyncio.sleep(
-                escena["pausa"]
-            )
+                elif evento.tipo == "cambio":
+                    await asyncio.sleep(2.5)
+
+                elif evento.tipo == "victoria":
+                    await asyncio.sleep(5)
+
+                else:
+                    await asyncio.sleep(2)

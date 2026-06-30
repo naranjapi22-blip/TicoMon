@@ -129,6 +129,7 @@ class VistaCombate(discord.ui.View):
     async def actualizar_discord(
         self,
         escena,
+        evento,
         texto,
     ):
         try:
@@ -150,15 +151,11 @@ class VistaCombate(discord.ui.View):
 
             turno_atacante = 1
 
-            for evento in escena["eventos"]:
-
-                if getattr(evento, "tipo", "") == "ataque":
-
-                    if evento.atacante == p2_actual["nombre"]:
-
-                        turno_atacante = 2
-
-                    break
+            if (
+                evento.tipo == "ataque"
+                and evento.atacante == p2_actual["nombre"]
+            ):
+                turno_atacante = 2
 
             id1 = p1_actual.get("id")
 
@@ -248,7 +245,12 @@ class VistaCombate(discord.ui.View):
             embed.set_footer(
                 text=f"Turno {escena['turno']}"
             )
-            if self.necesita_actualizar_imagen(escena):
+            actualizar_imagen = evento.tipo in (
+                "inicio",
+                "cambio",
+                "victoria",
+            )            
+            if actualizar_imagen:
 
                 buffer = await imagencomb.generar_escena_combate(
 
