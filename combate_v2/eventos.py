@@ -26,15 +26,20 @@ class EventoMovimiento(Evento):
 class EventoDaño(Evento):
 
     atacante: str
+
     defensor: str
 
     dano: int
 
     hp_actual: int
+
     hp_max: int
 
     critico: bool = False
+
     efectivo: float = 1.0
+
+    motivo: str | None = None
 
 
 
