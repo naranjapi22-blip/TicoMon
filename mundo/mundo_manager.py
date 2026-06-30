@@ -118,15 +118,15 @@ class MundoManager:
         )
 
         return True
-def hay_safari_disponible(
-    self,
-    guild_id
-):
-
-    world = self.obtener_estado(
+    def hay_safari_disponible(
+        self,
         guild_id
-    )
+    ):
 
-    return world.safaris_disponibles > 0
+        world = self.obtener_estado(
+            guild_id
+        )
+
+        return world.safaris_disponibles > 0
 
 mundo_manager = MundoManager()
