@@ -180,6 +180,7 @@ MOVIMIENTOS_ESPECIALES = {
     "gigaimpact",
     "dragonascent",
     "psychoboost",
+    "future sight",
 }
 MOVIMIENTOS_EXCLUIDOS = (
     MOVIMIENTOS_CARGA
