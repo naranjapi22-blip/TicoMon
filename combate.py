@@ -189,7 +189,9 @@ class CombateSim:
                         )
 
         return "\n".join(historial)
-
+        self.motor.snapshot(
+            self.equipos
+        )
     def obtener_eventos(self):
 
         return self.motor.obtener_eventos()

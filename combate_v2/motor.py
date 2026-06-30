@@ -193,16 +193,8 @@ class MotorCombate:
             copy.deepcopy(equipos)
         )
 
-    def snapshot(
-        self,
-        evento,
-        equipos
-    ):
+    def snapshot(self, equipos):
 
-        self.snapshots.append({
-
-            "evento": evento,
-
-            "estado": copy.deepcopy(equipos)
-
-        })
+        self.snapshots.append(
+            copy.deepcopy(equipos)
+        )
