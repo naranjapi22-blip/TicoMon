@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 from animacion_evolucion import EvolutionAnimation
 # Módulos locales y de proyecto
 import database
-from mundo.mundo_manager import MundoManager
+from mundo.mundo_manager import mundo_manager
 import servicios
 import admin
 import configuracion
