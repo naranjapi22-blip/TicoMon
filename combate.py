@@ -36,6 +36,7 @@ class CombateSim:
         if self.turno == 1:
 
             self.motor.inicio(
+                self.equipos,
                 p1["pokes"][0]["nombre"],
                 p2["pokes"][0]["nombre"]
             )
@@ -153,6 +154,7 @@ class CombateSim:
                         ]["nombre"]
 
                         self.motor.cambio(
+                            self.equipos,
 
                             turno=self.turno,
 
@@ -177,6 +179,7 @@ class CombateSim:
                         )
 
                         self.motor.victoria(
+                            self.equipos,
 
                             turno=self.turno,
 
@@ -224,8 +227,11 @@ class CombateSim:
 
             self.ejecutar_ronda()
 
-        return self.obtener_eventos()
+        return self.motor.obtener_pasos()
 
     def obtener_snapshots(self):
 
         return self.motor.snapshots
+    def obtener_pasos(self):
+
+        return self.motor.obtener_pasos()

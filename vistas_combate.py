@@ -111,15 +111,12 @@ class VistaCombate(discord.ui.View):
         self.fondo_seleccionado = random.choice(
             lista_fondos
         )
-        eventos = self.combate.simular()
-
-        snapshots = self.combate.obtener_snapshots()
+        pasos = self.combate.simular()
 
         orquestador = CombateV2()
 
         await orquestador.reproducir(
-            eventos,
-            snapshots,
+            pasos,
             callback=self.actualizar_discord
         )
 
@@ -139,9 +136,9 @@ class VistaCombate(discord.ui.View):
     ):
         try:
 
-            evento = paso["evento"]
+            evento = paso.evento
 
-            estado = paso["estado"]
+            estado = paso.estado
 
             e1 = estado["Jugador 1"]
             e2 = estado["Jugador 2"]

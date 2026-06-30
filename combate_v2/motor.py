@@ -8,7 +8,7 @@ from .eventos import (
 )
 
 import copy
-
+from .paso import PasoCombate
 
 class MotorCombate:
 
@@ -16,31 +16,40 @@ class MotorCombate:
 
         self.eventos = []
         self.snapshots = []
-
+        self.pasos = []
     def limpiar(self):
 
         self.eventos.clear()
         self.snapshots.clear()
+        self.pasos.clear()
 
     def inicio(
         self,
+        equipos,
         pokemon1,
         pokemon2
     ):
 
-        self.eventos.append(
+        evento = EventoInicio(
 
-            EventoInicio(
-                tipo="inicio",
-                turno=0,
-                pokemon1=pokemon1,
-                pokemon2=pokemon2
-            )
+            tipo="inicio",
 
+            turno=0,
+
+            pokemon1=pokemon1,
+
+            pokemon2=pokemon2
+
+        )
+
+        self.agregar_paso(
+            evento,
+            equipos
         )
 
     def ataque(
         self,
+        equipos,
         turno,
         atacante,
         defensor,
@@ -57,130 +66,135 @@ class MotorCombate:
         # Nuevo evento: Movimiento
         # ===========================
 
-        self.eventos.append(
+        evento = EventoMovimiento(
 
-            EventoMovimiento(
+            tipo="movimiento",
 
-                tipo="movimiento",
+            turno=turno,
 
-                turno=turno,
+            atacante=atacante,
 
-                atacante=atacante,
+            movimiento=movimiento,
 
-                movimiento=movimiento,
+        )
 
-            )
-
+        self.agregar_paso(
+            evento,
+            equipos
         )
 
         # ===========================
         # Nuevo evento: Daño
         # ===========================
 
-        self.eventos.append(
+        evento = EventoDaño(
 
-            EventoDaño(
+            tipo="dano",
 
-                tipo="dano",
+            turno=turno,
 
-                turno=turno,
+            atacante=atacante,
 
-                atacante=atacante,
+            defensor=defensor,
 
-                defensor=defensor,
+            dano=dano,
 
-                dano=dano,
+            hp_actual=hp_actual,
 
-                hp_actual=hp_actual,
+            hp_max=hp_max,
 
-                hp_max=hp_max,
+            critico=critico,
 
-                critico=critico,
-
-                efectivo=efectivo,
-
-            )
+            efectivo=efectivo,
 
         )
 
+        self.agregar_paso(
+            evento,
+            equipos
+        )
         # ===========================
         # Evento antiguo (compatibilidad)
         # ===========================
 
-        self.eventos.append(
+        evento = EventoAtaque(
 
-            EventoAtaque(
+            tipo="ataque",
 
-                tipo="ataque",
+            turno=turno,
 
-                turno=turno,
+            atacante=atacante,
 
-                atacante=atacante,
+            defensor=defensor,
 
-                defensor=defensor,
+            movimiento=movimiento,
 
-                movimiento=movimiento,
+            dano=dano,
 
-                dano=dano,
+            hp_actual=hp_actual,
 
-                hp_actual=hp_actual,
+            hp_max=hp_max,
 
-                hp_max=hp_max,
+            critico=critico,
 
-                critico=critico,
+            efectivo=efectivo,
 
-                efectivo=efectivo,
-
-                debilitado=debilitado
-
-            )
+            debilitado=debilitado
 
         )
 
+        self.agregar_paso(
+            evento,
+            equipos
+        )
     def cambio(
         self,
+        equipos,
         turno,
         entrenador,
         sale,
         entra
     ):
 
-        self.eventos.append(
+        evento = EventoCambioPokemon(
 
-            EventoCambioPokemon(
+            tipo="cambio",
 
-                tipo="cambio",
+            turno=turno,
 
-                turno=turno,
+            entrenador=entrenador,
 
-                entrenador=entrenador,
+            sale=sale,
 
-                sale=sale,
+            entra=entra
 
-                entra=entra
+        )
 
-            )
-
+        self.agregar_paso(
+            evento,
+            equipos
         )
 
     def victoria(
         self,
+        equipos,
         turno,
         ganador
     ):
 
-        self.eventos.append(
+        evento = EventoVictoria(
 
-            EventoVictoria(
+            tipo="victoria",
 
-                tipo="victoria",
+            turno=turno,
 
-                turno=turno,
+            ganador=ganador
 
-                ganador=ganador
+        )
 
-            )
-
+        self.agregar_paso(
+            evento,
+            equipos
         )
 
     def obtener_eventos(self):
@@ -193,8 +207,32 @@ class MotorCombate:
             copy.deepcopy(equipos)
         )
 
-    def snapshot(self, equipos):
+    def agregar_paso(
+        self,
+        evento,
+        equipos,
+        pausa=1.5,
+    ):
 
-        self.snapshots.append(
-            copy.deepcopy(equipos)
+        self.eventos.append(
+            evento
         )
+
+        self.pasos.append(
+
+            PasoCombate(
+
+                evento=evento,
+
+                estado=copy.deepcopy(
+                    equipos
+                ),
+
+                pausa=pausa
+
+            )
+
+        )
+    def obtener_pasos(self):
+
+        return self.pasos

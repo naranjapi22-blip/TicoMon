@@ -5,42 +5,43 @@ class PresentadorCombate:
 
     async def reproducir(
         self,
-        timeline,
+        pasos,
         narrador,
         callback=None,
     ):
 
         historial = []
 
-        print("EVENTOS:", len(timeline))
+        print("PASOS:", len(pasos))
 
-        for paso in timeline:
+        for paso in pasos:
 
-            evento = paso["evento"]
+            evento = paso.evento
 
             texto = narrador.narrar_evento(
                 evento
             )
 
-            if texto:
+            if not texto:
+                continue
 
-                historial.append(texto)
+            historial.append(texto)
 
-                historial = historial[-3:]
+            historial = historial[-3:]
 
-                if callback:
+            if callback:
 
-                    await callback(
-                        paso,
-                        historial.copy()
-                    )
-
-                else:
-
-                    print("=" * 50)
-                    print("\n".join(historial))
-                    print("=" * 50)
-
-                await asyncio.sleep(
-                    paso["pausa"]
+                await callback(
+                    paso,
+                    historial.copy()
                 )
+
+            else:
+
+                print("=" * 50)
+                print("\n".join(historial))
+                print("=" * 50)
+
+            await asyncio.sleep(
+                paso.pausa
+            )
