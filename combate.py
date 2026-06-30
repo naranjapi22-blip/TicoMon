@@ -187,11 +187,11 @@ class CombateSim:
                         historial.append(
                             f"💀 ¡{p_def['nombre']} se debilitó! ¡A {oponente} no le quedan más Pokémon!"
                         )
-
-        return "\n".join(historial)
         self.motor.snapshot(
             self.equipos
         )
+        return "\n".join(historial)
+
     def obtener_eventos(self):
 
         return self.motor.obtener_eventos()
