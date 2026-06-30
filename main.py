@@ -1124,13 +1124,18 @@ async def safari(ctx):
     # VALIDAR SAFARIS DISPONIBLES
     # ==========================
 
-    resultado = mundo_manager.usar_safari(
+    if not mundo_manager.hay_safari_disponible(
         ctx.guild.id
-    )
+    ):
 
-    print("usar_safari:", resultado)
+        world = mundo_manager.obtener_estado(
+            ctx.guild.id
+        )
 
-    if not resultado:
+        return await ctx.send(
+            f"🚙 No hay Safaris disponibles.\n\n"
+            f"🌍 Progreso: {world.progreso}/{world.objetivo}"
+        )
 
         world = mundo_manager.obtener_estado(
             ctx.guild.id
@@ -1225,7 +1230,13 @@ async def safari(ctx):
         )
 
         return
+    # ==========================
+    # CONSUMIR SAFARI
+    # ==========================
 
+    mundo_manager.usar_safari(
+        ctx.guild.id
+    )
     # ==========================
     # GUARDAR ÚLTIMO ORGANIZADOR
     # ==========================
