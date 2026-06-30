@@ -53,6 +53,13 @@ class NarradorCombate:
 
         if evento.tipo == "dano":
 
+            print(
+                "MOTIVO:",
+                evento.motivo,
+                "DAÑO:",
+                evento.dano,
+            )
+
             if evento.motivo == "inmune":
 
                 return f"🛡️ ¡No afecta a {evento.defensor}!"
