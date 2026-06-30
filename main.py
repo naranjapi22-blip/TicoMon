@@ -1086,8 +1086,10 @@ from vistas_safari import (
 )
 from datetime import datetime, timedelta
 from database import get_connection
+@bot.command()
+@canal_restringido()
 async def safari(ctx):
-
+    print("Entró a !safari")
     # ==========================
     # VALIDAR ÚLTIMO ORGANIZADOR
     # ==========================
