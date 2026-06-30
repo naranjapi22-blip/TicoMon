@@ -1086,54 +1086,16 @@ from vistas_safari import (
 )
 from datetime import datetime, timedelta
 from database import get_connection
-@bot.command()
-@canal_restringido()
 async def safari(ctx):
 
     # ==========================
-    # VALIDAR COOLDOWN SERVIDOR
+    # VALIDAR ÚLTIMO ORGANIZADOR
     # ==========================
 
     conn = get_connection()
     cursor = conn.cursor()
 
     try:
-
-        cursor.execute("""
-            SELECT ultimo_safari
-            FROM safari_cooldowns
-            WHERE guild_id = %s
-        """, (ctx.guild.id,))
-
-        resultado = cursor.fetchone()
-
-        if resultado:
-
-            ultimo_safari = resultado[0]
-
-            disponible_en = ultimo_safari + timedelta(hours=2)
-
-            ahora = datetime.utcnow()
-
-            if ahora < disponible_en:
-
-                restante = disponible_en - ahora
-
-                total_segundos = int(
-                    restante.total_seconds()
-                )
-
-                horas = total_segundos // 3600
-                minutos = (total_segundos % 3600) // 60
-
-                return await ctx.send(
-                    f"🚙 El Safari está descansando.\n"
-                    f"⏳ Disponible nuevamente en **{horas}h {minutos}m**."
-                )
-
-        # ==========================
-        # VALIDAR ÚLTIMO ORGANIZADOR
-        # ==========================
 
         cursor.execute("""
             SELECT user_id
@@ -1155,6 +1117,24 @@ async def safari(ctx):
 
         cursor.close()
         conn.close()
+
+    # ==========================
+    # VALIDAR SAFARIS DISPONIBLES
+    # ==========================
+
+    if not mundo_manager.usar_safari(
+        ctx.guild.id
+    ):
+
+        world = mundo_manager.obtener_estado(
+            ctx.guild.id
+        )
+
+        return await ctx.send(
+            "🚙 No hay Safaris disponibles.\n\n"
+            f"🌍 Progreso: {world.progreso}/{world.objetivo}\n"
+            "Usa **!mundo** para ver el progreso."
+        )
 
     # ==========================
     # VALIDAR SAFARI ACTIVO
@@ -1231,22 +1211,13 @@ async def safari(ctx):
         return
 
     # ==========================
-    # GUARDAR COOLDOWN
+    # GUARDAR ÚLTIMO ORGANIZADOR
     # ==========================
 
     conn = get_connection()
     cursor = conn.cursor()
 
     try:
-
-        cursor.execute("""
-            INSERT INTO safari_cooldowns
-            (guild_id, ultimo_safari)
-            VALUES (%s, NOW())
-            ON CONFLICT (guild_id)
-            DO UPDATE
-            SET ultimo_safari = NOW()
-        """, (ctx.guild.id,))
 
         cursor.execute("""
             INSERT INTO safari_usuarios
@@ -1284,7 +1255,9 @@ async def safari(ctx):
         f"**Guía {safari.guia_actual['nombre']}**\n"
         f"💬 {frase}"
     )
+
     await asyncio.sleep(3)
+
     await safari.ejecutar_safari()
 @bot.command()
 @commands.is_owner()
