@@ -22,26 +22,25 @@ class PresentadorCombate:
                 evento
             )
 
-        if texto:
+            if texto:
 
-            historial.append(texto)
+                historial.append(texto)
 
-            # Solo conservar las últimas 3 acciones
-            historial = historial[-3:]
+                historial = historial[-3:]
 
-            if callback:
+                if callback:
 
-                await callback(
-                    paso,
-                    historial.copy()
+                    await callback(
+                        paso,
+                        historial.copy()
+                    )
+
+                else:
+
+                    print("=" * 50)
+                    print("\n".join(historial))
+                    print("=" * 50)
+
+                await asyncio.sleep(
+                    paso["pausa"]
                 )
-
-            else:
-
-                print("=" * 50)
-                print("\n".join(historial))
-                print("=" * 50)
-
-            await asyncio.sleep(
-                paso["pausa"]
-            )
