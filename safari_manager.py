@@ -838,9 +838,11 @@ class SafariManager:
 
                         await guardar_captura(
                             user_id,
+                            self.guild_id,
                             nombre,
                             tamano_factor,
-                            es_shiny
+                            es_shiny,
+                            "Safari Ball"
                         )
 
                     except Exception as e:
