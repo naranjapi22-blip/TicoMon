@@ -919,11 +919,13 @@ def elegir_movimiento_combate(
         key=lambda x: x[0]
     )
 
-    top = candidatos[:3]
+    top = candidatos[:4]
+
+    pesos = [40, 30, 20, 10][:len(top)]
 
     elegido = random.choices(
         top,
-        weights=[60, 25, 15][:len(top)],
+        weights=pesos,
         k=1
     )[0]
 
