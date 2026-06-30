@@ -267,107 +267,115 @@ class VistaCombate(discord.ui.View):
                 "cambio",
                 "victoria",
             )
-        if actualizar_imagen:
 
-            if evento.tipo == "victoria":
+            if actualizar_imagen:
 
-                ganador_es_j1 = (
-                    evento.ganador == "Jugador 1"
+                if evento.tipo == "victoria":
+
+                    ganador_es_j1 = (
+                        evento.ganador == "Jugador 1"
+                    )
+
+                    pokemon = (
+                        p1_actual
+                        if ganador_es_j1
+                        else p2_actual
+                    )
+
+                    trainer = (
+                        trainer1
+                        if ganador_es_j1
+                        else trainer2
+                    )
+
+                    buffer = await imagencomb.generar_pantalla_victoria(
+
+                        self.session,
+
+                        pokemon["id"],
+
+                        pokemon["nombre"],
+
+                        pokemon.get("shiny", False),
+
+                        self.fondo_seleccionado,
+
+                        trainer,
+
+                    )
+
+                else:
+
+                    buffer = await imagencomb.generar_escena_combate(
+
+                        self.session,
+
+                        id1,
+
+                        id2,
+
+                        nombre1=p1_actual["nombre"],
+
+                        nombre2=p2_actual["nombre"],
+
+                        hp1=hp1,
+
+                        hp2=hp2,
+
+                        hp_max1=hp_max1,
+
+                        hp_max2=hp_max2,
+
+                        turno_jugador=turno_atacante,
+
+                        es_shiny1=p1_actual.get("shiny", False),
+
+                        es_shiny2=p2_actual.get("shiny", False),
+
+                        fondo_nombre=self.fondo_seleccionado,
+
+                        trainer1=trainer1,
+
+                        trainer2=trainer2,
+
+                    )
+
+                self.imagen_actual = discord.File(
+                    buffer,
+                    filename="combate.png"
                 )
 
-                pokemon = (
-                    p1_actual
-                    if ganador_es_j1
-                    else p2_actual
+                embed_imagen = discord.Embed(
+                    title="⚔️ Duelo Épico"
                 )
 
-                trainer = (
-                    trainer1
-                    if ganador_es_j1
-                    else trainer2
+                embed_imagen.set_image(
+                    url="attachment://combate.png"
                 )
 
-                buffer = await imagencomb.generar_pantalla_victoria(
+                if self.msg_imagen is None:
 
-                    self.session,
+                    self.msg_imagen = await self.interaction.followup.send(
+                        embed=embed_imagen,
+                        file=self.imagen_actual,
+                        wait=True
+                    )
 
-                    pokemon["id"],
+                else:
 
-                    pokemon["nombre"],
+                    await self.msg_imagen.edit(
+                        embed=embed_imagen,
+                        attachments=[self.imagen_actual]
+                    )
 
-                    pokemon.get("shiny", False),
-
-                    self.fondo_seleccionado,
-
-                    trainer,
-
-                )
-
-            else:
-
-                buffer = await imagencomb.generar_escena_combate(
-
-                    self.session,
-
-                    id1,
-
-                    id2,
-
-                    nombre1=p1_actual["nombre"],
-
-                    nombre2=p2_actual["nombre"],
-
-                    hp1=hp1,
-
-                    hp2=hp2,
-
-                    hp_max1=hp_max1,
-
-                    hp_max2=hp_max2,
-
-                    turno_jugador=turno_atacante,
-
-                    es_shiny1=p1_actual.get("shiny", False),
-
-                    es_shiny2=p2_actual.get("shiny", False),
-
-                    fondo_nombre=self.fondo_seleccionado,
-
-                    trainer1=trainer1,
-
-                    trainer2=trainer2,
-
-                )
-
-            self.imagen_actual = discord.File(
-                buffer,
-                filename="combate.png"
+            await self.msg_ui.edit(
+                embed=embed
             )
 
-            embed_imagen = discord.Embed(
-                title="⚔️ Duelo Épico"
-            )
+        except Exception:
 
-
-            if self.msg_imagen is None:
-
-                self.msg_imagen = await self.interaction.followup.send(
-                    embed=embed_imagen,
-                    file=self.imagen_actual,
-                    wait=True
-                )
-
-            else:
-
-                await self.msg_imagen.edit(
-                    embed=embed_imagen,
-                    attachments=[self.imagen_actual]
-                )
-
-        await self.msg_ui.edit(
-            embed=embed
-        )
-
+            import traceback
+            traceback.print_exc()
 
     def barra_hp(self, actual, maximo, largo=10):
 
