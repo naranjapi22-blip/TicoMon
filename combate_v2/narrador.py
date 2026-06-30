@@ -76,7 +76,7 @@ class NarradorCombate:
         # COMPATIBILIDAD
         # ===========================
 
-        if evento.tipo == "ataque":
+        if evento.tipo == "movimiento":
 
             nombre = evento.atacante
 

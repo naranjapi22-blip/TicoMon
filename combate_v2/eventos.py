@@ -37,24 +37,6 @@ class EventoDaño(Evento):
     efectivo: float = 1.0
 
 
-@dataclass
-class EventoAtaque(Evento):
-
-    atacante: str
-    defensor: str
-
-    movimiento: str
-
-    dano: int
-
-    hp_actual: int
-    hp_max: int
-
-    critico: bool = False
-    efectivo: float = 1.0
-
-    debilitado: bool = False
-
 
 @dataclass
 class EventoDebilitado(Evento):

@@ -2,7 +2,6 @@ from .eventos import (
     EventoInicio,
     EventoMovimiento,
     EventoDaño,
-    EventoAtaque,
     EventoCambioPokemon,
     EventoVictoria,
 )
@@ -109,40 +108,8 @@ class MotorCombate:
             evento,
             equipos
         )
-        # ===========================
-        # Evento antiguo (compatibilidad)
-        # ===========================
 
-        evento = EventoAtaque(
 
-            tipo="ataque",
-
-            turno=turno,
-
-            atacante=atacante,
-
-            defensor=defensor,
-
-            movimiento=movimiento,
-
-            dano=dano,
-
-            hp_actual=hp_actual,
-
-            hp_max=hp_max,
-
-            critico=critico,
-
-            efectivo=efectivo,
-
-            debilitado=debilitado
-
-        )
-
-        self.agregar_paso(
-            evento,
-            equipos
-        )
     def cambio(
         self,
         equipos,
