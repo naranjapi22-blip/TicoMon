@@ -113,6 +113,8 @@ class CombateSim:
 
                 self.motor.ataque(
 
+                    equipos=self.equipos,
+
                     turno=self.turno,
 
                     atacante=p_atk["nombre"],
