@@ -142,16 +142,21 @@ class VistaCombate(discord.ui.View):
             evento = paso["evento"]
 
             estado = paso["estado"]
-            print(
-                evento.tipo,
-                p1_actual["nombre"],
-                p2_actual["nombre"]
-            )
+
             e1 = estado["Jugador 1"]
             e2 = estado["Jugador 2"]
 
             p1_actual = e1["pokes"][e1["activo"]]
             p2_actual = e2["pokes"][e2["activo"]]
+
+            print(
+                "EVENTO:",
+                evento.tipo,
+                "P1:",
+                p1_actual["nombre"],
+                "P2:",
+                p2_actual["nombre"],
+            )
 
             hp1 = e1["hp"][e1["activo"]]
             hp_max1 = e1["hp_max"][e1["activo"]]
