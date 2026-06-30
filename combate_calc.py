@@ -656,9 +656,19 @@ def _calcular_dano_showdown(atacante: dict, defensor: dict) -> ResultadoDano:
         acc_pct = accuracy * 100 if accuracy <= 1 else accuracy
     if acc_pct < 100 and random.randint(1, 100) > acc_pct:
         return ResultadoDano(
-            0,
-            f"💨 ¡{atacante['nombre']} usó **{move_nombre}** pero falló!",
+
+            dano=0,
+
+            mensaje=f"💨 ¡{atacante['nombre']} usó **{move_nombre}** pero falló!",
+
             fallo=True,
+
+            critico=False,
+
+            efectivo=1.0,
+
+            motivo="fallo_precision",
+
         )
 
     es_critico = random.randint(1, 24) == 1
@@ -668,19 +678,23 @@ def _calcular_dano_showdown(atacante: dict, defensor: dict) -> ResultadoDano:
     print("TIPOS DEF:", defensor.get("tipo"))
     dano_min, dano_max = calc_gen9.calculate_damage(id_atk, id_def, move, battle, is_critical=es_critico)
     print("DAÑO:", dano_min, dano_max)
+    efectivo = _multiplicador_efectividad(move, defensor)
+
     if dano_max <= 0:
 
         return ResultadoDano(
 
             dano=0,
 
-            mensaje=f"💨 ¡{atacante['nombre']} usó **{move_nombre}**!",
+            mensaje="",
 
             fallo=True,
 
-            motivo="inmune",
+            critico=False,
 
-            efectivo=0,
+            efectivo=efectivo,
+
+            motivo="inmune" if efectivo == 0 else None,
 
         )
 

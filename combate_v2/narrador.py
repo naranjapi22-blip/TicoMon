@@ -53,12 +53,9 @@ class NarradorCombate:
 
         if evento.tipo == "dano":
 
-            print(
-                "MOTIVO:",
-                evento.motivo,
-                "DAÑO:",
-                evento.dano,
-            )
+            if evento.motivo == "fallo_precision":
+
+                return "💨 ¡El ataque falla!"
 
             if evento.motivo == "inmune":
 
