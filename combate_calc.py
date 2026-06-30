@@ -642,9 +642,25 @@ def calcular_dano(atacante: dict, defensor: dict) -> ResultadoDano:
 
 
 def _calcular_dano_showdown(atacante: dict, defensor: dict) -> ResultadoDano:
-    move_id = atacante.get("movimiento", "tackle")
+    stats = {
+        "atk": atacante.get("atk", 0),
+        "spa": atacante.get("atk_esp", 0),
+    }
+
+    move_id, move_nombre = elegir_movimiento_combate(
+
+        atacante["species_showdown"],
+
+        stats,
+
+        defensor.get("tipo"),
+
+    )
+
+    atacante["movimiento"] = move_id
+    atacante["movimiento_nombre"] = move_nombre
+
     move = Move(move_id, gen=9)
-    move_nombre = atacante.get("movimiento_nombre") or move.entry.get("name", move_id)
 
     battle = _contexto_batalla(atacante, defensor)
     id_atk = _identificador_batalla(atacante, "p1")
@@ -758,3 +774,154 @@ def movimiento_valido_ia(
         return False
 
     return True
+def elegir_movimiento_combate(
+    species_showdown: str,
+    stats: dict[str, int],
+    tipos_defensor: list[str] | None = None,
+) -> tuple[str, str]:
+
+
+    species_id = to_id_str(species_showdown)
+
+    entry = _GEN_DATA.learnset.get(species_id)
+
+    if not entry:
+        return "tackle", "Tackle"
+
+    learnset = entry.get("learnset", {})
+
+    dex = _GEN_DATA.pokedex.get(
+        species_id,
+        {}
+    )
+
+    tipos = dex.get("types", [])
+
+    prefer_physical = (
+        stats.get("atk", 0)
+        >=
+        stats.get("spa", 0)
+    )
+
+    candidatos = []
+
+    for move_id in learnset:
+
+        data = _GEN_DATA.moves.get(move_id)
+        if tipos_defensor:
+
+            move_type = data.get("type")
+
+            if move_type:
+
+                multiplicador = 1.0
+
+                for tipo in tipos_defensor:
+
+                    try:
+                        tipo_def = PokemonType.from_name(tipo)
+
+                        tipo_mov = PokemonType.from_name(move_type)
+
+                        multiplicador *= calc_gen9.get_move_effectiveness(
+                            Move(move_id, gen=9),
+                            tipo_mov,
+                            tipo_def
+                        )
+
+                    except Exception:
+                        pass
+
+                if multiplicador == 0:
+                    continue
+        if not movimiento_valido_ia(
+            move_id,
+            data,
+        ):
+            continue
+
+        bp = data.get("basePower") or 0
+        accuracy = data.get("accuracy") or 100
+
+        es_fisico = (
+            data.get("category")
+            == "Physical"
+        )
+
+        cat_bonus = (
+            15
+            if prefer_physical == es_fisico
+            else 0
+        )
+
+        stab = (
+            40
+            if data.get("type") in tipos
+            else 0
+        )
+        penalizacion = 0
+
+        if move_id in {
+            "dracometeor",
+            "leafstorm",
+            "overheat",
+            "psychoboost",
+        }:
+            penalizacion += 20
+
+        if move_id in {
+            "closecombat",
+            "superpower",
+            "headlongrush",
+        }:
+            penalizacion += 15
+
+        if move_id in {
+            "bravebird",
+            "flareblitz",
+            "woodhammer",
+            "doubleedge",
+            "volttackle",
+            "wavecrash",
+        }:
+            penalizacion += 10
+        puntaje = (
+            bp
+            + stab
+            + cat_bonus
+            + min(accuracy, 100) // 10
+            - penalizacion
+        )
+
+        nombre = data.get(
+            "name",
+            move_id
+        )
+
+        candidatos.append(
+            (
+                puntaje,
+                move_id,
+                nombre
+            )
+        )
+
+    if not candidatos:
+        return "tackle", "Tackle"
+
+    candidatos.sort(
+        reverse=True,
+        key=lambda x: x[0]
+    )
+
+    top = candidatos[:3]
+
+    pesos = [70, 20, 10][:len(top)]
+
+    elegido = random.choices(
+        top,
+        weights=pesos,
+        k=1
+    )[0]
+
+    return elegido[1], elegido[2]
