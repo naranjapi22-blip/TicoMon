@@ -1185,12 +1185,6 @@ async def safari(ctx):
 
         ultimo = cursor.fetchone()
 
-        if ultimo and ultimo[0] == ctx.author.id:
-
-            return await ctx.send(
-                "🚙 Otro entrenador debe organizar el próximo Safari."
-            )
-
     finally:
 
         cursor.close()
@@ -1215,6 +1209,33 @@ async def safari(ctx):
         archivo = discord.File(
             buffer,
             filename="safari.gif"
+        )
+
+    # ==========================
+    # VALIDAR ÚLTIMO ORGANIZADOR
+    # ==========================
+
+    if ultimo and ultimo[0] == ctx.author.id:
+
+        embed = crear_embed_safari(
+            world,
+            "🚙 Safari",
+            "Otro entrenador debe organizar el próximo Safari."
+        )
+
+        if archivo:
+
+            embed.set_image(
+                url="attachment://safari.gif"
+            )
+
+            return await ctx.send(
+                embed=embed,
+                file=archivo
+            )
+
+        return await ctx.send(
+            embed=embed
         )
 
     # ==========================
@@ -1256,8 +1277,25 @@ async def safari(ctx):
 
     if safari and safari.activo:
 
+        embed = crear_embed_safari(
+            world,
+            "🚙 Safari",
+            "Ya hay un Safari activo."
+        )
+
+        if archivo:
+
+            embed.set_image(
+                url="attachment://safari.gif"
+            )
+
+            return await ctx.send(
+                embed=embed,
+                file=archivo
+            )
+
         return await ctx.send(
-            "🚙 Ya hay un Safari activo."
+            embed=embed
         )
 
     # ==========================
