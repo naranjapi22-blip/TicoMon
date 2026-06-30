@@ -1149,11 +1149,42 @@ async def safari(ctx):
 
         embed = discord.Embed(
             title="🏕 Safari",
-            description=(
-                "Todavía no hay Safaris disponibles.\n\n"
-                f"📈 Progreso: **{world.progreso}/{world.objetivo}**"
-            ),
             color=discord.Color.green()
+        )
+
+        embed.add_field(
+            name="📈 Progreso",
+            value=(
+                f"{world.progreso}/{world.objetivo} "
+                f"({world.porcentaje}%)"
+            ),
+            inline=False
+        )
+
+        estado = []
+
+        for i in range(5):
+
+            if i < world.safaris_utilizados:
+
+                estado.append("⚫")
+
+            elif i < world.safaris_desbloqueados:
+
+                estado.append("🟢")
+
+            else:
+
+                estado.append("⚪")
+
+        embed.add_field(
+            name="🏕 Safaris",
+            value=" ".join(estado),
+            inline=False
+        )
+
+        embed.set_image(
+            url="attachment://safari.gif"
         )
 
         if archivo:

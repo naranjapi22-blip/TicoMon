@@ -1,13 +1,10 @@
 import io
 import os
 import database
-from mundo.mundo_manager import mundo_manager
 import random
 from PIL import (
     Image,
-    ImageSequence,
-    ImageDraw,
-    ImageFont
+    ImageSequence
 )
 
 POSICIONES = [
@@ -77,133 +74,7 @@ async def generar_panel_safari(
         (800, 400),
         Image.Resampling.LANCZOS
     )
-    draw = ImageDraw.Draw(
-        fondo
-    )
 
-    try:
-
-        font = ImageFont.truetype(
-            "arial.ttf",
-            22
-        )
-
-    except:
-
-        font = ImageFont.load_default()
-
-    world = mundo_manager.obtener_estado(
-        guild_id
-    )
-    draw.text(
-
-        (40,5),
-
-        "🏕 Safari del Servidor",
-
-        fill="white",
-
-        font=font
-
-    )
-    porcentaje = world.porcentaje
-    barra_x = 40
-    barra_y = 30
-
-    barra_w = 500
-    barra_h = 24
-
-    draw.rounded_rectangle(
-        (
-            barra_x,
-            barra_y,
-            barra_x + barra_w,
-            barra_y + barra_h
-        ),
-        radius=10,
-        fill=(45,45,45)
-    )
-
-    ancho = int(
-        barra_w *
-        porcentaje /
-        100
-    )
-
-    draw.rounded_rectangle(
-        (
-            barra_x,
-            barra_y,
-            barra_x + ancho,
-            barra_y + barra_h
-        ),
-        radius=10,
-        fill=(70,200,80)
-    )
-
-    draw.text(
-        (
-            barra_x + barra_w + 15,
-            barra_y - 2
-        ),
-        f"{porcentaje}%",
-        fill="white",
-        font=font
-    )
-    draw.text(
-
-        (40,65),
-
-        f"{world.progreso}/{world.objetivo} capturas",
-
-        fill="white",
-
-        font=font
-
-    )
-    inicio_x = 40
-    inicio_y = 105
-
-    for i in range(5):
-
-        if i < world.safaris_utilizados:
-
-            color = (160,160,160)
-
-        elif i < world.safaris_desbloqueados:
-
-            color = (50,220,80)
-
-        else:
-
-            color = (80,80,80)
-
-        x = inicio_x + i * 40
-
-        draw.ellipse(
-
-            (
-                x,
-                inicio_y,
-                x + 26,
-                inicio_y + 26
-            ),
-
-            fill=color
-
-        )
-
-    draw.text(
-
-    (40,190),
-
-    "Últimas capturas",
-
-    fill="white",
-
-    font=font
-
-    )
     # ==========================
     # CARGAR GIFS
     # ==========================
