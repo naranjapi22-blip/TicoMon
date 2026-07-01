@@ -297,7 +297,7 @@ class VistaCompararPokemon(discord.ui.View):
             if self.message and self.message.embeds:
                 embed = self.message.embeds[0].copy()
                 embed.set_footer(
-                    text="⏱️ Sesión expirada — usa !comparar-pokemon para abrir de nuevo"
+                    text="⏱️ Sesión expirada — usa !compare-pokemon para abrir de nuevo"
                 )
                 await self.message.edit(embed=embed, view=self)
             elif self.message:
@@ -553,7 +553,7 @@ def iniciar_modulo_ranking(bot):
         finally:
             conn.close()
 
-    @bot.command(name="compare-pokemon")
+    @bot.command(name="comparepokemon")
     async def comparar_pokemon(ctx, miembro: discord.Member):
         if miembro.bot:
             return await ctx.send("❌ No puedes comparar con un bot.")

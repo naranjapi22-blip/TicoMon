@@ -5,7 +5,7 @@ import database
 
 def iniciar_modulo_ranking_shiny(bot):
 
-    @bot.command(name="rankingshiny")
+    @bot.command(name="shinyleaderboard")
     async def rankingshiny(ctx):
         """Muestra el ranking de shinies."""
 

@@ -177,7 +177,7 @@ def iniciar_modulo_perfil(bot):
                 name="🌟 Compañero Destacado",
                 value=(
                     "*No ha destacado ningún Pokémon.*\n"
-                    "Usa `!destacar <nombre>`"
+                    "Usa `!favote <nombre>`"
                 ),
                 inline=False
             )
@@ -185,7 +185,7 @@ def iniciar_modulo_perfil(bot):
             if es_shiny:
                 embed.color = discord.Color.gold()
             else:
-                embed.add_field(name="🌟 Compañero Destacado", value="*No ha destacado ningún Pokémon.*\nUsa `@Bot destacar <nombre> [shiny]`", inline=False)
+                embed.add_field(name="🌟 Compañero Destacado", value="*No ha destacado ningún Pokémon.*\nUsa `!favorite <nombre> [shiny]`", inline=False)
             
         await ctx.send(embed=embed)
 
@@ -213,7 +213,7 @@ def iniciar_modulo_perfil(bot):
             return await ctx.send(f"❌ ¡Aún no has capturado a **{nombre.capitalize()}** en su versión ✨ Shiny!")
             
         if not quiere_shiny and 0 not in versiones:
-            return await ctx.send(f"❌ Solo posees la versión ✨ Shiny de **{nombre.capitalize()}**. Usa el comando `destacar {nombre} shiny`.")
+            return await ctx.send(f"❌ Solo posees la versión ✨ Shiny de **{nombre.capitalize()}**. Usa el comando `!favorite {nombre} shiny`.")
         
         # 3. Guardamos la selección
         es_shiny_int = 1 if quiere_shiny else 0

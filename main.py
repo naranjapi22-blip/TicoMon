@@ -517,9 +517,7 @@ class ComandosView(discord.ui.View):
 
         embed.add_field(
             name="📖 Pokédex",
-            value=(
-                "`!pokedex`"
-            ),
+            value="`!pokedex`",
             inline=False
         )
 
@@ -569,27 +567,13 @@ class ComandosView(discord.ui.View):
 
         embed.add_field(
             name="👥 Team",
-            value=(
-                "`!team`"
-            ),
+            value="`!team`",
             inline=False
         )
 
         embed.add_field(
             name="🤝 Trading",
-            value=(
-                "`!trade @user`"
-            ),
-            inline=False
-        )
-
-        embed.add_field(
-            name="🏆 Leaderboards",
-            value=(
-                "`!dexleaderboard`\n"
-                "`!shinyleaderboard`\n"
-                "`!legendleaderboard`"
-            ),
+            value="`!trade @user`",
             inline=False
         )
 
@@ -599,6 +583,17 @@ class ComandosView(discord.ui.View):
                 "`!world`\n"
                 "`!raid`\n"
                 "`!safari`"
+            ),
+            inline=False
+        )
+
+        embed.add_field(
+            name="🏆 Leaderboards",
+            value=(
+                "`!leaderboard`\n"
+                "`!dexleaderboard`\n"
+                "`!shinyleaderboard`\n"
+                "`!legendleaderboard`"
             ),
             inline=False
         )

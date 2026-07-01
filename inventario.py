@@ -361,7 +361,7 @@ class VistaInventario(discord.ui.View):
             if self.message and self.message.embeds:
                 embed = self.message.embeds[0].copy()
                 embed.set_footer(
-                    text="⏱️ Sesión expirada — usa !new-inventario para abrir de nuevo"
+                    text="⏱️ Sesión expirada — usa !new-inventory para abrir de nuevo"
                 )
                 await self.message.edit(embed=embed, view=self)
             elif self.message:
@@ -404,7 +404,7 @@ class PaginadorInventario(discord.ui.View):
         try:
             if self.message and self.message.embeds:
                 embed = self.message.embeds[0].copy()
-                embed.set_footer(text="⏱️ Sesión expirada — usa !inventario para abrir de nuevo")
+                embed.set_footer(text="⏱️ Sesión expirada — usa !inventory para abrir de nuevo")
                 await self.message.edit(embed=embed, view=self)
             elif self.message:
                 await self.message.edit(view=self)
@@ -525,7 +525,7 @@ class Inventario(commands.Cog):
 
         view.message = mensaje
 
-    @commands.command(name="new-inventario")
+    @commands.command(name="new-inventory")
     async def ver_new_inventario(self, ctx):
         pokemones = database.obtener_inventario_usuario(ctx.author.id)
 
@@ -537,7 +537,7 @@ class Inventario(commands.Cog):
         mensaje = await ctx.send(embed=vista.embed_actual(), view=vista)
         vista.message = mensaje
 
-    @commands.command(name="top")
+    @commands.command(name="leaderboard")
     async def ver_top(self, ctx, tipo=None):
 
         TIPOS_VALIDOS = {

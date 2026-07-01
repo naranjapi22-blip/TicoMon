@@ -431,7 +431,7 @@ class IvsCommands(commands.Cog):
             log.error(f"Error cargando GIF: {e}", exc_info=True)
 
             await ctx.send(embed=embed, ephemeral=True)
-    @commands.command(name="misrecords")
+    @commands.command(name="myrecords")
     async def ver_mis_records(self, ctx):
         conn = database.get_connection()
         cursor = conn.cursor()
@@ -680,13 +680,13 @@ class IvsCommands(commands.Cog):
             cursor.close()
             conn.close()
 
-    @commands.command(name="new-liberar")
+    @commands.command(name="new-release")
     async def new_liberar(self, ctx, *, ids: str):
         captura_ids = _parsear_ids_liberar(ids)
 
         if not captura_ids:
             return await ctx.send(
-                "❌ Indica al menos un ID. Ejemplo: `!new-liberar 101, 202, 303`"
+                "❌ Indica al menos un ID. Ejemplo: `!new-release 101, 202, 303`"
             )
 
         log.info(

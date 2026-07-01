@@ -5,7 +5,7 @@ import database
 
 def iniciar_modulo_ranking_legend(bot):
 
-    @bot.command(name="rankinglegend")
+    @bot.command(name="legendleaderboard")
     async def rankinglegend(ctx):
         """Muestra el ranking de legendarios y míticos."""
 

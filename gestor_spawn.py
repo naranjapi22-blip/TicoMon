@@ -163,7 +163,7 @@ def aplicar_filtro_spawn(bot):
 
                 await ctx.send(
                     "¡Bienvenido! Antes de tu aventura, "
-                    "elige tu Pokémon inicial con el comando `!inicial`."
+                    "elige tu Pokémon inicial con el comando `!starter`."
                 )
 
                 return False
