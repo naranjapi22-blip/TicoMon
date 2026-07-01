@@ -688,13 +688,23 @@ def _calcular_dano_showdown(atacante: dict, defensor: dict) -> ResultadoDano:
         "spa": atacante.get("atk_esp", 0),
     }
 
-    move_id, move_nombre = elegir_movimiento_combate(
-        atacante["moveset"],
-        defensor.get("tipo"),
-    )
+    # Si ya viene un movimiento elegido (incursiones), úsalo.
+    if atacante.get("movimiento"):
+        move_id = atacante["movimiento"]
+        move_nombre = atacante.get(
+            "movimiento_nombre",
+            move_id.replace("-", " ").title()
+        )
 
-    atacante["movimiento"] = move_id
-    atacante["movimiento_nombre"] = move_nombre
+    # Si no, elige uno del moveset (PvP)
+    else:
+        move_id, move_nombre = elegir_movimiento_combate(
+            atacante["moveset"],
+            defensor.get("tipo"),
+        )
+
+        atacante["movimiento"] = move_id
+        atacante["movimiento_nombre"] = move_nombre
 
     move = Move(move_id, gen=9)
 
