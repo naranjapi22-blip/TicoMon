@@ -2012,16 +2012,7 @@ async def trainer(ctx):
             ctx.author.id
         )
     )
-@bot.command()
-async def settrainer(ctx):
 
-    trainer = database.obtener_trainer(
-        ctx.author.id
-    )
-
-    await ctx.send(
-        f"Trainer: {trainer}"
-    )
 @bot.command()
 async def testalola(ctx):
 
