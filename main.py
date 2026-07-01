@@ -581,7 +581,6 @@ class ComandosView(discord.ui.View):
         embed.add_field(
             name="🌍 World & Events",
             value=(
-                "`!world`\n"
                 "`!raid`\n"
                 "`!safari`"
             ),
