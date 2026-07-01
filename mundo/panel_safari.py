@@ -44,31 +44,19 @@ async def generar_panel_safari(
         "fondos"
     )
 
-    fondos = [
-        f for f in os.listdir(carpeta_fondos)
-        if f.lower().endswith(".png")
-    ]
-
-    if not fondos:
-        raise FileNotFoundError(
-            "No hay fondos disponibles."
-        )
-
     ruta_fondo = os.path.join(
         carpeta_fondos,
-        random.choice(fondos)
+        "safari.png"
     )
 
     if not os.path.exists(ruta_fondo):
-        fondo = Image.new(
-            "RGBA",
-            (800, 400),
-            (50, 50, 50, 255)
+        raise FileNotFoundError(
+            f"No existe el fondo: {ruta_fondo}"
         )
-    else:
-        fondo = Image.open(
-            ruta_fondo
-        ).convert("RGBA")
+
+    fondo = Image.open(
+        ruta_fondo
+    ).convert("RGBA")
 
     fondo = fondo.resize(
         (800, 400),
