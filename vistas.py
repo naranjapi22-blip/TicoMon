@@ -147,7 +147,7 @@ class PokedexView(discord.ui.View):
         file = discord.File(buffer, filename="pokedex.png")
         
         embed = discord.Embed(
-            title=f"🎒 Collection | {'Shiny ' if self.modo_shiny else ''}Tipo: {self.filtro_actual.capitalize()}", 
+            title=f"🎒 Collection | {'Shiny ' if self.modo_shiny else ''}Type: {self.filtro_actual.capitalize()}", 
             description=f"Page {self.pagina + 1}/{max(1, len(self.paginas))}"
         )
         embed.set_image(url="attachment://pokedex.png")
