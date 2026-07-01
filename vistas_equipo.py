@@ -1,6 +1,5 @@
 import discord
 import database
-import servicios
 from ivs_commands import calcular_stat_lvl50, calcular_hp_lvl50
 from vistas_selector import SPRITE_URL, POR_PAGINA
 

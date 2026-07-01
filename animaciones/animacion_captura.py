@@ -12,7 +12,6 @@ Motor de animaciones para capturas.
 """
 from __future__ import annotations
 
-from urllib.request import urlopen
 from io import BytesIO
 import time
 import math
@@ -25,7 +24,6 @@ from PIL import (
     ImageDraw,
     ImageFilter,
     ImageFont,
-    ImageOps,
     ImageSequence,
 )
 
@@ -1285,7 +1283,7 @@ class CaptureAnimation:
 
         if frame < 19:
 
-            texto = f"Lanzando Poké Ball..."
+            texto = "Lanzando Poké Ball..."
 
         elif self.capturado:
 

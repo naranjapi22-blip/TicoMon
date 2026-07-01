@@ -3,13 +3,9 @@ import re
 import discord
 from discord.ext import commands
 import database
-import servicios
 import math
-import io # Necesario para io.BytesIO
-from PIL import Image # Necesario para Image.open
 from logger_config import log # Necesario para el log
-from datetime import datetime, timezone # Asegúrate de tener este también
-from discord.ui import Button, View
+from discord.ui import View
 import records
 from candy import add_candy_for_pokemon
 from records import recalcular_record_liberado

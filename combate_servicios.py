@@ -1,4 +1,3 @@
-import aiohttp
 
 import combate_calc
 import database

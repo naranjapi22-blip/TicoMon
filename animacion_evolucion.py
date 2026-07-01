@@ -29,8 +29,6 @@ from PIL import (
     ImageDraw,
     ImageFilter,
     ImageFont,
-    ImageOps,
-    ImageChops,
 )
 
 # ============================================================
@@ -104,8 +102,6 @@ PURPLE = (
 # FUENTES
 # ============================================================
 
-from pathlib import Path
-from PIL import ImageFont
 
 def load_font(size: int):
 

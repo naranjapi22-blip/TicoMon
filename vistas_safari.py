@@ -1,8 +1,5 @@
 import discord
 import random
-from PIL import Image
-from io import BytesIO
-import aiohttp
 ACCIONES_EXPEDICION = [
     ("cebo", "🍓 Tirar Cebo"),
     ("huellas", "🔍 Seguir Huellas"),

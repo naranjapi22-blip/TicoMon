@@ -1,11 +1,9 @@
 import discord
 from discord.ext import commands
 import random
-import aiohttp
 from vistas import BotonCaptura, obtener_rareza
 from logger_config import log
 import servicios
-from database import obtener_pokemon_local_nombre
 import database
 # DICCIONARIO PARA TRADUCCIONES DE TIPOS
 TRADUCCIONES_TIPOS = {

@@ -5,7 +5,6 @@ import discord
 from discord import app_commands
 
 import database
-import servicios
 from vistas_equipo import crear_embed_captura_stats, crear_embed_comparacion, crear_embed_equipo
 
 _tipos_cache: dict[str, str] = {}

@@ -1,11 +1,6 @@
 import discord
-from discord.ext import commands
 import database
-import servicios
 import os
-import random
-import psycopg2
-from logger_config import log
 from mapeo_pokes import obtener_id_gif
 # --- 1. CONFIGURACIÓN DE BASE DE DATOS DEL PERFIL ---
 def init_db_perfil():
@@ -110,7 +105,7 @@ def iniciar_modulo_perfil(bot):
         )
         
         embed.add_field(
-            name=f"📈 Progreso de la Pokédex",
+            name="📈 Progreso de la Pokédex",
             value=f"{barra_visual} ({porcentaje_completado:.1f}%)\n`{especies_unicas}` de `{MAX_POKEDEX}` registrados.",
             inline=False
         )

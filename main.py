@@ -2,11 +2,9 @@ import os
 import random
 import asyncio
 import asyncpg
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 import discord
 import aiohttp
-from discord import Member
-import psycopg2
 from discord.ext import commands
 from dotenv import load_dotenv
 from animacion_evolucion import EvolutionAnimation
@@ -15,10 +13,7 @@ import database
 import servicios
 import admin
 import configuracion
-import logger_config
-import cache_service
 import gestor_spawn
-import setup_cache
 import perfil
 import intercambio
 # Configuración específica
@@ -28,7 +23,7 @@ from cache_service import db_cache
 from setup_cache import prellenar_cache
 from rarezas import pokemon_por_rareza
 # Vistas e interfaces
-from vistas import PokedexView, BotonCaptura, InfoView, SpawnSelectionView
+from vistas import InfoView, SpawnSelectionView
 from vistas_combate import VistaCombate
 import vistas_batalla
 from vistas_batalla import SelectorBatalla
@@ -37,8 +32,6 @@ from rankingdex import iniciar_modulo_ranking
 from rankinglegend import iniciar_modulo_ranking_legend
 from rankingshiny import iniciar_modulo_ranking_shiny
 from vistas import liberar_canal_completo
-from database import guardar_captura
-from regiones import obtener_siguiente_region
 from safari_personajes import obtener_frase
 # Variables globales
 from evolutions import (
@@ -54,8 +47,7 @@ from candy import (
 )
 from trainers import (
     generar_imagen_trainers,
-    VistaTrainers,
-    ModalSeleccionTrainer
+    VistaTrainers
 )
 database.init_db()
 # 1. CONFIGURACIÓN
@@ -127,7 +119,7 @@ async def on_ready():
             max_size=20
         )
         log.info("Pool de base de datos inicializado.")
-    except Exception as e:
+    except Exception:
         log.exception("Error inicializando el pool de BD")
 
     await configuracion.init_config_db(bot)

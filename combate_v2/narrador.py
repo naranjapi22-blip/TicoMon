@@ -21,7 +21,7 @@ class NarradorCombate:
 
                 f"⚔️ {evento.pokemon1} y {evento.pokemon2} están listos para luchar.",
 
-                f"⚔️ ¡Empieza una nueva batalla!",
+                "⚔️ ¡Empieza una nueva batalla!",
 
             ])
 

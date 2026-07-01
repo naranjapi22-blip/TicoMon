@@ -1,9 +1,7 @@
-import sqlite3
 import asyncio
 import os
 import psycopg2
 from logger_config import log
-import logging
 import random
 import records
 from datetime import datetime, timezone

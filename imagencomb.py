@@ -1,6 +1,5 @@
 import io
 import os
-import aiohttp
 import logging
 from PIL import Image, ImageDraw, ImageFont
 

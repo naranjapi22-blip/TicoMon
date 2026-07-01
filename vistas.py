@@ -4,25 +4,17 @@ import traceback
 import discord
 import random
 import math
-import logging
 import database
 from datetime import datetime, timezone
 import os
-import gestor_spawn
 import servicios
 from logger_config import log
-from pathlib import Path
-from captura_imagen import (
-    generar_imagen_captura
-)
 from mapeo_pokes import obtener_id_gif
-import records  # Importa tu archivo de lógica de récords
 COOLDOWN_LANZAMIENTO = 10.0
 COOLDOWN_GRACE = 0.25
 from mundo.mundo_manager import mundo_manager
 from animaciones.animacion_captura import CaptureAnimation
 
-from animaciones.animacion_captura import ruta_sprite
 
 def liberar_canal_completo(channel_id):
     import gestor_spawn
@@ -750,7 +742,6 @@ class BotonCaptura(discord.ui.View):
                         except discord.NotFound:
                             pass
 
-                        import uuid
                         import time
                         inicio = time.perf_counter()
 

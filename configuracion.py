@@ -1,6 +1,4 @@
-import os
 from discord.ext import commands
-import database
 
 async def init_config_db(bot):
     async with bot.db_pool.acquire() as conn:

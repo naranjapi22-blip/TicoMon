@@ -1,6 +1,5 @@
 import asyncio
 import aiohttp
-from PIL import Image
 
 from incursiones import imagen_raid
 

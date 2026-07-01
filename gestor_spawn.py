@@ -1,11 +1,9 @@
 import os
 import database 
 from datetime import datetime, timezone
-import discord
-from discord.ext import commands
 from logger_config import log
 import time
-from datetime import datetime, timezone, timedelta
+from datetime import timedelta
 tareas_limpieza = {}
 class CandadoInteligente(set):
     """

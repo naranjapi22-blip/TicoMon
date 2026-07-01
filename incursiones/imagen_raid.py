@@ -2,7 +2,7 @@ import io
 import os
 import logging
 from PIL import Image
-from PIL import Image, ImageFilter
+from PIL import ImageFilter
 log = logging.getLogger('imagencomb')
 from PIL import ImageSequence
 

@@ -4,7 +4,6 @@ from PIL import Image, ImageDraw, ImageFont
 import io
 
 import database
-import aiohttp
 import servicios
 
 class PhotoDex(commands.Cog):

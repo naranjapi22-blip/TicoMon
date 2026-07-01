@@ -1,7 +1,6 @@
 import asyncio
 import logging
 import random
-import servicios
 import database
 log = logging.getLogger(__name__)
 from database import guardar_captura
@@ -9,14 +8,11 @@ import discord
 from vistas_safari import VistaSituacionSafari
 from safari_personajes import (
     obtener_guia_aleatorio,
-    obtener_frase,
-    obtener_recomendacion_ruta,
-    obtener_lado_recomendado
+    obtener_frase
 )
 from utils_imagenes import crear_imagen_encuentro
 from regiones import obtener_siguiente_region, obtener_rango_region
 from rarezas import (
-    pokemon_por_rareza,
     generar_ids_safari_region
 )
 DESCRIPCION_EVENTO = {

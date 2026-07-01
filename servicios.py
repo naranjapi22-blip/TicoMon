@@ -1,19 +1,13 @@
 import io
-import math
-import random
 from cachetools import TTLCache
 import asyncio
 from logger_config import log
 from PIL import (
     Image,
     ImageFilter,
-    ImageEnhance,
     ImageDraw,
-    ImageChops,
-    ImageOps,
     ImageFont
 )
-import time
 import aiohttp
 from database import obtener_nombre_local
 # 1. Creamos una caché que:
@@ -120,7 +114,7 @@ def aplicar_filtro_silueta(img):
         silueta = Image.new("L", img.size, 0)
         # Combinamos la silueta con el canal Alpha original
         img = Image.merge("RGBA", (silueta, silueta, silueta, a))
-        log.debug(f"✅ Filtro de silueta aplicado (modo rápido)")
+        log.debug("✅ Filtro de silueta aplicado (modo rápido)")
         return img
     except Exception as e:
         log.error(f"🚨 Error al aplicar filtro de silueta: {e}", exc_info=True)
@@ -231,7 +225,7 @@ async def generar_collage(session, data_pokes, tenidos=None, es_shiny=False):
                 18
             )
 
-        except Exception as e:
+        except Exception:
             log.warning("No se pudo cargar la fuente, usando la predeterminada.")
             font = ImageFont.load_default()
 
@@ -710,7 +704,7 @@ async def generar_imagen_top(
                     sprite
                 )
 
-            except Exception as e:
+            except Exception:
 
                 log.warning(
                     f"No se encontró sprite: {ruta_sprite}"

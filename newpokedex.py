@@ -1,4 +1,3 @@
-import discord
 from discord.ext import commands
 import aiohttp
 from cache_service import db_cache
@@ -66,7 +65,7 @@ class PokedexCog(commands.Cog):
 
             # 3. Validación de resultados
             if not ids_finales and not (any(a.isdigit() for a in args)):
-                return await ctx.send(f"No tienes Pokémon que coincidan con esos filtros.")
+                return await ctx.send("No tienes Pokémon que coincidan con esos filtros.")
 
             # 4. Lanzar vista
             view = PokedexView(
