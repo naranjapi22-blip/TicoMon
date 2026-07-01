@@ -49,6 +49,7 @@ from trainers import (
     generar_imagen_trainers,
     VistaTrainers
 )
+from mundo.mundo_manager import mundo_manager
 database.init_db()
 # 1. CONFIGURACIÓN
 load_dotenv()
