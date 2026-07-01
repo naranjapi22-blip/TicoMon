@@ -1359,6 +1359,52 @@ async def safari(ctx):
     await asyncio.sleep(3)
 
     await safari.ejecutar_safari()
+@bot.command(name="check")
+@canal_restringido()
+async def check(ctx):
+
+    safari = obtener_safari(
+        ctx.guild.id
+    )
+
+    if (
+        safari is None
+        or not safari.activo
+        or not safari.encuentro_actual.get("pokemons")
+    ):
+        return await ctx.author.send(
+            "❌ No hay un Safari activo."
+        )
+
+    mensaje = "🔍 **Safari**\n\n"
+
+    for pokemon in safari.encuentro_actual["pokemons"]:
+
+        tiene = database.usuario_tiene_especie(
+            ctx.author.id,
+            pokemon["pokemon_id"]
+        )
+
+        emoji = "✅" if tiene else "❌"
+
+        mensaje += (
+            f"{emoji} "
+            f"{pokemon['nombre'].capitalize()}\n"
+        )
+
+    try:
+
+        await ctx.author.send(
+            mensaje
+        )
+
+        await ctx.message.add_reaction("📩")
+
+    except discord.Forbidden:
+
+        await ctx.send(
+            "❌ Activa tus mensajes privados para usar este comando."
+        )
 @bot.command()
 @commands.is_owner()
 async def stress(ctx, cantidad: int = 100):

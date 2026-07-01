@@ -1,5 +1,6 @@
 import discord
 import random
+from database import usuario_tiene_especie
 ACCIONES_EXPEDICION = [
     ("cebo", "🍓 Tirar Cebo"),
     ("huellas", "🔍 Seguir Huellas"),
@@ -63,7 +64,6 @@ class BotonParticipar(discord.ui.Button):
         await interaction.response.send_message(
             (
                 "🚙 Te has unido al Safari.\n\n"
-                "🎯 Safari Balls: 9"
             ),
             ephemeral=True
         )
@@ -230,6 +230,59 @@ class BotonSeleccionPokemon(discord.ui.Button):
             ),
             ephemeral=True
         )
+class BotonRevisarPokedex(discord.ui.Button):
+
+    def __init__(self, guild_id):
+
+        super().__init__(
+            label="Revisar Pokédex",
+            emoji="📖",
+            style=discord.ButtonStyle.secondary,
+            row=1
+        )
+
+        self.guild_id = guild_id
+
+    async def callback(
+        self,
+        interaction: discord.Interaction
+    ):
+
+        from safari_manager import obtener_safari
+
+        safari = obtener_safari(
+            self.guild_id
+        )
+
+        if (
+            safari is None
+            or not safari.activo
+        ):
+            return await interaction.response.send_message(
+                "❌ El Safari ya terminó.",
+                ephemeral=True
+            )
+
+        mensaje = "📖 **Pokédex**\n\n"
+
+        for pokemon in safari.encuentro_actual["pokemons"]:
+
+            tiene = database.usuario_tiene_especie(
+                interaction.user.id,
+                pokemon["pokemon_id"]
+            )
+
+            emoji = "✅" if tiene else "❌"
+
+            mensaje += (
+                f"{emoji} "
+                f"{pokemon['nombre'].capitalize()}\n"
+            )
+
+        await interaction.response.send_message(
+            mensaje,
+            ephemeral=True
+        )
 class VistaSeleccionPokemon(discord.ui.View):
 
     def __init__(
@@ -254,6 +307,12 @@ class VistaSeleccionPokemon(discord.ui.View):
                     pokemon["nombre"].capitalize()
                 )
             )
+
+        self.add_item(
+            BotonRevisarPokedex(
+                guild_id
+            )
+        )
 
     async def on_timeout(self):
 

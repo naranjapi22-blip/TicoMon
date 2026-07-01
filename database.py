@@ -2073,3 +2073,40 @@ def obtener_trainer(user_id):
 
         cursor.close()
         conn.close()
+def usuario_tiene_especie(
+    user_id,
+    pokemon_id
+):
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+
+        pokemon = obtener_pokemon_local(
+            pokemon_id
+        )
+
+        if not pokemon:
+            return False
+
+        cursor.execute(
+            """
+            SELECT 1
+            FROM capturas
+            WHERE user_id = %s
+            AND pokemon_nombre = %s
+            LIMIT 1
+            """,
+            (
+                str(user_id),
+                pokemon["nombre"].lower()
+            )
+        )
+
+        return cursor.fetchone() is not None
+
+    finally:
+
+        cursor.close()
+        conn.close()
