@@ -338,6 +338,7 @@ class SafariManager:
         self.creador_vistas = None
         self.modificador_evento = {}
         self.frases_viaje_usadas = 0
+        self.pokedex_cache = {}
         self.encuentro_actual = {
             "pokemon_id": None,
             "nombre": None,
@@ -703,6 +704,13 @@ class SafariManager:
                 for p in self.encuentro_actual["pokemons"]
             ]
         )
+        self.pokedex_cache.clear()
+
+        for user_id in self.participantes:
+
+            self.pokedex_cache[user_id] = set(
+                database.obtener_lista_capturas(user_id)
+            )        
         embed = discord.Embed(
             title=f"🚙 Encuentro {self.encuentro_numero}/{self.max_encuentros}",
             description=(

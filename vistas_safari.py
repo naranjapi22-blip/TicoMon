@@ -265,18 +265,23 @@ class BotonRevisarPokedex(discord.ui.Button):
 
         mensaje = "📖 **Pokédex**\n\n"
 
+        capturadas = safari.pokedex_cache.get(
+            interaction.user.id,
+            set()
+        )
+
+        mensaje = "📖 **Pokédex**\n\n"
+
         for pokemon in safari.encuentro_actual["pokemons"]:
 
-            tiene = database.usuario_tiene_especie(
-                interaction.user.id,
-                pokemon["pokemon_id"]
+            emoji = (
+                "✅"
+                if pokemon["nombre"].lower() in capturadas
+                else "❌"
             )
 
-            emoji = "✅" if tiene else "❌"
-
             mensaje += (
-                f"{emoji} "
-                f"{pokemon['nombre'].capitalize()}\n"
+                f"{emoji} {pokemon['nombre'].capitalize()}\n"
             )
 
         await interaction.response.send_message(
