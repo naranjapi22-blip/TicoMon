@@ -339,9 +339,7 @@ async def generar_escena_raid(
     sprites = []
 
     for p in jugadores:
-        print(
-            f"{p['nombre']} -> id={p['id']} pokeapi={p.get('pokeapi_id')}"
-        )
+
         frames = cargar_frames_gif(
             p["id"],
             145,
@@ -431,9 +429,7 @@ async def generar_escena_raid_gif(
     sprites = []
 
     for p in jugadores:
-        print(
-            f"{p['nombre']} -> id={p['id']} pokeapi={p.get('pokeapi_id')}"
-        )
+
         frames = cargar_frames_gif(
             p["id"],
             145,
@@ -453,15 +449,8 @@ async def generar_escena_raid_gif(
         es_espalda=False
     )
 
-    print(
-        "Jugadores:",
-        [len(f) for _, f in sprites]
-    )
 
-    print(
-        "Alpha:",
-        len(alpha_frames)
-    )
+
 
     # =====================================
     # TOTAL DE FRAMES
@@ -480,10 +469,7 @@ async def generar_escena_raid_gif(
         )
     )
 
-    print(
-        "Frames finales:",
-        total_frames
-    )
+
 
     # =====================================
     # CREAR ESCENAS
@@ -533,10 +519,6 @@ async def generar_escena_raid_gif(
             escena
         )
 
-    print(
-        "Escenas creadas:",
-        len(resultado)
-    )
 
     # =====================================
     # EXPORTAR GIF
