@@ -16,14 +16,6 @@ from database import obtener_nombre_local
 _cache_imagenes = TTLCache(maxsize=600, ttl=3600)
 
 
-# --- NUEVA FUNCIÓN AUXILIAR PARA LA HIERBA VERDE ---
-
-# --- FUNCIÓN AUXILIAR PARA GENERAR HIERBA ALTA ---
-
-_cache_imagenes = TTLCache(
-    maxsize=600,
-    ttl=3600
-)
 
 pokemon_cache = TTLCache(
     maxsize=2000,
@@ -34,10 +26,10 @@ async def obtener_pokemon(session, nombre_o_id):
         cache_key = str(nombre_o_id).lower()
 
         if cache_key in pokemon_cache:
-            log.info(f"⚡ Cache hit: {cache_key}")
+            log.debug(f"⚡ Cache hit: {cache_key}")
             return pokemon_cache[cache_key]
 
-        log.info(f"🌐 Cache miss: {cache_key}")
+        log.debug(f"Cache miss: {cache_key}")
 
         url = f"https://pokeapi.co/api/v2/pokemon/{cache_key}"
 
@@ -66,8 +58,8 @@ async def obtener_pokemon(session, nombre_o_id):
                             45
                         )
 
-                        log.info(
-                            f"✅ Pokémon {data['name']} cargado. Rate: {rate}"
+                        log.debug(
+                            f"Pokémon {data['name']} cargado. Rate: {rate}"
                         )
 
                         data['capture_rate'] = rate
@@ -81,8 +73,8 @@ async def obtener_pokemon(session, nombre_o_id):
                         
         return None, None
 
-    except Exception as e:
-        log.error(f"🚨 Error al obtener datos: {e}")
+    except Exception:
+        log.exception("Error al obtener datos del Pokémon")
         return None, None
 
 # 2. Obtener nombre por ID
@@ -126,12 +118,6 @@ async def generar_collage(session, data_pokes, tenidos=None, es_shiny=False):
         tenidos = []
 
     try:
-
-        log.info(
-            f"🎨 Generando collage para "
-            f"{len(data_pokes)} pokémon "
-            f"(Shiny={es_shiny})"
-        )
 
         celda_ancho = 140
         celda_alto = 150
@@ -188,13 +174,8 @@ async def generar_collage(session, data_pokes, tenidos=None, es_shiny=False):
                         nombre.capitalize()
                     )
 
-            except Exception as e:
-
-                log.error(
-                    f"🚨 Error procesando pokémon "
-                    f"{id_poke}: {e}",
-                    exc_info=True
-                )
+            except Exception:
+                log.exception(f"Error procesando Pokémon {id_poke}")
 
             return None
 
@@ -235,11 +216,6 @@ async def generar_collage(session, data_pokes, tenidos=None, es_shiny=False):
             if r is not None
         ]
 
-        log.info(
-            f"✅ {len(resultados)}/"
-            f"{len(data_pokes)} "
-            f"pokémon procesados exitosamente"
-        )
 
         for idx, (img, nombre) in enumerate(
             resultados
@@ -304,11 +280,6 @@ async def generar_collage(session, data_pokes, tenidos=None, es_shiny=False):
 
         buffer.seek(0)
 
-        log.info(
-            f"✅ Collage generado exitosamente: "
-            f"{celda_ancho * cols}x"
-            f"{celda_alto * filas}"
-        )
 
         return buffer
 
@@ -331,7 +302,6 @@ async def filtrar_capturas_por_tipo(session, tipo, tenidos):
         log.debug(f"🔍 Filtrando capturas por tipo: {tipo}")
         
         if tipo == "all":
-            log.info(f"✅ Mostrando todas las capturas: {len(tenidos)} pokémon")
             return sorted(list(tenidos))
         
         url = f"https://pokeapi.co/api/v2/type/{tipo}"
@@ -342,7 +312,6 @@ async def filtrar_capturas_por_tipo(session, tipo, tenidos):
                 ids_del_tipo = {int(p['pokemon']['url'].split('/')[-2]) for p in data['pokemon']}
                 # Devolvemos solo los IDs que están en la lista 'tenidos' del usuario
                 resultado = sorted([id_poke for id_poke in tenidos if id_poke in ids_del_tipo])
-                log.info(f"✅ Filtro completado: {len(resultado)} pokémon de tipo {tipo}")
                 return resultado
             else:
                 log.warning(f"⚠️ Tipo no encontrado: {tipo} (Status: {r.status})")
@@ -355,7 +324,6 @@ async def filtrar_capturas_por_tipo(session, tipo, tenidos):
 async def generar_collage_siluetas(session, data_pokes, tenidos=None, es_shiny=False):
     """Genera el collage para el SPAWN (3 fragmentos)."""
     try:
-        log.info(f"🎨 Generando collage de siluetas (Shiny={es_shiny}) para {len(data_pokes)} pokémon")
         siluetas = []
         
         for idx, (data, _) in enumerate(data_pokes):
@@ -426,8 +394,8 @@ async def obtener_especie_desde_data(session, data):
         async with session.get(species_url) as resp:
             if resp.status == 200:
                 return await resp.json()
-    except Exception as e:
-        log.error(f"🚨 Error al obtener especie: {e}")
+    except Exception:
+        log.exception("Error al obtener especie")
     return None
 # Añade esto a servicios.py
 def obtener_sprite_escalado(imagen_pil, factor):
