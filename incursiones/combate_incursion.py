@@ -16,13 +16,9 @@ async def iniciar_incursion(
 
     equipo_jugador = []
 
-    print("SELECCIONES:", raid.selecciones)
 
     for user_id, captura_id in raid.selecciones.items():
 
-        print(
-            f"Usuario={user_id} Captura={captura_id}"
-        )
 
         equipo = await preparar_equipo_desde_capturas(
             session,
@@ -30,24 +26,7 @@ async def iniciar_incursion(
             [captura_id]
         )
 
-        print(
-            "Equipo devuelto:",
-            len(equipo)
-        )
-
-        for p in equipo:
-            print(
-                p["nombre"],
-                p["id"],
-                p["species_showdown"]
-            )
-
         equipo_jugador.extend(equipo)
-
-    print(
-        "TOTAL POKEMON:",
-        len(equipo_jugador)
-    )
 
     vista = VistaCombateIncursion(
         canal,

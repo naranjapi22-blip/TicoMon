@@ -29,18 +29,10 @@ async def obtener_datos_combate(
     try:
         async with session.get(url) as response:
             if response.status != 200:
-                print(f"URL: {url}")
-                print(f"NOMBRE: {repr(nombre_pokemon)}")
-                print(f"STATUS: {response.status}")
                 return None
 
             data = await response.json()
 
-            print(
-                nombre_pokemon,
-                data["id"],
-                data["name"]
-            )
 
             stats = {
                 s["stat"]["name"]: s["base_stat"]
@@ -129,12 +121,6 @@ async def _fighter_desde_fila(session, user_id, fila):
         ivs=ivs,
         naturaleza=naturaleza,
         es_shiny=bool(es_shiny),
-    )
-    print(
-        "Pokemon:",
-        nombre,
-        "->",
-        "OK" if datos else "NONE"
     )
 
     if datos:
