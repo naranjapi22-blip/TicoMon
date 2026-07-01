@@ -74,7 +74,7 @@ def obtener_destacado(user_id):
 def iniciar_modulo_perfil(bot):
     init_db_perfil() # Prepara la tabla al encender el bot
 
-    @bot.command(name="perfil")
+    @bot.command(name="profile")
     async def perfil(ctx, miembro: discord.Member = None):
         """Muestra la tarjeta de entrenador del usuario con su progreso y compañero."""
         usuario = miembro or ctx.author
@@ -189,7 +189,7 @@ def iniciar_modulo_perfil(bot):
             
         await ctx.send(embed=embed)
 
-    @bot.command(name="destacar")
+    @bot.command(name="favorite")
     async def destacar(ctx, *, argumentos: str):
         """Elige un Pokémon que hayas capturado para mostrarlo en tu perfil gigante."""
         argumentos = argumentos.lower().strip()

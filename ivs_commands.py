@@ -515,7 +515,7 @@ class IvsCommands(commands.Cog):
         
         await ctx.send(embed=embed)
 
-    @commands.command(name="liberar")
+    @commands.command(name="release")
     async def liberar(self, ctx, id_pokemon: int):
 
         conn = database.get_connection()

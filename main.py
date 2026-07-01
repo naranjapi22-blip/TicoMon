@@ -501,16 +501,16 @@ class ComandosView(discord.ui.View):
 
     def embed_pagina_1(self):
         embed = discord.Embed(
-            title="📜 Guía de Comandos TicoMon (1/2)",
+            title="📜 TicoMon Commands (1/2)",
             color=discord.Color.blue()
         )
 
         embed.add_field(
-            name="🎯 Captura",
+            name="🎯 Capture",
             value=(
                 "`!spawn`\n"
                 "`!cooldowns`\n"
-                "`!inicial`"
+                "`!starter`"
             ),
             inline=False
         )
@@ -524,26 +524,27 @@ class ComandosView(discord.ui.View):
         )
 
         embed.add_field(
-            name="🎒 Colección",
+            name="🎒 Collection",
             value=(
-                "`!perfil`\n"
-                "`!inventario`\n"
-                "`!caramelos`\n"
+                "`!profile`\n"
+                "`!inventory`\n"
+                "`!candies`\n"
                 "`!info <id>`\n"
-                "`!destacar <id>`\n"
+                "`!favorite <id>`\n"
                 "`!ivs <id>`"
             ),
             inline=False
         )
+
         embed.add_field(
-            name="🧬 Evolución y Records",
+            name="🧬 Evolution & Records",
             value=(
-                "`!evolucionar <id>`\n"
-                "`!elegir <id> <opción>`\n"
-                "`!liberar <id>`\n"
-                "`!top`\n"
+                "`!evolve <id>`\n"
+                "`!choose <id> <option>`\n"
+                "`!release <id>`\n"
+                "`!leaderboard`\n"
                 "`!records`\n"
-                "`!misrecords`"
+                "`!myrecords`"
             ),
             inline=False
         )
@@ -552,42 +553,52 @@ class ComandosView(discord.ui.View):
 
     def embed_pagina_2(self):
         embed = discord.Embed(
-            title="📜 Guía de Comandos TicoMon (2/2)",
+            title="📜 TicoMon Commands (2/2)",
             color=discord.Color.green()
         )
 
         embed.add_field(
-            name="⚔️ Combate",
+            name="⚔️ Battle",
             value=(
-                "`!batalla @usuario`\n"
-                "`!comparar @usuario`\n"
-                "`!comparar-pokemon @usuario`"
+                "`!battle @user`\n"
+                "`!compare @user`\n"
+                "`!comparepokemon @user`"
             ),
             inline=False
         )
 
         embed.add_field(
-            name="👥 Equipo",
+            name="👥 Team",
             value=(
-                "`!equipo`"
+                "`!team`"
             ),
             inline=False
         )
 
         embed.add_field(
-            name="🤝 Interacción",
+            name="🤝 Trading",
             value=(
-                "`!trade @usuario`"
+                "`!trade @user`"
             ),
             inline=False
         )
 
         embed.add_field(
-            name="🏆 Rankings",
+            name="🏆 Leaderboards",
             value=(
-                "`!rankingdex`\n"
-                "`!rankingshiny`\n"
-                "`!rankinglegend`"
+                "`!dexleaderboard`\n"
+                "`!shinyleaderboard`\n"
+                "`!legendleaderboard`"
+            ),
+            inline=False
+        )
+
+        embed.add_field(
+            name="🌍 World & Events",
+            value=(
+                "`!world`\n"
+                "`!raid`\n"
+                "`!safari`"
             ),
             inline=False
         )
@@ -595,8 +606,11 @@ class ComandosView(discord.ui.View):
         return embed
 
     @discord.ui.button(label="⬅️", style=discord.ButtonStyle.secondary)
-    async def anterior(self, interaction: discord.Interaction, button: discord.ui.Button):
-
+    async def anterior(
+        self,
+        interaction: discord.Interaction,
+        button: discord.ui.Button
+    ):
         self.pagina = 1
 
         await interaction.response.edit_message(
@@ -605,8 +619,11 @@ class ComandosView(discord.ui.View):
         )
 
     @discord.ui.button(label="➡️", style=discord.ButtonStyle.primary)
-    async def siguiente(self, interaction: discord.Interaction, button: discord.ui.Button):
-
+    async def siguiente(
+        self,
+        interaction: discord.Interaction,
+        button: discord.ui.Button
+    ):
         self.pagina = 2
 
         await interaction.response.edit_message(
@@ -615,7 +632,7 @@ class ComandosView(discord.ui.View):
         )
 
 
-@bot.command(name="comandos")
+@bot.command(name="commands")
 @canal_restringido()
 async def comandos(ctx):
 
@@ -812,7 +829,7 @@ async def _iniciar_arena(
 
 
 
-@bot.command(name="batalla")
+@bot.command(name="battle")
 async def iniciar_batalla(ctx, oponente: discord.Member):
     """Duelo con selector mejorado (miniaturas y búsqueda)."""
     if not await _validar_retador(ctx, oponente):
@@ -839,7 +856,7 @@ async def iniciar_batalla(ctx, oponente: discord.Member):
     )
 
 
-@bot.command(name="equipo")
+@bot.command(name="team")
 @canal_restringido()
 async def equipo(ctx):
     """Gestiona tu equipo de hasta 9 Pokémon (panel privado)."""
@@ -1444,7 +1461,7 @@ async def stress(ctx, cantidad: int = 100):
         f"❌ Errores: {errores}"
     )
 
-@bot.command(name="caramelos")
+@bot.command(name="candies")
 @canal_restringido()
 async def caramelos(ctx):
 
@@ -1497,7 +1514,7 @@ async def caramelos(ctx):
         conn.close()
 
 
-@bot.command(name="evolucionar")
+@bot.command(name="evolve")
 @canal_restringido()
 async def evolucionar(ctx, id_pokemon: int):
 
@@ -1577,7 +1594,7 @@ async def evolucionar(ctx, id_pokemon: int):
         cursor.close()
         conn.close()
 
-@bot.command(name="elegir")
+@bot.command(name="choose")
 @canal_restringido()
 async def elegir(ctx, id_pokemon: int, opcion: int):
 

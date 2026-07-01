@@ -271,7 +271,7 @@ def setup_gestor(bot):
         database.init_energia_db()
         log.info("✅ Gestor de spawn configurado")
 
-        @bot.command(name="inicial")
+        @bot.command(name="starter")
         async def inicial(ctx):
             try:
                 log.info(f"🎯 Comando inicial ejecutado por user {ctx.author.id}")

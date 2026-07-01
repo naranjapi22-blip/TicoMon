@@ -322,7 +322,7 @@ class VistaCompararPokemon(discord.ui.View):
 
 def iniciar_modulo_ranking(bot):
 
-    @bot.command(name="rankingdex")
+    @bot.command(name="dexleaderboard")
     async def rankingdex(ctx):
         """Muestra el ranking global de Pokédex."""
 
@@ -471,7 +471,7 @@ def iniciar_modulo_ranking(bot):
         finally:
             conn.close()
 
-    @bot.command(name="comparar")
+    @bot.command(name="compare")
     async def comparar(ctx, miembro: discord.Member):
 
         if miembro.bot:
@@ -553,7 +553,7 @@ def iniciar_modulo_ranking(bot):
         finally:
             conn.close()
 
-    @bot.command(name="comparar-pokemon")
+    @bot.command(name="compare-pokemon")
     async def comparar_pokemon(ctx, miembro: discord.Member):
         if miembro.bot:
             return await ctx.send("❌ No puedes comparar con un bot.")

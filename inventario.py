@@ -458,7 +458,7 @@ class Inventario(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name="inventario")
+    @commands.command(name="inventory")
     async def ver_inventario(self, ctx):
         conn = database.get_connection()
         cursor = conn.cursor()
