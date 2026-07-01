@@ -111,14 +111,7 @@ bot = commands.Bot(
     case_insensitive=True,
     setup_hook=setup_hook
 )
-mundos = {}
-def obtener_mundo(guild_id):
 
-    if guild_id not in mundos:
-
-        mundos[guild_id] = MundoManager()
-
-    return mundos[guild_id]
 bot.setup_hook = cargar_extensiones
 REGIONES = {
     "1": (1, 151), "2": (152, 251), "3": (252, 386),
@@ -142,7 +135,7 @@ async def on_ready():
         log.exception("Error inicializando el pool de BD")
 
     await configuracion.init_config_db(bot)
-    print(f'Bot conectado como {bot.user}')
+    log.info(f"Bot conectado como {bot.user}")
     
     # 0. Inicializar sesión de red
     bot.session = aiohttp.ClientSession()
@@ -171,13 +164,10 @@ async def on_ready():
     # Verificamos si la tabla está vacía
     ids = await db_cache.obtener_ids_por_filtro()
     if not ids:
-        print("⚠️ Tabla detectada pero vacía. Iniciando carga masiva...")
+        log.warning("Tabla de caché vacía. Iniciando carga masiva.")
         await prellenar_cache() 
-        manager = obtener_mundo(ctx.guild.id)
-
-        await manager.iniciar()
-        print("✅ ¡Carga masiva completada!")
-        print("Base de datos, módulos y sesión de red verificados.")
+        log.info("Carga masiva completada.")
+        log.info("Inicialización del bot completada.")
 # 2. Tu evento de encendido con la inicialización correcta
 
 @bot.event
@@ -914,8 +904,6 @@ async def cargar_pokemon_por_rareza(session):
             else:
                 pokemon_por_rareza["epico"].append(pokemon_id)
 
-    for rareza, lista in pokemon_por_rareza.items():
-        print(f"{rareza}: {len(lista)}")
 
 
 async def inicializar_rarezas_spawn():
@@ -960,21 +948,6 @@ async def inicializar_rarezas_spawn():
         )
 
 
-    for rareza, lista in pokemon_por_rareza.items():
-        print(f"{rareza}: {len(lista)}")
-
-
-    log.info("=== Rarezas cargadas ===")
-    log.info(f"Muy comunes: {len(pokemon_por_rareza['muy_comun'])}")
-    log.info(f"Comunes: {len(pokemon_por_rareza['comun'])}")
-    log.info(f"Poco comunes: {len(pokemon_por_rareza['poco_comun'])}")
-    log.info(f"Raros: {len(pokemon_por_rareza['raro'])}")
-    log.info(f"Épicos: {len(pokemon_por_rareza['epico'])}")
-    log.info(f"Míticos: {len(pokemon_por_rareza['mitico'])}")
-    log.info(f"Legendarios: {len(pokemon_por_rareza['legendario'])}")
-    print("=== RESUMEN RAREZAS ===")
-    for rareza, lista in pokemon_por_rareza.items():
-        print(f"{rareza}: {len(lista)}")
 def generar_ids_spawn():
     ids_spawn = []
     rarezas_spawn = {}
