@@ -1037,9 +1037,8 @@ class SafariManager:
 
         try:
             await mensaje.edit(view=None)
-        except:
+        except Exception:
             pass
-
         resultado = view.resolver_resultado()
 
         self.modificador_evento = (

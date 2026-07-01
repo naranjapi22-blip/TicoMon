@@ -342,5 +342,5 @@ class ModalSeleccionTrainer(
                 view=None
                 )
 
-            except:
+            except Exception:
                 pass

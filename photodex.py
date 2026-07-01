@@ -71,12 +71,12 @@ class PhotoDex(commands.Cog):
                     24
                 )
 
-            except:
+            except Exception:
 
                 font_nombre = ImageFont.load_default()
                 font_info = ImageFont.load_default()
 
-
+                pass
 
             # =====================
             # OFFICIAL ARTWORK

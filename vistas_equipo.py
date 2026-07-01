@@ -796,5 +796,5 @@ async def on_timeout(self):
                 view=self
             )
 
-        except:
+        except Exception:
             pass

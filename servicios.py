@@ -607,13 +607,13 @@ async def generar_imagen_top(
                 32
             )
 
-        except:
+        except Exception:
 
             fuente_titulo = ImageFont.load_default()
             fuente = ImageFont.load_default()
             fuente_header = ImageFont.load_default()
             fuente_iv = ImageFont.load_default()
-
+            pass
         # =========================
         # TÍTULO
         # =========================

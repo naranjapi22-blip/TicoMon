@@ -440,7 +440,7 @@ class SelectorPokemonTrade(discord.ui.View):
                 content="✅ Oferta realizada.",
                 view=None
             )
-        except:
+        except Exception:
             pass
 
     async def buscar(self, interaction: discord.Interaction):

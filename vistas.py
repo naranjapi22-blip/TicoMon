@@ -460,7 +460,7 @@ class BotonCaptura(discord.ui.View):
         try:
             if self.message:
                 await self.message.edit(content="💨 ¡El Pokémon se cansó de esperar y ha huido!", view=self)
-        except:
+        except Exception:
             pass
         
         import gestor_spawn

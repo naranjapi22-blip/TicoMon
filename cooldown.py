@@ -35,7 +35,7 @@ def verificar_cooldown(user_id):
         if conn:
             try:
                 cursor.close()
-            except:
+            except Exception:
                 pass
 
             conn.close()
@@ -90,10 +90,9 @@ def registrar_captura(user_id):
         if conn:
             try:
                 cursor.close()
-            except:
+            except Exception:
                 pass
-
             try:
                 conn.close()
-            except:
+            except Exception:
                 pass
