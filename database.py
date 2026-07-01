@@ -277,11 +277,6 @@ def obtener_capturas(user_id, solo_shiny=False):
         )
         capturas = [fila[0] for fila in res]
 
-        log.info(
-            f"✅ Se obtuvieron {len(capturas)} "
-            f"capturas para user {user_id}"
-        )
-
         return capturas
 
     except Exception as e:
@@ -324,11 +319,6 @@ def obtener_versiones_pokemon(
             for fila in res
         ]
 
-        log.info(
-            f"✅ Se obtuvieron "
-            f"{len(versiones)} versiones "
-            f"de {nombre_pokemon}"
-        )
 
         return versiones
 
@@ -405,10 +395,6 @@ def obtener_info_captura(user_id, nombre_pokemon):
             for fila in filas_capturas
         ]
 
-        log.info(
-            f"✅ Info de captura obtenida: "
-            f"{nombre_pokemon} - Cantidad: {cantidad}"
-        )
 
         return fecha, cantidad, capturas
 
@@ -484,7 +470,6 @@ async def actualizar_energia_db(bot, user_id, intentos, ultima_recarga):
                     ultima_recarga = EXCLUDED.ultima_recarga
             """, str(user_id), intentos, ultima_recarga)
                                         
-        log.info(f"✅ Energía actualizada: User {user_id}")
         
     except Exception as e:
         log.error(f"🚨 Error al actualizar energía: {e}", exc_info=True)
@@ -503,7 +488,6 @@ def obtener_lista_capturas(user_id):
 )
             
         res = [row[0] for row in cursor.fetchall()]
-        log.info(f"✅ Lista de capturas obtenida: User {user_id} - {len(res)} pokémon únicos")
         return res
     except Exception as e:
         log.error(f"🚨 Error al obtener lista de capturas: {e}", exc_info=True)
@@ -1266,7 +1250,6 @@ def actualizar_capture_rate(pokemon_id, capture_rate):
     cursor = conn.cursor()
 
     try:
-        log.info(f"Actualizando Pokémon {pokemon_id} con rate {capture_rate}")
 
         cursor.execute(
             """
@@ -1277,7 +1260,6 @@ def actualizar_capture_rate(pokemon_id, capture_rate):
             (capture_rate, pokemon_id)
         )
 
-        log.info(f"Pokémon {pokemon_id} -> Filas afectadas: {cursor.rowcount}")
 
         conn.commit()
 
@@ -1814,36 +1796,7 @@ async def guardar_trainer(
 
         cursor.close()
         conn.close()
-async def obtener_trainer(
-    user_id
-):
 
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    try:
-
-        cursor.execute(
-            """
-            SELECT trainer_sprite
-            FROM trainers_usuario
-            WHERE user_id = %s
-            """,
-            (str(user_id),)
-        )
-
-        fila = cursor.fetchone()
-
-        if fila:
-
-            return fila[0]
-
-        return None
-
-    finally:
-
-        cursor.close()
-        conn.close()
 def obtener_pokeapi_id(nombre):
 
     pokemon = obtener_pokemon_local_nombre(

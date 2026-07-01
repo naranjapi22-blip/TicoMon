@@ -2015,7 +2015,7 @@ async def trainer(ctx):
 @bot.command()
 async def settrainer(ctx):
 
-    trainer = await database.obtener_trainer(
+    trainer = database.obtener_trainer(
         ctx.author.id
     )
 
