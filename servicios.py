@@ -36,7 +36,6 @@ pokemon_cache = TTLCache(
     ttl=86400
 )
 async def obtener_pokemon(session, nombre_o_id):
-    print(f"🌐 POKEAPI -> {nombre_o_id}")
     try:
         cache_key = str(nombre_o_id).lower()
 
@@ -86,7 +85,6 @@ async def obtener_pokemon(session, nombre_o_id):
 
                         return data, species
                         
-        print(f"POKEAPI -> {cache_key}")
         return None, None
 
     except Exception as e:
@@ -234,12 +232,7 @@ async def generar_collage(session, data_pokes, tenidos=None, es_shiny=False):
             )
 
         except Exception as e:
-
-            print(
-                "ERROR FUENTE:",
-                e
-            )
-
+            log.warning("No se pudo cargar la fuente, usando la predeterminada.")
             font = ImageFont.load_default()
 
         resultados = [

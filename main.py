@@ -2,7 +2,7 @@ import os
 import random
 import asyncio
 import asyncpg
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 import discord
 import aiohttp
 from discord import Member
@@ -12,7 +12,6 @@ from dotenv import load_dotenv
 from animacion_evolucion import EvolutionAnimation
 # Módulos locales y de proyecto
 import database
-from mundo.mundo_manager import mundo_manager
 import servicios
 import admin
 import configuracion
@@ -42,9 +41,6 @@ from database import guardar_captura
 from regiones import obtener_siguiente_region
 from safari_personajes import obtener_frase
 # Variables globales
-from rarezas import pokemon_por_rareza
-import asyncio
-from datetime import datetime, timedelta
 from evolutions import (
     get_evolutions,
     get_evolution_cost,
@@ -168,7 +164,6 @@ async def on_ready():
         await prellenar_cache() 
         log.info("Carga masiva completada.")
         log.info("Inicialización del bot completada.")
-# 2. Tu evento de encendido con la inicialización correcta
 
 @bot.event
 async def on_command_error(ctx, error):
@@ -260,10 +255,6 @@ async def spawn(ctx):
 
         log.info(f"Spawn generado: {ids_spawn}")
 
-        for pid in ids_spawn:
-
-            poke = database.obtener_pokemon_local(pid)
-
 
         # FASE 3: DESCARGA PARALELA
         tasks = [
@@ -274,9 +265,6 @@ async def spawn(ctx):
             for pid in ids_spawn
         ]
 
-        import time
-
-        inicio_api = time.perf_counter()
 
         resultados = await asyncio.gather(
             *tasks,
@@ -342,7 +330,6 @@ async def spawn(ctx):
         ]
 
         # Pasamos la lista limpia al generador
-        inicio_siluetas = time.perf_counter()
 
         buffer_siluetas = await servicios.generar_collage_siluetas(
             ctx.bot.session,
@@ -384,7 +371,6 @@ async def spawn(ctx):
         view = SpawnSelectionView(data_pokes, ctx.author)
         
         try:
-            inicio_discord = time.perf_counter()
             mensaje_enviado = await ctx.send(embed=embed, file=imagen_final, view=view)
 
             view.message = mensaje_enviado
@@ -939,13 +925,8 @@ async def inicializar_rarezas_spawn():
 
             else:
                 pokemon_por_rareza["epico"].append(pokemon_id)
-    regionales = 0
 
-    for lista in pokemon_por_rareza.values():
 
-        regionales += len(
-            [x for x in lista if x > 1025]
-        )
 
 
 def generar_ids_spawn():
@@ -1024,7 +1005,6 @@ from vistas_safari import (
     VistaParticiparSafari,
     VistaApuestasSafari
 )
-from datetime import datetime, timedelta
 from database import get_connection
 def crear_embed_safari(
     world,
@@ -1379,7 +1359,6 @@ async def safari(ctx):
 async def stress(ctx, cantidad: int = 100):
 
     import time
-    import asyncio
     import gc
 
     async def spawn_falso():
@@ -1524,8 +1503,7 @@ async def caramelos(ctx):
         cursor.close()
         conn.close()
 
-from evolutions import ( get_evolutions, get_evolution_cost )
-from candy import get_candies
+
 @bot.command(name="evolucionar")
 @canal_restringido()
 async def evolucionar(ctx, id_pokemon: int):
@@ -1730,10 +1708,6 @@ async def elegir(ctx, id_pokemon: int, opcion: int):
                     filename="evolucion.gif"
                 )
             ]
-        )
-        evolve_pokemon(
-            id_pokemon,
-            destino
         )
 
 
