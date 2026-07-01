@@ -273,7 +273,7 @@ def obtener_capturas(user_id, solo_shiny=False):
 
         res = ejecutar_consulta(
             q,
-            (str(user_id),)
+            (user_id,)
         )
 
         capturas = [fila[0] for fila in res]
@@ -2079,6 +2079,33 @@ def obtener_ultimas_capturas(
         ))
 
         return cursor.fetchall()
+
+    finally:
+
+        cursor.close()
+        conn.close()
+def obtener_trainer(user_id):
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+
+        cursor.execute(
+            """
+            SELECT trainer_sprite
+            FROM trainers_usuario
+            WHERE user_id = %s
+            """,
+            (str(user_id),)
+        )
+
+        fila = cursor.fetchone()
+
+        if fila:
+            return fila[0]
+
+        return "red"
 
     finally:
 

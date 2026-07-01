@@ -204,16 +204,66 @@ class SelectorPokemon(discord.ui.View):
             btn_confirmar.callback = self._callback_confirmar
             self.add_item(btn_confirmar)
 
-    async def _editar_vista(self, interaction: discord.Interaction, vista_previa: str | None = None):
+    async def _editar_vista(
+        self,
+        interaction: discord.Interaction,
+        vista_previa: str | None = None,
+    ):
         embed = await self.crear_embed(vista_previa=vista_previa)
-        await interaction.response.edit_message(embed=embed, view=self)
 
-    async def _finalizar_seleccion(self, interaction: discord.Interaction, vista_previa: str | None = None):
+        try:
+
+            if interaction.response.is_done():
+
+                await interaction.edit_original_response(
+                    embed=embed,
+                    view=self,
+                )
+
+            else:
+
+                await interaction.response.edit_message(
+                    embed=embed,
+                    view=self,
+                )
+
+        except discord.NotFound:
+
+            pass
+
+    async def _finalizar_seleccion(
+        self,
+        interaction: discord.Interaction,
+        vista_previa: str | None = None,
+    ):
         self.stop()
-        embed = await self.crear_embed(vista_previa=vista_previa)
+
+        embed = await self.crear_embed(
+            vista_previa=vista_previa
+        )
+
         embed.title = "✅ Selección lista"
         embed.color = discord.Color.green()
-        await interaction.response.edit_message(embed=embed, view=None)
+
+        try:
+
+            if interaction.response.is_done():
+
+                await interaction.edit_original_response(
+                    embed=embed,
+                    view=None,
+                )
+
+            else:
+
+                await interaction.response.edit_message(
+                    embed=embed,
+                    view=None,
+                )
+
+        except discord.NotFound:
+
+            pass
 
     async def _callback_anadir(self, interaction: discord.Interaction):
         nombre = interaction.data["values"][0]

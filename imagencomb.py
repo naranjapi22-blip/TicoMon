@@ -72,7 +72,9 @@ async def generar_escena_combate(
     fondo_nombre,
     turno_jugador=0,
     es_shiny1=False,
-    es_shiny2=False
+    es_shiny2=False,
+    trainer1=None,
+    trainer2=None,
 ):
 
     carpeta_fondos = "fondos"
@@ -87,7 +89,14 @@ async def generar_escena_combate(
 
     draw = ImageDraw.Draw(fondo)
     font = ImageFont.load_default()
+    trainer_img1 = None
+    trainer_img2 = None
 
+    if trainer1:
+        trainer_img1 = cargar_trainer(trainer1)
+
+    if trainer2:
+        trainer_img2 = cargar_trainer(trainer2)
     img1_bytes = await obtener_sprite_bytes(session, poke1_id, es_shiny1, True)
     img2_bytes = await obtener_sprite_bytes(session, poke2_id, es_shiny2, False)
 
@@ -99,7 +108,31 @@ async def generar_escena_combate(
 
     pos1 = (100, 220)
     pos2 = (500, 60)
+    if trainer_img1:
 
+        trainer_img1.thumbnail(
+            (140, 140),
+            Image.Resampling.LANCZOS
+        )
+
+        fondo.paste(
+            trainer_img1,
+            (20, 220),
+            trainer_img1
+        )
+
+    if trainer_img2:
+
+        trainer_img2.thumbnail(
+            (140, 140),
+            Image.Resampling.LANCZOS
+        )
+
+        fondo.paste(
+            trainer_img2,
+            (640, 10),
+            trainer_img2
+        )
     fondo.paste(img2, pos2, img2)
     fondo.paste(img1, pos1, img1)
 
@@ -108,7 +141,103 @@ async def generar_escena_combate(
     buffer.seek(0)
 
     return buffer
+async def generar_pantalla_victoria(
+    session,
+    poke_id,
+    nombre,
+    es_shiny,
+    fondo_nombre,
+    trainer,
+):
+    carpeta_fondos = "fondos"
+    ruta_fondo = os.path.join(
+        carpeta_fondos,
+        fondo_nombre
+    )
 
+    if not os.path.exists(ruta_fondo):
+
+        fondo = Image.new(
+            "RGBA",
+            (800, 400),
+            (50, 50, 50, 255)
+        )
+
+    else:
+
+        fondo = Image.open(
+            ruta_fondo
+        ).convert("RGBA")
+
+    fondo = fondo.resize(
+        (800, 400),
+        Image.Resampling.LANCZOS
+    )
+
+    draw = ImageDraw.Draw(fondo)
+
+    font = ImageFont.load_default()
+
+    trainer_img = cargar_trainer(trainer)
+
+    trainer_img.thumbnail(
+        (180, 180),
+        Image.Resampling.LANCZOS
+    )
+
+    fondo.paste(
+        trainer_img,
+        (40, 170),
+        trainer_img
+    )
+
+    sprite_bytes = await obtener_sprite_bytes(
+        session,
+        poke_id,
+        es_shiny,
+        False
+    )
+
+    sprite = Image.open(
+        io.BytesIO(sprite_bytes)
+    ).convert("RGBA")
+
+    sprite = preparar_sprite(
+        sprite,
+        260,
+        260
+    )
+
+    fondo.paste(
+        sprite,
+        (420, 80),
+        sprite
+    )
+
+    draw.text(
+        (300, 20),
+        "🏆 VICTORIA 🏆",
+        fill="white",
+        font=font
+    )
+
+    draw.text(
+        (300, 55),
+        nombre,
+        fill="white",
+        font=font
+    )
+
+    buffer = io.BytesIO()
+
+    fondo.save(
+        buffer,
+        format="PNG"
+    )
+
+    buffer.seek(0)
+
+    return buffer
 
 # =========================
 # RAID (3v1 base)
@@ -177,3 +306,22 @@ async def generar_escena_raid(
     buffer.seek(0)
 
     return buffer
+def cargar_trainer(nombre):
+
+    ruta = os.path.join(
+        "sprites",
+        "trainers",
+        f"{nombre}.png"
+    )
+
+    if not os.path.exists(ruta):
+
+        ruta = os.path.join(
+            "sprites",
+            "trainers",
+            "ash.png"
+        )
+
+    img = Image.open(ruta).convert("RGBA")
+
+    return img

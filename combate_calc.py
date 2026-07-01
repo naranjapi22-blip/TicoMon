@@ -174,12 +174,13 @@ MOVIMIENTOS_ESPECIALES = {
     "celebrate",
     "holdhands",
     "happyhour",
-    "futuresight"
+    "futuresight",
     "waterspout",
     "roaroftime",
     "gigaimpact",
     "dragonascent",
     "psychoboost",
+    "future sight",
 }
 MOVIMIENTOS_EXCLUIDOS = (
     MOVIMIENTOS_CARGA
@@ -200,6 +201,8 @@ class ResultadoDano:
     mensaje: str
     fallo: bool = False
     critico: bool = False
+    efectivo: float = 1.0
+    motivo: str | None = None
 
 def _ivs_lista(fighter: dict) -> list[int]:
     ivs = fighter.get("ivs")
@@ -250,7 +253,8 @@ def _contexto_batalla(atacante: dict, defensor: dict) -> Battle:
 
 def elegir_movimiento_automatico(
     species_showdown: str,
-    stats: dict[str, int]
+    stats: dict[str, int],
+    tipos_defensor: list[str] | None = None,
 ) -> tuple[str, str]:
 
     species_id = to_id_str(species_showdown)
@@ -302,10 +306,11 @@ def elegir_movimiento_automatico(
         )
 
         stab = (
-            40
+            25
             if data.get("type") in tipos
             else 0
         )
+
         penalizacion = 0
 
         if move_id in {
@@ -332,22 +337,61 @@ def elegir_movimiento_automatico(
             "wavecrash",
         }:
             penalizacion += 10
+
+        multiplicador = 1.0
+
+        if tipos_defensor:
+
+            move_type = data.get("type")
+
+            if move_type:
+
+                for tipo in tipos_defensor:
+
+                    try:
+
+                        tipo_mov = PokemonType.from_name(move_type)
+                        tipo_def = PokemonType.from_name(tipo)
+
+                        multiplicador *= calc_gen9.get_move_effectiveness(
+                            Move(move_id, gen=9),
+                            tipo_mov,
+                            tipo_def
+                        )
+
+                    except Exception:
+                        pass
+
+        if multiplicador == 0:
+            continue
+
+        bonus_tipo = 0
+
+        if multiplicador == 4:
+            bonus_tipo = 35
+
+        elif multiplicador == 2:
+            bonus_tipo = 18
+
+        elif multiplicador == 0.5:
+            bonus_tipo = -12
+
+        elif multiplicador == 0.25:
+            bonus_tipo = -25
+
         puntaje = (
             bp
             + stab
             + cat_bonus
+            + bonus_tipo
             + min(accuracy, 100) // 10
             - penalizacion
-        )
-        nombre = data.get(
-            "name",
-            move_id
         )
 
         candidato = (
             puntaje,
             move_id,
-            nombre
+            data.get("name", move_id),
         )
 
         if (
@@ -359,7 +403,7 @@ def elegir_movimiento_automatico(
     if mejor:
         return mejor[1], mejor[2]
 
-    return "tackle", "Tackle"
+
 def elegir_movimiento_alpha(
     species_showdown: str,
     stats: dict[str, int],
@@ -598,6 +642,36 @@ def _etiqueta_efectividad(move: Move, defensor: dict) -> str:
         return " No afecta al objetivo..."
     return ""
 
+def _multiplicador_efectividad(
+    move: Move,
+    defensor: dict,
+) -> float:
+
+    move_type = move.type
+
+    if move_type is None:
+        return 1.0
+
+    tipos_def = defensor.get("tipo") or []
+
+    mult = 1.0
+
+    for tipo_nombre in tipos_def:
+
+        try:
+
+            tipo_def = PokemonType.from_name(tipo_nombre)
+
+            mult *= calc_gen9.get_move_effectiveness(
+                move,
+                move_type,
+                tipo_def
+            )
+
+        except Exception:
+            pass
+
+    return mult
 
 def calcular_dano(atacante: dict, defensor: dict) -> ResultadoDano:
     """Calcula daño de un turno usando poke-env. Fallback a fórmula simple si falla."""
@@ -609,9 +683,20 @@ def calcular_dano(atacante: dict, defensor: dict) -> ResultadoDano:
 
 
 def _calcular_dano_showdown(atacante: dict, defensor: dict) -> ResultadoDano:
-    move_id = atacante.get("movimiento", "tackle")
+    stats = {
+        "atk": atacante.get("atk", 0),
+        "spa": atacante.get("atk_esp", 0),
+    }
+
+    move_id, move_nombre = elegir_movimiento_combate(
+        atacante["moveset"],
+        defensor.get("tipo"),
+    )
+
+    atacante["movimiento"] = move_id
+    atacante["movimiento_nombre"] = move_nombre
+
     move = Move(move_id, gen=9)
-    move_nombre = atacante.get("movimiento_nombre") or move.entry.get("name", move_id)
 
     battle = _contexto_batalla(atacante, defensor)
     id_atk = _identificador_batalla(atacante, "p1")
@@ -623,9 +708,19 @@ def _calcular_dano_showdown(atacante: dict, defensor: dict) -> ResultadoDano:
         acc_pct = accuracy * 100 if accuracy <= 1 else accuracy
     if acc_pct < 100 and random.randint(1, 100) > acc_pct:
         return ResultadoDano(
-            0,
-            f"💨 ¡{atacante['nombre']} usó **{move_nombre}** pero falló!",
+
+            dano=0,
+
+            mensaje=f"💨 ¡{atacante['nombre']} usó **{move_nombre}** pero falló!",
+
             fallo=True,
+
+            critico=False,
+
+            efectivo=1.0,
+
+            motivo="fallo_precision",
+
         )
 
     es_critico = random.randint(1, 24) == 1
@@ -635,11 +730,24 @@ def _calcular_dano_showdown(atacante: dict, defensor: dict) -> ResultadoDano:
     print("TIPOS DEF:", defensor.get("tipo"))
     dano_min, dano_max = calc_gen9.calculate_damage(id_atk, id_def, move, battle, is_critical=es_critico)
     print("DAÑO:", dano_min, dano_max)
+    efectivo = _multiplicador_efectividad(move, defensor)
+
     if dano_max <= 0:
+
         return ResultadoDano(
-            0,
-            f"💨 ¡{atacante['nombre']} usó **{move_nombre}** pero no hizo daño!",
+
+            dano=0,
+
+            mensaje="",
+
             fallo=True,
+
+            critico=False,
+
+            efectivo=efectivo,
+
+            motivo="inmune" if efectivo == 0 else None,
+
         )
 
     dano = random.randint(int(dano_min), int(dano_max)) if dano_max > dano_min else int(dano_max)
@@ -649,7 +757,19 @@ def _calcular_dano_showdown(atacante: dict, defensor: dict) -> ResultadoDano:
     sufijo = _etiqueta_efectividad(move, defensor)
     mensaje = f"{prefijo} **{atacante['nombre']}** causa {dano} HP.{sufijo}"
 
-    return ResultadoDano(dano=dano, mensaje=mensaje, critico=es_critico)
+    return ResultadoDano(
+
+        dano=dano,
+
+        mensaje=mensaje,
+
+        critico=es_critico,
+
+        efectivo=_multiplicador_efectividad(move, defensor),
+
+        motivo=None,
+
+    )
 
 
 def _calcular_dano_fallback(atacante: dict, defensor: dict) -> ResultadoDano:
@@ -690,3 +810,247 @@ def movimiento_valido_ia(
         return False
 
     return True
+def elegir_movimiento_combate(
+    moveset: list[tuple[str, str]],
+    tipos_defensor: list[str] | None = None,
+) -> tuple[str, str]:
+
+    candidatos = []
+
+    for move_id, nombre in moveset:
+
+        data = _GEN_DATA.moves.get(move_id)
+
+        if not data:
+            continue
+
+        bp = data.get("basePower") or 0
+        accuracy = data.get("accuracy") or 100
+
+        penalizacion = 0
+
+        if move_id in {
+            "dracometeor",
+            "leafstorm",
+            "overheat",
+            "psychoboost",
+        }:
+            penalizacion += 20
+
+        if move_id in {
+            "closecombat",
+            "superpower",
+            "headlongrush",
+        }:
+            penalizacion += 15
+
+        if move_id in {
+            "bravebird",
+            "flareblitz",
+            "woodhammer",
+            "doubleedge",
+            "volttackle",
+            "wavecrash",
+        }:
+            penalizacion += 10
+
+        multiplicador = 1.0
+
+        if tipos_defensor:
+
+            move_type = data.get("type")
+
+            if move_type:
+
+                for tipo in tipos_defensor:
+
+                    try:
+
+                        tipo_mov = PokemonType.from_name(move_type)
+
+                        tipo_def = PokemonType.from_name(tipo)
+
+                        multiplicador *= calc_gen9.get_move_effectiveness(
+                            Move(move_id, gen=9),
+                            tipo_mov,
+                            tipo_def
+                        )
+
+                    except Exception:
+                        pass
+
+        if multiplicador == 0:
+            continue
+
+        bonus_tipo = 0
+
+        if multiplicador == 4:
+            bonus_tipo = 35
+
+        elif multiplicador == 2:
+            bonus_tipo = 18
+
+        elif multiplicador == 0.5:
+            bonus_tipo = -12
+
+        elif multiplicador == 0.25:
+            bonus_tipo = -25
+
+        puntaje = (
+            bp
+            + bonus_tipo
+            + min(accuracy, 100) // 10
+            - penalizacion
+        )
+
+        candidatos.append(
+            (
+                puntaje,
+                move_id,
+                nombre,
+            )
+        )
+
+    if not candidatos:
+        return "tackle", "Tackle"
+
+    candidatos.sort(
+        reverse=True,
+        key=lambda x: x[0]
+    )
+
+    top = candidatos[:4]
+
+    pesos = [40, 30, 20, 10][:len(top)]
+
+    elegido = random.choices(
+        top,
+        weights=pesos,
+        k=1
+    )[0]
+
+    return elegido[1], elegido[2]
+def generar_moveset_combate(
+    species_showdown: str,
+    stats: dict[str, int],
+) -> list[tuple[str, str]]:
+
+    species_id = to_id_str(species_showdown)
+
+    entry = _GEN_DATA.learnset.get(species_id)
+
+    if not entry:
+        return [
+            ("tackle", "Tackle")
+        ]
+
+    learnset = entry.get("learnset", {})
+
+    dex = _GEN_DATA.pokedex.get(
+        species_id,
+        {}
+    )
+
+    tipos = dex.get("types", [])
+
+    prefer_physical = (
+        stats.get("atk", 0)
+        >=
+        stats.get("spa", 0)
+    )
+
+    candidatos = []
+    for move_id in learnset:
+
+        data = _GEN_DATA.moves.get(move_id)
+
+        if not movimiento_valido_ia(
+            move_id,
+            data,
+        ):
+            continue
+
+        bp = data.get("basePower") or 0
+        accuracy = data.get("accuracy") or 100
+
+        es_fisico = (
+            data.get("category")
+            == "Physical"
+        )
+
+        cat_bonus = (
+            15
+            if prefer_physical == es_fisico
+            else 0
+        )
+
+        stab = (
+            25
+            if data.get("type") in tipos
+            else 0
+        )
+
+        penalizacion = 0
+
+        if move_id in {
+            "dracometeor",
+            "leafstorm",
+            "overheat",
+            "psychoboost",
+        }:
+            penalizacion += 20
+
+        if move_id in {
+            "closecombat",
+            "superpower",
+            "headlongrush",
+        }:
+            penalizacion += 15
+
+        if move_id in {
+            "bravebird",
+            "flareblitz",
+            "woodhammer",
+            "doubleedge",
+            "volttackle",
+            "wavecrash",
+        }:
+            penalizacion += 10
+
+        puntaje = (
+            bp
+            + stab
+            + cat_bonus
+            + min(accuracy, 100) // 10
+            - penalizacion
+        )
+
+        candidatos.append(
+            (
+                puntaje,
+                move_id,
+                data.get("name", move_id),
+            )
+        )
+    if not candidatos:
+
+        return [
+            ("tackle", "Tackle")
+        ]
+
+    candidatos.sort(
+        reverse=True,
+        key=lambda x: x[0]
+    )
+
+    top = candidatos[:12]
+
+    seleccion = random.sample(
+        top,
+        k=min(4, len(top))
+    )
+
+    return [
+        (move_id, nombre)
+        for _, move_id, nombre in seleccion
+    ]
