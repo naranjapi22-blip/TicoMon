@@ -526,6 +526,7 @@ class ComandosView(discord.ui.View):
             value=(
                 "`!profile`\n"
                 "`!inventory`\n"
+                "`!duplicates`\n"
                 "`!candies`\n"
                 "`!info <id>`\n"
                 "`!favorite <id>`\n"
