@@ -137,9 +137,9 @@ async def on_ready():
             min_size=5,
             max_size=20
         )
-        print("✅ Pool de base de datos inicializado correctamente.")
+        log.info("Pool de base de datos inicializado.")
     except Exception as e:
-        print(f"🚨 Error crítico al inicializar el pool de BD: {e}")
+        log.exception("Error inicializando el pool de BD")
 
     await configuracion.init_config_db(bot)
     print(f'Bot conectado como {bot.user}')
@@ -148,11 +148,8 @@ async def on_ready():
     bot.session = aiohttp.ClientSession()
 
     # Cargar listas de rareza 
-    print("Entrando en on_ready")
     await inicializar_rarezas_spawn()
-    print("Terminó inicializar_rarezas_spawn")
     database.cargar_cache_pokemon()
-    print("✅ Cache Pokémon cargada")
     #print("✅ Pokémon clasificados por rareza.")
     # 1. SETUP DE GESTORES
     gestor_spawn.setup_gestor(bot)
@@ -167,7 +164,6 @@ async def on_ready():
     except Exception as e:
         log.error(f"🚨 Error al sincronizar slash commands: {e}", exc_info=True)
 
-    print("Base de datos, módulos y sesión de red verificados.")
     
     # Esto creará la tabla automáticamente si no existe al encender el bot
     await db_cache.inicializar_bd()
@@ -206,7 +202,7 @@ async def on_command_error(ctx, error):
 
         return
 
-    print(f"Error inesperado: {error}")
+    log.exception("Error inesperado en comando")
 
 
 
@@ -217,8 +213,8 @@ async def auto_liberar_canal(channel_id, segundos):
 
         liberar_canal_completo(channel_id)
 
-        print(
-            f"🧹 [LIMPIEZA FORZADA] Canal {channel_id} liberado por seguridad."
+        log.info(
+            f"Canal {channel_id} liberado automáticamente."
         )
 
     except asyncio.CancelledError:
@@ -278,11 +274,6 @@ async def spawn(ctx):
 
             poke = database.obtener_pokemon_local(pid)
 
-            print(
-                f"{pid} -> "
-                f"{poke['nombre']} -> "
-                f"{poke['pokeapi_id']}"
-            )
 
         # FASE 3: DESCARGA PARALELA
         tasks = [
@@ -302,10 +293,6 @@ async def spawn(ctx):
             return_exceptions=True
         )
 
-        print(
-            f"OBTENER_POKEMON: "
-            f"{time.perf_counter() - inicio_api:.3f}s"
-        )
 
         # FASE 4: Procesamiento de datos
         for pid, resultado in zip(ids_spawn, resultados):
@@ -373,10 +360,6 @@ async def spawn(ctx):
             tenidos=[]
         )
 
-        print(
-            f"SILUETAS: "
-            f"{time.perf_counter() - inicio_siluetas:.3f}s"
-        )
         
         if not buffer_siluetas:
 
@@ -413,10 +396,6 @@ async def spawn(ctx):
         try:
             inicio_discord = time.perf_counter()
             mensaje_enviado = await ctx.send(embed=embed, file=imagen_final, view=view)
-            print(
-                f"DISCORD_SEND: "
-                f"{time.perf_counter() - inicio_discord:.3f}s"
-            )
 
             view.message = mensaje_enviado
             gestor_spawn.vistas_activas[ctx.channel.id] = view 
@@ -935,7 +914,6 @@ async def cargar_pokemon_por_rareza(session):
             else:
                 pokemon_por_rareza["epico"].append(pokemon_id)
 
-    print("=== Pokémon por rareza ===")
     for rareza, lista in pokemon_por_rareza.items():
         print(f"{rareza}: {len(lista)}")
 
@@ -949,8 +927,7 @@ async def inicializar_rarezas_spawn():
         pokemon_por_rareza[rareza].clear()
 
     datos = database.obtener_datos_rareza()
-    print("TOTAL DATOS:", len(datos))
-    print("PRIMEROS 10:", datos[:10])
+
     for pokemon_id, capture_rate, es_legendario, es_mitico in datos:
 
         if es_legendario:
@@ -982,21 +959,11 @@ async def inicializar_rarezas_spawn():
             [x for x in lista if x > 1025]
         )
 
-    print(
-        f"REGIONALES EN SPAWN: {regionales}"
-    )
-    print("=== RESUMEN SPAWN ===")
 
     for rareza, lista in pokemon_por_rareza.items():
         print(f"{rareza}: {len(lista)}")
 
-    print("Primeros muy_comun:", pokemon_por_rareza["muy_comun"][:10])
-    print("Primeros comun:", pokemon_por_rareza["comun"][:10])
-    print("Primeros poco_comun:", pokemon_por_rareza["poco_comun"][:10])
-    print("Primeros raro:", pokemon_por_rareza["raro"][:10])
-    print("Primeros epico:", pokemon_por_rareza["epico"][:10])
-    print("Primeros mitico:", pokemon_por_rareza["mitico"][:10])
-    print("Primeros legendario:", pokemon_por_rareza["legendario"][:10])
+
     log.info("=== Rarezas cargadas ===")
     log.info(f"Muy comunes: {len(pokemon_por_rareza['muy_comun'])}")
     log.info(f"Comunes: {len(pokemon_por_rareza['comun'])}")
@@ -1164,7 +1131,7 @@ def crear_embed_safari(
 @canal_restringido()
 async def safari(ctx):
 
-    print("Entró a !safari")
+
 
     # ==========================
     # VALIDAR ÚLTIMO ORGANIZADOR
@@ -1695,14 +1662,11 @@ async def elegir(ctx, id_pokemon: int, opcion: int):
             return
 
         pokemon_nombre = resultado[0]
-        print("POKEMON:", pokemon_nombre)
-        print("ID:", id_pokemon)
-        print("OPCION:", opcion)
+
         evo = get_evolution_choice(
             pokemon_nombre,
             opcion
         )
-        print("EVO:", evo)
         if not evo:
 
             await ctx.send(
@@ -2013,15 +1977,5 @@ async def trainer(ctx):
         )
     )
 
-@bot.command()
-async def testalola(ctx):
-
-    pokemon = database.obtener_pokemon_local_nombre(
-        "raichu-alola"
-    )
-
-    await ctx.send(
-        f"{pokemon}"
-    )
 
 bot.run(TOKEN)
