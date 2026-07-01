@@ -18,9 +18,9 @@ async def obtener_datos_combate(session, nombre_pokemon, *, ivs=None, naturaleza
     try:
         async with session.get(url) as response:
             if response.status != 200:
-                print(
-                    f"PokeAPI devolvió {response.status} para {nombre_pokemon}"
-                )
+                print(f"URL: {url}")
+                print(f"NOMBRE: {repr(nombre_pokemon)}")
+                print(f"STATUS: {response.status}")
                 return None
 
             data = await response.json()
