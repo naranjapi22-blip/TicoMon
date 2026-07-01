@@ -18,6 +18,9 @@ async def obtener_datos_combate(session, nombre_pokemon, *, ivs=None, naturaleza
     try:
         async with session.get(url) as response:
             if response.status != 200:
+                print(
+                    f"PokeAPI devolvió {response.status} para {nombre_pokemon}"
+                )
                 return None
 
             data = await response.json()
@@ -115,8 +118,17 @@ async def _fighter_desde_fila(session, user_id, fila):
         naturaleza=naturaleza,
         es_shiny=bool(es_shiny),
     )
+
+    print(
+        "Pokemon:",
+        nombre,
+        "->",
+        "OK" if datos else "NONE"
+    )
+
     if datos:
         datos["captura_id"] = captura_id
+
     return datos
 
 
