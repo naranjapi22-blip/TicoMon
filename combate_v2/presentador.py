@@ -12,7 +12,6 @@ class PresentadorCombate:
 
         historial = []
 
-        print("PASOS:", len(pasos))
 
         for paso in pasos:
 
