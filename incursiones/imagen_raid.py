@@ -5,7 +5,7 @@ from PIL import Image
 from PIL import ImageFilter
 log = logging.getLogger('imagencomb')
 from PIL import ImageSequence
-
+from imagencomb import obtener_sprite_bytes
 
 # =========================
 # SPRITE PREP

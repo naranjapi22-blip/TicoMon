@@ -94,40 +94,26 @@ class TipoSelect(discord.ui.Select):
         await self.view.generar_vista_pokedex(interaction, interaction.client.session)
 
 # --- CLASE PRINCIPAL DE POKEDEX ---
-class PokedexView(discord.ui.View):
-    def __init__(self, region, tenidos, inicio=1, fin=1077, es_coleccion_personal=False, modo_shiny=False):
-        super().__init__(timeout=60)
-        self.region = region
-        self.tenidos = sorted(list(tenidos))
-        self.es_coleccion_personal = es_coleccion_personal
-        self.modo_shiny = modo_shiny  # Guardamos el modo
-        self.filtro_actual = "all"
-        
-        if self.es_coleccion_personal:
-            self.total_pokes = self.tenidos
-        else:
-            self.total_pokes = list(range(inicio, fin + 1))
-            
-        self.paginas = [self.total_pokes[i:i + 10] for i in range(0, len(self.total_pokes), 10)]
-        self.pagina = 0
-        
-        # self.add_item(TipoSelect(self.tenidos)) # Asegúrate de tener esta clase definida
 
 class PokedexView(discord.ui.View):
-    def __init__(self, region, tenidos, inicio=1, fin=1077, es_coleccion_personal=False, modo_shiny=False):
+    def __init__(self, region, tenidos, inicio=1, fin=1077,
+                 es_coleccion_personal=False, modo_shiny=False):
         super().__init__(timeout=60)
         self.region = region
         self.tenidos = sorted(list(tenidos))
         self.es_coleccion_personal = es_coleccion_personal
         self.modo_shiny = modo_shiny
-        self.filtro_actual = "All" # Valor por defecto
-        
+        self.filtro_actual = "All"
+
         if self.es_coleccion_personal:
             self.total_pokes = self.tenidos
         else:
             self.total_pokes = list(range(inicio, fin + 1))
-            
-        self.paginas = [self.total_pokes[i:i + 10] for i in range(0, len(self.total_pokes), 10)]
+
+        self.paginas = [
+            self.total_pokes[i:i + 10]
+            for i in range(0, len(self.total_pokes), 10)
+        ]
         self.pagina = 0
 
     async def generar_vista_pokedex(self, interaction_or_ctx, session):
