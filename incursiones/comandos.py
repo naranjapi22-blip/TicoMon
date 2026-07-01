@@ -19,7 +19,7 @@ class Incursiones(commands.Cog):
         self.bot = bot
 
     @commands.command()
-    async def incursion(self, ctx):
+    async def raid(self, ctx):
         print(">>> Entró a !incursion")
         existente = obtener_incursion(ctx.channel.id)
 
