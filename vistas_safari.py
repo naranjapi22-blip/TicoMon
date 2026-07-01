@@ -1,6 +1,6 @@
 import discord
 import random
-from database import usuario_tiene_especie
+import database
 ACCIONES_EXPEDICION = [
     ("cebo", "🍓 Tirar Cebo"),
     ("huellas", "🔍 Seguir Huellas"),
