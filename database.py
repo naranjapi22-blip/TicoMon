@@ -273,9 +273,8 @@ def obtener_capturas(user_id, solo_shiny=False):
 
         res = ejecutar_consulta(
             q,
-            (user_id,)
+            (str(user_id),)
         )
-
         capturas = [fila[0] for fila in res]
 
         log.info(
