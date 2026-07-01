@@ -358,12 +358,22 @@ async def setup(bot):
             45
         )
 
+        rareza = obtener_rareza(capture_rate)
+
+        tipo = (
+            pokemon["tipos"]
+            .split(",")[0]
+            .strip()
+            .lower()
+        )
+
         view = BotonCaptura(
-            data,
-            "admin",
-            es_shiny,
-            capture_rate,
-            1.0
+            pokemon_data=data,
+            rareza=rareza,
+            es_shiny=es_shiny,
+            capture_rate=capture_rate,
+            tamano_factor=1.0,
+            tipo=tipo
         )
 
         embed = discord.Embed(
