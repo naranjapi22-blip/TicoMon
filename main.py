@@ -1814,7 +1814,7 @@ class VistaDuplicados(discord.ui.View):
 
 
 @bot.command()
-async def duplicados(ctx, tipo=None):
+async def oldduplicados(ctx, tipo=None):
     tipo_filtro = None
     if tipo:
         tipo_filtro = _normalizar_tipo_filtro(tipo)
@@ -1854,7 +1854,7 @@ async def duplicados(ctx, tipo=None):
     await ctx.send(embed=embed)
 
 
-@bot.command(name="new-duplicados")
+@bot.command(name="duplicates")
 async def new_duplicados(ctx, *, filtro=None):
     tipo_filtro = None
     pokemon_filtro = None

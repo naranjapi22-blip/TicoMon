@@ -515,7 +515,7 @@ class IvsCommands(commands.Cog):
         
         await ctx.send(embed=embed)
 
-    @commands.command(name="release")
+    @commands.command(name="old-release")
     async def liberar(self, ctx, id_pokemon: int):
 
         conn = database.get_connection()
@@ -680,13 +680,13 @@ class IvsCommands(commands.Cog):
             cursor.close()
             conn.close()
 
-    @commands.command(name="new-release")
+    @commands.command(name="release")
     async def new_liberar(self, ctx, *, ids: str):
         captura_ids = _parsear_ids_liberar(ids)
 
         if not captura_ids:
             return await ctx.send(
-                "❌ Indica al menos un ID. Ejemplo: `!new-release 101, 202, 303`"
+                "❌ Indica al menos un ID. Ejemplo: `!release 101, 202, 303`"
             )
 
         log.info(

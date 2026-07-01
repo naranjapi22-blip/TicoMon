@@ -458,7 +458,7 @@ class Inventario(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name="inventory")
+    @commands.command(name="old-inventory")
     async def ver_inventario(self, ctx):
         conn = database.get_connection()
         cursor = conn.cursor()
@@ -525,7 +525,7 @@ class Inventario(commands.Cog):
 
         view.message = mensaje
 
-    @commands.command(name="new-inventory")
+    @commands.command(name="inventory")
     async def ver_new_inventario(self, ctx):
         pokemones = database.obtener_inventario_usuario(ctx.author.id)
 
