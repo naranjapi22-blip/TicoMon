@@ -69,7 +69,7 @@ class TipoSelect(discord.ui.Select):
                  "poison", "ground", "flying", "psychic", "bug", "rock", "ghost", 
                  "dragon", "steel", "dark", "fairy"]
         options = [discord.SelectOption(label=t.capitalize(), value=t) for t in tipos]
-        super().__init__(placeholder="Filtrar por tipo...", options=options, custom_id="filtro_tipo")
+        super().__init__(placeholder="Filter by type...", options=options, custom_id="filtro_tipo")
         self.tenidos = tenidos
 
     async def callback(self, interaction: discord.Interaction):
@@ -120,8 +120,8 @@ class PokedexView(discord.ui.View):
         # 1. CASO: LISTA VACÍA
         if not self.total_pokes:
             embed = discord.Embed(
-                title=f"🎒 Colección | {'Shiny ' if self.modo_shiny else ''}Tipo: {self.filtro_actual.capitalize()}",
-                description="¡No tienes Pokémon de ese tipo!"
+                title=f"🎒 Collection | {'Shiny ' if self.modo_shiny else ''}Type: {self.filtro_actual.capitalize()}",
+                description="You don't have any Pokémon of this type."
             )
             
             if isinstance(interaction_or_ctx, discord.Interaction):
@@ -147,8 +147,8 @@ class PokedexView(discord.ui.View):
         file = discord.File(buffer, filename="pokedex.png")
         
         embed = discord.Embed(
-            title=f"🎒 Colección | {'Shiny ' if self.modo_shiny else ''}Tipo: {self.filtro_actual.capitalize()}", 
-            description=f"Página {self.pagina + 1}/{max(1, len(self.paginas))}"
+            title=f"🎒 Collection | {'Shiny ' if self.modo_shiny else ''}Tipo: {self.filtro_actual.capitalize()}", 
+            description=f"Page {self.pagina + 1}/{max(1, len(self.paginas))}"
         )
         embed.set_image(url="attachment://pokedex.png")
         
@@ -213,8 +213,8 @@ class SpawnSelectionView(discord.ui.View):
                 # Actualizamos el embed original a modo "Huida"
                 if self.message.embeds:
                     embed_huida = self.message.embeds[0]
-                    embed_huida.title = "💨 ¡Los Pokémon salvajes huyeron!"
-                    embed_huida.description = "Tardaste demasiado en decidir y escaparon."
+                    embed_huida.title = "💨 The wild Pokémon fled!"
+                    embed_huida.description = "You took too long to choose, and they fled."
                     embed_huida.color = discord.Color.red()
                     
                     # Editamos el mensaje con el embed modificado y los botones deshabilitados
@@ -240,13 +240,13 @@ class SpawnSelectionView(discord.ui.View):
 
             try:
                 await interaction.response.send_message(
-                    "¡Hey! 🛑 Consigue tu propio Pokémon usando `!spawn`. Este encuentro no es tuyo.",
+                    "🛑 This encounter isn't yours. Use `/spawn` to find your own Pokémon.",
                     ephemeral=True
                 )
             except discord.InteractionResponded:
                 try:
                     await interaction.followup.send(
-                        "¡Hey! 🛑 Consigue tu propio Pokémon usando `!spawn`. Este encuentro no es tuyo.",
+                        "🛑 This encounter isn't yours. Use `/spawn` to find your own Pokémon.",
                         ephemeral=True
                     )
                 except discord.NotFound:
@@ -270,7 +270,7 @@ class SpawnSelectionView(discord.ui.View):
 
             try:
                 await interaction.response.send_message(
-                    "❌ Esta opción ya no está disponible.",
+                    "❌ This option is no longer available.",
                     ephemeral=True
                 )
             except discord.InteractionResponded:
@@ -357,7 +357,7 @@ class SpawnSelectionView(discord.ui.View):
 
         rareza = obtener_rareza(capture_rate)
 
-        titulo_revelado = f"¡Es un {data['name'].capitalize()} salvaje!"
+        titulo_revelado =  f"A wild {data['name'].capitalize()} appeared!"
         if etiquetas:
             titulo_revelado = f"{' '.join(etiquetas)} {titulo_revelado}"
 
@@ -369,14 +369,14 @@ class SpawnSelectionView(discord.ui.View):
 
         embed_revelado = discord.Embed(
             title=titulo_revelado,
-            description=f"**Rareza:** {obtener_nombre_rareza(rareza)}",
+            description=f"**Rarity:** {obtener_nombre_rareza(rareza)}",
             color=color_embed
         )
         print("=" * 80)
         print(url_gif)
         print("=" * 80)
         embed_revelado.set_image(url=url_gif)
-        embed_revelado.set_footer(text="Intentos fallidos: 0")
+        embed_revelado.set_footer(text="Failed Attempts: 0")
 
         view_captura = BotonCaptura(
             pokemon_data=data,
@@ -395,7 +395,7 @@ class SpawnSelectionView(discord.ui.View):
         )
 
     # --- BOTONES ---
-    @discord.ui.button(label="[1] Opción 1", style=discord.ButtonStyle.primary)
+    @discord.ui.button(label="[1] Option 1", style=discord.ButtonStyle.primary)
     async def opcion1(
         self,
         interaction: discord.Interaction,
@@ -403,7 +403,7 @@ class SpawnSelectionView(discord.ui.View):
     ):
         await self.manejar_seleccion(interaction, 0)
 
-    @discord.ui.button(label="[2] Opción 2", style=discord.ButtonStyle.primary)
+    @discord.ui.button(label="[2] Option 2", style=discord.ButtonStyle.primary)
     async def opcion2(
         self,
         interaction: discord.Interaction,
@@ -411,7 +411,7 @@ class SpawnSelectionView(discord.ui.View):
     ):
         await self.manejar_seleccion(interaction, 1)
 
-    @discord.ui.button(label="[3] Opción 3", style=discord.ButtonStyle.primary)
+    @discord.ui.button(label="[3] Option 3", style=discord.ButtonStyle.primary)
     async def opcion3(
         self,
         interaction: discord.Interaction,
@@ -459,7 +459,7 @@ class BotonCaptura(discord.ui.View):
         
         try:
             if self.message:
-                await self.message.edit(content="💨 ¡El Pokémon se cansó de esperar y ha huido!", view=self)
+                await self.message.edit(content="💨 The Pokémon got tired of waiting and fled!", view=self)
         except Exception:
             pass
         
@@ -474,7 +474,7 @@ class BotonCaptura(discord.ui.View):
         return COOLDOWN_LANZAMIENTO - (ahora - ultimo)
 
     @discord.ui.button(
-        label="¡Lanzar Pokéball!",
+        label="Throw Poké Ball!",
         style=discord.ButtonStyle.primary,
         emoji="🔴"
     )
@@ -498,14 +498,14 @@ class BotonCaptura(discord.ui.View):
                     if interaction.user.id == self.usuario_capturador:
 
                         await interaction.response.send_message(
-                            "✅ Ya capturaste este Pokémon.",
+                            "✅ You already caught this Pokémon.",
                             ephemeral=True
                         )
 
                     else:
 
                         await interaction.response.send_message(
-                            "💨 ¡Llegaste tarde!",
+                            "💨 Too late!",
                             ephemeral=True
                         )
 
@@ -531,7 +531,10 @@ class BotonCaptura(discord.ui.View):
                 restante = self._segundos_restantes_cooldown(user_id, ahora)
                 if restante > COOLDOWN_GRACE:
                     segundos = max(1, math.ceil(restante))
-                    return await interaction.followup.send(f"⏱️ Espera {segundos}s para volver a lanzar.", ephemeral=True)
+                    return await interaction.followup.send(
+                        f"⏱️ Wait {segundos}s before throwing again.",
+                        ephemeral=True
+                    )
 
                 self.user_cooldowns[user_id] = ahora
                 
@@ -543,7 +546,7 @@ class BotonCaptura(discord.ui.View):
                     self.alguien_lo_atrapo = True
                     self.usuario_capturador = interaction.user.id
                     liberar_canal_completo(interaction.channel.id)
-                    await interaction.message.edit(content="💨 ¡El tiempo se ha agotado! El Pokémon ha huido.", view=None)
+                    await interaction.message.edit(content="💨 Time's up! The Pokémon fled.", view=None)
                     return self.stop()
 
                 if self.intentos_fallidos > 30:
@@ -551,7 +554,7 @@ class BotonCaptura(discord.ui.View):
                         self.alguien_lo_atrapo = True
                         self.usuario_capturador = interaction.user.id
                         liberar_canal_completo(interaction.channel.id)
-                        await interaction.message.edit(content="💨 ¡El Pokémon se ha asustado y ha huido!", view=None)
+                        await interaction.message.edit(content="💨 The Pokémon got scared and fled!", view=None)
                         return self.stop()
 
                 # --- MATEMÁTICA DE CAPTURA (INTEGRANDO TUS % BASE) ---
@@ -702,23 +705,23 @@ class BotonCaptura(discord.ui.View):
 
                         mensaje = (
                             f"🎉 {interaction.user.mention} "
-                            f"capturó a **{self.nombre.capitalize()}** "
-                            f"(ID: {id_captura}) usando una "
+                            f"caught **{self.nombre.capitalize()}** "
+                            f"(ID: {id_captura}) using a "
                             f"**{nombre_bola}**! ({porcentaje}%)"
                         )
 
                         if resultado_record == "NUEVO_RECORD_GRANDE":
 
                             mensaje += (
-                                "\n👑 **¡Nuevo Récord XXL!** "
-                                "Has entrado en el Salón de la Fama."
+                                "\n👑 **New XXL Record!** "
+                                "You've entered the Hall of Fame."
                             )
 
                         elif resultado_record == "NUEVO_RECORD_PEQUENO":
 
                             mensaje += (
-                                "\n🤏 **¡Nuevo Récord XXS!** "
-                                "Has entrado en el Salón de la Fama."
+                                "\n🤏 **New XXS Record!** "
+                                "You've entered the Hall of Fame."
                             )
 
                         # ← Aquí termina el if/elif
@@ -745,7 +748,7 @@ class BotonCaptura(discord.ui.View):
                             )
 
                             await interaction.channel.send(
-                                f"🏕 ¡Se ha desbloqueado el Safari #{world.safaris_desbloqueados}!"
+                                f"🏕 Safari #{world.safaris_desbloqueados} has been unlocked!"
                             )
                         print("ENVÍO:", time.perf_counter() - inicio)
 
@@ -763,7 +766,7 @@ class BotonCaptura(discord.ui.View):
                         )
 
                         await interaction.followup.send(
-                            "⚠️ Error interno de base de datos.",
+                            "⚠️ Internal database error.",
                             ephemeral=True
                         )
                 else:
@@ -776,13 +779,13 @@ class BotonCaptura(discord.ui.View):
 
                     embed = interaction.message.embeds[0]
                     embed.set_footer(
-                        text=f"Intentos fallidos: {self.intentos_fallidos}"
+                        text=f"Failed Attempts: {self.intentos_fallidos}"
                     )
 
                     await interaction.message.edit(embed=embed)
 
                     await interaction.followup.send(
-                        f"❌ Fallaste la {nombre_bola} con un ({porcentaje}%). ¡El Pokémon está más cansado!",
+                        f"❌ Your {nombre_bola} missed with ({porcentaje}%). The Pokémon is getting tired!",
                         ephemeral=True
                     )
 
@@ -804,7 +807,7 @@ class BotonCaptura(discord.ui.View):
 
                 try:
                     await interaction.followup.send(
-                        "⚠️ El encuentro ha finalizado debido a un error.",
+                        "⚠️ This encounter ended due to an internal error.",
                         ephemeral=True
                     )
                 except discord.NotFound:
@@ -895,7 +898,7 @@ class InfoView(discord.ui.View):
             if len(capturas) > 8:
                 ids_formateados += "..."
         else:
-            ids_formateados = "Ninguno"
+            ids_formateados = "None"
         
         # 4. Construimos el texto base
         tipos = ", ".join(
@@ -903,11 +906,11 @@ class InfoView(discord.ui.View):
             for t in self.data["tipos"].split(",")
         )
 
-        info_text = f"✨ **Tipo:** {tipos}\n"
-        info_text += f"📅 **Primera captura:** {fecha_str}\n"
-        info_text += f"🔢 **Total capturados:** {cantidad}\n"
-        info_text += f"🆔 **IDs de captura:** {ids_formateados}\n"
-        info_text += f"📏 **Altura:** {self.data['height']/10}m | ⚖️ **Peso:** {self.data['weight']/10}kg\n"
+        info_text = f"✨ **Type:** {tipos}\n"
+        info_text += f"📅 **First Capture:** {fecha_str}\n"
+        info_text += f"🔢 **Total Caught:** {cantidad}\n"
+        info_text += f"🆔 **Capture IDs:** {ids_formateados}\n"
+        info_text += f"📏 **Height:** {self.data['height']/10}m | ⚖️ **Weight:** {self.data['weight']/10}kg\n"
         
         # 5. Creamos el Embed
         embed = discord.Embed(title=titulo, color=discord.Color.dark_grey())
@@ -915,7 +918,7 @@ class InfoView(discord.ui.View):
         embed.set_thumbnail(url=url_sprite)
         
         # 6. Añadimos campo de Detalles Generales
-        embed.add_field(name="📋 Detalles Generales", value=info_text, inline=False)
+        embed.add_field(name="📋 General Information", value=info_text, inline=False)
         
         # 7. Añadimos las estadísticas
         stats_text = (
@@ -927,14 +930,14 @@ class InfoView(discord.ui.View):
             f"`Speed          : {self.data['speed']}`"
         )
                 
-        embed.add_field(name="📊 Estadísticas Base", value=stats_text, inline=False)
+        embed.add_field(name="📊 Base Stats", value=stats_text, inline=False)
         
         return embed
 
     async def enviar_embed(self, ctx):
         await ctx.send(embed=self.crear_embed(), view=self)
 
-    @discord.ui.button(label="Cambiar Versión", style=discord.ButtonStyle.secondary, custom_id="boton_cambiar")
+    @discord.ui.button(label="Switch Version", style=discord.ButtonStyle.secondary, custom_id="boton_cambiar")
     async def boton_cambiar(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.mostrar_shiny = not self.mostrar_shiny
         await interaction.response.edit_message(embed=self.crear_embed(), view=self)
@@ -946,10 +949,10 @@ class SeleccionInicialView(discord.ui.View):
 
     def get_embed(self):
         poke = INICIALES[self.index]
-        embed = discord.Embed(title=f"Elige a tu inicial: {poke['nombre']}", color=discord.Color.green())
+        embed = discord.Embed(title=f"Choose Your Starter: {poke['nombre']}", color=discord.Color.green())
         # Usamos la URL oficial de imágenes de Pokémon
         embed.set_image(url=f"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/{poke['id']}.png")
-        embed.set_footer(text=f"Pokémon {self.index + 1} de {len(INICIALES)}")
+        embed.set_footer(text=f"Pokémon {self.index + 1} of {len(INICIALES)}")
         return embed
 
     @discord.ui.button(label="⬅️", style=discord.ButtonStyle.primary)
@@ -957,7 +960,7 @@ class SeleccionInicialView(discord.ui.View):
         self.index = (self.index - 1) % len(INICIALES)
         await interaction.response.edit_message(embed=self.get_embed())
 
-    @discord.ui.button(label="¡Lo elijo a él!", style=discord.ButtonStyle.success)
+    @discord.ui.button(label="Choose This Pokémon", style=discord.ButtonStyle.success)
     async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
         poke = INICIALES[self.index]
         
@@ -998,7 +1001,7 @@ class SeleccionInicialView(discord.ui.View):
         )
         
         await interaction.response.edit_message(
-            content=f"🎉 ¡Felicidades! Has elegido a **{poke['nombre']}**. ¡Tu aventura comienza ahora!", 
+            content=f"🎉 Congratulations! You chose **{poke['nombre']}**. Your adventure begins now!", 
             embed=None, 
             view=None
         )
@@ -1009,13 +1012,13 @@ class SeleccionInicialView(discord.ui.View):
         await interaction.response.edit_message(embed=self.get_embed())
 def obtener_nombre_rareza(rareza):
     nombres = {
-        "muy_comun": "Muy Común 🟢",
-        "comun": "Común ⚪",
-        "poco_comun": "Poco Común 🔵",
-        "raro": "Raro 🟣",
-        "epico": "Épico 🔴",
-        "mitico": "Mítico 🟡",
-        "legendario": "Legendario 👑"
+        "muy_comun": "Very Common 🟢",
+        "comun": "Common ⚪",
+        "poco_comun": "Uncommon 🔵",
+        "raro": "Rare 🟣",
+        "epico": "Epic 🔴",
+        "mitico": "Mythic 🟡",
+        "legendario": "Legendary 👑",
     }
     return nombres.get(rareza, rareza)
 
