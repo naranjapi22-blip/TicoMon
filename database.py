@@ -682,11 +682,23 @@ def obtener_capturas_por_ids(user_id, captura_ids: list) -> dict[int, tuple]:
 
         cursor.execute(
             f"""
-            SELECT id, pokemon_nombre, es_shiny, naturaleza,
-                iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe
-            FROM capturas
-            WHERE user_id = %s
-            AND id IN ({placeholders})
+            SELECT
+                c.id,
+                c.pokemon_nombre,
+                p.pokeapi_id,
+                c.es_shiny,
+                c.naturaleza,
+                c.iv_hp,
+                c.iv_atk,
+                c.iv_def,
+                c.iv_spa,
+                c.iv_spd,
+                c.iv_spe
+            FROM capturas c
+            LEFT JOIN pokemon_data p
+                ON LOWER(c.pokemon_nombre) = LOWER(p.nombre)
+            WHERE c.user_id = %s
+            AND c.id IN ({placeholders})
             """,
             [_uid(user_id), *ids],
         )

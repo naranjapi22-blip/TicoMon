@@ -9,11 +9,22 @@ _GEN_DATA = GenData.from_gen(9)
 _IVS_PERFECTOS = {"hp": 31, "atk": 31, "def": 31, "spa": 31, "spd": 31, "spe": 31}
 
 
-async def obtener_datos_combate(session, nombre_pokemon, *, ivs=None, naturaleza=None, es_shiny=False):
+async def obtener_datos_combate(
+    session,
+    nombre_pokemon,
+    pokeapi_id=None,
+    *,
+    ivs=None,
+    naturaleza=None,
+    es_shiny=False,
+):
     """
     Consulta PokeAPI y arma el dict de luchador con stats lvl 50 (poke-env).
     """
-    url = f"https://pokeapi.co/api/v2/pokemon/{nombre_pokemon.lower()}"
+    if pokeapi_id:
+        url = f"https://pokeapi.co/api/v2/pokemon/{pokeapi_id}"
+    else:
+        url = f"https://pokeapi.co/api/v2/pokemon/{nombre_pokemon.lower()}"
 
     try:
         async with session.get(url) as response:
@@ -36,7 +47,6 @@ async def obtener_datos_combate(session, nombre_pokemon, *, ivs=None, naturaleza
                 for s in data["stats"]
             }
 
-            data = await response.json()
             stats = {s["stat"]["name"]: s["base_stat"] for s in data["stats"]}
             tipos = [t["type"]["name"] for t in data["types"]]
             species_showdown = await combate_calc.resolver_especie_showdown(session, nombre_pokemon)
@@ -94,6 +104,7 @@ async def _fighter_desde_fila(session, user_id, fila):
     (
         captura_id,
         nombre,
+        pokeapi_id,
         es_shiny,
         naturaleza,
         iv_hp,
@@ -113,12 +124,12 @@ async def _fighter_desde_fila(session, user_id, fila):
     }
     datos = await obtener_datos_combate(
         session,
-        nombre,
+        pokeapi_id=pokeapi_id,
+        nombre_pokemon=nombre,
         ivs=ivs,
         naturaleza=naturaleza,
         es_shiny=bool(es_shiny),
     )
-
     print(
         "Pokemon:",
         nombre,
