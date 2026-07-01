@@ -1,6 +1,19 @@
 from database import obtener_pokemon_local_nombre
 from combate_calc import elegir_movimiento_automatico
-
+FORMAS_BASE = {
+    "zacian-hero": "zacian",
+    "zamazenta-hero": "zamazenta",
+    "basculegion-male": "basculegion",
+    "basculegion-female": "basculegion",
+    "indeedee-male": "indeedee",
+    "indeedee-female": "indeedee",
+    "meowstic-male": "meowstic",
+    "meowstic-female": "meowstic",
+    "oinkologne-male": "oinkologne",
+    "oinkologne-female": "oinkologne",
+    "pyroar-male": "pyroar",
+    "pyroar-female": "pyroar",
+}
 
 def crear_alpha(nombre_pokemon):
 
@@ -11,6 +24,10 @@ def crear_alpha(nombre_pokemon):
         .lower()
     )
 
+    nombre_pokemon = FORMAS_BASE.get(
+        nombre_pokemon,
+        nombre_pokemon
+    )
     print(f"🎯 Creando Alpha: {nombre_pokemon}")
 
     pokemon = obtener_pokemon_local_nombre(
