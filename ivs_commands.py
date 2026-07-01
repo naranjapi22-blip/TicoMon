@@ -1,5 +1,5 @@
 import re
-
+import time
 import discord
 from discord.ext import commands
 import database
@@ -414,7 +414,7 @@ class IvsCommands(commands.Cog):
 
                 url_gif = (
                     "https://pub-23cb564f6c174627926c1ac0409563d4.r2.dev/"
-                    f"gifs_calidad/{path_folder}/{gif_id}.gif?v=2"
+                    f"gifs_calidad/{path_folder}/{gif_id}.gif?v={int(time.time())}"
                 )
 
                 embed.set_image(url=url_gif)
