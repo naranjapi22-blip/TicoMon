@@ -3,18 +3,25 @@ from combate_calc import elegir_movimiento_automatico
 FORMAS_BASE = {
     "zacian-hero": "zacian",
     "zamazenta-hero": "zamazenta",
+
+    "giratina-altered": "giratina",
+    "giratina-origin": "giratina",
+
     "basculegion-male": "basculegion",
     "basculegion-female": "basculegion",
+
     "indeedee-male": "indeedee",
     "indeedee-female": "indeedee",
+
     "meowstic-male": "meowstic",
     "meowstic-female": "meowstic",
+
     "oinkologne-male": "oinkologne",
     "oinkologne-female": "oinkologne",
+
     "pyroar-male": "pyroar",
     "pyroar-female": "pyroar",
 }
-
 def crear_alpha(nombre_pokemon):
 
     nombre_pokemon = (
