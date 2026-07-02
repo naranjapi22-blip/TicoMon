@@ -162,8 +162,8 @@ def aplicar_filtro_spawn(bot):
                 )
 
                 await ctx.send(
-                    "¡Bienvenido! Antes de tu aventura, "
-                    "elige tu Pokémon inicial con el comando `!starter`."
+                    "Welcome! Before your adventure, "
+                    "choose your starter pokémon with the `!starter` command."
                 )
 
                 return False
@@ -183,8 +183,8 @@ def aplicar_filtro_spawn(bot):
                 )
 
                 await ctx.send(
-                    "❌ Has agotado tus intentos. "
-                    "Tus inciensos se recargan en 2 horas."
+                    "❌ You've run our of attempts. "
+                    "Your incense will recharge in 2 hours."
                 )
 
                 return False
@@ -278,7 +278,7 @@ def setup_gestor(bot):
                 
                 if verificar_inicial(ctx.author.id):
                     log.warning(f"⚠️ User {ctx.author.id} ya tiene inicial")
-                    return await ctx.send("❌ Ya has recibido tu Pokémon inicial.")
+                    return await ctx.send("❌ You already have a starter Pokémon.")
                 
                 log.info(f"✅ Mostrando selector de inicial para user {ctx.author.id}")
                 from vistas import SeleccionInicialView

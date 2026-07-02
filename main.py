@@ -481,11 +481,11 @@ async def cooldowns(ctx):
         segundos = int(tiempo_restante % 60)
         
         embed = discord.Embed(
-            title="🔋 Estado de tus Inciensos",
+            title="🔋 Status of your incense",
             color=discord.Color.blue()
         )
-        embed.add_field(name="Intentos disponibles", value=f"**{intentos}/12**", inline=True)
-        embed.add_field(name="Reseteo en", value=f"**{minutos}m {segundos}s**", inline=True)
+        embed.add_field(name="Available attempts", value=f"**{intentos}/12**", inline=True)
+        embed.add_field(name="Resets in", value=f"**{minutos}m {segundos}s**", inline=True)
         
         await ctx.send(embed=embed)
         log.info(f"✅ [Comando] Respuesta de !cooldowns enviada correctamente al usuario {ctx.author.id}")
@@ -1917,7 +1917,7 @@ async def new_duplicados(ctx, *, filtro=None):
                 pokemon_filtro = pokemon["nombre"]
             else:
                 return await ctx.send(
-                    f"❌ '{filtro}' no es un tipo ni un Pokémon válido."
+                    f"❌ '{filtro}' is not a valid type nor Pokémon name."
                 )
 
     grupos = database.obtener_duplicados_detalle(
@@ -1930,17 +1930,17 @@ async def new_duplicados(ctx, *, filtro=None):
     if not grupos:
         if tipo_filtro:
             return await ctx.send(
-                f"🎉 No tienes duplicados de tipo **{filtro.capitalize()}**."
+                f"🎉 You don't have any **{filtro.capitalize()}** duplicates."
             )
 
         if pokemon_filtro:
             return await ctx.send(
-                f"🎉 No tienes duplicados de **{pokemon_filtro.capitalize()}**."
+                f"🎉 You don't have any duplicates of **{pokemon_filtro.capitalize()}**."
             )
 
-        return await ctx.send("🎉 No tienes Pokémon duplicados.")
+        return await ctx.send("🎉 You don't have any Pokémon duplicates.")
 
-    titulo = "📦 Pokémon duplicados"
+    titulo = "📦 Pokémon duplicates"
 
     if tipo_filtro:
         titulo += f" ({filtro.capitalize()})"
