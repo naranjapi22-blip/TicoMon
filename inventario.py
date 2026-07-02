@@ -21,25 +21,25 @@ GENERACIONES = [
 ]
 
 TIPOS_FILTRO = [
-    ("todos", "Todos los tipos"),
+    ("todos", "All types"),
     ("normal", "Normal"),
-    ("fuego", "Fuego"),
-    ("agua", "Agua"),
-    ("planta", "Planta"),
-    ("electrico", "Eléctrico"),
-    ("hielo", "Hielo"),
-    ("lucha", "Lucha"),
-    ("veneno", "Veneno"),
-    ("tierra", "Tierra"),
-    ("volador", "Volador"),
-    ("psiquico", "Psíquico"),
-    ("bicho", "Bicho"),
-    ("roca", "Roca"),
-    ("fantasma", "Fantasma"),
-    ("dragon", "Dragón"),
-    ("siniestro", "Siniestro"),
-    ("acero", "Acero"),
-    ("hada", "Hada"),
+    ("fuego", "Fire"),
+    ("agua", "Water"),
+    ("planta", "Grass"),
+    ("electrico", "Electric"),
+    ("hielo", "Ice"),
+    ("lucha", "Fighting"),
+    ("veneno", "Poison"),
+    ("tierra", "Ground"),
+    ("volador", "Flying"),
+    ("psiquico", "Psychic"),
+    ("bicho", "Bug"),
+    ("roca", "Rock"),
+    ("fantasma", "Ghost"),
+    ("dragon", "Dragon"),
+    ("siniestro", "Dark"),
+    ("acero", "Steel"),
+    ("hada", "Fairy"),
 ]
 
 TIPO_ALIASES = {
@@ -64,12 +64,12 @@ TIPO_ALIASES = {
 }
 
 ORDENES = {
-    "nombre_asc": ("Nombre A → Z", lambda e: e["nombre"].lower()),
-    "nombre_desc": ("Nombre Z → A", lambda e: e["nombre"].lower(), True),
-    "id_asc": ("ID ↑ (antiguos)", lambda e: e["id"]),
-    "id_desc": ("ID ↓ (recientes)", lambda e: e["id"], True),
-    "iv_asc": ("IV% ↑ (menor)", lambda e: e["iv_pct"]),
-    "iv_desc": ("IV% ↓ (mayor)", lambda e: e["iv_pct"], True),
+    "nombre_asc": ("Name A → Z", lambda e: e["nombre"].lower()),
+    "nombre_desc": ("Name Z → A", lambda e: e["nombre"].lower(), True),
+    "id_asc": ("ID ↑ (oldest)", lambda e: e["id"]),
+    "id_desc": ("ID ↓ (recent)", lambda e: e["id"], True),
+    "iv_asc": ("IV% ↑ (lower)", lambda e: e["iv_pct"]),
+    "iv_desc": ("IV% ↓ (higher)", lambda e: e["iv_pct"], True),
 }
 
 
@@ -165,7 +165,7 @@ def _embed_para_pagina(
         color=discord.Color.green(),
     )
     embed.set_footer(
-        text=f"Página {pagina + 1}/{total_paginas} · {filtros_activos} · !ivs [ID] para detalles"
+        text=f"Page {pagina + 1}/{total_paginas} · {filtros_activos} · !ivs [ID] for more details"
     )
     return embed, pagina
 
@@ -219,11 +219,11 @@ class TipoInventarioSelect(discord.ui.Select):
 class GeneracionInventarioSelect(discord.ui.Select):
     def __init__(self, vista: "VistaInventario"):
         self.vista = vista
-        options = [discord.SelectOption(label="Todas las generaciones", value="todas", default=(vista.filtro_gen == "todas"))]
+        options = [discord.SelectOption(label="All generations", value="todas", default=(vista.filtro_gen == "todas"))]
         for _, _, gen in GENERACIONES:
             options.append(
                 discord.SelectOption(
-                    label=f"Generación {gen}",
+                    label=f"Generation {gen}",
                     value=str(gen),
                     default=(vista.filtro_gen == str(gen)),
                 )
@@ -247,7 +247,7 @@ class RegionInventarioSelect(discord.ui.Select):
         self.vista = vista
         options = [
             discord.SelectOption(
-                label="Todas las regiones",
+                label="All regions",
                 value="todas",
                 default=(vista.filtro_region == "todas"),
             )
@@ -294,7 +294,7 @@ class VistaInventario(discord.ui.View):
     def _texto_filtros(self) -> str:
         partes = [ORDENES[self.orden][0]]
         if self.filtro_tipo != "todos":
-            partes.append(f"Tipo: {dict(TIPOS_FILTRO).get(self.filtro_tipo, self.filtro_tipo)}")
+            partes.append(f"Type: {dict(TIPOS_FILTRO).get(self.filtro_tipo, self.filtro_tipo)}")
         if self.filtro_gen != "todas":
             partes.append(f"Gen {self.filtro_gen}")
         if self.filtro_region != "todas":
@@ -361,7 +361,7 @@ class VistaInventario(discord.ui.View):
             if self.message and self.message.embeds:
                 embed = self.message.embeds[0].copy()
                 embed.set_footer(
-                    text="⏱️ Sesión expirada — usa !new-inventory para abrir de nuevo"
+                    text="⏱️ Session expired — use !inventory to open a new one"
                 )
                 await self.message.edit(embed=embed, view=self)
             elif self.message:
@@ -530,7 +530,7 @@ class Inventario(commands.Cog):
         pokemones = database.obtener_inventario_usuario(ctx.author.id)
 
         if not pokemones:
-            await ctx.send("🎒 Tu inventario está vacío.")
+            await ctx.send("🎒 Your inventory is empty.")
             return
 
         vista = VistaInventario(ctx, pokemones)
@@ -568,7 +568,7 @@ class Inventario(commands.Cog):
             if tipo not in TIPOS_VALIDOS:
 
                 return await ctx.send(
-                    f"❌ Tipo inválido: {tipo}"
+                    f"❌ Invalid type: {tipo}"
                 )
 
         conn = database.get_connection()
@@ -628,13 +628,13 @@ class Inventario(commands.Cog):
             if tipo:
 
                 await ctx.send(
-                    f"❌ No tienes Pokémon tipo **{tipo}**."
+                    f"❌ You don't have any **{tipo}** Pokémon."
                 )
 
             else:
 
                 await ctx.send(
-                    "❌ Aún no tienes Pokémon capturados."
+                    "❌ You haven't caught any Pokémon yet!."
                 )
 
             return

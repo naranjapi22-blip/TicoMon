@@ -1283,15 +1283,15 @@ class CaptureAnimation:
 
         if frame < 19:
 
-            texto = "Lanzando Poké Ball..."
+            texto = "Throwing Poké Ball..."
 
         elif self.capturado:
 
-            texto = f"¡{self.nombre} fue capturado!"
+            texto = f"{self.nombre.capitalize()} was caught!"
 
         else:
 
-            texto = f"¡{self.nombre} escapó!"
+            texto = f"{self.nombre.capitalize()} escaped!"
 
         bbox = draw.textbbox(
 

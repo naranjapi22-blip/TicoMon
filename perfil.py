@@ -93,21 +93,21 @@ def iniciar_modulo_perfil(bot):
         barra_visual = "🟩" * bloques_llenos + "⬛" * (10 - bloques_llenos)
 
         embed = discord.Embed(
-            title=f"🎒 Tarjeta de Entrenador: {usuario.display_name}",
+            title=f"🎒 Trainer card: {usuario.display_name}",
             color=discord.Color.from_rgb(46, 125, 50)
         )
         embed.set_thumbnail(url=usuario.display_avatar.url)
         
         embed.add_field(
-            name="📊 Estadísticas de Colección",
-            value=f"• **Total Capturas:** `{total_capturados}`\n"
-                  f"• **Variocolores (Shiny) ✨:** `{total_shinies}`",
+            name="📊 Collection statistics",
+            value=f"• **Total caught:** `{total_capturados}`\n"
+                  f"• **Shiny ✨:** `{total_shinies}`",
             inline=True
         )
         
         embed.add_field(
-            name="📈 Progreso de la Pokédex",
-            value=f"{barra_visual} ({porcentaje_completado:.1f}%)\n`{especies_unicas}` de `{MAX_POKEDEX}` registrados.",
+            name="📈 Pokédex progress",
+            value=f"{barra_visual} ({porcentaje_completado:.1f}%)\n`{especies_unicas}` of `{MAX_POKEDEX}` registered.",
             inline=False
         )
 
@@ -163,7 +163,7 @@ def iniciar_modulo_perfil(bot):
                 )
 
                 embed.add_field(
-                    name="🌟 Compañero Destacado",
+                    name="🌟 Featured companion",
                     value=titulo_destacado,
                     inline=False
                 )
@@ -174,10 +174,10 @@ def iniciar_modulo_perfil(bot):
         else:
 
             embed.add_field(
-                name="🌟 Compañero Destacado",
+                name="🌟 Featured companion",
                 value=(
-                    "*No ha destacado ningún Pokémon.*\n"
-                    "Usa `!favote <nombre>`"
+                    "*No featured Pokémon yet.*\n"
+                    "Use `!favorite <id>`"
                 ),
                 inline=False
             )
@@ -185,7 +185,7 @@ def iniciar_modulo_perfil(bot):
             if es_shiny:
                 embed.color = discord.Color.gold()
             else:
-                embed.add_field(name="🌟 Compañero Destacado", value="*No ha destacado ningún Pokémon.*\nUsa `!favorite <nombre> [shiny]`", inline=False)
+                embed.add_field(name="🌟 Featured companion", value="*No featured Pokémon yet.*\nUse `!favorite <id> [shiny]`", inline=False)
             
         await ctx.send(embed=embed)
 
